@@ -1,18 +1,11 @@
+import os
+
 from langchain_community.llms import LlamaCpp
 from langchain_core.prompts import PromptTemplate
 from langchain_classic.chains.retrieval_qa.base import RetrievalQA
 from app.config import MODEL_PATH, RETRIEVAL_K
 
-llm = LlamaCpp(
-    model_path=MODEL_PATH,
-    temperature=0.1,
-    max_tokens=256,
-    n_ctx=2048,
-    n_gpu_layers=20,
-    n_batch=128,
-    streaming=True,
-    verbose=False
-)
+_llm = None
 
 
 prompt_template = """
@@ -36,9 +29,34 @@ PROMPT = PromptTemplate(
     input_variables=["context", "question"]
 )
 
+
+def get_llm():
+    global _llm
+    if _llm is not None:
+        return _llm
+
+    if not os.path.exists(MODEL_PATH):
+        raise FileNotFoundError(
+            "Llama model file not found. Set LLAMA_MODEL_PATH or place model at: "
+            f"{MODEL_PATH}"
+        )
+
+    _llm = LlamaCpp(
+        model_path=MODEL_PATH,
+        temperature=0.1,
+        max_tokens=256,
+        n_ctx=2048,
+        n_gpu_layers=20,
+        n_batch=128,
+        streaming=True,
+        verbose=False,
+    )
+    return _llm
+
+
 def get_qa_chain(vectorstore):
     return RetrievalQA.from_chain_type(
-        llm=llm,
+        llm=get_llm(),
         retriever=vectorstore.as_retriever(search_kwargs={"k": RETRIEVAL_K}),
         chain_type_kwargs={"prompt": PROMPT}
     )
