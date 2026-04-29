@@ -1,13 +1,29 @@
 import os
 import re
 from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from app.services.pdf_service import process_pdf
 from app.services.vector_service import create_vector_store, load_vector_store
 from app.services.chat_service import get_qa_chain
+from app.voice_api import router as voice_router
 
 app = FastAPI()
 
 vectorstore = None
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # dev convenience; tighten in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(voice_router)
+
+class ChatRequest(BaseModel):
+    query: str
 
 
 def _fallback_answer_from_docs(query: str):
@@ -79,7 +95,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 
 @app.post("/chat")
-async def chat(query: str):
+async def chat(req: ChatRequest):
     global vectorstore
 
     if not vectorstore:
@@ -87,13 +103,13 @@ async def chat(query: str):
 
     try:
         qa_chain = get_qa_chain(vectorstore)
+        response = qa_chain.run(req.query)
     except FileNotFoundError as e:
-        response = _fallback_answer_from_docs(query)
+        response = _fallback_answer_from_docs(req.query)
         return {
             "answer": response,
             "mode": "retrieval_fallback",
             "warning": str(e),
         }
-    response = qa_chain.run(query)
 
     return {"answer": response}

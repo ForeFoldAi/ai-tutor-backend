@@ -7,9 +7,25 @@ from langchain_core.retrievers import BaseRetriever
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from app.config import CHROMA_PATH
 
-embedding_model = HuggingFaceEmbeddings(
-    model_name="BAAI/bge-base-en-v1.5"
-)
+_embedding_model = None
+
+
+def _get_embedding_model():
+    """
+    Lazily create embeddings to avoid crashing server startup when the
+    HF Hub is blocked/unavailable.
+    """
+    global _embedding_model
+    if _embedding_model is not None:
+        return _embedding_model
+    try:
+        _embedding_model = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
+        return _embedding_model
+    except Exception:
+        # If embeddings can't be created (e.g. HF download blocked),
+        # fall back to keyword-only retrieval in-memory.
+        _embedding_model = None
+        return None
 
 
 class KeywordRetriever(BaseRetriever):
@@ -63,6 +79,11 @@ def create_vector_store(docs):
     # Import AFTER sanitizing env, otherwise chromadb may parse bad values
     # during module import.
     from langchain_community.vectorstores import Chroma
+
+    embedding_model = _get_embedding_model()
+    if embedding_model is None:
+        return InMemoryDocVectorStore(docs)
+
     try:
         vectorstore = Chroma.from_documents(
             docs,
@@ -78,6 +99,11 @@ def create_vector_store(docs):
 def load_vector_store():
     _sanitize_chroma_env()
     from langchain_community.vectorstores import Chroma
+
+    embedding_model = _get_embedding_model()
+    if embedding_model is None:
+        return InMemoryDocVectorStore([])
+
     try:
         return Chroma(
             persist_directory=CHROMA_PATH,

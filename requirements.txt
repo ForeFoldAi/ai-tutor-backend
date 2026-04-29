@@ -111,3 +111,11 @@ websockets==16.0
 xxhash==3.6.0
 zipp==3.23.0
 zstandard==0.25.0
+
+duckduckgo-search==8.1.1
+fastrtc==0.0.19
+fastrtc-moonshine-onnx==20241016
+kokoro-onnx==0.4.7
+loguru==0.7.3
+pyautogui==0.9.54
+soundfile==0.13.1
