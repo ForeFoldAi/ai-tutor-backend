@@ -34,6 +34,9 @@ wheels/
 # Chroma DB
 chroma_db/
 
+# Hugging Face / local model cache
+.cache/
+
 # Model files (large GGUF binaries)
 models/*.gguf
 models/*.bin
@@ -41,6 +44,12 @@ models/*.bin
 # Temp / uploads
 temp_*.pdf
 *.tmp
+uploads/_layout_validation/
+uploads/_audit_extraction_report.json
+uploads/
+
+# Local dev PDFs at repo root (canonical copies live under uploads/)
+/*.pdf
 
 # IDE
 .idea/

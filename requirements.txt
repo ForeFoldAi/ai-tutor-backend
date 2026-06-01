@@ -3,7 +3,8 @@ annotated-types==0.7.0
 anyio==4.12.1
 attrs==25.4.0
 backoff==2.2.1
-bcrypt==5.0.0
+# passlib 1.7.4 is incompatible with bcrypt 4.1+ (see passlib #148).
+bcrypt==4.0.1
 build==1.4.0
 certifi==2026.1.4
 charset-normalizer==3.4.4
@@ -69,6 +70,7 @@ pydantic==2.12.5
 pydantic_core==2.41.5
 Pygments==2.19.2
 pypdf==6.7.0
+pymupdf==1.26.5
 PyPika==0.51.1
 pyproject_hooks==1.2.0
 python-dateutil==2.9.0.post0
@@ -93,6 +95,7 @@ starlette==0.52.1
 sympy==1.14.0
 tenacity==9.1.4
 threadpoolctl==3.6.0
+tiktoken==0.12.0
 tokenizers==0.22.2
 torch==2.10.0
 tqdm==4.67.3
@@ -113,9 +116,16 @@ zipp==3.23.0
 zstandard==0.25.0
 
 duckduckgo-search==8.1.1
-fastrtc==0.0.19
-fastrtc-moonshine-onnx==20241016
-kokoro-onnx==0.4.7
+edge-tts==7.2.7
 loguru==0.7.3
 pyautogui==0.9.54
 soundfile==0.13.1
+SQLAlchemy==2.0.44
+alembic==1.17.1
+psycopg2-binary==2.9.11
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+redis==7.0.1
+email-validator==2.3.0
+python-docx==1.1.2
+Pillow==11.1.0
