@@ -22,9 +22,11 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Generic figure label detector (any textbook)
+# Generic figure label detector — covers NCERT (Fig./Figure), ICSE (Plate, Exhibit),
+# state-board (Diagram N, Illustration N, Scheme N) and multilingual textbooks.
+# Requires a digit after the label to avoid matching common words like "diagram of…"
 _FIG_MARKER_RE = re.compile(
-    r"(?i)\b(fig\.?|figure|fig)\s*[\.\s:]*\s*(\d+(?:\.\d+)*)"
+    r"(?i)\b(fig\.?|figure|diagram|illustration|plate|exhibit|scheme)\s*[\.\s:]*\s*(\d+(?:\.\d+)*)"
 )
 _CAPTION_STOP_RE = re.compile(
     r"(?i)(?:\.indd\b|reprint|not\s+to\s+be\s+republished|chapter\s+\d+\.indd)",
@@ -165,7 +167,7 @@ def bbox_from_json(raw: str | None) -> BBox | None:
 
 def is_page_background(bbox: BBox, page_bbox: BBox, *, recurring_template: bool = False) -> bool:
     """Delegate to shared rejection heuristics in textbook_image_extraction."""
-    from app.services.textbook_image_extraction import reject_figure_rect
+    from app.services.image_service.textbook_image_extraction import reject_figure_rect
 
     rejected, _ = reject_figure_rect(
         bbox.x0,
@@ -219,7 +221,7 @@ def scan_recurring_template_keys(pdf_path: str, *, max_pages: int | None = None)
     """Rects that repeat on multiple pages (publisher page shells, not figures)."""
     import fitz
 
-    from app.services.textbook_image_extraction import reject_figure_rect
+    from app.services.image_service.textbook_image_extraction import reject_figure_rect
 
     doc = fitz.open(pdf_path)
     counts: dict[tuple[float, float, float, float], int] = {}
@@ -266,21 +268,34 @@ def pairing_distance(
     page_bbox: BBox | None = None,
 ) -> float:
     """
-    Vertical-primary distance (captions usually below figures).
+    Edge-to-edge vertical distance (captions usually just below figures).
 
-    Penalizes oversized plates and images drawn mostly below their caption.
+    Uses the gap between image bottom and caption top (or caption bottom to
+    image top) rather than center-to-center, so large teaching diagrams that
+    sit immediately above their label are not penalised by their own height.
     """
-    ix, iy = image_bbox.center
-    cx, cy = caption_bbox.center
-    dy = abs(iy - cy)
-    dx = abs(ix - cx)
+    # Vertical component: edge-to-edge gap
+    if caption_bbox.y0 >= image_bbox.y1:
+        # Caption is below image (normal textbook layout)
+        dy = caption_bbox.y0 - image_bbox.y1
+    elif image_bbox.y0 >= caption_bbox.y1:
+        # Caption is above image (e.g. figure title at top)
+        dy = image_bbox.y0 - caption_bbox.y1
+    else:
+        # Overlapping vertically — use center distance as fallback
+        dy = abs(image_bbox.center[1] - caption_bbox.center[1])
+
+    # Horizontal component: center-to-center (captions are usually aligned with figure)
+    dx = abs(image_bbox.center[0] - caption_bbox.center[0])
     dist = dy + 0.35 * dx
 
+    # Light area penalty for very large images to reduce spurious long-range pairings,
+    # but cap it so a closely-placed caption always wins over a far-away one.
     if page_bbox and page_bbox.area > 0:
         area_frac = image_bbox.area / page_bbox.area
-        dist += _LARGE_IMAGE_DISTANCE_PENALTY * area_frac
+        dist += min(60.0, _LARGE_IMAGE_DISTANCE_PENALTY * area_frac)
 
-    # Figures are typically above captions in textbooks
+    # Penalty when image is drawn BELOW its caption (rare, usually wrong pairing)
     if image_bbox.y0 > caption_bbox.y0 + 12:
         dist += _BELOW_CAPTION_DISTANCE_PENALTY
     elif image_bbox.center[1] > caption_bbox.center[1] + 20:
@@ -331,6 +346,15 @@ def detect_captions_from_blocks(
             continue
         for m in _FIG_MARKER_RE.finditer(text):
             fig_num = m.group(2).strip()
+
+            # Skip inline cross-references like "(Fig. 2.6)" — these are parenthesised
+            # references inside body text, not standalone figure labels.  The actual
+            # label ("Fig. 2.6. Rain gauge") appears as its own text block or at the
+            # start of a line and is NOT preceded by "(".
+            start = m.start()
+            if start > 0 and text[start - 1] == "(":
+                continue
+
             # Title: text after marker until stop pattern or 200 chars
             tail = text[m.end() :]
             tail = _CAPTION_STOP_RE.split(tail, maxsplit=1)[0].strip(" .:;-")
@@ -349,19 +373,22 @@ def detect_captions_from_blocks(
             )
             cap_idx += 1
 
-    # Deduplicate overlapping captions (same figure twice in text layer)
-    deduped: list[LayoutCaption] = []
-    seen_nums: set[str] = set()
+    # Deduplicate: same figure number can appear multiple times (inline refs, repeated
+    # labels).  Prefer the caption with the LONGEST descriptive title — "Fig. 2.6. Rain
+    # gauge" wins over a bare "Fig. 2.6" or one whose tail starts with ")".
+    def _title_len(c: LayoutCaption) -> int:
+        idx = c.caption_text.find(c.figure_number)
+        if idx == -1:
+            return 0
+        tail = c.caption_text[idx + len(c.figure_number):].strip(" .:;-()")
+        return len(tail)
+
+    best: dict[str, LayoutCaption] = {}
     for cap in sorted(captions, key=lambda c: (c.bbox.y0, c.bbox.x0)):
-        if cap.figure_number in seen_nums:
-            continue
-        if any(
-            pairing_distance(cap.bbox, kept.bbox) < 8.0 and cap.figure_number == kept.figure_number
-            for kept in deduped
-        ):
-            continue
-        seen_nums.add(cap.figure_number)
-        deduped.append(cap)
+        if cap.figure_number not in best or _title_len(cap) > _title_len(best[cap.figure_number]):
+            best[cap.figure_number] = cap
+
+    deduped = sorted(best.values(), key=lambda c: (c.bbox.y0, c.bbox.x0))
     return deduped
 
 
@@ -397,13 +424,23 @@ def collect_images(
     page_bbox: BBox,
     *,
     recurring_template_keys: set[tuple[float, float, float, float]] | None = None,
-) -> tuple[list[tuple[LayoutImage, bytes]], int]:
-    """Returns list of (LayoutImage, jpeg_bytes) and background count."""
+) -> tuple[list[tuple[LayoutImage, bytes]], list[tuple[LayoutImage, bytes]], int]:
+    """
+    Returns (accepted_images, tentative_recurring_images, backgrounds_removed).
+
+    *accepted_images* passed all filters.
+    *tentative_recurring_images* were rejected only because they appear at the same
+    normalised position on multiple pages (recurring template).  Some PDFs rasterise
+    the entire page content as one large XObject — the same image slot is reused on
+    every page, so the genuine teaching diagram is incorrectly flagged as a template.
+    Callers can try to pair tentative images with orphan captions before discarding them.
+    """
     import fitz
 
-    from app.services.textbook_image_extraction import log_figure_extract, reject_figure_rect
+    from app.services.image_service.textbook_image_extraction import log_figure_extract, reject_figure_rect
 
     results: list[tuple[LayoutImage, bytes]] = []
+    tentative: list[tuple[LayoutImage, bytes]] = []
     backgrounds_removed = 0
     img_idx = 0
     render_matrix = fitz.Matrix(_RENDER_MATRIX_SCALE, _RENDER_MATRIX_SCALE)
@@ -422,32 +459,27 @@ def collect_images(
 
             rect_key = normalized_rect_key(bbox, page_bbox)
             is_recurring = rect_key in recurring
-            rejected, reason = reject_figure_rect(
-                bbox.x0,
-                bbox.y0,
-                bbox.x1,
-                bbox.y1,
-                page_bbox.width,
-                page_bbox.height,
-                recurring_template=is_recurring,
-            )
-            if not rejected and is_page_background(bbox, page_bbox):
-                rejected = True
-                reason = "bleed_or_full_page_overlap"
 
-            if rejected:
+            # Check for hard background rejection (ignore recurring flag here)
+            rejected_hard, reason_hard = reject_figure_rect(
+                bbox.x0, bbox.y0, bbox.x1, bbox.y1,
+                page_bbox.width, page_bbox.height,
+                recurring_template=False,  # check structure only
+            )
+            if not rejected_hard and is_page_background(bbox, page_bbox):
+                rejected_hard = True
+                reason_hard = "bleed_or_full_page_overlap"
+
+            if rejected_hard:
                 backgrounds_removed += 1
                 log_figure_extract(
-                    page=page_number,
-                    figure=None,
-                    caption_bbox=None,
-                    image_bbox=bbox.to_list(),
-                    distance=None,
-                    selected=False,
-                    rejected_reason=reason,
+                    page=page_number, figure=None, caption_bbox=None,
+                    image_bbox=bbox.to_list(), distance=None,
+                    selected=False, rejected_reason=reason_hard,
                 )
                 continue
 
+            # Rasterise the image regardless of recurring status
             try:
                 pix = page.get_pixmap(matrix=render_matrix, clip=rect, alpha=False)
                 w, h = pix.width, pix.height
@@ -457,7 +489,7 @@ def collect_images(
             except Exception:
                 continue
 
-            from app.services.textbook_image_display import normalize_image_blob
+            from app.services.image_service.textbook_image_display import normalize_image_blob
 
             if not normalize_image_blob(blob):
                 continue
@@ -465,15 +497,23 @@ def collect_images(
             lim = LayoutImage(
                 page_number=page_number,
                 image_index_on_page=img_idx,
-                bbox=bbox,
-                xref=xref,
-                pixel_width=w,
-                pixel_height=h,
+                bbox=bbox, xref=xref,
+                pixel_width=w, pixel_height=h,
             )
-            results.append((lim, blob))
-            img_idx += 1
 
-    return _dedupe_near_duplicate_images(results), backgrounds_removed
+            if is_recurring:
+                # Defer: only include if it can be paired with a caption
+                tentative.append((lim, blob))
+                log_figure_extract(
+                    page=page_number, figure=None, caption_bbox=None,
+                    image_bbox=bbox.to_list(), distance=None,
+                    selected=False, rejected_reason="recurring_page_template",
+                )
+            else:
+                results.append((lim, blob))
+                img_idx += 1
+
+    return _dedupe_near_duplicate_images(results), _dedupe_near_duplicate_images(tentative), backgrounds_removed
 
 
 def _bbox_iou(a: BBox, b: BBox) -> float:
@@ -628,7 +668,7 @@ def build_figure_context_layout(
     subsection_title: str | None,
     chapter_title: str | None,
 ) -> str:
-    from app.services.textbook_image_extraction import build_figure_context
+    from app.services.image_service.textbook_image_extraction import build_figure_context
 
     return build_figure_context(
         caption=caption,
@@ -675,7 +715,7 @@ def extract_document_layout(
             log = PageExtractionLog(page_number=page_number)
             text_blocks = collect_text_blocks(page, page_number)
             captions = detect_captions_from_blocks(page_number, text_blocks)
-            images_with_blobs, bg_removed = collect_images(
+            images_with_blobs, tentative_images, bg_removed = collect_images(
                 page,
                 page_number,
                 page_bbox,
@@ -691,6 +731,30 @@ def extract_document_layout(
             assignments, orphan_i, orphan_j = pair_images_to_captions(
                 images_with_blobs, captions, page_bbox=page_bbox
             )
+
+            # Rescue orphan captions using tentative recurring images.
+            # Some PDFs rasterise each page's entire content as one large XObject
+            # (same normalised position on every page). The genuine teaching figure
+            # lives inside that image slot — pair it with any remaining orphan caption.
+            if orphan_j and tentative_images:
+                orphan_caps = [captions[j] for j in orphan_j]
+                extra_assignments, extra_orphan_i, extra_orphan_j = pair_images_to_captions(
+                    tentative_images, orphan_caps, page_bbox=page_bbox
+                )
+                # Translate extra_assignments back to original caption indices
+                for ti, oci, dist in extra_assignments:
+                    orig_cap_idx = orphan_j[oci]
+                    # Append the tentative image to images_with_blobs
+                    new_img_idx = len(images_with_blobs)
+                    images_with_blobs.append(tentative_images[ti])
+                    assignments.append((new_img_idx, orig_cap_idx, dist))
+                # Update orphan_j to only truly-unmatched captions
+                matched_oci = {oci for _, oci, _ in extra_assignments}
+                orphan_j = [j for pos, j in enumerate(orphan_j) if pos not in matched_oci]
+                logger.debug(
+                    "[LAYOUT] p%d: rescued %d orphan caption(s) via tentative recurring images",
+                    page_number, len(extra_assignments),
+                )
 
             for cap_idx in orphan_j:
                 log.orphan_captions.append(captions[cap_idx].figure_number)
@@ -728,7 +792,7 @@ def extract_document_layout(
                     chapter_title=chapter_title,
                 )
 
-                from app.services.textbook_image_extraction import log_figure_extract
+                from app.services.image_service.textbook_image_extraction import log_figure_extract
 
                 log_figure_extract(
                     page=page_number,
@@ -773,47 +837,11 @@ def extract_document_layout(
                 )
                 global_seq += 1
 
-            # Unpaired images: still extract if large enough (no figure number)
-            for oi in orphan_i:
-                if len(figures) >= max_figures:
-                    break
-                img, blob = images_with_blobs[oi]
-                if is_page_background(img.bbox, page_bbox):
-                    continue
-                if page_bbox.area > 0 and img.bbox.area / page_bbox.area > 0.28:
-                    continue
-                if img.pixel_width * img.pixel_height < 8000:
-                    continue
-                before, after = _text_near_figure(text_blocks, img.bbox, None)
-                ctx = build_figure_context_layout(
-                    caption=None,
-                    nearby_before=before,
-                    nearby_after=after,
-                    section_title=sec,
-                    subsection_title=subsec,
-                    chapter_title=chapter_title,
-                )
-                figures.append(
-                    PairedFigure(
-                        page_number=page_number,
-                        page_index=page_index,
-                        sequence=global_seq,
-                        figure_number=None,
-                        caption=None,
-                        figure_context=ctx,
-                        image_bbox=img.bbox,
-                        caption_bbox=None,
-                        pairing_distance=-1.0,
-                        pairing_confidence=0.0,
-                        image_bytes=blob,
-                        nearby_before=before,
-                        nearby_after=after,
-                        section_title=sec,
-                        subsection_title=subsec,
-                        validation_flags=["orphan_image_no_caption"],
-                    )
-                )
-                global_seq += 1
+            # Unpaired images (no figure number, no caption) are intentionally NOT
+            # extracted.  Only images that have been paired with a figure label
+            # (Fig. N, Diagram N, etc.) are educationally indexable.  Orphan images
+            # without labels are decorative publisher assets, icons, or clip-art that
+            # add noise to retrieval and must be excluded.
 
             if log.captions_found or log.images_found:
                 page_logs.append(log)

@@ -8,6 +8,7 @@ forced purge is called first (re-processing).
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import re
@@ -31,8 +32,9 @@ _MIN_WH = 36
 # Reject only full-page raster plates (not large teaching diagrams).
 _MAX_FIGURE_AREA = 12_000_000
 
-# NCERT-style labels: "Fig. 1.1. Title" / "FIGURE 2.3: Title"
-_FIG_MARKER_RE = re.compile(r"(?i)\b(fig\.?|figure)\s*(\d+(?:\.\d+)*)")
+# Labels: NCERT (Fig./Figure), ICSE (Plate, Exhibit), state-board (Diagram N, Illustration N, Scheme N).
+# Requires a digit after the label to avoid matching prose occurrences of "diagram".
+_FIG_MARKER_RE = re.compile(r"(?i)\b(fig\.?|figure|diagram|illustration|plate|exhibit|scheme)\s*(\d+(?:\.\d+)*)")
 _TITLE_STOP_RE = re.compile(
     r"(?i)(?:don['\u2019]?t\s+miss|chapter\s+\d|\.indd\b|reprint|not\s+to\s+be\s+republished)",
 )
@@ -209,7 +211,7 @@ def purge_textbook_images_disk_and_rows(db: Session, upload_id: uuid.UUID) -> No
     upload = db.get(TextbookUpload, upload_id)
     if upload is not None:
         try:
-            from app.services.multimodal_image_index import purge_multimodal_index_for_upload
+            from app.services.image_service.multimodal_image_index import purge_multimodal_index_for_upload
 
             purge_multimodal_index_for_upload(db, upload)
         except Exception as exc:
@@ -401,10 +403,15 @@ def reject_figure_rect(
     if touches_left and touches_top and touches_right and touches_bottom:
         return True, "touches_all_margins"
 
+    # Large content-area plate — must ALSO touch at least one page edge.
+    # Centered teaching diagrams (e.g. rain gauge, cross-section) can be wide/tall
+    # yet have clear margins on every side and must not be rejected as backgrounds.
+    touches_any = touches_left or touches_top or touches_right or touches_bottom
     if (
         area_frac >= _LARGE_PLATE_AREA_FRAC
         and w >= _LARGE_PLATE_WIDTH_FRAC * page_width
         and h >= _LARGE_PLATE_HEIGHT_FRAC * page_height
+        and touches_any
     ):
         return True, "large_content_plate"
 
@@ -466,6 +473,88 @@ def _is_page_background_plate(
     return False
 
 
+def compute_content_hash(data: bytes) -> str:
+    """SHA-256 hex digest for image deduplication."""
+    return hashlib.sha256(data).hexdigest()
+
+
+def _enrich_image_row(
+    row: TextbookImage,
+    *,
+    image_bytes: bytes,
+    upload: TextbookUpload,
+    nearby_before: str = "",
+    nearby_after: str = "",
+) -> None:
+    """
+    Populate production metadata fields on a freshly created TextbookImage row.
+
+    Called for both PDF and DOCX extractions. Uses caption_generator for
+    uncaptioned / minimal-label figures, and derives grade_level / subject from
+    the parent upload to avoid joins at retrieval time.
+    """
+    from app.services.image_service.caption_generator import (
+        generate_contextual_caption,
+        extract_semantic_keywords,
+        generate_educational_tags,
+    )
+    from app.services.image_service.figure_context_gates import is_minimal_figure_caption
+
+    # Content hash (deduplication)
+    row.content_hash = compute_content_hash(image_bytes)
+
+    # Denormalise upload-level fields so retrieval doesn't need a join
+    row.grade_level = str(getattr(upload, "class_level", "") or "")
+    row.subject = str(getattr(upload, "subject_name", "") or "")
+
+    # Generated caption for uncaptioned or bare-label figures
+    has_real_caption = bool(row.caption) and not is_minimal_figure_caption(row.caption)
+    if not has_real_caption:
+        gen = generate_contextual_caption(
+            figure_number=row.figure_number,
+            image_type=row.image_type or "unknown",
+            section_title=row.section_title,
+            subsection_title=row.subsection_title,
+            chapter_title=row.chapter_title,
+            nearby_before=nearby_before,
+            nearby_after=nearby_after,
+        )
+        if gen:
+            row.generated_caption = gen
+            # Use generated caption to improve educational role classification
+            if row.educational_role in ("decorative", "unknown"):
+                row.educational_role = classify_educational_role(row.image_type or "unknown", gen)
+            # Recalculate salience using generated caption
+            if row.educational_salience < 0.15:
+                row.educational_salience = max(
+                    row.educational_salience,
+                    compute_educational_salience(gen) * 0.8,
+                )
+
+    # Semantic keywords from all available text
+    effective_caption = row.caption or row.generated_caption or ""
+    row.semantic_keywords = extract_semantic_keywords(
+        effective_caption,
+        row.generated_caption,
+        nearby_before,
+        nearby_after,
+        row.section_title,
+        row.chapter_title,
+        row.image_type or "unknown",
+    )
+
+    # Educational tags (subject domain + type + role)
+    row.educational_tags = generate_educational_tags(
+        effective_caption,
+        row.generated_caption,
+        nearby_before,
+        nearby_after,
+        row.image_type or "unknown",
+        row.educational_role or "unknown",
+        row.section_title,
+    )
+
+
 def generate_extraction_audit_report(
     rows: list[dict[str, Any]],
     *,
@@ -513,7 +602,7 @@ def _valid_pdf_image_blobs_pypdf(page) -> list[tuple[bytes, int]]:
     Does NOT sort by area — largest blob was often a wrong full-page plate while the
     actual Fig. 2.2 diagram was the next embedded image.
     """
-    from app.services.textbook_image_display import normalize_image_blob
+    from app.services.image_service.textbook_image_display import normalize_image_blob
 
     pw = float(page.mediabox.width) if getattr(page, "mediabox", None) else 612.0
     ph = float(page.mediabox.height) if getattr(page, "mediabox", None) else 792.0
@@ -556,7 +645,7 @@ def _valid_pdf_image_blobs_fitz(doc: Any, page_index: int) -> list[tuple[bytes, 
     NCERT PDFs often store a CMYK+SMask shell as a separate XObject; the visible
     diagram only appears when the page is rendered at the figure's rect.
     """
-    from app.services.textbook_image_display import normalize_image_blob
+    from app.services.image_service.textbook_image_display import normalize_image_blob
 
     import fitz
 
@@ -631,7 +720,7 @@ def _page_snippet(page_text: str, figure_captions: list[str]) -> str | None:
 
 
 def _save_blob(upload_id: uuid.UUID, page_index: int, seq: int, blob: bytes) -> str | None:
-    from app.services.textbook_image_display import normalize_image_blob
+    from app.services.image_service.textbook_image_display import normalize_image_blob
 
     jpeg = normalize_image_blob(blob)
     if not jpeg:
@@ -649,8 +738,8 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
     """
   Layout-aware PDF extraction (PyMuPDF): spatial caption pairing, no index matching.
     """
-    from app.services.figure_context_gates import is_minimal_figure_caption
-    from app.services.pdf_layout_extraction import (
+    from app.services.image_service.figure_context_gates import is_minimal_figure_caption
+    from app.services.image_service.pdf_layout_extraction import (
         bbox_to_json,
         extract_document_layout,
         validation_report_dict,
@@ -734,6 +823,13 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
             pairing_confidence=conf,
             context_bge_indexed=False,
         )
+        _enrich_image_row(
+            row,
+            image_bytes=pf.image_bytes,
+            upload=upload,
+            nearby_before=pf.nearby_before or "",
+            nearby_after=pf.nearby_after or "",
+        )
         db.add(row)
         created += 1
         audit_rows.append({
@@ -787,7 +883,7 @@ def extract_docx_images(db: Session, upload: TextbookUpload) -> int:
             blob = part.blob
         except Exception:
             continue
-        from app.services.textbook_image_display import normalize_image_blob
+        from app.services.image_service.textbook_image_display import normalize_image_blob
 
         if not normalize_image_blob(blob):
             continue
@@ -839,6 +935,13 @@ def extract_docx_images(db: Session, upload: TextbookUpload) -> int:
             nearby_text_after_figure=after or None,
             figure_context=fig_ctx or None,
         )
+        _enrich_image_row(
+            row,
+            image_bytes=blob,
+            upload=upload,
+            nearby_before=before,
+            nearby_after=after,
+        )
         db.add(row)
         created += 1
 
@@ -877,6 +980,7 @@ def ensure_textbook_images_extracted(db: Session, upload: TextbookUpload) -> int
             db.commit()
             _index_multimodal_after_extract(db, upload)
             ensure_figure_context_bge_indexed(db, upload)
+            _run_ocr_if_needed(db, upload)
         return n
     except Exception as exc:
         logger.warning("Image extraction failed for upload %s: %s", upload.id, exc)
@@ -884,9 +988,24 @@ def ensure_textbook_images_extracted(db: Session, upload: TextbookUpload) -> int
         return 0
 
 
+def _run_ocr_if_needed(db: Session, upload: TextbookUpload) -> None:
+    """Run OCR on scanned PDFs after image extraction (best-effort, non-blocking)."""
+    try:
+        from app.services.image_service.ocr_service import ocr_upload_if_needed
+
+        images = list(
+            db.scalars(
+                select(TextbookImage).where(TextbookImage.textbook_upload_id == upload.id)
+            ).all()
+        )
+        ocr_upload_if_needed(db, upload, images)
+    except Exception as exc:
+        logger.warning("OCR post-extract failed for %s: %s", upload.id, exc)
+
+
 def _index_multimodal_after_extract(db: Session, upload: TextbookUpload) -> None:
     try:
-        from app.services.multimodal_image_index import index_upload_images
+        from app.services.image_service.multimodal_image_index import index_upload_images
 
         index_upload_images(db, upload)
     except Exception as exc:
@@ -896,7 +1015,7 @@ def _index_multimodal_after_extract(db: Session, upload: TextbookUpload) -> None
 def ensure_figure_context_bge_indexed(db: Session, upload: TextbookUpload) -> int:
     """Index BGE embeddings for figure_context when missing (backward compat)."""
     try:
-        from app.services.figure_context_bge import index_figure_context_embeddings
+        from app.services.image_service.figure_context_bge import index_figure_context_embeddings
 
         rows = list(
             db.scalars(
@@ -933,6 +1052,7 @@ def reextract_textbook_images(db: Session, upload: TextbookUpload) -> int:
             db.commit()
             _index_multimodal_after_extract(db, upload)
             ensure_figure_context_bge_indexed(db, upload)
+            _run_ocr_if_needed(db, upload)
         return n
     except Exception as exc:
         logger.warning("reextract failed for %s: %s", upload.id, exc)

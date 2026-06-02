@@ -20,16 +20,16 @@ from typing import Any
 import numpy as np
 
 from app.modules.catalog.models import TextbookImage
-from app.services.figure_context_bge import embed_query, figure_context_bge_score
-from app.services.image_intent_extractor import ImageIntent
-from app.services.symbolic_image_filters import (
+from app.services.image_service.figure_context_bge import embed_query, figure_context_bge_score
+from app.services.image_service.image_intent_extractor import ImageIntent
+from app.services.image_service.symbolic_image_filters import (
     SymbolicMatchInfo,
     count_required_term_matches,
     extract_caption_entities,
     tokenize,
     topic_purity_score,
 )
-from app.services.textbook_image_extraction import build_figure_context, normalize_caption
+from app.services.image_service.textbook_image_extraction import build_figure_context, normalize_caption
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ def get_figure_context(im: TextbookImage) -> str:
 
 
 def get_has_caption(im: TextbookImage) -> bool:
-    from app.services.figure_context_gates import is_minimal_figure_caption
+    from app.services.image_service.figure_context_gates import is_minimal_figure_caption
 
     if is_minimal_figure_caption(im.caption):
         return False
@@ -132,13 +132,13 @@ def _bge_cosine_pair(query_text: str, doc_text: str, qvec: np.ndarray | None) ->
     if not doc_text.strip():
         return 0.0
     if qvec is not None:
-        from app.services.figure_context_bge import embed_texts, cosine_100
+        from app.services.image_service.figure_context_bge import embed_texts, cosine_100
 
         dvecs = embed_texts([doc_text[:2000]])
         if dvecs[0] is None:
             return 0.0
         return cosine_100(qvec, dvecs[0])
-    from app.services.figure_context_bge import embed_texts, cosine_100
+    from app.services.image_service.figure_context_bge import embed_texts, cosine_100
 
     vecs = embed_texts([query_text, doc_text[:2000]])
     if vecs[0] is None or vecs[1] is None:
@@ -299,7 +299,7 @@ def classify_mandatory_figure(
         reasons.append("uncaptioned_teaching_figure")
         topic_anchor = True
 
-    from app.services.figure_context_gates import is_minimal_figure_caption
+    from app.services.image_service.figure_context_gates import is_minimal_figure_caption
 
     if is_minimal_figure_caption(im.caption) and context_score >= 52.0 and core and core in ctx:
         topic_anchor = True

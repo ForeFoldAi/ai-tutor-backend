@@ -22,8 +22,8 @@ from sqlalchemy import select
 
 from app.core.database import SessionLocal
 from app.modules.catalog.models import TextbookUpload
-from app.services.multimodal_image_index import index_upload_images
-from app.services.multimodal_encoder import clip_model_available
+from app.services.image_service.multimodal_image_index import index_upload_images
+from app.services.image_service.multimodal_encoder import clip_model_available
 
 
 def main() -> int:

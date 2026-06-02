@@ -517,7 +517,7 @@ async def chapter_aware_qa(
         set_cached_answer,
     )
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
-    from app.services.textbook_image_retrieval import related_images_for_query
+    from app.services.image_service.textbook_image_retrieval import related_images_for_query
     from app.services.vector_service import retrieve_from_collection
 
     conv = resolve_conversation_context(
@@ -648,7 +648,7 @@ async def chapter_aware_qa_stream(
         set_cached_answer,
     )
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
-    from app.services.textbook_image_retrieval import early_related_images_for_query, related_images_for_query
+    from app.services.image_service.textbook_image_retrieval import early_related_images_for_query, related_images_for_query
     from app.services.vector_service import retrieve_from_collection
 
     conv = resolve_conversation_context(
@@ -753,7 +753,7 @@ async def chapter_aware_qa_stream(
             return []
 
     # Bootstrap image search from retrieved textbook context while the LLM streams.
-    from app.services.textbook_image_retrieval import _context_excerpt_from_docs
+    from app.services.image_service.textbook_image_retrieval import _context_excerpt_from_docs
 
     bootstrap_ctx = _context_excerpt_from_docs(docs)[:2000]
     img_task: asyncio.Task[list[dict]] | None = None

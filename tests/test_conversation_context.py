@@ -7,8 +7,8 @@ from app.services.conversation_context import (
     resolve_conversation_context,
     should_retrieve_images,
 )
-from app.services.symbolic_image_filters import level3_overlap_allowed
-from app.services.image_intent_extractor import ImageIntent
+from app.services.image_service.symbolic_image_filters import level3_overlap_allowed
+from app.services.image_service.image_intent_extractor import ImageIntent
 from app.services.tts_sanitize import sanitize_for_tts
 
 

@@ -24,7 +24,7 @@ from sqlalchemy import select, func
 
 from app.core.database import SessionLocal
 from app.modules.catalog.models import TextbookImage, TextbookUpload
-from app.services.textbook_image_extraction import (
+from app.services.image_service.textbook_image_extraction import (
     IMAGE_ROOT,
     image_count_for_upload,
     purge_textbook_images_disk_and_rows,

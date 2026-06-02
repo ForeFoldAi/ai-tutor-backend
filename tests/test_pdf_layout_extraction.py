@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.services.pdf_layout_extraction import (
+from app.services.image_service.pdf_layout_extraction import (
     BBox,
     detect_captions_from_blocks,
     is_page_background,
@@ -15,7 +15,7 @@ from app.services.pdf_layout_extraction import (
     LayoutImage,
     LayoutTextBlock,
 )
-from app.services.textbook_image_extraction import reject_figure_rect
+from app.services.image_service.textbook_image_extraction import reject_figure_rect
 
 BACKEND = Path(__file__).resolve().parents[1]
 WEATHER_PDF = BACKEND / "uploads" / "CBSE" / "CLASS_9" / "Social" / "d57926c5_gees102.pdf"
@@ -97,7 +97,7 @@ def test_pairing_confidence_monotonic():
 def test_weather_chapter_multi_figure_pages():
     if not WEATHER_PDF.is_file():
         return
-    from app.services.pdf_layout_extraction import extract_document_layout
+    from app.services.image_service.pdf_layout_extraction import extract_document_layout
 
     result = extract_document_layout(str(WEATHER_PDF), max_figures=96)
     by_page: dict[int, list[str]] = {}

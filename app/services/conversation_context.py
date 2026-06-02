@@ -140,7 +140,7 @@ def _last_assistant_snippet(history: list[dict], max_len: int = 200) -> str:
 
 
 def _extract_entities_from_text(text: str) -> list[str]:
-    from app.services.symbolic_image_filters import extract_educational_entities
+    from app.services.image_service.symbolic_image_filters import extract_educational_entities
 
     if not text.strip():
         return []

@@ -129,3 +129,32 @@ REQUIRED_TERM_GATE_ENABLED = os.environ.get(
 MIN_PEDAGOGY_SCORE = MIN_FINAL_SCORE
 MIN_CAPTION_BGE_SCORE = float(os.environ.get("MIN_CAPTION_BGE_SCORE", "0.0"))
 MIN_CONCEPT_SCORE = float(os.environ.get("MIN_CONCEPT_SCORE", "0.0"))
+
+# ---------------------------------------------------------------------------
+# Storage backend
+# ---------------------------------------------------------------------------
+
+# "local" (default) or "s3"
+STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local")
+S3_BUCKET = os.environ.get("S3_BUCKET", "")
+S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "")
+S3_REGION = os.environ.get("S3_REGION", "ap-south-1")
+AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+# CDN prefix for public image URLs (e.g. "https://cdn.example.com/images")
+CDN_BASE_URL = os.environ.get("CDN_BASE_URL", "")
+# Thumbnail dimensions "WxH", e.g. "320x240". Empty = no thumbnails.
+IMAGE_THUMB_SIZE = os.environ.get("IMAGE_THUMB_SIZE", "")
+
+# ---------------------------------------------------------------------------
+# OCR service
+# ---------------------------------------------------------------------------
+
+# Master on/off switch for OCR (applies to scanned PDF detection and per-image OCR)
+OCR_ENABLED = os.environ.get("OCR_ENABLED", "true").lower() in ("1", "true", "yes")
+# Tesseract language code(s) for pytesseract / PyMuPDF OCR
+OCR_LANG = os.environ.get("OCR_LANG", "eng")
+# Pages with fewer than this many characters are treated as scanned
+OCR_MIN_CHARS_PER_PAGE = int(os.environ.get("OCR_MIN_CHARS_PER_PAGE", "80"))
+# DPI for rasterising scanned pages before OCR
+OCR_DPI = int(os.environ.get("OCR_DPI", "200"))

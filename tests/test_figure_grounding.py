@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from app.services.figure_grounding import (
+from app.services.image_service.figure_grounding import (
     RetrievalStages,
     assemble_payload_rows,
     caption_conflicts_with_topic,
@@ -10,9 +10,9 @@ from app.services.figure_grounding import (
     compute_supporting_score,
     FigureRankRecord,
 )
-from app.services.image_intent_extractor import extract_image_intent
-from app.services.symbolic_image_filters import level3_overlap_allowed
-from app.services.textbook_image_extraction import build_figure_context, parse_figure_slots
+from app.services.image_service.image_intent_extractor import extract_image_intent
+from app.services.image_service.symbolic_image_filters import level3_overlap_allowed
+from app.services.image_service.textbook_image_extraction import build_figure_context, parse_figure_slots
 
 
 def test_parse_figure_slots_extracts_nearby_text():
@@ -110,7 +110,7 @@ def test_mandatory_bypasses_supporting_rank():
 
 
 def test_page_background_plate_rejects_full_page_raster():
-    from app.services.textbook_image_extraction import _is_page_background_plate, reject_figure_rect
+    from app.services.image_service.textbook_image_extraction import _is_page_background_plate, reject_figure_rect
 
     assert _is_page_background_plate(2480, 3508)
     assert not _is_page_background_plate(1894, 1894)
@@ -120,7 +120,7 @@ def test_page_background_plate_rejects_full_page_raster():
 
 
 def test_minimal_caption_detected():
-    from app.services.figure_context_gates import is_minimal_figure_caption
+    from app.services.image_service.figure_context_gates import is_minimal_figure_caption
 
     assert is_minimal_figure_caption("Fig. 2.2")
     assert not is_minimal_figure_caption("Fig. 2.4.2. Cloudy weather")

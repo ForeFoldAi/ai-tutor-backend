@@ -26,8 +26,8 @@ from sqlalchemy import select
 
 from app.core.database import SessionLocal
 from app.modules.catalog.models import TextbookUpload
-from app.services.pdf_layout_extraction import extract_document_layout, validation_report_dict
-from app.services.textbook_image_extraction import reextract_textbook_images
+from app.services.image_service.pdf_layout_extraction import extract_document_layout, validation_report_dict
+from app.services.image_service.textbook_image_extraction import reextract_textbook_images
 
 
 def _write_validation_report(upload_id: str, pdf_path: str, out_dir: Path) -> Path:

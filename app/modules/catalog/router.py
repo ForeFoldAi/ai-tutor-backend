@@ -224,7 +224,7 @@ def _process_upload_background(upload_id: uuid.UUID) -> None:
         row.ocr_status = ProcessingStatusEnum.EMBEDDED
         db.commit()
         try:
-            from app.services.textbook_image_extraction import replace_all_images_after_reprocess
+            from app.services.image_service.textbook_image_extraction import replace_all_images_after_reprocess
 
             replace_all_images_after_reprocess(db, row)
         except Exception as img_exc:
@@ -382,7 +382,7 @@ def delete_textbook_upload(
     if not row:
         return MessageResponse(message="Upload not found.")
 
-    from app.services.textbook_image_extraction import purge_textbook_images_disk_and_rows
+    from app.services.image_service.textbook_image_extraction import purge_textbook_images_disk_and_rows
 
     purge_textbook_images_disk_and_rows(db, upload_id)
     db.commit()
@@ -419,7 +419,7 @@ def get_textbook_image_file(
     _current_user: Annotated[User, Depends(get_current_user_bearer_or_query)],
 ):
     """Serve an extracted textbook diagram (authenticated students and staff)."""
-    from app.services.textbook_image_extraction import IMAGE_ROOT
+    from app.services.image_service.textbook_image_extraction import IMAGE_ROOT
 
     safe = os.path.basename(filename.strip())
     if not safe or safe != filename.strip():
@@ -438,7 +438,7 @@ def get_textbook_image_file(
     if not os.path.isfile(path):
         raise HTTPException(status_code=404, detail="Image file missing.")
 
-    from app.services.textbook_image_display import can_serve_file_directly, encode_browser_jpeg
+    from app.services.image_service.textbook_image_display import can_serve_file_directly, encode_browser_jpeg
 
     if can_serve_file_directly(path):
         return FileResponse(path, media_type="image/jpeg", filename=safe)

@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from app.modules.catalog.models import TextbookImage
-    from app.services.image_intent_extractor import ImageIntent
+    from app.services.image_service.image_intent_extractor import ImageIntent
 
 # ---------------------------------------------------------------------------
 # Geographic conflict table (query concept → conflicting place/region tokens)
@@ -309,7 +309,7 @@ def apply_symbolic_hard_filters(
     Run ordered hard filters. Returns SymbolicMatchInfo with rejection_reason set if rejected.
     """
     from app.config import MIN_TOPIC_PURITY
-    from app.services.figure_context_gates import (
+    from app.services.image_service.figure_context_gates import (
         context_supports_topic,
         figure_descriptive_text_for_gates,
         is_minimal_figure_caption,

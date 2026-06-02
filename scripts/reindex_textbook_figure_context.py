@@ -24,8 +24,8 @@ from sqlalchemy import select
 
 from app.core.database import SessionLocal
 from app.modules.catalog.models import TextbookImage, TextbookUpload
-from app.services.figure_context_bge import index_figure_context_embeddings
-from app.services.multimodal_image_index import index_upload_images
+from app.services.image_service.figure_context_bge import index_figure_context_embeddings
+from app.services.image_service.multimodal_image_index import index_upload_images
 
 
 def main() -> int:

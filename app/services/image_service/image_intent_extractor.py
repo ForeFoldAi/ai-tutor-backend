@@ -217,7 +217,9 @@ def _extract_core_concept(question: str) -> str:
     q = re.sub(r"\s+", " ", (question or "").strip())
     q = _QUESTION_STRIP_RE.sub("", q)
     q = _QUESTION_TAIL_RE.sub("", q)
-    return q.strip() or question.strip()
+    # Strip trailing punctuation that leaked from the question form
+    q = q.strip(" ?!.,;:-")
+    return q.strip() or question.strip(" ?!.,;:-")
 
 
 def _extract_required_terms(core_concept: str, question: str) -> list[str]:
@@ -414,7 +416,7 @@ def extract_image_intent(
             section_parts.append(str(hint))
     rag_section_tokens = _tokenize(" ".join(section_parts)) if section_parts else frozenset()
 
-    from app.services.symbolic_image_filters import extract_educational_entities
+    from app.services.image_service.symbolic_image_filters import extract_educational_entities
 
     entities = extract_educational_entities(effective_question, core_concept)
     if conversation_context is not None:

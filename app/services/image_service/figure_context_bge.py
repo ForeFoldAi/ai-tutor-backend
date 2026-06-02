@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.catalog.models import TextbookImage, TextbookUpload
-from app.services.textbook_image_extraction import build_figure_context
+from app.services.image_service.textbook_image_extraction import build_figure_context
 
 logger = logging.getLogger(__name__)
 

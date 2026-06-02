@@ -28,16 +28,16 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal
 from app.modules.catalog.models import TextbookImage, TextbookUpload
 from app.services.query_match import document_page, keyword_match_score
-from app.services.textbook_image_display import image_has_visible_content
-from app.services.textbook_image_extraction import (
+from app.services.image_service.textbook_image_display import image_has_visible_content
+from app.services.image_service.textbook_image_extraction import (
     IMAGE_ROOT,
     classify_image_type,
     compute_educational_salience,
     ensure_textbook_images_extracted,
     normalize_caption,
 )
-from app.services.image_intent_extractor import ImageIntent, extract_image_intent
-from app.services.symbolic_image_filters import (
+from app.services.image_service.image_intent_extractor import ImageIntent, extract_image_intent
+from app.services.image_service.symbolic_image_filters import (
     SymbolicMatchInfo,
     apply_symbolic_hard_filters,
     count_required_term_matches,
@@ -46,12 +46,11 @@ from app.services.symbolic_image_filters import (
     topic_purity_score,
     extract_caption_entities,
 )
-from app.services.figure_grounding import (
+from app.services.image_service.figure_grounding import (
     assemble_payload_rows,
     record_to_debug_dict,
     run_topic_centric_retrieval,
 )
-from app.services.topic_intent import TopicIntent, build_topic_intent  # kept for backward compat
 
 logger = logging.getLogger(__name__)
 
@@ -243,7 +242,7 @@ def _get_educational_role(im: TextbookImage) -> str:
     if role and role != "unknown":
         return role
     img_type = _get_image_type(im)
-    from app.services.textbook_image_extraction import classify_educational_role
+    from app.services.image_service.textbook_image_extraction import classify_educational_role
     return classify_educational_role(img_type, im.caption or "")
 
 
@@ -255,7 +254,7 @@ def _get_section_title(im: TextbookImage) -> str:
 # Precision-level 1: Concept specificity score (dominant 40% signal)
 # ---------------------------------------------------------------------------
 
-def _concept_specificity_score(intent: "ImageIntent | TopicIntent", im: TextbookImage) -> float:
+def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> float:
     """
     0–100 score measuring how SPECIFICALLY the figure matches the core educational concept.
 
@@ -271,7 +270,7 @@ def _concept_specificity_score(intent: "ImageIntent | TopicIntent", im: Textbook
     - No required phrases like "weather station" appear
     - Result: ~10-15 (well below the 25-point hard-reject threshold)
     """
-    from app.services.figure_context_gates import (
+    from app.services.image_service.figure_context_gates import (
         figure_descriptive_text_for_gates,
         is_minimal_figure_caption,
     )
@@ -342,13 +341,6 @@ def _concept_specificity_score(intent: "ImageIntent | TopicIntent", im: Textbook
         ratio = len(tok_match) / max(1, len(concept_tokens))
         raw = ratio * 30.0 + _sup_bonus() - _neg_penalty()
         return max(0.0, min(30.0, raw))
-    elif tok_match and not isinstance(intent, ImageIntent):
-        # Legacy TopicIntent: still require 2+ tokens
-        if len(tok_match) >= 2:
-            ratio = len(tok_match) / max(1, len(concept_tokens))
-            raw = ratio * 30.0 + _sup_bonus() - _neg_penalty()
-            return max(0.0, min(30.0, raw))
-
     # ── Level 4: nothing matches ──────────────────────────────────────────────
     return max(0.0, 0.0 - _neg_penalty())
 
@@ -357,7 +349,7 @@ def _concept_specificity_score(intent: "ImageIntent | TopicIntent", im: Textbook
 # Supporting scoring helpers
 # ---------------------------------------------------------------------------
 
-def _section_overlap_score(intent: "ImageIntent | TopicIntent", im: TextbookImage) -> float:
+def _section_overlap_score(intent: "ImageIntent", im: TextbookImage) -> float:
     """0–100 overlap: RAG section tokens ↔ figure's section_title + caption tokens."""
     rag_tokens: frozenset[str] = getattr(intent, "rag_section_tokens", frozenset())
     if not rag_tokens:
@@ -374,7 +366,7 @@ def _section_overlap_score(intent: "ImageIntent | TopicIntent", im: TextbookImag
     return min(100.0, ratio * 200.0)
 
 
-def _type_and_salience_score(intent: "ImageIntent | TopicIntent", im: TextbookImage) -> float:
+def _type_and_salience_score(intent: "ImageIntent", im: TextbookImage) -> float:
     """
     Combined image-type match + pedagogical salience (0-100).
     Fuses two previously separate signals into a single 10% component.
@@ -410,7 +402,7 @@ def _type_and_salience_score(intent: "ImageIntent | TopicIntent", im: TextbookIm
 # Hard filters
 # ---------------------------------------------------------------------------
 
-def _hard_negative(intent: "ImageIntent | TopicIntent", im: TextbookImage) -> bool:
+def _hard_negative(intent: "ImageIntent", im: TextbookImage) -> bool:
     """Backward-compat wrapper for the old TopicIntent-based filter."""
     excluded: list[str] = getattr(intent, "excluded_types", [])
     if not excluded:
@@ -423,7 +415,7 @@ def _hard_negative(intent: "ImageIntent | TopicIntent", im: TextbookImage) -> bo
     return not bool(concept_tokens & cap_tokens)
 
 
-def _hard_concept_filter(intent: "ImageIntent | TopicIntent", im: TextbookImage) -> tuple[bool, str]:
+def _hard_concept_filter(intent: "ImageIntent", im: TextbookImage) -> tuple[bool, str]:
     """
     Symbolic-first hard filter pipeline. Returns (reject, reason).
     """
@@ -449,7 +441,7 @@ def _hard_concept_filter(intent: "ImageIntent | TopicIntent", im: TextbookImage)
             return True, sym.rejection_reason or "symbolic_filter"
 
     # Legacy fallback for TopicIntent or very weak matches.
-    from app.services.figure_context_gates import (
+    from app.services.image_service.figure_context_gates import (
         context_supports_topic,
         figure_descriptive_text_for_gates,
         is_minimal_figure_caption,
@@ -562,7 +554,7 @@ def _semantic_bonus(
 
 
 def _pedagogy_score(
-    intent: "ImageIntent | TopicIntent",
+    intent: "ImageIntent",
     im: TextbookImage,
     pages_by_upload: dict[str, list[int]],
     bge_score: float,
@@ -1063,7 +1055,7 @@ def _list_images(db: Session, upload_ids: list[uuid.UUID]) -> list[TextbookImage
 # ---------------------------------------------------------------------------
 
 def _pedagogy_rank(
-    intent: "ImageIntent | TopicIntent",
+    intent: "ImageIntent",
     images: list[TextbookImage],
     uploads: dict[uuid.UUID, TextbookUpload],
     chapter_hints: list[str],
@@ -1079,9 +1071,6 @@ def _pedagogy_rank(
     Mandatory figures never enter the scoring competition.
     """
     from app.config import MAX_GROUNDED_IMAGES
-
-    if not isinstance(intent, ImageIntent):
-        intent = extract_image_intent(getattr(intent, "query", ""), rag_docs)
 
     filtered = filter_chapter_candidates(intent, images)
     if not filtered:
@@ -1173,7 +1162,7 @@ def related_images_payload(
         for u in uploads.values():
             try:
                 ensure_textbook_images_extracted(db, u)
-                from app.services.textbook_image_extraction import ensure_figure_context_bge_indexed
+                from app.services.image_service.textbook_image_extraction import ensure_figure_context_bge_indexed
 
                 ensure_figure_context_bge_indexed(db, u)
             except Exception as exc:
@@ -1252,7 +1241,7 @@ def related_images_for_query(
 
     if USE_MULTIMODAL_IMAGE_RETRIEVAL and chapter_ids:
         try:
-            from app.services.multimodal_image_retrieval import related_images_multimodal
+            from app.services.image_service.multimodal_image_retrieval import related_images_multimodal
 
             hits = related_images_multimodal(
                 text_collection_name,
@@ -1367,7 +1356,7 @@ def debug_rank_figures(
         for u in uploads.values():
             try:
                 ensure_textbook_images_extracted(db, u)
-                from app.services.textbook_image_extraction import ensure_figure_context_bge_indexed
+                from app.services.image_service.textbook_image_extraction import ensure_figure_context_bge_indexed
 
                 ensure_figure_context_bge_indexed(db, u)
             except Exception:

@@ -24,15 +24,15 @@ from app.config import (
     TOP_RELATED_IMAGES,
 )
 from app.core.database import SessionLocal
-from app.services.image_intent_extractor import ImageIntent, extract_image_intent
-from app.services.image_vector_store import clip_similarities_for_images, image_collection_name
-from app.services.multimodal_encoder import clip_model_available, encode_text
-from app.services.multimodal_image_index import ensure_multimodal_indexed
-from app.services.textbook_image_extraction import (
+from app.services.image_service.image_intent_extractor import ImageIntent, extract_image_intent
+from app.services.image_service.image_vector_store import clip_similarities_for_images, image_collection_name
+from app.services.image_service.multimodal_encoder import clip_model_available, encode_text
+from app.services.image_service.multimodal_image_index import ensure_multimodal_indexed
+from app.services.image_service.textbook_image_extraction import (
     ensure_figure_context_bge_indexed,
     ensure_textbook_images_extracted,
 )
-from app.services.textbook_image_retrieval import (
+from app.services.image_service.textbook_image_retrieval import (
     _chapter_label_match_score,
     _context_excerpt_from_docs,
     _list_images,
@@ -130,7 +130,7 @@ def related_images_multimodal(
 
         # ── Step 8–10: pedagogy rank + MMR + strict select ────────────────────
         # Reuse _pedagogy_rank with precomputed clip_sims
-        from app.services.textbook_image_retrieval import _pedagogy_rank as rank_fn
+        from app.services.image_service.textbook_image_retrieval import _pedagogy_rank as rank_fn
 
         results = rank_fn(
             intent,
@@ -152,7 +152,7 @@ def related_images_multimodal(
             return results
 
         # Last resort: legacy fallback with keyword gate (still no LLM answer)
-        from app.services.textbook_image_retrieval import _topic_keyword_score
+        from app.services.image_service.textbook_image_retrieval import _topic_keyword_score
 
         scored_fb = []
         for im, _ in filtered[:top_n * 2]:

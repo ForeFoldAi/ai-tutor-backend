@@ -13,18 +13,18 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from app.modules.catalog.models import TextbookImage
-    from app.services.image_intent_extractor import ImageIntent
+    from app.services.image_service.image_intent_extractor import ImageIntent
 
 def is_minimal_figure_caption(caption: str | None) -> bool:
     """True when the caption is a bare figure label with no descriptive title."""
     cap = (caption or "").strip()
     if not cap:
         return True
-    from app.services.textbook_image_extraction import _FIG_ONLY_CAPTION_RE
+    from app.services.image_service.textbook_image_extraction import _FIG_ONLY_CAPTION_RE
 
     if _FIG_ONLY_CAPTION_RE.match(cap):
         return True
-    from app.services.textbook_image_extraction import normalize_caption
+    from app.services.image_service.textbook_image_extraction import normalize_caption
 
     norm = normalize_caption(cap)
     if not norm:
@@ -85,7 +85,7 @@ def context_supports_topic(intent: "ImageIntent", gate_text: str) -> bool:
     if core and core in gate_text:
         return True
 
-    from app.services.symbolic_image_filters import tokenize, level3_overlap_allowed
+    from app.services.image_service.symbolic_image_filters import tokenize, level3_overlap_allowed
 
     concept_tokens = intent.concept_tokens
     overlap = concept_tokens & tokenize(gate_text)

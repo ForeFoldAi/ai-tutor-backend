@@ -10,18 +10,18 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.modules.catalog.models import TextbookImage, TextbookUpload
-from app.services.image_vector_store import (
+from app.services.image_service.image_vector_store import (
     delete_image_vectors_for_upload,
     image_collection_name,
     subject_collection_from_upload,
     upsert_image_vectors,
 )
-from app.services.multimodal_encoder import (
+from app.services.image_service.multimodal_encoder import (
     clip_model_available,
     current_model_name,
     encode_image_file,
 )
-from app.services.textbook_image_extraction import IMAGE_ROOT
+from app.services.image_service.textbook_image_extraction import IMAGE_ROOT
 
 logger = logging.getLogger(__name__)
 

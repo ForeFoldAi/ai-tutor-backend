@@ -67,7 +67,7 @@ def _startup() -> None:
         if not USE_MULTIMODAL_IMAGE_RETRIEVAL or not WARM_MULTIMODAL_ON_STARTUP:
             return
         try:
-            from app.services.multimodal_encoder import clip_model_available
+            from app.services.image_service.multimodal_encoder import clip_model_available
 
             if clip_model_available():
                 logger.info("CLIP multimodal model pre-warmed and ready")
@@ -95,7 +95,7 @@ def ai_models_health():
         MULTIMODAL_IMAGE_MODEL,
         USE_MULTIMODAL_IMAGE_RETRIEVAL,
     )
-    from app.services.multimodal_encoder import clip_model_available, current_model_name
+    from app.services.image_service.multimodal_encoder import clip_model_available, current_model_name
     from app.services.vector_service import is_embedding_model_loaded
 
     clip_ok = False
@@ -384,8 +384,8 @@ async def debug_figure_rank(req: FigureRankDebugRequest):
         ]
       }
     """
-    from app.services.textbook_image_retrieval import debug_rank_figures
-    from app.services.topic_intent import build_topic_intent
+    from app.services.image_service.textbook_image_retrieval import debug_rank_figures
+    from app.services.image_service.image_intent_extractor import extract_image_intent
     from app.services.vector_service import retrieve_from_collection
 
     docs: list = []
@@ -401,7 +401,7 @@ async def debug_figure_rank(req: FigureRankDebugRequest):
         except Exception as exc:
             logger.warning("debug_figure_rank: RAG retrieval failed: %s", exc)
 
-    intent = build_topic_intent(req.query, docs)
+    intent = extract_image_intent(req.query, docs)
     figures = debug_rank_figures(
         req.chapter_ids,
         req.chapter_names or [],
@@ -415,11 +415,13 @@ async def debug_figure_rank(req: FigureRankDebugRequest):
         "query": req.query,
         "rag_docs_used": len(docs),
         "intent": {
-            "topic_phrases": intent.topic_phrases,
+            "core_concept": intent.core_concept,
+            "required_terms": intent.required_terms,
             "concept_tokens": sorted(intent.concept_tokens),
             "preferred_types": intent.preferred_types,
             "excluded_types": intent.excluded_types,
             "rag_section_tokens": sorted(intent.rag_section_tokens),
+            "query_type": intent.query_type,
         },
         "figures": figures,
     }
