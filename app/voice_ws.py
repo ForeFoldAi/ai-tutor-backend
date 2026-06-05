@@ -23,8 +23,8 @@ from app.services.edge_tts_service import stream_edge_tts
 from app.services.tts_sanitize import sanitize_chunk_for_tts
 from app.services.voice_chunking import (
     VoicePipelineTiming,
-    _IDLE_FLUSH_SEC,
-    extract_responsive_chunks,
+    VOICE_IDLE_FLUSH_SEC,
+    extract_voice_chunks,
 )
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ async def _idle_flush_loop(
         async with state.lock:
             chunk = state.buf.strip()
             idle = time.monotonic() - state.last_token_at
-            if not chunk or idle < _IDLE_FLUSH_SEC:
+            if not chunk or idle < VOICE_IDLE_FLUSH_SEC:
                 continue
             state.buf = ""
 
@@ -122,13 +122,26 @@ async def _enqueue_from_buffer(
     timing: VoicePipelineTiming,
 ) -> None:
     async with state.lock:
-        chunks, state.buf = extract_responsive_chunks(state.buf)
+        chunks, state.buf = extract_voice_chunks(state.buf)
     for chunk in chunks:
         await _enqueue_sanitized(sentence_queue, timing, chunk)
 
 
 class _Session:
-    __slots__ = ("board", "class_level", "subject_name", "chapter_ids", "chapter", "chapter_names", "history")
+    __slots__ = (
+        "board",
+        "class_level",
+        "subject_name",
+        "chapter_ids",
+        "chapter",
+        "chapter_names",
+        "history",
+        "student_name",
+        "student_key",
+        "tutor_state",
+        "last_topic",
+        "learner_profile",
+    )
 
     def __init__(self) -> None:
         self.board = ""
@@ -138,11 +151,17 @@ class _Session:
         self.chapter = ""
         self.chapter_names: list[str] = []
         self.history: list[dict] = []
+        self.student_name = ""
+        self.student_key = ""
+        self.tutor_state = "LISTENING"
+        self.last_topic = ""
+        self.learner_profile = None
 
     def configure(self, msg: dict) -> None:
         self.board = msg.get("board", self.board)
         self.class_level = msg.get("class_level", self.class_level)
         self.subject_name = msg.get("subject_name", self.subject_name)
+        self.student_name = msg.get("student_name", self.student_name) or self.student_name
         self.chapter_ids = msg.get("chapter_ids", self.chapter_ids)
         self.chapter = msg.get("chapter", self.chapter)
         raw_names = msg.get("chapter_names")
@@ -222,55 +241,69 @@ async def _run_llm_producer(
             pass
 
 
-async def _general_answer_stream(question: str, class_level: str) -> AsyncIterator[str]:
-    import httpx
-    from app.config import MISTRAL_API_KEY, MISTRAL_MAX_TOKENS, MISTRAL_MODEL, MISTRAL_TEMPERATURE
-    from app.services.chat_service import _GRADE_COMPLEXITY, _GRADE_LABELS
-
-    if not MISTRAL_API_KEY:
-        yield "Sorry, I need a Mistral API key to answer general questions."
-        return
-
-    grade = _GRADE_LABELS.get(class_level, "school student")
-    complexity = _GRADE_COMPLEXITY.get(class_level, "Use clear simple language.")
-
-    prompt = (
-        f"You are a friendly AI Tutor for a {grade}.\n"
-        f"Language rule: {complexity}\n"
-        f"Voice rule: Use short spoken sentences. No bullet symbols, no markdown, no formatting.\n"
-        f"Be warm and encouraging like a kind teacher.\n\n"
-        f"Student asks: {question}\n\nAnswer:"
+async def _general_answer_stream(
+    question: str,
+    session: _Session,
+    *,
+    understanding_scores: dict | None = None,
+    learner_snapshot: dict | None = None,
+) -> AsyncIterator[str]:
+    """General (no-chapter) voice answers — uses VOICE_SYSTEM_PROMPT."""
+    from app.services.voice_tutor import (
+        TutorState,
+        UnderstandingScores,
+        LearnerProfileSnapshot,
+        build_voice_mistral_messages,
+        voice_expand_requested,
     )
+    from app.services.chat_service import _stream_mistral_async
 
-    async with httpx.AsyncClient(timeout=90.0) as client:
-        async with client.stream(
-            "POST",
-            "https://api.mistral.ai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {MISTRAL_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": MISTRAL_MODEL,
-                "messages": [{"role": "user", "content": prompt}],
-                "max_tokens": MISTRAL_MAX_TOKENS,
-                "temperature": MISTRAL_TEMPERATURE,
-                "stream": True,
-            },
-        ) as resp:
-            resp.raise_for_status()
-            async for line in resp.aiter_lines():
-                if not line.startswith("data: "):
-                    continue
-                data = line[6:].strip()
-                if data == "[DONE]":
-                    break
-                try:
-                    delta = json.loads(data)["choices"][0]["delta"].get("content", "")
-                    if delta:
-                        yield delta
-                except Exception:
-                    continue
+    try:
+        current_state = TutorState(session.tutor_state)
+    except ValueError:
+        current_state = TutorState.TEACHING
+
+    scores = UnderstandingScores(**understanding_scores) if understanding_scores else UnderstandingScores()
+    learner = LearnerProfileSnapshot(**learner_snapshot) if learner_snapshot else None
+    messages = build_voice_mistral_messages(
+        question,
+        "(No chapter excerpt — use accurate general knowledge briefly.)",
+        class_level=session.class_level,
+        board=session.board,
+        subject_name=session.subject_name,
+        chapter=session.chapter,
+        student_name=session.student_name,
+        conversation_history=session.history,
+        tutor_state=current_state,
+        understanding=scores,
+        learner=learner,
+        expand_deep=voice_expand_requested(question),
+    )
+    async for token in _stream_mistral_async(messages):
+        yield token
+
+
+async def _play_session_greeting(ws: WebSocket, session: _Session) -> None:
+    """Welcome message with TTS when the student opens AI Voice from Start Learning."""
+    from app.services.chat_service import build_session_greeting
+
+    text = build_session_greeting(
+        student_name=session.student_name,
+        subject_name=session.subject_name,
+        chapter=session.chapter,
+        chapter_names=session.chapter_names,
+    )
+    stop = asyncio.Event()
+    timing = VoicePipelineTiming(turn_id="greeting")
+    await _send(ws, {"type": "greeting_start", "text": text})
+    try:
+        await _send(ws, {"type": "speaking"})
+        await stream_edge_tts(text, ws, stop, timing=timing)
+    finally:
+        if not stop.is_set():
+            await _send(ws, {"type": "done"})
+            await _send(ws, {"type": "listening"})
+    session.remember("assistant", text)
 
 
 async def _pipeline_cached_answer(
@@ -313,26 +346,56 @@ async def _stream_answer(
     session: _Session,
     stop: asyncio.Event,
 ) -> None:
-    from app.core.cache import deserialize_tutor_cache, get_cached_answer
     from app.services.chat_service import chapter_aware_qa_stream
+    from app.services.learner_profile import load_learner_profile, save_learner_profile
+    from app.services.voice_tutor import (
+        TutorState,
+        evaluate_student_response,
+        next_tutor_state,
+    )
 
     turn_id = uuid.uuid4().hex[:8]
     timing = VoicePipelineTiming(turn_id=turn_id)
-    logger.info("[voice %s] Turn started", turn_id)
+    logger.info("[voice %s] Turn started state=%s", turn_id, session.tutor_state)
 
-    if session.has_context:
-        cached = await get_cached_answer(session.collection, session.chapter_ids, question)
-        if cached and not stop.is_set():
-            await _send(ws, {"type": "thinking"})
-            answer, imgs = deserialize_tutor_cache(cached)
-            await _send(ws, {"type": "related_images", "images": imgs})
-            await _pipeline_cached_answer(ws, answer, stop, timing)
-            if not stop.is_set():
-                await _send(ws, {"type": "done"})
-            session.remember("user", question)
-            session.remember("assistant", answer)
-            logger.info("[voice %s] Timing %s", turn_id, timing.summary())
-            return
+    last_assistant = ""
+    for turn in reversed(session.history):
+        if (turn.get("role") or "").lower() == "assistant":
+            last_assistant = (turn.get("content") or "").strip()
+            break
+
+    try:
+        current_state = TutorState(session.tutor_state)
+    except ValueError:
+        current_state = TutorState.LISTENING
+
+    scores = evaluate_student_response(
+        question,
+        last_assistant=last_assistant,
+        tutor_state=current_state,
+    )
+
+    if session.student_key:
+        if session.learner_profile is None:
+            session.learner_profile = await load_learner_profile(session.student_key)
+        topic = session.last_topic or question
+        session.learner_profile.apply_understanding(topic, scores)
+        await save_learner_profile(session.learner_profile)
+
+    session.last_topic = question
+    understanding_payload = {
+        "understanding": scores.understanding,
+        "confidence": scores.confidence,
+        "confusion": scores.confusion,
+        "is_affirmation": scores.is_affirmation,
+        "wants_expansion": scores.wants_expansion,
+        "wants_quiz": scores.wants_quiz,
+    }
+    learner_snapshot = (
+        session.learner_profile.snapshot().__dict__
+        if session.learner_profile
+        else None
+    )
 
     if stop.is_set():
         return
@@ -372,9 +435,19 @@ async def _stream_answer(
                 chapter_names=session.chapter_names,
                 emit_related_images=_emit_imgs,
                 conversation_history=session.history,
+                student_name=session.student_name,
+                voice_mode=True,
+                tutor_state=session.tutor_state,
+                understanding_scores=understanding_payload,
+                learner_snapshot=learner_snapshot,
             )
         else:
-            token_iter = _general_answer_stream(question, session.class_level)
+            token_iter = _general_answer_stream(
+                question,
+                session,
+                understanding_scores=understanding_payload,
+                learner_snapshot=learner_snapshot,
+            )
 
         await _run_llm_producer(ws, token_iter, sentence_queue, stop, timing, full_tokens)
 
@@ -407,6 +480,12 @@ async def _stream_answer(
     full_answer = "".join(full_tokens)
     session.remember("user", question)
     session.remember("assistant", full_answer)
+    session.tutor_state = next_tutor_state(
+        current=current_state,
+        scores=scores,
+        assistant_reply=full_answer,
+    ).value
+    await _send(ws, {"type": "tutor_state", "state": session.tutor_state})
 
 
 @ws_router.websocket("/ws/voice")
@@ -416,18 +495,19 @@ async def voice_ws(
 ):
     await websocket.accept()
 
-    if token:
-        try:
-            from app.core.security import decode_token
-            decode_token(token)
-        except Exception:
-            pass
-
     logger.info("Voice WS connected")
 
     session = _Session()
     stop = asyncio.Event()
     gen_task: asyncio.Task | None = None
+
+    if token:
+        try:
+            from app.core.security import decode_token
+            payload = decode_token(token)
+            session.student_key = str(payload.get("sub") or "")
+        except Exception:
+            pass
 
     async def _cancel_gen() -> None:
         nonlocal gen_task
@@ -461,7 +541,13 @@ async def voice_ws(
 
             if mtype == "session_start":
                 session.configure(msg)
-                await _send(websocket, {"type": "listening"})
+                if msg.get("greet"):
+                    asyncio.create_task(
+                        _play_session_greeting(websocket, session),
+                        name="voice-greeting",
+                    )
+                else:
+                    await _send(websocket, {"type": "listening"})
 
             elif mtype == "question":
                 text = (msg.get("text") or "").strip()

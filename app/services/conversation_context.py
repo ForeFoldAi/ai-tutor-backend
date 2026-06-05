@@ -111,10 +111,17 @@ _VISUAL_RE = re.compile(
 )
 _COMPARISON_RE = re.compile(r"\b(compare|difference\s+between|vs\.?|versus)\b", re.I)
 _CONCEPTUAL_RE = re.compile(
-    r"\b(explain|describe|what\s+is|how\s+does|why\s+does|define|tell\s+me\s+about|"
-    r"process|formation|structure|location|region|climate|desert|river|mountain|map)\b",
+    r"\b(explain|describe|what\s+is|what\s+are|how\s+does|why\s+does|define|"
+    r"tell\s+me\s+about|list|types?\s+of|name\s+the|"
+    r"process|formation|structure|location|region|climate|desert|river|mountain|map|"
+    r"instrument|instruments|weather|temperature|precipitation|humidity|wind|pressure)\b",
     re.I,
 )
+_PRONOUN_FOLLOWUP = re.compile(
+    r"\b(that|it|this|they|them|those|these|same\s+thing)\b",
+    re.I,
+)
+_WHY_SHORT = re.compile(r"^why\b", re.I)
 _SHORT_FILLER_RE = re.compile(
     r"^(yes|no|ok|okay|sure|thanks|thank you|hi|hello|hey)\s*[.!?]*$",
     re.I,
@@ -243,6 +250,15 @@ class ConversationContextResolver:
         inherited_entities: list[str] = []
         resolved_topic = q
 
+        if (
+            followup == FollowupType.NEW_TOPIC
+            and prior_user
+            and len(q.split()) <= 8
+            and (_WHY_SHORT.match(q) or _PRONOUN_FOLLOWUP.search(q))
+        ):
+            followup = FollowupType.CONTINUE_EXPLANATION
+            mode = _response_mode_for(followup, q)
+
         if followup in (
             FollowupType.CONTINUE_EXPLANATION,
             FollowupType.SIMPLIFY,
@@ -303,6 +319,7 @@ def should_retrieve_images(
     ctx: ConversationContext,
     *,
     chapter_ids: list[str] | None = None,
+    heading_scope_kind: str | None = None,
 ) -> bool:
     """
     Master gate: images only when chapter scope exists and pedagogy allows visuals.
@@ -311,6 +328,9 @@ def should_retrieve_images(
 
     if not chapter_ids:
         return False
+    # Main-section chapter questions (e.g. "what are weather instruments") always allow figures.
+    if heading_scope_kind == "main_section":
+        return True
     if not ENABLE_VISUAL_INTENT_DETECTION:
         return True
     if ctx.visual_intent == VisualIntent.NO_VISUALS:

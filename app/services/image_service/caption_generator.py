@@ -95,6 +95,17 @@ def _score_sentence(sent: str, concept_hint: str) -> float:
         sent_words = set(re.findall(r"\b[a-z]{3,}\b", s))
         overlap = hint_words & sent_words
         score += min(2.0, len(overlap) * 0.4)
+    # Textbook definition sentences (e.g. "Weather is a state of the atmosphere…")
+    if re.search(r"(?i)\bwhat\s+is\s+\w+\b", s):
+        score += 2.5
+    if re.search(
+        r"(?i)\b(?:weather|climate)\s+is\s+(?:a\s+)?state\s+of\s+(?:the\s+)?(?:earth['\u2019]?s\s+)?atmosphere\b",
+        s,
+    ):
+        score += 3.0
+    if re.search(r"(?i)day[- ]to[- ]day\s+condition\s+of\s+the\s+atmosphere", s):
+        score += 2.5
+
     # Educational signal words
     edu_signals = {
         "shows", "illustrates", "depicts", "represents", "diagram", "figure",
@@ -389,3 +400,162 @@ def generate_educational_tags(
             tags.append(t)
 
     return "|".join(tags[:12])
+
+
+# ---------------------------------------------------------------------------
+# Stage 7 — Educational title generation (structured, no LLM)
+# ---------------------------------------------------------------------------
+
+# Fig-number prefix stripped before short_title extraction
+_CAPTION_FIG_PREFIX_RE = re.compile(
+    r"(?i)^(?:fig\.?|figure|diagram|illustration|plate|exhibit|scheme)\s*\d+(?:\.\d+)*\s*[.:;\-–—]?\s*"
+)
+
+# Curriculum concept tag patterns — maps pattern → concept label
+_CONCEPT_TAG_PATTERNS: dict[str, list[str]] = {
+    # Physics
+    "light_optics":    ["refraction", "reflection", "lens", "mirror", "prism", "spectrum", "optics"],
+    "heat_transfer":   ["conduction", "convection", "radiation", "heat transfer", "thermometer", "calorimeter"],
+    "motion_forces":   ["force", "friction", "velocity", "acceleration", "newton", "momentum", "inertia"],
+    "electricity":     ["circuit", "current", "voltage", "resistance", "ohm", "conductor", "capacitor"],
+    "magnetism":       ["magnet", "magnetic field", "compass", "electromagnetic", "solenoid"],
+    "waves_sound":     ["wave", "frequency", "amplitude", "sound", "vibration", "resonance"],
+    # Chemistry
+    "states_of_matter": ["solid", "liquid", "gas", "melting", "boiling", "evaporation", "sublimation", "condensation"],
+    "chemical_reactions": ["oxidation", "reduction", "combustion", "electrolysis", "catalyst", "precipitate"],
+    "atomic_structure": ["atom", "proton", "neutron", "electron", "nucleus", "periodic table", "valence"],
+    # Biology
+    "cell_biology":    ["cell", "nucleus", "membrane", "cytoplasm", "mitochondria", "chloroplast", "organelle"],
+    "photosynthesis":  ["photosynthesis", "chlorophyll", "glucose", "carbon dioxide", "sunlight"],
+    "human_body":      ["heart", "lung", "kidney", "liver", "brain", "muscle", "blood vessel", "nervous"],
+    "plant_biology":   ["root", "stem", "leaf", "flower", "seed", "germination", "pollination", "xylem"],
+    "ecology":         ["ecosystem", "food chain", "predator", "prey", "habitat", "biodiversity", "food web"],
+    "reproduction":    ["reproduction", "fertilisation", "embryo", "gamete", "ovum", "sperm", "zygote"],
+    # Geography
+    "weather_climate": ["weather", "climate", "monsoon", "rainfall", "temperature", "humidity", "wind speed"],
+    "landforms":       ["mountain", "plateau", "plain", "valley", "river", "delta", "canyon", "glacier", "peninsula"],
+    "water_cycle":     ["water cycle", "evaporation", "precipitation", "transpiration", "groundwater"],
+    "maps_cartography": ["map", "scale", "latitude", "longitude", "contour", "atlas", "legend", "grid"],
+    "natural_disasters": ["earthquake", "volcano", "tsunami", "cyclone", "flood", "drought", "landslide"],
+    # History
+    "ancient_civilizations": ["civilization", "ancient", "mesopotamia", "egypt", "indus", "harappa", "dynasty"],
+    "colonial_period": ["colonial", "empire", "trade route", "east india", "british", "mughal", "viceroy"],
+    "independence_movement": ["independence", "freedom", "revolution", "nationalist", "civil disobedience", "satyagraha"],
+    # Mathematics
+    "geometry":        ["triangle", "circle", "polygon", "angle", "perimeter", "area", "volume", "congruence"],
+    "algebra":         ["equation", "variable", "expression", "polynomial", "linear", "quadratic", "root"],
+    "statistics":      ["graph", "bar chart", "mean", "median", "mode", "frequency", "histogram", "probability"],
+    "number_systems":  ["integer", "fraction", "decimal", "rational", "irrational", "prime", "factor"],
+    # Environment
+    "pollution":       ["pollution", "waste", "sewage", "emission", "acid rain", "ozone", "greenhouse"],
+    "conservation":    ["conservation", "reserve", "protected area", "biodiversity", "wildlife", "deforestation"],
+}
+
+
+def generate_educational_title(
+    *,
+    figure_number: str | None,
+    image_type: str,
+    caption: str | None,
+    section_title: str | None,
+    subsection_title: str | None,
+    chapter_title: str | None,
+    nearby_before: str,
+    nearby_after: str,
+) -> dict[str, object]:
+    """
+    Generate structured educational metadata for a figure (Stage 7).
+
+    Always includes chapter and section context in both description and as the
+    concept hint for title extraction.  Returns:
+        {
+            "short_title":   str   (≤ 80 chars, 3–7 words + section prefix),
+            "description":   str   (≤ 400 chars, starts with Chapter/Section),
+            "keywords":      list[str]   (top-5 semantic keywords),
+            "concept_tags":  list[str]   (matched curriculum concept names),
+        }
+    """
+    concept = _concept_from_headings(section_title, subsection_title, chapter_title)
+    prefix = _type_prefix(image_type)
+
+    # --- short_title ---
+    bare_title: str | None = None
+
+    # Attempt 1: strip Fig-number prefix from official caption
+    if caption and caption.strip():
+        stripped = _CAPTION_FIG_PREFIX_RE.sub("", caption.strip()).strip(" .:;-")
+        if len(stripped.split()) >= 3:
+            bare_title = " ".join(stripped.split()[:7])
+
+    # Attempt 2: best sentence from nearby text (first 7 words)
+    if not bare_title:
+        best = _best_sentence(nearby_before, nearby_after, concept)
+        if best:
+            bare_title = " ".join(best.split()[:7]).rstrip(",.;:")
+
+    # Always include section context in short_title
+    if bare_title:
+        if section_title and section_title.lower() not in bare_title.lower():
+            short_title = f"{section_title}: {bare_title}"[:80]
+        else:
+            short_title = bare_title[:80]
+    else:
+        # Fallback: "{type_label} — {section or chapter}"
+        heading = section_title or subsection_title or chapter_title or ""
+        short_title = (f"{prefix} — {heading}" if heading else prefix)[:80]
+
+    # --- description (always starts with Chapter / Section context) ---
+    desc_parts: list[str] = []
+    if chapter_title:
+        desc_parts.append(f"Chapter: {chapter_title.strip()}")
+    if section_title:
+        desc_parts.append(f"Section: {section_title.strip()}")
+
+    # Collect best 1–2 educational sentences from nearby text
+    all_sents: list[tuple[float, str]] = []
+    for sent in _split_sentences(nearby_before)[-4:]:
+        all_sents.append((_score_sentence(sent, concept), sent))
+    for sent in _split_sentences(nearby_after)[:4]:
+        all_sents.append((_score_sentence(sent, concept), sent))
+    all_sents.sort(key=lambda x: -x[0])
+    edu_sents = [s for sc, s in all_sents if sc >= 0.3][:2]
+
+    if edu_sents:
+        desc_parts.append(" ".join(edu_sents))
+    elif caption:
+        stripped_cap = _CAPTION_FIG_PREFIX_RE.sub("", caption).strip(" .:;-")
+        if stripped_cap:
+            desc_parts.append(stripped_cap)
+
+    description = ". ".join(desc_parts)[:400]
+
+    # --- keywords (top-5) ---
+    kw_str = extract_semantic_keywords(
+        caption or "",
+        None,
+        nearby_before,
+        nearby_after,
+        section_title,
+        chapter_title,
+        image_type,
+    )
+    keywords: list[str] = [k for k in kw_str.split("|") if k][:5]
+
+    # --- concept_tags ---
+    blob = " ".join(
+        t for t in [caption, nearby_before[:400], nearby_after[:400], section_title, chapter_title]
+        if t
+    ).lower()
+    concept_tags: list[str] = []
+    for tag_name, kw_list in _CONCEPT_TAG_PATTERNS.items():
+        if any(re.search(r"\b" + re.escape(kw) + r"\b", blob) for kw in kw_list):
+            concept_tags.append(tag_name)
+            if len(concept_tags) >= 5:
+                break
+
+    return {
+        "short_title": short_title,
+        "description": description,
+        "keywords": keywords,
+        "concept_tags": concept_tags,
+    }

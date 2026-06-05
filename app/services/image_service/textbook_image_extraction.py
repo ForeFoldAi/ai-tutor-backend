@@ -27,14 +27,18 @@ logger = logging.getLogger(__name__)
 
 IMAGE_ROOT = os.path.join(UPLOADS_DIR, "_textbook_images")
 _MAX_IMAGES_PER_UPLOAD = 96
-_MIN_PIXELS = 2800  # skip tiny icons / bullets
-_MIN_WH = 36
+_MIN_PIXELS = 4096  # skip tiny icons / bullets (Stage 9)
+_MIN_WH = 64        # minimum pixel dimension (Stage 9)
+_PHASH_HAMMING_THRESHOLD = 4  # Hamming distance for near-duplicate detection (configurable)
 # Reject only full-page raster plates (not large teaching diagrams).
 _MAX_FIGURE_AREA = 12_000_000
 
 # Labels: NCERT (Fig./Figure), ICSE (Plate, Exhibit), state-board (Diagram N, Illustration N, Scheme N).
 # Requires a digit after the label to avoid matching prose occurrences of "diagram".
-_FIG_MARKER_RE = re.compile(r"(?i)\b(fig\.?|figure|diagram|illustration|plate|exhibit|scheme)\s*(\d+(?:\.\d+)*)")
+# Keep in sync with pdf_layout_extraction._FIG_MARKER_RE (optional punctuation before number).
+_FIG_MARKER_RE = re.compile(
+    r"(?i)\b(fig\.?|figure|diagram|illustration|plate|exhibit|scheme)\s*[\.\s:]*\s*(\d+(?:\.\d+)*)"
+)
 _TITLE_STOP_RE = re.compile(
     r"(?i)(?:don['\u2019]?t\s+miss|chapter\s+\d|\.indd\b|reprint|not\s+to\s+be\s+republished)",
 )
@@ -350,7 +354,7 @@ def _image_blob_dimensions(blob: bytes) -> tuple[int, int]:
 
 
 # Page-space rejection (PDF points). Subject-agnostic layout heuristics.
-_BACKGROUND_AREA_FRAC = 0.70
+_BACKGROUND_AREA_FRAC = 0.80
 _PAGE_ASPECT_AREA_FRAC = 0.55
 _PAGE_ASPECT_TOLERANCE = 0.12
 _MARGIN_TOUCH_PT = 48.0
@@ -478,6 +482,36 @@ def compute_content_hash(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def compute_phash(image_bytes: bytes) -> int | None:
+    """
+    Compute a 64-bit perceptual hash of an image, stored as a signed BigInteger.
+
+    Uses imagehash.phash (DCT-based). Returns a signed int64 suitable for a
+    PostgreSQL bigint column, or None if imagehash is not installed or the image
+    is corrupt. Hamming distance threshold is configurable via _PHASH_HAMMING_THRESHOLD.
+    """
+    try:
+        import imagehash
+        from PIL import Image
+
+        with Image.open(BytesIO(image_bytes)) as im:
+            h = imagehash.phash(im)
+        raw = int(h)
+        # Convert unsigned uint64 → signed int64 for PostgreSQL bigint
+        if raw >= (1 << 63):
+            raw -= (1 << 64)
+        return raw
+    except Exception:
+        return None
+
+
+def phash_hamming(h1: int, h2: int) -> int:
+    """Hamming distance between two signed int64 pHash values."""
+    # Mask to 64 bits to handle Python's arbitrary-precision negative ints
+    xor = (h1 & 0xFFFFFFFFFFFFFFFF) ^ (h2 & 0xFFFFFFFFFFFFFFFF)
+    return bin(xor).count("1")
+
+
 def _enrich_image_row(
     row: TextbookImage,
     *,
@@ -553,6 +587,26 @@ def _enrich_image_row(
         row.educational_role or "unknown",
         row.section_title,
     )
+
+    # Educational title, description, and concept tags (Stage 7)
+    from app.services.image_service.caption_generator import generate_educational_title
+
+    edu = generate_educational_title(
+        figure_number=row.figure_number,
+        image_type=row.image_type or "unknown",
+        caption=row.caption,
+        section_title=row.section_title,
+        subsection_title=row.subsection_title,
+        chapter_title=row.chapter_title,
+        nearby_before=nearby_before,
+        nearby_after=nearby_after,
+    )
+    if edu.get("short_title"):
+        row.title = edu["short_title"]
+    if edu.get("description"):
+        row.educational_description = edu["description"]
+    if edu.get("concept_tags"):
+        row.concept_tags = "|".join(edu["concept_tags"])[:512]
 
 
 def generate_extraction_audit_report(
@@ -719,13 +773,28 @@ def _page_snippet(page_text: str, figure_captions: list[str]) -> str | None:
     return base[:880] or None
 
 
-def _save_blob(upload_id: uuid.UUID, page_index: int, seq: int, blob: bytes) -> str | None:
+def _save_blob(
+    upload_id: uuid.UUID,
+    page_index: int,
+    seq: int,
+    blob: bytes,
+    *,
+    figure_number: str | None = None,
+    preferred_name: str | None = None,
+) -> str | None:
     from app.services.image_service.textbook_image_display import normalize_image_blob
 
     jpeg = normalize_image_blob(blob)
     if not jpeg:
         return None
-    name = f"p{page_index}_{seq}.jpg"
+    if preferred_name:
+        name = preferred_name
+    elif figure_number:
+        from app.services.image_service.figure_reconstruction import figure_number_to_filename
+
+        name = figure_number_to_filename(figure_number, page_index, seq)
+    else:
+        name = f"p{page_index}_{seq}.jpg"
     out_dir = _upload_image_dir(upload_id)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, name)
@@ -774,10 +843,37 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
 
     created = 0
     audit_rows: list[dict[str, Any]] = []
+    seen_phashes: dict[int, str] = {}  # phash_int → first filename for dedup logging
+
     for pf in result.figures:
-        fname = _save_blob(upload.id, pf.page_index, pf.sequence, pf.image_bytes)
+        # Stage 9: document-level pHash deduplication
+        ph = compute_phash(pf.image_bytes)
+        if ph is not None:
+            is_dup = False
+            for existing_ph, existing_fname in seen_phashes.items():
+                if phash_hamming(ph, existing_ph) <= _PHASH_HAMMING_THRESHOLD:
+                    logger.debug(
+                        "[PHASH-DUP] p%d seq=%d matches %s (hamming≤%d) — skipped",
+                        pf.page_number, pf.sequence, existing_fname, _PHASH_HAMMING_THRESHOLD,
+                    )
+                    is_dup = True
+                    break
+            if is_dup:
+                continue
+
+        fname = _save_blob(
+            upload.id,
+            pf.page_index,
+            pf.sequence,
+            pf.image_bytes,
+            figure_number=pf.figure_number,
+            preferred_name=pf.preferred_file_name,
+        )
         if not fname:
             continue
+
+        if ph is not None:
+            seen_phashes[ph] = fname
 
         cap = pf.caption or ""
         fig_ctx = pf.figure_context or ""
@@ -822,6 +918,11 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
             caption_distance=cap_dist,
             pairing_confidence=conf,
             context_bge_indexed=False,
+            # Production extraction metadata (Stage 2–3, migration 0016)
+            source_type=pf.source_type,
+            caption_source=pf.caption_source,
+            page_coverage=pf.page_coverage if pf.page_coverage else None,
+            phash=ph,
         )
         _enrich_image_row(
             row,

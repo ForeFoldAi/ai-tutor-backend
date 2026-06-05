@@ -283,6 +283,7 @@ async def chapter_chat(
         chapter=req.chapter or "",
         chapter_names=req.chapter_names,
         conversation_history=history,
+        student_name=_current_user.full_name,
     )
     return {"answer": answer, "related_images": related_images}
 
@@ -330,6 +331,7 @@ async def chapter_chat_stream(
             chapter_names=req.chapter_names,
             emit_related_images=emit_imgs,
             conversation_history=history,
+            student_name=_current_user.full_name,
         ):
             while pending:
                 yield pending.pop(0)

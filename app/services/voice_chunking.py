@@ -13,19 +13,20 @@ _MIN_WORDS = 15
 _MIN_CHARS = 60
 _SOFT_PUNCT_MIN_CHARS = 40
 
+# Voice pipeline: start TTS earlier (Phase 5).
+VOICE_IDLE_FLUSH_SEC = 0.35
+VOICE_MIN_WORDS = 8
+VOICE_MIN_CHARS = 35
+VOICE_SOFT_PUNCT_MIN_CHARS = 28
 
-def _word_count(text: str) -> int:
-    return len(text.split())
 
-
-def extract_responsive_chunks(buf: str) -> tuple[list[str], str]:
-    """
-    Extract speakable chunks from *buf* when any trigger matches:
-      - sentence punctuation (.?!)
-      - >= 15 words
-      - >= 60 characters
-      - comma/semicolon after 40 characters
-    """
+def _extract_chunks(
+    buf: str,
+    *,
+    min_words: int,
+    min_chars: int,
+    soft_punct_min: int,
+) -> tuple[list[str], str]:
     out: list[str] = []
 
     while buf.strip():
@@ -41,24 +42,24 @@ def extract_responsive_chunks(buf: str) -> tuple[list[str], str]:
             progressed = True
             continue
 
-        if _word_count(buf) >= _MIN_WORDS:
-            words = buf.split()
-            out.append(" ".join(words[:_MIN_WORDS]))
-            buf = " ".join(words[_MIN_WORDS:])
+        words = buf.split()
+        if len(words) >= min_words:
+            out.append(" ".join(words[:min_words]))
+            buf = " ".join(words[min_words:])
             progressed = True
             continue
 
-        if len(buf) >= _MIN_CHARS:
+        if len(buf) >= min_chars:
             flushed = False
             for sep in (", ", "; ", ": "):
-                pos = buf.rfind(sep, _SOFT_PUNCT_MIN_CHARS)
-                if pos >= _SOFT_PUNCT_MIN_CHARS:
+                pos = buf.rfind(sep, soft_punct_min)
+                if pos >= soft_punct_min:
                     out.append(buf[: pos + len(sep)].strip())
                     buf = buf[pos + len(sep) :].lstrip()
                     flushed = True
                     break
             if not flushed:
-                pos = buf.rfind(" ", _SOFT_PUNCT_MIN_CHARS)
+                pos = buf.rfind(" ", soft_punct_min)
                 if pos > 0:
                     out.append(buf[:pos].strip())
                     buf = buf[pos:].lstrip()
@@ -68,7 +69,7 @@ def extract_responsive_chunks(buf: str) -> tuple[list[str], str]:
             progressed = True
             continue
 
-        if len(buf) >= _SOFT_PUNCT_MIN_CHARS:
+        if len(buf) >= soft_punct_min:
             for sep in (", ", "; "):
                 pos = buf.rfind(sep, 20)
                 if pos >= 20:
@@ -82,6 +83,26 @@ def extract_responsive_chunks(buf: str) -> tuple[list[str], str]:
         break
 
     return out, buf
+
+
+def extract_responsive_chunks(buf: str) -> tuple[list[str], str]:
+    """Default thresholds — 15 words / 60 chars."""
+    return _extract_chunks(
+        buf,
+        min_words=_MIN_WORDS,
+        min_chars=_MIN_CHARS,
+        soft_punct_min=_SOFT_PUNCT_MIN_CHARS,
+    )
+
+
+def extract_voice_chunks(buf: str) -> tuple[list[str], str]:
+    """Voice tutor: faster first audio — 8 words / 35 chars."""
+    return _extract_chunks(
+        buf,
+        min_words=VOICE_MIN_WORDS,
+        min_chars=VOICE_MIN_CHARS,
+        soft_punct_min=VOICE_SOFT_PUNCT_MIN_CHARS,
+    )
 
 
 @dataclass

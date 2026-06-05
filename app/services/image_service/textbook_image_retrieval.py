@@ -158,7 +158,9 @@ def _page_proximity_score(upload_id: str, page_index: int, pages_by_upload: dict
     best = 0.0
     for p in pages:
         dist = abs(int(page_index) - int(p))
-        best = max(best, max(0.0, 24.0 - dist * 3.2))
+        # Decay to 0 at 4 pages distance (was 7.5).  Images more than 4 pages from
+        # any RAG citation page should not receive a page-proximity boost.
+        best = max(best, max(0.0, 24.0 - dist * 6.0))
     return best
 
 
@@ -272,47 +274,59 @@ def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> floa
     """
     from app.services.image_service.figure_context_gates import (
         figure_descriptive_text_for_gates,
-        is_minimal_figure_caption,
+        is_core_definition_figure,
+        is_tangential_weather_mention,
     )
 
     cap = _get_caption_normalized(im)
-    snippet = im.page_text_snippet or ""
     sec = _get_section_title(im)
-    minimal = is_minimal_figure_caption(im.caption)
-    # Minimal labels (e.g. "Fig. 2.2"): use nearby figure_context, never shared page snippet.
-    if minimal:
-        caption_text = figure_descriptive_text_for_gates(im, cap)
-        full_text = caption_text
-    else:
-        caption_text = f"{cap} {sec}".lower()
-        full_text = f"{cap} {snippet} {sec}".lower()
+    subsec = (getattr(im, "subsection_title", None) or "").strip()
+    gate_text = figure_descriptive_text_for_gates(im, cap)
+    topic_text = gate_text
+    caption_text = " ".join(
+        p for p in (cap, sec, subsec) if p
+    ).lower()
 
-    if not caption_text.strip() and not full_text.strip():
+    if not topic_text.strip():
         return 0.0
+
+    core = getattr(intent, "core_concept", None) or ""
+    query_type = getattr(intent, "query_type", "") or ""
+
+    from app.services.image_service.figure_context_gates import is_offtopic_for_broad_definition_query
+
+    if is_offtopic_for_broad_definition_query(
+        im, gate_text, query_type=query_type, core_concept=core
+    ):
+        return 0.0
+    if is_tangential_weather_mention(im, gate_text, query_type=query_type, core_concept=core):
+        return 0.0
+
+    if is_core_definition_figure(im, core):
+        return 95.0
 
     # ── helpers ──────────────────────────────────────────────────────────────
     def _neg_penalty() -> float:
         if not hasattr(intent, "negative_terms"):
             return 0.0
-        return sum(15.0 for t in (intent.negative_terms or []) if t.lower() in full_text)
+        return sum(15.0 for t in (intent.negative_terms or []) if t.lower() in topic_text)
 
     def _sup_bonus() -> float:
         if not hasattr(intent, "supporting_terms"):
             return 0.0
-        matches = sum(1 for t in (intent.supporting_terms or []) if t.lower() in full_text)
+        matches = sum(1 for t in (intent.supporting_terms or []) if t.lower() in topic_text)
         return min(15.0, matches * 5.0)
 
-    core = getattr(intent, "core_concept", None) or ""
     required_terms: list[str] = getattr(intent, "required_terms", [])
     concept_tokens: frozenset[str] = getattr(intent, "concept_tokens", frozenset())
 
-    # ── Level 0: exact core concept (caption only) ───────────────────────────
-    if core and core.lower() in caption_text:
+    # ── Level 0: exact core concept in caption OR nearby layout text ─────────
+    if core and core.lower() in topic_text:
         raw = 100.0 + _sup_bonus() - _neg_penalty()
         return max(70.0, min(100.0, raw))
 
-    # ── Level 1: required multi-word phrase match (caption only) ──────────────
-    phrase_matches = [t for t in required_terms if len(t.split()) > 1 and t.lower() in caption_text]
+    # ── Level 1: required multi-word phrase match ─────────────────────────────
+    phrase_matches = [t for t in required_terms if len(t.split()) > 1 and t.lower() in topic_text]
     if phrase_matches:
         base = 70.0 + len(phrase_matches) * 8.0
         raw = min(95.0, base) + _sup_bonus() - _neg_penalty()
@@ -326,7 +340,7 @@ def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> floa
 
     single_matches = [
         t for t in required_terms
-        if len(t.split()) == 1 and _is_distinctive_single(t) and t.lower() in caption_text
+        if len(t.split()) == 1 and _is_distinctive_single(t) and t.lower() in topic_text
     ]
     if single_matches:
         base = 50.0 + len(single_matches) * 6.0
@@ -334,8 +348,7 @@ def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> floa
         return max(15.0, min(70.0, raw))
 
     # ── Level 3: concept-token overlap — STRICT (no single-token escape) ───────
-    # Weak signal: page snippet allowed here but capped at 30 (never decisive).
-    cap_tokens = _tokenize(full_text)
+    cap_tokens = _tokenize(topic_text)
     tok_match = concept_tokens & cap_tokens
     if tok_match and isinstance(intent, ImageIntent) and level3_overlap_allowed(intent, tok_match):
         ratio = len(tok_match) / max(1, len(concept_tokens))
@@ -444,15 +457,27 @@ def _hard_concept_filter(intent: "ImageIntent", im: TextbookImage) -> tuple[bool
     from app.services.image_service.figure_context_gates import (
         context_supports_topic,
         figure_descriptive_text_for_gates,
-        is_minimal_figure_caption,
+        is_core_definition_figure,
+        is_offtopic_for_broad_definition_query,
+        is_tangential_weather_mention,
     )
+
+    gate_text = figure_descriptive_text_for_gates(im, cap_norm)
+    qt = getattr(intent, "query_type", "") or ""
+    core = getattr(intent, "core_concept", "") or ""
+    if is_offtopic_for_broad_definition_query(
+        im, gate_text, query_type=qt, core_concept=core
+    ):
+        return True, "offtopic_broad_definition"
+    if is_tangential_weather_mention(im, gate_text, query_type=qt, core_concept=core):
+        return True, "tangential_weather_mention"
 
     concept_tokens: frozenset[str] = getattr(intent, "concept_tokens", frozenset())
     cap_tokens = _tokenize(f"{cap_norm} {_get_section_title(im)}")
     has_any_overlap = bool(concept_tokens & cap_tokens)
-    if is_minimal_figure_caption(im.caption):
-        gate_text = figure_descriptive_text_for_gates(im, cap_norm)
-        has_any_overlap = has_any_overlap or context_supports_topic(intent, gate_text)
+    has_any_overlap = has_any_overlap or context_supports_topic(intent, gate_text)
+    if is_core_definition_figure(im, getattr(intent, "core_concept", "") or ""):
+        has_any_overlap = True
     excluded: list[str] = getattr(intent, "excluded_types", [])
 
     if img_type in excluded and not has_any_overlap:
@@ -1318,6 +1343,32 @@ def early_related_images_for_query(
             return []
         effective_query = conv.retrieval_query or query
         intent = extract_image_intent(effective_query, retrieved_docs, conversation_context=conv)
+        from app.services.image_service.figure_context_gates import (
+            _BROAD_DEFINITION_CORES,
+            is_core_definition_figure,
+        )
+
+        core = (intent.core_concept or "").lower()
+        if intent.query_type == "concept_definition" and core in _BROAD_DEFINITION_CORES:
+            defs = [
+                im
+                for im in images
+                if is_core_definition_figure(im, core)
+                and not _symbolically_rejected(intent, im)
+            ]
+            if defs:
+                defs.sort(
+                    key=lambda im: -_page_proximity_score(
+                        str(im.textbook_upload_id), im.page_index, pages_by_upload
+                    )
+                )
+                return [
+                    _payload_row(im, 72.0, None)
+                    for im in defs[:top_n]
+                    if image_has_visible_content(
+                        os.path.join(IMAGE_ROOT, str(im.textbook_upload_id), im.file_name)
+                    )
+                ]
         return _guaranteed_citation_figures(
             images, pages_by_upload, max_n=top_n, query=effective_query, intent=intent
         )

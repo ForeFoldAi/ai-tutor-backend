@@ -312,22 +312,39 @@ def apply_symbolic_hard_filters(
     from app.services.image_service.figure_context_gates import (
         context_supports_topic,
         figure_descriptive_text_for_gates,
+        is_core_definition_figure,
         is_minimal_figure_caption,
+        is_offtopic_for_broad_definition_query,
+        is_tangential_weather_mention,
     )
 
-    # Hard gates use caption (+ section), or figure_context for minimal labels.
     caption_text = _figure_caption_text(im, caption_normalized)
     gate_text = figure_descriptive_text_for_gates(im, caption_normalized)
-    minimal_cap = is_minimal_figure_caption(im.caption)
     full_text = _figure_full_text(im, caption_normalized)
+    minimal_cap = is_minimal_figure_caption(im.caption)
     info = SymbolicMatchInfo(concept_specificity=concept_specificity)
+
+    qt = getattr(intent, "query_type", "") or ""
+    core = getattr(intent, "core_concept", "") or ""
+    if is_offtopic_for_broad_definition_query(
+        im, gate_text, query_type=qt, core_concept=core
+    ):
+        info.hard_rejected = True
+        info.rejection_reason = "offtopic_broad_definition"
+        return info
+    if is_tangential_weather_mention(im, gate_text, query_type=qt, core_concept=core):
+        info.hard_rejected = True
+        info.rejection_reason = "tangential_weather_mention"
+        return info
 
     # ── 1. Excluded image types (zero concept overlap) ───────────────────────
     cap_tokens = tokenize(caption_text)
     gate_tokens = tokenize(gate_text)
-    has_concept_overlap = bool(intent.concept_tokens & cap_tokens) or (
-        minimal_cap and context_supports_topic(intent, gate_text)
+    has_concept_overlap = bool(intent.concept_tokens & cap_tokens) or context_supports_topic(
+        intent, gate_text
     )
+    if is_core_definition_figure(im, getattr(intent, "core_concept", "") or ""):
+        has_concept_overlap = True
     if intent.excluded_types and image_type in intent.excluded_types and not has_concept_overlap:
         info.hard_rejected = True
         info.rejection_reason = f"excluded_type={image_type}, no concept overlap in caption"
@@ -336,7 +353,10 @@ def apply_symbolic_hard_filters(
     # ── 2. Decorative / sidebar gate ─────────────────────────────────────────
     if educational_role in ("sidebar_example", "decorative"):
         if concept_specificity < sidebar_min_specificity:
-            if not (minimal_cap and context_supports_topic(intent, gate_text)):
+            if not (
+                context_supports_topic(intent, gate_text)
+                or is_core_definition_figure(im, getattr(intent, "core_concept", "") or "")
+            ):
                 info.hard_rejected = True
                 info.rejection_reason = (
                     f"role={educational_role}, specificity={concept_specificity:.1f} "
@@ -345,7 +365,7 @@ def apply_symbolic_hard_filters(
                 return info
 
     # ── 3. Required-term gate (multi-word concepts) ────────────────────────────
-    req_source = gate_text if minimal_cap else caption_text
+    req_source = gate_text
     req_matches, passes_gate = count_required_term_matches(intent, req_source)
     info.required_term_matches = req_matches
     info.passes_required_gate = passes_gate

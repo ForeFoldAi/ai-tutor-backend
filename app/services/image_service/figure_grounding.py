@@ -53,12 +53,12 @@ _ROLE_SCORE: dict[str, float] = {
 }
 
 _RANK_WEIGHTS = {
-    "context": 0.40,
+    "context": 0.30,  # was 0.40 — reduced to let page proximity matter
     "caption": 0.15,
-    "section": 0.15,
-    "type": 0.10,
-    "role": 0.10,
-    "page": 0.05,
+    "section": 0.20,  # was 0.15 — subsection titles are now stored, boost them
+    "type": 0.08,
+    "role": 0.07,
+    "page": 0.15,  # was 0.05 — images far from citation pages must score lower
     "clip": 0.05,
 }
 
@@ -161,18 +161,24 @@ def caption_bge_score(
 
 
 def section_match_score(intent: ImageIntent, im: TextbookImage) -> float:
-    """Match retrieved section/subsection/topic against image metadata."""
+    """
+    Match retrieved section/subsection topic against image's section metadata.
+
+    Uses ONLY section_title and subsection_title — intentionally excludes
+    chapter_title and full figure_context.  The chapter title is shared by ALL
+    figures in the chapter (e.g. "Understanding the Weather" gives every figure
+    a false "weather" match) and must not contribute to section scoring.
+    """
     topic_tokens = set(intent.concept_tokens)
     topic_tokens |= intent.rag_section_tokens
     for t in (intent.core_concept or "").lower().split():
         if len(t) >= 3:
             topic_tokens.add(t)
 
+    # Only subsection_title and section_title — precise, per-figure signals.
     meta_parts = [
         getattr(im, "section_title", None) or "",
         getattr(im, "subsection_title", None) or "",
-        getattr(im, "chapter_title", None) or "",
-        get_figure_context(im)[:500],
     ]
     img_tokens = tokenize(" ".join(meta_parts))
     if not img_tokens or not topic_tokens:
@@ -280,15 +286,66 @@ def classify_mandatory_figure(
         fig_num = m.group(1) if m else None
 
     ctx = get_figure_context(im).lower()
+
+    from app.services.image_service.figure_context_gates import is_core_definition_figure
+
+    # Focused text for concept presence — NOT chapter_title, page snippet, or
+    # nearby_after (peripheral mentions like "wind is an element of the weather").
+    # For broad definition queries ("what is weather?"), also skip section_title:
+    # shared headings such as "Understanding the Weather" match every figure.
     core = (intent.core_concept or "").lower()
+    from app.services.image_service.figure_context_gates import (
+        _BROAD_DEFINITION_CORES,
+        figure_descriptive_text_for_gates,
+        is_offtopic_for_broad_definition_query,
+    )
 
-    if _figure_referenced_in_rag(fig_num, rag_docs) or _figure_referenced_in_context(im, fig_num):
-        reasons.append("educational_content_reference")
+    primary_parts = [
+        normalize_caption(im.caption or ""),
+        (getattr(im, "subsection_title", None) or ""),
+        (getattr(im, "nearby_text_before_figure", None) or "")[:200],
+    ]
+    if not (
+        intent.query_type == "concept_definition" and core in _BROAD_DEFINITION_CORES
+    ):
+        primary_parts.insert(1, (getattr(im, "section_title", None) or ""))
+    primary_context = " ".join(filter(None, primary_parts)).lower()
 
-    if core and core in ctx and context_score >= 50.0:
-        reasons.append("concept_centered_explanation")
-        if context_score >= 58.0 and section_score >= 45.0:
-            reasons.append("same_section_and_topic")
+    gate_text = figure_descriptive_text_for_gates(im, normalize_caption(im.caption or ""))
+    if is_offtopic_for_broad_definition_query(
+        im,
+        gate_text,
+        query_type=intent.query_type,
+        core_concept=intent.core_concept or "",
+    ):
+        return False, False, "offtopic_broad_definition"
+
+    rag_ref = _figure_referenced_in_rag(fig_num, rag_docs) or _figure_referenced_in_context(
+        im, fig_num
+    )
+    if rag_ref:
+        if intent.query_type == "concept_definition" and core in _BROAD_DEFINITION_CORES:
+            if is_core_definition_figure(im, core):
+                reasons.append("educational_content_reference")
+        else:
+            reasons.append("educational_content_reference")
+
+    if (
+        intent.query_type == "concept_definition"
+        and core
+        and is_core_definition_figure(im, core)
+    ):
+        reasons.append("textbook_definition_figure")
+        topic_anchor = True
+
+    # Require core concept in primary context (not shared chapter/section headings).
+    if core and core in primary_context and context_score >= 50.0:
+        if not (
+            intent.query_type == "concept_definition" and core in _BROAD_DEFINITION_CORES
+        ) or is_core_definition_figure(im, core):
+            reasons.append("concept_centered_explanation")
+            if context_score >= 58.0 and section_score >= 45.0:
+                reasons.append("same_section_and_topic")
 
     citation_pages = _rag_citation_pages(rag_docs)
     on_citation = str(im.textbook_upload_id) in citation_pages and im.page_index in citation_pages.get(
@@ -301,7 +358,7 @@ def classify_mandatory_figure(
 
     from app.services.image_service.figure_context_gates import is_minimal_figure_caption
 
-    if is_minimal_figure_caption(im.caption) and context_score >= 52.0 and core and core in ctx:
+    if is_minimal_figure_caption(im.caption) and context_score >= 52.0 and core and core in primary_context:
         topic_anchor = True
         reasons.append("topic_anchor_minimal_caption")
 
@@ -324,9 +381,12 @@ def classify_mandatory_figure(
         if not re.search(r"\b(station|aws|instrument|sensor|gauge|anemometer)\b", qlow):
             return False, False, "instrument_not_requested"
 
-    is_mandatory = bool(reasons) and context_score >= 45.0 and (
+    definition_figure = "textbook_definition_figure" in reasons
+    min_ctx = 25.0 if definition_figure else 45.0
+    is_mandatory = bool(reasons) and context_score >= min_ctx and (
         concept_specificity >= 20.0
         or topic_anchor
+        or definition_figure
         or (core and core in ctx and context_score >= 55.0)
     )
     return is_mandatory, topic_anchor, ";".join(reasons)
@@ -397,6 +457,13 @@ def run_topic_centric_retrieval(
 
     scored_supporting: list[tuple[TextbookImage, FigureRankRecord]] = []
 
+    from app.services.image_service.figure_context_gates import (
+        _BROAD_DEFINITION_CORES,
+        figure_descriptive_text_for_gates,
+        is_core_definition_figure,
+        is_offtopic_for_broad_definition_query,
+    )
+
     for im, sym in candidates:
         rec = FigureRankRecord(
             image_id=str(im.id),
@@ -404,6 +471,18 @@ def run_topic_centric_retrieval(
         )
         spec = float(concept_specificity_fn(intent, im))
         rec.concept_specificity = spec
+
+        gate_text = figure_descriptive_text_for_gates(im, normalize_caption(im.caption or ""))
+        if is_offtopic_for_broad_definition_query(
+            im,
+            gate_text,
+            query_type=intent.query_type,
+            core_concept=intent.core_concept or "",
+        ):
+            rec.hard_rejected = True
+            rec.rejected_reason = "offtopic_broad_definition"
+            stages.rejected.append(rec)
+            continue
 
         role = getattr(im, "educational_role", None) or "unknown"
         if role == "decorative":
@@ -421,6 +500,10 @@ def run_topic_centric_retrieval(
             continue
 
         rec.figure_context_score = figure_context_bge_score(qtext, im, query_vec=qvec)
+        from app.services.image_service.figure_context_gates import is_core_definition_figure
+
+        if is_core_definition_figure(im, intent.core_concept or ""):
+            rec.figure_context_score = max(rec.figure_context_score, 72.0)
         rec.section_score = section_match_score(intent, im)
         prox = float(page_proximity_fn(str(im.textbook_upload_id), im.page_index, pages_by_upload))
         rec.page_score = min(100.0, prox / 24.0 * 100.0)
@@ -486,9 +569,26 @@ def run_topic_centric_retrieval(
             stages.rejected.append(rec)
         stages.mandatory_images = stages.mandatory_images[:max_images]
 
+    core_low = (intent.core_concept or "").lower()
+    if intent.query_type == "concept_definition" and core_low in _BROAD_DEFINITION_CORES:
+        def_mand = [
+            pair
+            for pair in stages.mandatory_images
+            if is_core_definition_figure(pair[0], core_low)
+        ]
+        if def_mand:
+            for im, rec in stages.mandatory_images:
+                if not is_core_definition_figure(im, core_low):
+                    rec.rejected_reason = "definition_query_non_definition_figure"
+                    stages.rejected.append(rec)
+            stages.mandatory_images = def_mand[:max_images]
+
     scored_supporting.sort(key=lambda x: -x[1].final_score)
 
     max_supporting = max(0, max_images - len(stages.mandatory_images))
+    if intent.query_type == "concept_definition" and core_low in _BROAD_DEFINITION_CORES:
+        if any(is_core_definition_figure(im, core_low) for im, _ in stages.mandatory_images):
+            max_supporting = 0
     if max_supporting == 0:
         return stages
 

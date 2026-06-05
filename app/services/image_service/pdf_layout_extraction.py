@@ -1,15 +1,21 @@
 """
-Layout-aware PDF figure extraction (PyMuPDF).
+Production-grade layout-aware PDF figure extraction (PyMuPDF).
 
-General-purpose pipeline for textbook PDFs — no hardcoded figure numbers or publishers.
+Multi-source pipeline for educational PDFs — NCERT, CBSE, ICSE, State Board.
+
+Sources:
+  A. Embedded raster images (XObjects via page.get_images)
+  B. Vector drawing regions (clustered paths via page.get_drawings)
+  C. Layout-detected figure zones (DocLayout-YOLO or heuristic fallback)
 
 Stages:
-  1. Page analysis — image rects, text blocks, caption markers with bboxes
-  2. Background rejection — full-page plates never enter pairing
-  3. Caption detection — Fig./Figure markers with layout coordinates
-  4. Spatial pairing — nearest caption per image (not index order)
-  5. Figure context — paragraphs above/below from text blocks
-  6. Validation logs — orphans, suspicious pairs, background removals
+  1. Page analysis — image rects, text blocks, drawing objects, page dimensions
+  2. Multi-source figure discovery — Sources A, B, C
+  3. Candidate merging — IoU / containment / score-based deduplication
+  4. Caption detection — Fig./Figure markers with layout coordinates
+  5. Spatial pairing — nearest caption per figure candidate
+  6. Figure context — paragraphs above/below from text blocks
+  7. Validation logs — orphans, suspicious pairs, background removals
 """
 
 from __future__ import annotations
@@ -32,12 +38,24 @@ _CAPTION_STOP_RE = re.compile(
     r"(?i)(?:\.indd\b|reprint|not\s+to\s+be\s+republished|chapter\s+\d+\.indd)",
 )
 _MIN_IMAGE_PT = 28.0  # skip icons / bullets in page space
+_MIN_PIXEL_DIM = 64   # minimum width or height in pixels (Stage 9)
+_MIN_PIXEL_AREA = 4096  # minimum pixel area (Stage 9)
 _MAX_PAIR_DISTANCE = 280.0  # page points; tune for A4/Letter
 _RENDER_MATRIX_SCALE = 2.0
+_LAYOUT_RENDER_SCALE = 300.0 / 72.0  # 300 DPI for page-level layout detection (Stage 1)
 _PAGE_BLEED_Y0 = -15.0
 _RECURRING_TEMPLATE_MIN_PAGES = 2
 _LARGE_IMAGE_DISTANCE_PENALTY = 140.0
 _BELOW_CAPTION_DISTANCE_PENALTY = 220.0
+# Source B — vector drawing detection (configurable)
+_VECTOR_MIN_PATHS = 3          # minimum clustered paths to form a figure candidate
+_VECTOR_CLUSTER_PROXIMITY = 30.0  # pt: paths within this distance are clustered
+_VECTOR_MAX_TEXT_OVERLAP = 0.40   # reject vector clusters whose area is >40% body text
+# Candidate merging
+_MERGE_IOU_THRESHOLD = 0.50
+_MERGE_CONTAINMENT_THRESHOLD = 0.80
+# Source priority weights for score-based merging (added to confidence)
+_SOURCE_WEIGHT = {"embedded_image": 0.30, "vector_drawing": 0.20, "layout_detected": 0.10}
 
 
 @dataclass
@@ -108,6 +126,24 @@ class LayoutCaption:
 
 
 @dataclass
+class FigureCandidate:
+    """Pre-pairing figure region from any of the three discovery sources."""
+
+    bbox: BBox
+    source_type: str          # "embedded_image" | "vector_drawing" | "layout_detected"
+    confidence: float         # 0.0–1.0 (detection or extraction confidence)
+    image_bytes: bytes | None = None
+    xref: int = -1
+    pixel_width: int = 0
+    pixel_height: int = 0
+
+    @property
+    def merge_score(self) -> float:
+        """Score used for candidate deduplication — confidence + source weight."""
+        return self.confidence + _SOURCE_WEIGHT.get(self.source_type, 0.0)
+
+
+@dataclass
 class PairedFigure:
     """One teaching figure ready for persistence."""
 
@@ -127,6 +163,12 @@ class PairedFigure:
     section_title: str | None = None
     subsection_title: str | None = None
     validation_flags: list[str] = field(default_factory=list)
+    # Production fields (Stage 2–3)
+    source_type: str = "embedded_image"   # discovery source
+    caption_source: str = "none"          # "detected" | "none"
+    page_coverage: float = 0.0            # image area / page area
+    confidence: float = 1.0              # figure detection confidence
+    preferred_file_name: str | None = None  # e.g. fig_2_1.jpg from caption-anchored pipeline
 
 
 @dataclass
@@ -199,7 +241,7 @@ def is_page_background(bbox: BBox, page_bbox: BBox, *, recurring_template: bool 
     iy1 = min(bbox.y1, page_bbox.y1)
     if ix1 > ix0 and iy1 > iy0:
         inter = (ix1 - ix0) * (iy1 - iy0)
-        if inter / page_area > 0.85:
+        if inter / page_area > 0.80:
             return True
 
     return False
@@ -268,38 +310,56 @@ def pairing_distance(
     page_bbox: BBox | None = None,
 ) -> float:
     """
-    Edge-to-edge vertical distance (captions usually just below figures).
+    Layout-aware image–caption pairing distance.
 
-    Uses the gap between image bottom and caption top (or caption bottom to
-    image top) rather than center-to-center, so large teaching diagrams that
-    sit immediately above their label are not penalised by their own height.
+    Handles two common textbook layouts:
+
+    Type A — caption below (or above) image:
+        Uses edge-to-edge vertical gap + 0.35 × center-to-center horizontal.
+
+    Type B — caption beside image (side-by-side, NCERT grid layouts):
+        When image and caption share the same y-range (vertically overlapping),
+        distance is the horizontal edge-to-edge gap × 0.5, dy=0.
+        This correctly pairs Fig 2.3.1 (ants image on left) with its label
+        placed to the right at the same y-level rather than with the caption
+        of the next row that happens to be vertically adjacent below.
     """
-    # Vertical component: edge-to-edge gap
-    if caption_bbox.y0 >= image_bbox.y1:
-        # Caption is below image (normal textbook layout)
-        dy = caption_bbox.y0 - image_bbox.y1
-    elif image_bbox.y0 >= caption_bbox.y1:
-        # Caption is above image (e.g. figure title at top)
-        dy = image_bbox.y0 - caption_bbox.y1
+    # Detect side-by-side (Type B): image and caption share a y-range
+    vy0 = max(image_bbox.y0, caption_bbox.y0)
+    vy1 = min(image_bbox.y1, caption_bbox.y1)
+    vertically_overlapping = vy1 > vy0
+
+    if vertically_overlapping:
+        # Horizontal edge-to-edge gap: caption to the right or left of image
+        dy = 0.0
+        if caption_bbox.x0 >= image_bbox.x1:
+            dx = caption_bbox.x0 - image_bbox.x1   # caption right of image
+        elif image_bbox.x0 >= caption_bbox.x1:
+            dx = image_bbox.x0 - caption_bbox.x1   # caption left of image
+        else:
+            dx = abs(image_bbox.center[0] - caption_bbox.center[0])  # x-overlap
+        dist = dy + 0.5 * dx
     else:
-        # Overlapping vertically — use center distance as fallback
-        dy = abs(image_bbox.center[1] - caption_bbox.center[1])
+        # Type A: caption strictly above or below image (edge-to-edge vertical)
+        if caption_bbox.y0 >= image_bbox.y1:
+            dy = caption_bbox.y0 - image_bbox.y1
+        elif image_bbox.y0 >= caption_bbox.y1:
+            dy = image_bbox.y0 - caption_bbox.y1
+        else:
+            dy = abs(image_bbox.center[1] - caption_bbox.center[1])
+        dx = abs(image_bbox.center[0] - caption_bbox.center[0])
+        dist = dy + 0.35 * dx
 
-    # Horizontal component: center-to-center (captions are usually aligned with figure)
-    dx = abs(image_bbox.center[0] - caption_bbox.center[0])
-    dist = dy + 0.35 * dx
+        # Penalty when image is drawn BELOW its caption (rare, usually wrong pairing)
+        if image_bbox.y0 > caption_bbox.y0 + 12:
+            dist += _BELOW_CAPTION_DISTANCE_PENALTY
+        elif image_bbox.center[1] > caption_bbox.center[1] + 20:
+            dist += _BELOW_CAPTION_DISTANCE_PENALTY * 0.5
 
-    # Light area penalty for very large images to reduce spurious long-range pairings,
-    # but cap it so a closely-placed caption always wins over a far-away one.
+    # Light area penalty — capped so a nearby caption always beats a distant one
     if page_bbox and page_bbox.area > 0:
         area_frac = image_bbox.area / page_bbox.area
         dist += min(60.0, _LARGE_IMAGE_DISTANCE_PENALTY * area_frac)
-
-    # Penalty when image is drawn BELOW its caption (rare, usually wrong pairing)
-    if image_bbox.y0 > caption_bbox.y0 + 12:
-        dist += _BELOW_CAPTION_DISTANCE_PENALTY
-    elif image_bbox.center[1] > caption_bbox.center[1] + 20:
-        dist += _BELOW_CAPTION_DISTANCE_PENALTY * 0.5
 
     return dist
 
@@ -340,55 +400,64 @@ def detect_captions_from_blocks(
     captions: list[LayoutCaption] = []
     cap_idx = 0
 
+    # Collect captions, tagging each as inline or standalone.
+    # Inline: the fig marker is preceded by "(" AND that "(" is NOT the first char of
+    # the text block.  "gauge (Fig. 2.6). When it rains..." → inline.
+    # Standalone: "(Fig. 2.3.1. Ants...)" where "(" is char 0 → keep; or bare label.
+    captions_typed: list[tuple[LayoutCaption, bool]] = []  # (caption, is_inline)
+
     for block in text_blocks:
         text = block.text.strip()
         if not text:
             continue
         for m in _FIG_MARKER_RE.finditer(text):
             fig_num = m.group(2).strip()
-
-            # Skip inline cross-references like "(Fig. 2.6)" — these are parenthesised
-            # references inside body text, not standalone figure labels.  The actual
-            # label ("Fig. 2.6. Rain gauge") appears as its own text block or at the
-            # start of a line and is NOT preceded by "(".
             start = m.start()
-            if start > 0 and text[start - 1] == "(":
-                continue
+
+            # Inline: "(Fig. N)" deep inside a sentence — start > 1 so that
+            # "(Fig. 2.3.1. Title)" at position 0 is NOT skipped (that IS a label).
+            is_inline = start > 1 and text[start - 1] == "("
 
             # Title: text after marker until stop pattern or 200 chars
-            tail = text[m.end() :]
+            tail = text[m.end():]
             tail = _CAPTION_STOP_RE.split(tail, maxsplit=1)[0].strip(" .:;-")
             if len(tail) > 220:
                 tail = tail[:220].rsplit(" ", 1)[0]
             cap_text = _format_caption(m.group(1), fig_num, tail)
-            # Caption bbox: use block bbox (line-level precision when blocks are lines)
-            captions.append(
-                LayoutCaption(
-                    page_number=page_number,
-                    caption_index_on_page=cap_idx,
-                    figure_number=fig_num,
-                    caption_text=cap_text,
-                    bbox=block.bbox,
-                )
+            cap = LayoutCaption(
+                page_number=page_number,
+                caption_index_on_page=cap_idx,
+                figure_number=fig_num,
+                caption_text=cap_text,
+                bbox=block.bbox,
             )
+            captions_typed.append((cap, is_inline))
             cap_idx += 1
 
-    # Deduplicate: same figure number can appear multiple times (inline refs, repeated
-    # labels).  Prefer the caption with the LONGEST descriptive title — "Fig. 2.6. Rain
-    # gauge" wins over a bare "Fig. 2.6" or one whose tail starts with ")".
+    # Deduplicate: for the same figure number prefer standalone over inline,
+    # and among equal type prefer the longer descriptive title.
     def _title_len(c: LayoutCaption) -> int:
         idx = c.caption_text.find(c.figure_number)
         if idx == -1:
             return 0
-        tail = c.caption_text[idx + len(c.figure_number):].strip(" .:;-()")
-        return len(tail)
+        return len(c.caption_text[idx + len(c.figure_number):].strip(" .:;-()"))
 
-    best: dict[str, LayoutCaption] = {}
-    for cap in sorted(captions, key=lambda c: (c.bbox.y0, c.bbox.x0)):
-        if cap.figure_number not in best or _title_len(cap) > _title_len(best[cap.figure_number]):
-            best[cap.figure_number] = cap
+    best: dict[str, tuple[LayoutCaption, bool]] = {}
+    for cap, is_inline in sorted(captions_typed, key=lambda x: (x[0].bbox.y0, x[0].bbox.x0)):
+        num = cap.figure_number
+        if num not in best:
+            best[num] = (cap, is_inline)
+        else:
+            ex_cap, ex_inline = best[num]
+            # Non-inline always beats inline
+            if is_inline and not ex_inline:
+                continue
+            if not is_inline and ex_inline:
+                best[num] = (cap, is_inline)
+            elif _title_len(cap) > _title_len(ex_cap):
+                best[num] = (cap, is_inline)
 
-    deduped = sorted(best.values(), key=lambda c: (c.bbox.y0, c.bbox.x0))
+    deduped = sorted((cap for cap, _ in best.values()), key=lambda c: (c.bbox.y0, c.bbox.x0))
     return deduped
 
 
@@ -483,7 +552,7 @@ def collect_images(
             try:
                 pix = page.get_pixmap(matrix=render_matrix, clip=rect, alpha=False)
                 w, h = pix.width, pix.height
-                if w * h < 2800:
+                if w * h < _MIN_PIXEL_AREA or w < _MIN_PIXEL_DIM or h < _MIN_PIXEL_DIM:
                     continue
                 blob = pix.tobytes("jpeg")
             except Exception:
@@ -545,6 +614,328 @@ def _dedupe_near_duplicate_images(
         kept.append(pair)
     return kept
 
+
+# ---------------------------------------------------------------------------
+# Geometry helpers for multi-source merging
+# ---------------------------------------------------------------------------
+
+def _bbox_intersection_area(a: BBox, b: BBox) -> float:
+    ix0 = max(a.x0, b.x0)
+    iy0 = max(a.y0, b.y0)
+    ix1 = min(a.x1, b.x1)
+    iy1 = min(a.y1, b.y1)
+    return max(0.0, ix1 - ix0) * max(0.0, iy1 - iy0)
+
+
+def _text_overlap_fraction(bbox: BBox, text_blocks: list[LayoutTextBlock]) -> float:
+    """Fraction of bbox area covered by text blocks (0–1)."""
+    if bbox.area <= 0:
+        return 0.0
+    total = sum(_bbox_intersection_area(bbox, tb.bbox) for tb in text_blocks)
+    return min(1.0, total / bbox.area)
+
+
+def _cluster_bboxes(bboxes: list[BBox], *, proximity: float) -> list[list[BBox]]:
+    """Group bboxes whose edges are within `proximity` pt of any cluster member."""
+    if not bboxes:
+        return []
+    clusters: list[list[BBox]] = []
+    used = [False] * len(bboxes)
+
+    for i, bbox in enumerate(bboxes):
+        if used[i]:
+            continue
+        cluster: list[BBox] = [bbox]
+        used[i] = True
+        # BFS: keep checking newly added members for additional neighbors
+        frontier = [bbox]
+        while frontier:
+            cur = frontier.pop()
+            for j in range(len(bboxes)):
+                if used[j]:
+                    continue
+                other = bboxes[j]
+                # Gap between cur and other in x and y (negative = overlap)
+                gap_x = max(0.0, max(cur.x0, other.x0) - min(cur.x1, other.x1))
+                gap_y = max(0.0, max(cur.y0, other.y0) - min(cur.y1, other.y1))
+                if gap_x <= proximity and gap_y <= proximity:
+                    cluster.append(other)
+                    used[j] = True
+                    frontier.append(other)
+        clusters.append(cluster)
+    return clusters
+
+
+# ---------------------------------------------------------------------------
+# Source B — Vector drawing detection
+# ---------------------------------------------------------------------------
+
+def collect_vector_drawing_candidates(
+    page: Any,
+    page_number: int,
+    page_bbox: BBox,
+    text_blocks: list[LayoutTextBlock],
+) -> list[FigureCandidate]:
+    """
+    Detect figure candidates from vector drawings (page.get_drawings).
+
+    Clusters drawing paths into figure regions, rejecting table borders,
+    tiny decorative elements, and drawing clusters that mostly overlay text.
+    _VECTOR_MIN_PATHS and _VECTOR_CLUSTER_PROXIMITY are configurable constants.
+    """
+    try:
+        drawings = page.get_drawings()
+    except Exception:
+        return []
+
+    if not drawings:
+        return []
+
+    raw_rects: list[BBox] = []
+    for d in drawings:
+        rect = d.get("rect")
+        if rect is None:
+            continue
+        bbox = BBox(float(rect.x0), float(rect.y0), float(rect.x1), float(rect.y1))
+        if bbox.width < 8 or bbox.height < 8:
+            continue
+        # Skip near-horizontal rules (table borders, section dividers)
+        if bbox.height < 4.0 and bbox.width > 0.40 * page_bbox.width:
+            continue
+        # Skip near-vertical rules
+        if bbox.width < 4.0 and bbox.height > 0.40 * page_bbox.height:
+            continue
+        raw_rects.append(bbox)
+
+    if len(raw_rects) < _VECTOR_MIN_PATHS:
+        return []
+
+    clusters = _cluster_bboxes(raw_rects, proximity=_VECTOR_CLUSTER_PROXIMITY)
+
+    candidates: list[FigureCandidate] = []
+    for cluster in clusters:
+        if len(cluster) < _VECTOR_MIN_PATHS:
+            continue
+
+        envelope = BBox(
+            min(r.x0 for r in cluster),
+            min(r.y0 for r in cluster),
+            max(r.x1 for r in cluster),
+            max(r.y1 for r in cluster),
+        )
+        if envelope.width < _MIN_IMAGE_PT or envelope.height < _MIN_IMAGE_PT:
+            continue
+        if is_page_background(envelope, page_bbox):
+            continue
+        if _text_overlap_fraction(envelope, text_blocks) > _VECTOR_MAX_TEXT_OVERLAP:
+            continue
+
+        conf = min(0.90, 0.50 + (len(cluster) - _VECTOR_MIN_PATHS) * 0.02)
+        candidates.append(FigureCandidate(
+            bbox=envelope,
+            source_type="vector_drawing",
+            confidence=conf,
+        ))
+
+    return candidates
+
+
+# ---------------------------------------------------------------------------
+# Source C — Layout detection (DocLayout-YOLO with heuristic fallback)
+# ---------------------------------------------------------------------------
+
+_YOLO_MODEL: Any = None
+_YOLO_LOADED: bool = False
+
+
+def _load_doclayout_model() -> Any:
+    global _YOLO_MODEL, _YOLO_LOADED
+    if _YOLO_LOADED:
+        return _YOLO_MODEL
+    _YOLO_LOADED = True
+    try:
+        from doclayout_yolo import YOLOv10  # type: ignore[import]
+        _YOLO_MODEL = YOLOv10.from_pretrained("juliozhao/DocLayout-YOLO-DocStructBench")
+        logger.info("DocLayout-YOLO model loaded")
+    except Exception as exc:
+        logger.debug("DocLayout-YOLO unavailable (%s); heuristic fallback active", exc)
+        _YOLO_MODEL = None
+    return _YOLO_MODEL
+
+
+def _detect_with_yolo(
+    model: Any,
+    page: Any,
+    page_bbox: BBox,
+    render_scale: float,
+) -> list[FigureCandidate]:
+    import fitz
+    from io import BytesIO
+
+    try:
+        from PIL import Image as _PILImage
+        mat = fitz.Matrix(render_scale, render_scale)
+        pix = page.get_pixmap(matrix=mat, alpha=False)
+        pil_img = _PILImage.open(BytesIO(pix.tobytes("png")))
+    except Exception:
+        return []
+
+    try:
+        results = model.predict(pil_img, imgsz=1024, conf=0.20, verbose=False)
+    except Exception as exc:
+        logger.warning("DocLayout-YOLO predict failed: %s", exc)
+        return []
+
+    candidates: list[FigureCandidate] = []
+    _FIGURE_CLASSES = {"figure", "Figure", "picture", "Picture"}
+    for result in results:
+        for box in result.boxes:
+            cls_label = result.names.get(int(box.cls.item()), "")
+            if cls_label not in _FIGURE_CLASSES:
+                continue
+            conf = float(box.conf.item())
+            x1, y1, x2, y2 = box.xyxy[0].tolist()
+            pdf_bbox = BBox(x1 / render_scale, y1 / render_scale,
+                            x2 / render_scale, y2 / render_scale)
+            if is_page_background(pdf_bbox, page_bbox):
+                continue
+            candidates.append(FigureCandidate(
+                bbox=pdf_bbox,
+                source_type="layout_detected",
+                confidence=conf,
+            ))
+    return candidates
+
+
+def _detect_layout_heuristic(
+    page_number: int,
+    page_bbox: BBox,
+    text_blocks: list[LayoutTextBlock],
+) -> list[FigureCandidate]:
+    """
+    Heuristic layout detection: project figure zones above caption blocks.
+
+    Finds text-sparse regions (< 40% text coverage) that sit above a detected
+    figure-marker caption. Used when DocLayout-YOLO is not installed.
+    """
+    captions = detect_captions_from_blocks(page_number, text_blocks)
+    candidates: list[FigureCandidate] = []
+    for cap in captions:
+        fig_y1 = cap.bbox.y0
+        fig_y0 = max(page_bbox.y0, fig_y1 - 300.0)
+        fig_x0 = max(page_bbox.x0, cap.bbox.x0 - 20.0)
+        fig_x1 = min(page_bbox.x1, cap.bbox.x1 + 20.0)
+        zone = BBox(fig_x0, fig_y0, fig_x1, fig_y1)
+        if zone.width < 40.0 or zone.height < 40.0:
+            continue
+        if is_page_background(zone, page_bbox):
+            continue
+        if _text_overlap_fraction(zone, text_blocks) >= 0.40:
+            continue
+        candidates.append(FigureCandidate(
+            bbox=zone,
+            source_type="layout_detected",
+            confidence=0.35,
+        ))
+    return candidates
+
+
+def detect_layout_regions(
+    page: Any,
+    page_number: int,
+    page_bbox: BBox,
+    text_blocks: list[LayoutTextBlock],
+    render_scale: float = _LAYOUT_RENDER_SCALE,
+) -> list[FigureCandidate]:
+    """Try YOLO layout detection; fall back to caption-zone heuristic."""
+    model = _load_doclayout_model()
+    if model is not None:
+        return _detect_with_yolo(model, page, page_bbox, render_scale)
+    return _detect_layout_heuristic(page_number, page_bbox, text_blocks)
+
+
+# ---------------------------------------------------------------------------
+# Stage 3 — Multi-source candidate merging
+# ---------------------------------------------------------------------------
+
+def merge_figure_candidates(
+    sources_dict: dict[str, list[FigureCandidate]],
+    page_bbox: BBox,
+) -> list[FigureCandidate]:
+    """
+    Merge figure candidates from Sources A/B/C into a deduplicated list.
+
+    Uses score-based comparison (confidence + source weight) so a
+    high-confidence layout detection can beat a low-confidence embedded
+    image, rather than blindly preferring by source type.
+    """
+    all_candidates: list[FigureCandidate] = []
+    for src_list in sources_dict.values():
+        all_candidates.extend(src_list)
+
+    # Background rejection pass
+    all_candidates = [c for c in all_candidates
+                      if not is_page_background(c.bbox, page_bbox)]
+
+    # Sort by merge_score descending — highest score wins ties
+    all_candidates.sort(key=lambda c: c.merge_score, reverse=True)
+
+    kept: list[FigureCandidate] = []
+    for candidate in all_candidates:
+        absorbed = False
+        for i, existing in enumerate(kept):
+            iou = _bbox_iou(candidate.bbox, existing.bbox)
+            if iou >= _MERGE_IOU_THRESHOLD:
+                absorbed = True
+                break
+            # Containment: candidate is mostly inside existing
+            inter = _bbox_intersection_area(candidate.bbox, existing.bbox)
+            if candidate.bbox.area > 0:
+                if inter / candidate.bbox.area >= _MERGE_CONTAINMENT_THRESHOLD:
+                    absorbed = True
+                    break
+            # Reverse containment: existing mostly inside candidate
+            # If candidate scores higher, replace the existing entry
+            if existing.bbox.area > 0:
+                if inter / existing.bbox.area >= _MERGE_CONTAINMENT_THRESHOLD:
+                    if candidate.merge_score > existing.merge_score:
+                        kept[i] = candidate
+                    absorbed = True
+                    break
+        if not absorbed:
+            kept.append(candidate)
+
+    return kept
+
+
+# ---------------------------------------------------------------------------
+# Region renderer for non-embedded candidates (Sources B and C)
+# ---------------------------------------------------------------------------
+
+def _render_region(
+    page: Any,
+    bbox: BBox,
+    *,
+    render_scale: float = _RENDER_MATRIX_SCALE,
+) -> bytes | None:
+    """Rasterize a PDF page region to JPEG bytes."""
+    import fitz
+    from app.services.image_service.textbook_image_display import normalize_image_blob
+
+    clip = fitz.Rect(bbox.x0, bbox.y0, bbox.x1, bbox.y1)
+    try:
+        mat = fitz.Matrix(render_scale, render_scale)
+        pix = page.get_pixmap(matrix=mat, clip=clip, alpha=False)
+        w, h = pix.width, pix.height
+        if w * h < _MIN_PIXEL_AREA or w < _MIN_PIXEL_DIM or h < _MIN_PIXEL_DIM:
+            return None
+        blob = pix.tobytes("jpeg")
+        return blob if normalize_image_blob(blob) else None
+    except Exception:
+        return None
+
+
+# ---------------------------------------------------------------------------
 
 def pair_images_to_captions(
     images: list[tuple[LayoutImage, bytes]],
@@ -635,16 +1026,27 @@ def _bbox_union(a: BBox, b: BBox) -> BBox:
 
 
 def detect_section_titles_from_blocks(text_blocks: list[LayoutTextBlock]) -> tuple[str | None, str | None]:
-    """Heading detection from layout blocks (position + shape)."""
+    """
+    Heading detection from layout blocks (position + shape).
+
+    Detects:
+      - Numbered headings: "2.1 Title" / "2.1.3 Title"
+      - ALL-CAPS headings: "WEATHER STATIONS"
+      - Lettered sub-sections: "a) Temperature" / "b)\t Precipitation"
+        (common in NCERT / CBSE textbooks for topic sub-divisions)
+    """
     section: str | None = None
     subsection: str | None = None
     _NUMBERED_HEADING_RE = re.compile(r"^(\d+(?:\.\d+){0,2})\s+([A-Z][A-Za-z0-9 ,\-/]{3,70})$")
     _CAPS_HEADING_RE = re.compile(r"^[A-Z][A-Z\s\-/]{5,70}$")
+    # Matches "a) Temperature", "b)\t Precipitation", "c)  Atmospheric pressure"
+    _LETTERED_HEADING_RE = re.compile(r"^[a-e]\)[\s\t]+([A-Z][A-Za-z ]{2,40})$")
 
     for block in sorted(text_blocks, key=lambda b: b.bbox.y0):
         line = block.text.strip()
         if not line or len(line) > 80 or line.endswith("."):
             continue
+
         m = _NUMBERED_HEADING_RE.match(line)
         if m:
             level = m.group(1).count(".")
@@ -654,9 +1056,105 @@ def detect_section_titles_from_blocks(text_blocks: list[LayoutTextBlock]) -> tup
             elif level == 2 and subsection is None:
                 subsection = title
             continue
+
         if _CAPS_HEADING_RE.match(line) and len(line) >= 6 and section is None:
             section = line.title()
+            continue
+
+        # Lettered sub-section (e.g. "b) Precipitation") → subsection title
+        m2 = _LETTERED_HEADING_RE.match(line)
+        if m2 and subsection is None:
+            subsection = m2.group(1).strip()
+
     return section, subsection
+
+
+def _find_figure_top_y(
+    text_blocks: list["LayoutTextBlock"],
+    caption_y0: float,
+    page_y0: float,
+    *,
+    max_height: float = 320.0,
+) -> float:
+    """
+    Find the y-coordinate of the nearest section/subsection heading above
+    the caption.  The figure lives between this heading and the caption.
+
+    Falls back to `caption_y0 - max_height` when no heading is found.
+    """
+    nearest_heading_y0 = None
+    for block in text_blocks:
+        by0 = block.bbox.y0
+        if by0 >= caption_y0:
+            continue
+        text = block.text.strip()
+        # Lettered subsections ("b) Precipitation") or ALL-CAPS headings
+        if re.match(r"^[a-e]\)[\s\t]", text) or re.match(r"^[A-Z][A-Z\s\-/]{4,}", text):
+            if nearest_heading_y0 is None or by0 > nearest_heading_y0:
+                nearest_heading_y0 = by0
+
+    if nearest_heading_y0 is not None:
+        return max(page_y0, nearest_heading_y0 - 8.0)
+
+    return max(page_y0, caption_y0 - max_height)
+
+
+def _render_figure_crop_for_caption(
+    page: Any,
+    caption_bbox: BBox,
+    page_bbox: BBox,
+    text_blocks: "list[LayoutTextBlock] | None" = None,
+    *,
+    render_matrix_scale: float = _RENDER_MATRIX_SCALE,
+) -> bytes | None:
+    """
+    Render a focused crop of the PDF page containing only the figure above
+    a caption.
+
+    Used when the figure lives inside a full-page raster (recurring template)
+    rather than its own XObject.  Two-pass strategy:
+
+    Vertical extent
+      Top: nearest section/subsection heading above the caption (e.g. the
+        "b) Precipitation" line).  This excludes tables or earlier figures
+        that appear above the heading.  Falls back to 320 pt above caption.
+      Bottom: caption top edge.
+
+    Horizontal extent
+      Start at 50 % of page width to stay in the right-hand column where
+      most NCERT diagrams are placed, avoiding the left body-text column.
+      End at the right page margin.
+
+    Returns JPEG bytes, or None if the crop is too small or rendering fails.
+    """
+    import fitz
+
+    from app.services.image_service.textbook_image_display import normalize_image_blob
+
+    fig_y0 = _find_figure_top_y(
+        text_blocks or [], caption_bbox.y0, page_bbox.y0
+    )
+    fig_y1 = caption_bbox.y0
+
+    # Right half of the page: avoids the left body-text column entirely.
+    # NCERT two-column pages place the diagram in the right ~50 % of the page.
+    fig_x0 = max(caption_bbox.x0, page_bbox.width * 0.50)
+    fig_x1 = page_bbox.x1
+
+    if fig_y1 - fig_y0 < 40 or fig_x1 - fig_x0 < 40:
+        return None
+
+    clip = fitz.Rect(fig_x0, fig_y0, fig_x1, fig_y1)
+
+    try:
+        mat = fitz.Matrix(render_matrix_scale, render_matrix_scale)
+        pix = page.get_pixmap(matrix=mat, clip=clip, alpha=False)
+        if pix.width * pix.height < 8000:
+            return None
+        blob = pix.tobytes("jpeg")
+        return blob if normalize_image_blob(blob) else None
+    except Exception:
+        return None
 
 
 def build_figure_context_layout(
@@ -689,8 +1187,31 @@ def extract_document_layout(
     chapter_title: str | None = None,
 ) -> DocumentExtractionResult:
     """
-    Extract all teaching figures from a PDF using layout-aware pairing.
+    Extract teaching figures via caption-anchored reconstruction.
+
+    Each Fig./Diagram anchor defines a search region; embedded images, vectors,
+    and layout boxes are fused, padded, and rendered as one page region (3×).
     """
+    from app.services.image_service.figure_reconstruction import (
+        extract_document_by_caption_anchors,
+    )
+
+    return extract_document_by_caption_anchors(
+        pdf_path,
+        max_pages=max_pages,
+        max_figures=max_figures,
+        chapter_title=chapter_title,
+    )
+
+
+def _extract_document_layout_legacy(
+    pdf_path: str,
+    *,
+    max_pages: int | None = None,
+    max_figures: int = 96,
+    chapter_title: str | None = None,
+) -> DocumentExtractionResult:
+    """Legacy image-object-first pipeline (kept for reference / debugging)."""
     import fitz
 
     doc = fitz.open(pdf_path)
@@ -715,12 +1236,84 @@ def extract_document_layout(
             log = PageExtractionLog(page_number=page_number)
             text_blocks = collect_text_blocks(page, page_number)
             captions = detect_captions_from_blocks(page_number, text_blocks)
-            images_with_blobs, tentative_images, bg_removed = collect_images(
+
+            # --- Stage 2: Multi-source figure discovery ---
+
+            # Source A: embedded raster images
+            embedded_raw, tentative_images, bg_removed = collect_images(
                 page,
                 page_number,
                 page_bbox,
                 recurring_template_keys=recurring_keys,
             )
+            embedded_candidates = [
+                FigureCandidate(
+                    bbox=img.bbox,
+                    source_type="embedded_image",
+                    confidence=1.0,
+                    image_bytes=blob,
+                    xref=img.xref,
+                    pixel_width=img.pixel_width,
+                    pixel_height=img.pixel_height,
+                )
+                for img, blob in embedded_raw
+            ]
+
+            # Source B: vector drawing regions
+            vector_candidates = collect_vector_drawing_candidates(
+                page, page_number, page_bbox, text_blocks
+            )
+
+            # Source C: layout-detected regions (YOLO or heuristic)
+            layout_candidates = detect_layout_regions(
+                page, page_number, page_bbox, text_blocks
+            )
+
+            # --- Stage 3: Merge candidates ---
+            merged = merge_figure_candidates(
+                {
+                    "embedded": embedded_candidates,
+                    "vector": vector_candidates,
+                    "layout": layout_candidates,
+                },
+                page_bbox,
+            )
+
+            # Render image bytes for non-embedded candidates that survived merging
+            for c in merged:
+                if c.image_bytes is None:
+                    c.image_bytes = _render_region(page, c.bbox)
+                    if c.image_bytes is not None:
+                        import fitz as _fitz
+                        mat = _fitz.Matrix(_RENDER_MATRIX_SCALE, _RENDER_MATRIX_SCALE)
+                        try:
+                            pix = page.get_pixmap(
+                                matrix=mat,
+                                clip=_fitz.Rect(c.bbox.x0, c.bbox.y0, c.bbox.x1, c.bbox.y1),
+                                alpha=False,
+                            )
+                            c.pixel_width = pix.width
+                            c.pixel_height = pix.height
+                        except Exception:
+                            pass
+
+            # Reconstruct images_with_blobs (LayoutImage, bytes) for existing pairing logic
+            images_with_blobs: list[tuple[LayoutImage, bytes]] = []
+            # Also keep a parallel candidate list to retrieve source_type / confidence later
+            active_candidates: list[FigureCandidate] = []
+            for idx, c in enumerate(merged):
+                if c.image_bytes is None:
+                    continue
+                lim = LayoutImage(
+                    page_number=page_number,
+                    image_index_on_page=idx,
+                    bbox=c.bbox,
+                    xref=c.xref,
+                    pixel_width=c.pixel_width,
+                    pixel_height=c.pixel_height,
+                )
+                images_with_blobs.append((lim, c.image_bytes))
+                active_candidates.append(c)
 
             log.backgrounds_removed = bg_removed
             log.images_found = len(images_with_blobs)
@@ -741,13 +1334,33 @@ def extract_document_layout(
                 extra_assignments, extra_orphan_i, extra_orphan_j = pair_images_to_captions(
                     tentative_images, orphan_caps, page_bbox=page_bbox
                 )
-                # Translate extra_assignments back to original caption indices
+                # Translate extra_assignments back to original caption indices.
+                # For each rescued figure, render a focused crop of the page
+                # (region above the caption) instead of the full content-area
+                # raster — otherwise we'd extract the entire page as one image.
                 for ti, oci, dist in extra_assignments:
                     orig_cap_idx = orphan_j[oci]
-                    # Append the tentative image to images_with_blobs
+                    tentative_img, tentative_blob = tentative_images[ti]
+                    cap_for_crop = captions[orig_cap_idx]
+
+                    focused_blob = _render_figure_crop_for_caption(
+                        page, cap_for_crop.bbox, page_bbox, text_blocks
+                    )
+                    use_blob = focused_blob if focused_blob else tentative_blob
+
                     new_img_idx = len(images_with_blobs)
-                    images_with_blobs.append(tentative_images[ti])
+                    images_with_blobs.append((tentative_img, use_blob))
                     assignments.append((new_img_idx, orig_cap_idx, dist))
+                    # Track candidate for rescued recurring images
+                    active_candidates.append(FigureCandidate(
+                        bbox=tentative_img.bbox,
+                        source_type="embedded_image",
+                        confidence=0.70,
+                        image_bytes=use_blob,
+                        xref=tentative_img.xref,
+                        pixel_width=tentative_img.pixel_width,
+                        pixel_height=tentative_img.pixel_height,
+                    ))
                 # Update orphan_j to only truly-unmatched captions
                 matched_oci = {oci for _, oci, _ in extra_assignments}
                 orphan_j = [j for pos, j in enumerate(orphan_j) if pos not in matched_oci]
@@ -766,9 +1379,9 @@ def extract_document_layout(
                     break
                 img, blob = images_with_blobs[img_idx]
                 cap = captions[cap_idx]
-                conf = pairing_confidence_from_distance(dist)
+                pairing_conf = pairing_confidence_from_distance(dist)
                 flags: list[str] = []
-                if conf < 0.35:
+                if pairing_conf < 0.35:
                     flags.append("low_pairing_confidence")
                 if dist > 180:
                     flags.append("suspicious_pairing_distance")
@@ -776,7 +1389,7 @@ def extract_document_layout(
                         {
                             "figure_number": cap.figure_number,
                             "distance": round(dist, 1),
-                            "confidence": round(conf, 3),
+                            "confidence": round(pairing_conf, 3),
                         }
                     )
 
@@ -811,9 +1424,15 @@ def extract_document_layout(
                         "image_bbox": img.bbox.to_list(),
                         "caption_bbox": cap.bbox.to_list(),
                         "pairing_distance": round(dist, 1),
-                        "pairing_confidence": round(conf, 3),
+                        "pairing_confidence": round(pairing_conf, 3),
                     }
                 )
+
+                # Retrieve candidate metadata (source_type, detection confidence)
+                cand = active_candidates[img_idx] if img_idx < len(active_candidates) else None
+                src_type = cand.source_type if cand else "embedded_image"
+                det_conf = cand.confidence if cand else 1.0
+                page_cov = round(min(1.0, img.bbox.area / page_bbox.area), 4) if page_bbox.area > 0 else 0.0
 
                 figures.append(
                     PairedFigure(
@@ -826,13 +1445,17 @@ def extract_document_layout(
                         image_bbox=img.bbox,
                         caption_bbox=cap.bbox,
                         pairing_distance=dist,
-                        pairing_confidence=conf,
+                        pairing_confidence=pairing_conf,
                         image_bytes=blob,
                         nearby_before=before,
                         nearby_after=after,
                         section_title=sec,
                         subsection_title=subsec,
                         validation_flags=flags,
+                        source_type=src_type,
+                        caption_source="detected",
+                        page_coverage=page_cov,
+                        confidence=det_conf,
                     )
                 )
                 global_seq += 1

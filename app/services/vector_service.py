@@ -275,6 +275,57 @@ def retrieve_from_collection(
         return []
 
 
+def fetch_chapter_chunks(
+    collection_name: str,
+    chapter_ids: list[str],
+    *,
+    limit: int = 500,
+) -> list:
+    """Load all embedded chunks for the given textbook upload IDs (for heading-aware RAG)."""
+    if not chapter_ids:
+        return []
+
+    _sanitize_chroma_env()
+    try:
+        import chromadb
+        from langchain_core.documents import Document
+
+        client = chromadb.PersistentClient(path=CHROMA_PATH)
+        coll = client.get_collection(collection_name)
+        if len(chapter_ids) == 1:
+            where_filter = {"textbook_upload_id": chapter_ids[0]}
+        else:
+            where_filter = {"textbook_upload_id": {"$in": chapter_ids}}
+
+        result = coll.get(
+            where=where_filter,
+            include=["documents", "metadatas"],
+            limit=limit,
+        )
+        docs_raw = result.get("documents") or []
+        metas = result.get("metadatas") or []
+        out: list[Document] = []
+        for text, meta in zip(docs_raw, metas):
+            if text:
+                out.append(Document(page_content=text, metadata=meta or {}))
+        out.sort(
+            key=lambda d: (
+                int((d.metadata or {}).get("page", 0) or 0),
+                (d.metadata or {}).get("section_number") or "",
+            )
+        )
+        logger.debug(
+            "[FETCH] collection=%r uploads=%d chunks=%d",
+            collection_name,
+            len(chapter_ids),
+            len(out),
+        )
+        return out
+    except Exception as exc:
+        logger.warning("fetch_chapter_chunks failed: %s", exc)
+        return []
+
+
 def delete_collection_docs(collection_name: str, *, where_filter: dict | None = None) -> None:
     """Delete documents from a collection, optionally matching a metadata filter."""
     _sanitize_chroma_env()

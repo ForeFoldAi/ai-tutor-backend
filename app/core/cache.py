@@ -39,8 +39,8 @@ def get_redis() -> aioredis.Redis:
 
 
 def _make_key(collection: str, chapter_ids: list[str] | None, query: str) -> str:
-    # v6: guaranteed citation-page figures + bootstrap image retrieval.
-    canonical = f"v6|{collection}|{','.join(sorted(chapter_ids or []))}|{query.strip().lower()}"
+    # v13: fix weather scope + minimal_cap image filter crash.
+    canonical = f"v13|{collection}|{','.join(sorted(chapter_ids or []))}|{query.strip().lower()}"
     digest = hashlib.sha256(canonical.encode()).hexdigest()
     return f"tutor:qa:{digest}"
 

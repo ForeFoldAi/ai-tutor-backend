@@ -29,7 +29,15 @@ def _section_hint(content: str) -> str | None:
             return None
         if re.search(r"chapter\s*\d+", line, re.I):
             return line[:160]
-        if re.match(r"^\d+(\.\d+)*\s+\S", line):
+        m = re.match(r"^(\d+(?:\.\d+)*)\s+(\S.+)$", line)
+        if m:
+            num = m.group(1)
+            if "." not in num:
+                try:
+                    if int(num) >= 20:
+                        continue
+                except ValueError:
+                    pass
             return line[:160]
         if len(line) <= 80 and line.replace(" ", "").isalpha() and line.isupper():
             return line[:160]
@@ -133,4 +141,7 @@ def process_document(
     splitter = _get_splitter()
     chunks = splitter.split_documents(raw_docs)
     _enrich_metadata(chunks, source, extra_metadata)
+    from app.services.section_heading import enrich_chunks_with_section_metadata
+
+    enrich_chunks_with_section_metadata(chunks)
     return chunks

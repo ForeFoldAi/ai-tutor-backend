@@ -163,6 +163,7 @@ async def chapter_voice_stream(req: ChapterVoiceRequest):
             chapter=req.chapter,
             chapter_names=req.chapter_names,
             emit_related_images=emit_imgs,
+            voice_mode=True,
         ):
             while side_frames:
                 yield side_frames.pop(0)

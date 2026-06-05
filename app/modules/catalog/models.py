@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 
-from sqlalchemy import Boolean, DateTime, Enum, Float, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, Float, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -159,6 +159,14 @@ class TextbookImage(Base):
     grade_level: Mapped[str | None] = mapped_column(String(12), nullable=True)
     subject: Mapped[str | None] = mapped_column(String(120), nullable=True)
     ocr_text: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Production extraction fields (migration 0016)
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    educational_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    concept_tags: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    phash: Mapped[int | None] = mapped_column(BigInteger, nullable=True, index=True)
+    source_type: Mapped[str | None] = mapped_column(String(32), nullable=True, default="embedded_image")
+    caption_source: Mapped[str | None] = mapped_column(String(32), nullable=True, default="none")
+    page_coverage: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
 
     upload: Mapped["TextbookUpload"] = relationship("TextbookUpload", back_populates="images")

@@ -36,6 +36,15 @@ def test_explain_topic_allows_images():
     assert should_retrieve_images(ctx, chapter_ids=["ch1"])
 
 
+def test_what_are_weather_instruments_allows_images():
+    ctx = resolve_conversation_context("What are the Weather Instruments")
+    assert ctx.visual_intent != VisualIntent.NO_VISUALS
+    assert should_retrieve_images(ctx, chapter_ids=["ch1"])
+    assert should_retrieve_images(
+        ctx, chapter_ids=["ch1"], heading_scope_kind="main_section"
+    )
+
+
 def test_visual_request_required():
     ctx = resolve_conversation_context("Show me a diagram of photosynthesis")
     assert ctx.visual_intent == VisualIntent.REQUIRED_VISUALS

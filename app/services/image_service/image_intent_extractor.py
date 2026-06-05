@@ -393,11 +393,23 @@ def extract_image_intent(
     query_type = _classify_query_type(effective_question)
     preferred_types, excluded_types = _get_type_preferences(effective_question, query_type)
 
-    # Broad definition queries ("what is weather?") should not pull instruments/AWS.
+    # Broad atmospheric definition queries ("what is weather?") should not pull
+    # instruments/AWS — those are taught in later measurement sections.
+    # Exception: measurement-centric concepts like "precipitation" and "rainfall"
+    # ARE taught via their measuring instruments (rain gauge, barometer), so
+    # "instrument" must NOT be excluded for those concepts.
     _broad_definition_cores = frozenset({
-        "weather", "climate", "monsoon", "rainfall", "temperature", "precipitation",
+        "weather", "climate", "monsoon", "temperature",
     })
-    if query_type == "concept_definition" and core_concept.lower() in _broad_definition_cores:
+    _measurement_concepts = frozenset({
+        "precipitation", "rainfall", "humidity", "wind", "pressure",
+        "atmospheric pressure", "air pressure",
+    })
+    if (
+        query_type == "concept_definition"
+        and core_concept.lower() in _broad_definition_cores
+        and core_concept.lower() not in _measurement_concepts
+    ):
         if not re.search(
             r"\b(station|aws|instrument|sensor|gauge|anemometer|meteorological)\b",
             effective_question,

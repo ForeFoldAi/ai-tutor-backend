@@ -4,8 +4,9 @@ AI Tutor chat service.
 Key improvements over the original:
 - Fully async: uses httpx.AsyncClient instead of requests (no event-loop blocking)
 - Streaming: stream_chapter_qa() yields tokens for StreamingResponse
-- Grade-aware prompt: adapts language complexity to class level (1-10)
-- Answer-type detection: one-word / definition / stepwise / paragraph / exam-format
+- Grade-aware prompt: adapts language complexity to class level (1-12)
+- Tiered answer format: direct prose by default; full emoji sections only for exam/long requests
+- Answer-type detection: honors brief/one-word and question intent (not every "what is" → essay)
 - Redis cache: repeated questions answered instantly at zero LLM cost
 - Fallback: keyword-chunk answer when Mistral key is missing
 """
@@ -61,14 +62,22 @@ _GREETING_PATTERNS = re.compile(
     r"can you help|are you (there|ready|a bot|ai|real))\b",
     re.I,
 )
-_ONE_WORD_PATTERNS = re.compile(
-    r"\b(who (is|was|invented|discovered|founded)|"
-    r"when (was|did|is)|"
-    r"which (country|city|element|planet|organ)|"
-    r"name (the|a|an|one)\b|"
-    r"capital of|"
-    r"symbol (of|for)|"
-    r"formula (of|for))\b",
+_EXPLICIT_ONE_WORD = re.compile(
+    r"\b(one word|single word|in one word|just the word|one-word answer)\b",
+    re.I,
+)
+_EXPLICIT_BRIEF = re.compile(
+    r"\b(one line|one-liner|very brief|just one sentence|only one sentence)\b",
+    re.I,
+)
+_EXPLICIT_SHORT = re.compile(
+    r"\b("
+    r"in short|short answer|short version|keep (it )?short|make (it )?short|"
+    r"briefly|be brief|tell me briefly|quick answer|just briefly|in brief|"
+    r"very short(?:\s+answer)?|answer in short|explain in short|"
+    r"(?:give|want|need)\s+(?:me\s+)?(?:a\s+)?short|"
+    r"only\s+short|shortly"
+    r")\b",
     re.I,
 )
 _EXAM_PATTERNS = re.compile(
@@ -86,8 +95,8 @@ _SIMPLE_PATTERNS = re.compile(
     r"explain simply|layman)\b",
     re.I,
 )
-_DEFINITION_STARTS = re.compile(
-    r"^(define|what is|what are|meaning of|definition of)\b",
+_CONCEPT_STARTS = re.compile(
+    r"^(what is|what are|meaning of|definition of|define)\b",
     re.I,
 )
 _EXPLAIN_PATTERNS = re.compile(
@@ -115,56 +124,102 @@ def detect_answer_type(query: str) -> str:
         return "stepwise"
     if _SIMPLE_PATTERNS.search(q):
         return "simplified"
-    if _ONE_WORD_PATTERNS.search(q):
+    if _EXPLICIT_ONE_WORD.search(q):
         return "one-word"
-    if _DEFINITION_STARTS.match(q):
-        return "definition"
+    # Honor explicit short/brief requests before "what is …" → full teaching mode
+    if _EXPLICIT_SHORT.search(q) or _EXPLICIT_BRIEF.search(q):
+        return "brief"
+    # Simple "what is X?" → direct answer; deep explain / exam → longer formats
+    if _CONCEPT_STARTS.match(q):
+        if _EXPLAIN_PATTERNS.search(q) or _EXAM_PATTERNS.search(q):
+            return "paragraph"
+        return "short-answer"
     if _EXPLAIN_PATTERNS.search(q):
         return "paragraph"
     return "short-answer"
 
+
+_COMPACT_TYPES = frozenset({"greeting", "one-word", "brief"})
+# Only exam-style questions use the five emoji section template
+_FULL_STRUCTURE_TYPES = frozenset({"exam-format"})
+
+
+def _structure_tier(answer_type: str) -> str:
+    if answer_type in _COMPACT_TYPES:
+        return "compact"
+    if answer_type in _FULL_STRUCTURE_TYPES:
+        return "full"
+    return "direct"
+
+
+_ANSWER_MIN_WORDS: dict[str, int] = {
+    "one-word": 1,
+    "brief": 15,
+    "greeting": 40,
+    "short-answer": 70,
+    "concept": 100,
+    "definition": 100,
+    "paragraph": 120,
+    "stepwise": 150,
+    "bullet-points": 100,
+    "simplified": 90,
+    "exam-format": 280,
+}
 
 _ANSWER_INSTRUCTIONS: dict[str, str] = {
     "one-word": (
         "Give ONE word or a very short phrase (2-3 words max) only. "
         "No sentence. No explanation. Just the answer."
     ),
+    "brief": (
+        "The student explicitly asked for a SHORT answer. Give 2-4 clear sentences only "
+        "(about 25-60 words total). Plain prose only — NO emoji section headers, "
+        "NO numbered lists, NO bullet points, NO Quick Check, NO follow-up question. "
+        "You may start with a friendly opener like 'Sure!' then answer directly."
+    ),
+    "concept": (
+        "Write at least {min_words} words in clear flowing paragraphs. "
+        "Define the idea, explain why it matters, give one real-life example. "
+        "NO emoji section headers (no 🌱 Concept Overview, etc.). "
+        "You may use a short bullet list only if it genuinely helps."
+    ),
     "definition": (
-        "Give exactly ONE clear, simple sentence that defines the term. "
-        "Keep it natural and easy to understand."
+        "Write at least {min_words} words: definition first, then a short explanation and one example. "
+        "Plain prose only — NO emoji section headers."
     ),
     "stepwise": (
-        "Explain step by step. Number each step clearly (Step 1, Step 2, ...). "
-        "Keep each step short, simple, and easy to follow."
+        "Write at least {min_words} words. Explain step by step (Step 1, Step 2, ...). "
+        "Plain headings only — NO emoji section headers. End with one short check question."
     ),
     "paragraph": (
-        "Write a clear, friendly paragraph of 3-4 sentences. "
-        "Use simple language. Add a relatable example if it helps."
+        "Write at least {min_words} words in 2-4 clear paragraphs. "
+        "Cover the main idea, how it works, and one example. "
+        "NO emoji section headers. No padded sections."
     ),
     "exam-format": (
-        "Write a well-structured answer suitable for an exam:\n"
-        "- Start with a one-line introduction.\n"
-        "- Give 4-6 numbered key points, each as a complete sentence.\n"
-        "- End with a one-line conclusion.\n"
-        "Keep the language clear and academic but not robotic."
+        "MANDATORY: Write at least {min_words} words. Use the FULL five-section exam format with emoji headers: "
+        "🌱 Concept Overview, 📚 Detailed Explanation, 🌍 Real-Life Example, "
+        "📝 Key Points to Remember (3-5 bullets), ❓ Quick Check."
     ),
     "simplified": (
-        "Use the simplest everyday words possible. Very short sentences. "
-        "No technical terms. Explain like you are talking to a young child. "
-        "Add a fun or relatable example."
+        "Write at least {min_words} words using the simplest everyday words. "
+        "2-3 short paragraphs, one example — NO emoji section headers."
     ),
     "bullet-points": (
-        "Answer using clear bullet points. "
-        "Each bullet should be one short, complete idea."
+        "Write at least {min_words} words. Lead with a one-sentence intro, then use a clear bullet list "
+        "for the main points and one short closing sentence. NO emoji section headers."
     ),
     "short-answer": (
-        "Answer in 2-3 short, clear sentences. Be direct and friendly."
+        "Write a clear, direct answer of about {min_words} words (roughly 2-4 short paragraphs). "
+        "Answer the question first, then add one helpful example if useful. "
+        "NO emoji section headers, NO Quick Check section, NO five-part template. "
+        "Do NOT use labels like 'Concept Overview' or 'Key Points to Remember'."
     ),
     "greeting": (
-        "The student is greeting or making small talk. Reply WARMLY and VERY BRIEFLY "
-        "(1-2 sentences max) in a friendly teacher tone. "
-        "Then gently guide them back to the current chapter with ONE short invite. "
-        "Example: 'Hi! Great to see you. Ready to explore {subject} today? Ask me anything about {chapter}!' "
+        "The student is greeting or making small talk. Greet them personally by first name. "
+        "Reply WARMLY and BRIEFLY (2-3 sentences max) in a friendly teacher tone. "
+        "Example: 'Hello {student_name}! Welcome back. I'm your AI Tutor. "
+        "What would you like to learn today? Feel free to ask anything from {subject} or {chapter}!' "
         "Never become a social chatbot. Always stay as a helpful tutor."
     ),
 }
@@ -182,6 +237,8 @@ _GRADE_LABELS: dict[str, str] = {
     "CLASS_8": "Class 8 (age 13-14)",
     "CLASS_9": "Class 9 (age 14-15)",
     "CLASS_10": "Class 10 (age 15-16)",
+    "CLASS_11": "Class 11 (age 16-17)",
+    "CLASS_12": "Class 12 (age 17-18)",
 }
 
 _GRADE_COMPLEXITY: dict[str, str] = {
@@ -235,58 +292,177 @@ _GRADE_COMPLEXITY: dict[str, str] = {
         "Use correct technical terms. Give thorough, well-structured answers. "
         "Tone should be clear, confident, and exam-ready."
     ),
+    "CLASS_11": (
+        "Provide deeper conceptual understanding for a 16-17-year-old. "
+        "Use advanced terminology where appropriate. Explain reasoning and links between ideas. "
+        "Prepare for competitive exams and higher studies."
+    ),
+    "CLASS_12": (
+        "Provide deeper conceptual understanding for a 17-18-year-old. "
+        "Use advanced terminology where appropriate. Explain reasoning and relationships between concepts. "
+        "Prepare for board exams, competitive exams, and higher studies."
+    ),
 }
 
-_SYSTEM_PROMPT_TEMPLATE = """\
-You are a friendly AI Tutor for school students from Class 1 to Class 10.
-Your goal is to help students learn easily, clearly, and confidently — like a kind, patient teacher.
+_CLASS_BAND_RULES: dict[str, str] = {
+    "1-5": (
+        "Classes 1-5: Use simple language and everyday examples. "
+        "Keep explanations short and fun. Avoid technical terminology."
+    ),
+    "6-8": (
+        "Classes 6-8: Use moderate detail. Introduce basic scientific and academic terms. "
+        "Include relatable examples."
+    ),
+    "9-10": (
+        "Classes 9-10: Provide detailed explanations and underlying concepts. "
+        "Include exam-oriented points and real-world applications."
+    ),
+    "11-12": (
+        "Classes 11-12: Provide deeper conceptual understanding. "
+        "Use advanced terminology where appropriate. Explain reasoning and concept relationships."
+    ),
+}
 
-STUDENT DETAILS:
-- Class: {grade_label}
+
+def _student_first_name(full_name: str) -> str:
+    name = (full_name or "").strip()
+    if not name:
+        return "there"
+    return name.split()[0]
+
+
+def build_session_greeting(
+    *,
+    student_name: str = "",
+    subject_name: str = "",
+    chapter: str = "",
+    chapter_names: list[str] | None = None,
+) -> str:
+    """Personalized welcome when a student taps Start Learning."""
+    first = _student_first_name(student_name)
+    subject = (subject_name or "").strip() or "your subject"
+    names = [n.strip() for n in (chapter_names or []) if n and str(n).strip()]
+    if not names and chapter:
+        names = [chapter.strip()]
+    if names:
+        if len(names) == 1:
+            scope = f"about {names[0]} in {subject}"
+        elif len(names) == 2:
+            scope = f"about {names[0]} and {names[1]} in {subject}"
+        else:
+            scope = f"about {names[0]}, {names[1]}, and more in {subject}"
+    else:
+        scope = f"from your {subject} textbook"
+    return (
+        f"Hello {first}! Welcome back. I'm your AI Tutor. "
+        f"What would you like to learn today? "
+        f"Feel free to ask any question {scope}, from your homework, or about topics you're curious about."
+    )
+
+
+def _class_band(class_level: str) -> str:
+    m = re.search(r"(\d+)", class_level or "")
+    if not m:
+        return "6-8"
+    n = int(m.group(1))
+    if n <= 5:
+        return "1-5"
+    if n <= 8:
+        return "6-8"
+    if n <= 10:
+        return "9-10"
+    return "11-12"
+
+
+_SYSTEM_PROMPT_TEMPLATE = """\
+You are an AI Tutor designed specifically for school students.
+Your purpose is not only to answer questions but to help students understand concepts deeply —
+like a caring teacher explaining step by step.
+
+STUDENT CONTEXT:
+- Student Name: {student_name}
+- Class/Grade: {grade_label}
 - Board: {board}
 - Subject: {subject}
 - Chapter: {chapter}
 
-LANGUAGE RULE:
+CLASS-BASED TEACHING:
 {complexity_rule}
+{class_band_rule}
+
+{length_policy}
 
 ANSWER FORMAT RULE:
 {answer_instruction}
 
-CHAPTER CONTEXT (always use this first to answer):
+{interaction_policy}
+
+DOUBT HANDLING:
+If the student seems confused, explain again more simply, use an analogy, and break into smaller steps.
+Never say "I already explained this."
+
+{explanation_structure}
+
+TEXTBOOK PRIORITY:
+- Answer using the chapter context provided in the user message FIRST.
+- If insufficient, use accurate general educational knowledge and say:
+  "This is a general explanation as it is not covered in detail in this chapter."
+- Never contradict the textbook curriculum.
+- Never invent textbook-specific facts (dates, names, formulas, page numbers).
+- Never mix content from other chapters or subjects.
+
+SAFETY:
+Keep all content educational, age-appropriate, and student-friendly."""
+
+_USER_PROMPT_TEMPLATE = """\
+CHAPTER CONTEXT (use this first to answer):
 {context}
 
 STUDENT'S QUESTION:
 {question}
 
-YOUR RULES:
-1. Answer using the chapter context above first. That is always your first source.
-2. If the chapter context does not have enough information, give a safe, accurate general explanation and say: "This is a general explanation as it is not covered in detail in this chapter."
-3. Never make up textbook-specific facts — no invented dates, names, formulas, or page numbers.
-4. Never mix in content from other chapters or subjects.
-5. Use a warm, encouraging, teacher-like tone. Never sound robotic or cold.
-6. Start naturally when suitable — for example:
-   - "Great question!"
-   - "Let me explain simply."
-   - "Nice doubt!"
-   - "Here's an easy answer."
-   - "Let's understand this step by step."
-7. Add a relatable example when it genuinely helps understanding.
-8. Do NOT give unsolicited study tips.
-9. When suitable, end your answer with ONE helpful next-step offer, such as:
-   - "Want a short answer too?"
-   - "Want me to explain with an example?"
-   - "Want this in even simpler words?"
-   - "Want a 5-marks style answer?"
-   (Only offer this when it adds real value. Skip it for one-word or very short answers.)
-10. Keep your answer voice-friendly — smooth, natural sentences that sound good when read aloud.
-11. GREETING / CASUAL CHAT RULE: If the student greets you or makes small talk (hi, hello, how are you, thanks, bye, etc.):
-    - Reply warmly and briefly (1-2 sentences max).
-    - Stay teacher-like — never become a social chatbot.
-    - Gently guide them back to the subject with a short invite.
-    - Example: "Hi! Happy to help. Ready to learn {subject} today? Ask me anything!"
+{user_closing}"""
 
-YOUR ANSWER ({answer_type}):"""
+_EXPLANATION_STRUCTURE_FULL = """\
+EXPLANATION STRUCTURE (required for this exam-style answer only):
+1. 🌱 Concept Overview — one or two sentences
+2. 📚 Detailed Explanation — several sentences with clear reasoning
+3. 🌍 Real-Life Example — relatable to the student's age
+4. 📝 Key Points to Remember — 3 to 5 bullet points
+5. ❓ Quick Check — one short question for the student"""
+
+_EXPLANATION_STRUCTURE_DIRECT = """\
+ANSWER STYLE (required):
+- Use plain paragraphs only. Do NOT use emoji section headers or template labels.
+- Be clear and complete, but do not pad with extra sections the student did not ask for."""
+
+_LENGTH_POLICY_LONG = """\
+RESPONSE LENGTH — CRITICAL (read carefully):
+- For this answer you MUST write at least {min_words} words (count before finishing).
+- Never stop after only a definition, opener (e.g. "Great question!"), or one short paragraph.
+- If chapter context is short, expand with accurate general teaching — do not stay brief.
+- Default range: 100-500 words. Focus on understanding, not memorization."""
+
+_LENGTH_POLICY_DIRECT = """\
+RESPONSE LENGTH:
+- Write about {min_words} words (roughly 70-150 words unless the question needs more detail).
+- Be direct: answer the question in the first paragraph.
+- Do NOT force a five-section essay format."""
+
+_LENGTH_POLICY_BRIEF = """\
+RESPONSE LENGTH — CRITICAL:
+- The student asked for a SHORT answer. Keep it to 2-4 sentences (about 25-60 words).
+- Do NOT use the five-section teaching format or emoji headers.
+- Do NOT add bullet lists, examples sections, or a Quick Check question."""
+
+_INTERACTION_LONG = """\
+INTERACTIVE TEACHING (after every non-greeting answer):
+1. End with ONE follow-up question to check understanding (e.g. "Does this make sense so far?").
+2. Encourage curiosity and invite doubts briefly."""
+
+_INTERACTION_BRIEF = """\
+INTERACTIVE TEACHING:
+- Do NOT add a follow-up question — the student asked for a short answer only."""
 
 _LEGACY_PROMPT_TEMPLATE = """\
 You are a friendly AI Tutor helping school students learn clearly and confidently.
@@ -320,6 +496,119 @@ PROMPT = PromptTemplate(
 )
 
 
+def _build_chat_messages(
+    query: str,
+    context: str,
+    *,
+    class_level: str = "",
+    board: str = "",
+    subject_name: str = "",
+    chapter: str = "",
+    student_name: str = "",
+    section_instruction: str = "",
+    heading_scope: Any | None = None,
+) -> list[dict[str, str]]:
+    from app.services.section_heading import HeadingScope
+
+    answer_type = detect_answer_type(query)
+    min_words = _ANSWER_MIN_WORDS.get(answer_type, 120)
+    grade_label = _GRADE_LABELS.get(class_level, class_level or "School student")
+    complexity = _GRADE_COMPLEXITY.get(class_level, "Use clear, age-appropriate language.")
+    class_band = _CLASS_BAND_RULES.get(_class_band(class_level), _CLASS_BAND_RULES["6-8"])
+    display_name = _student_first_name(student_name)
+    raw_instruction = _ANSWER_INSTRUCTIONS.get(answer_type, _ANSWER_INSTRUCTIONS["short-answer"])
+    if answer_type == "greeting":
+        instruction = raw_instruction.format(
+            student_name=display_name,
+            subject=subject_name or "your subject",
+            chapter=chapter or "the current chapter",
+            min_words=min_words,
+        )
+    elif "{min_words}" in raw_instruction:
+        instruction = raw_instruction.format(min_words=min_words)
+    else:
+        instruction = raw_instruction
+
+    tier = _structure_tier(answer_type)
+
+    if tier == "compact":
+        length_policy = _LENGTH_POLICY_BRIEF if answer_type in ("brief", "one-word") else (
+            "RESPONSE LENGTH: 2-3 sentences only."
+        )
+        interaction_policy = _INTERACTION_BRIEF if answer_type in ("brief", "one-word") else ""
+        explanation_structure = ""
+        user_closing = (
+            f"Write your SHORT answer now ({answer_type} — 2-4 sentences max, no sections):"
+            if answer_type in ("brief", "one-word")
+            else "Write your greeting now:"
+        )
+    elif tier == "full":
+        length_policy = _LENGTH_POLICY_LONG.format(min_words=min_words)
+        interaction_policy = _INTERACTION_LONG
+        explanation_structure = _EXPLANATION_STRUCTURE_FULL
+        user_closing = (
+            f"Write your complete exam-style answer now ({answer_type}, minimum {min_words} words, "
+            "all five emoji sections):"
+        )
+    else:
+        length_policy = _LENGTH_POLICY_DIRECT.format(min_words=min_words)
+        interaction_policy = _INTERACTION_LONG
+        explanation_structure = _EXPLANATION_STRUCTURE_DIRECT
+        user_closing = (
+            f"Write your direct answer now ({answer_type}, about {min_words} words, "
+            "plain prose only — no emoji section headers):"
+        )
+
+    if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
+        length_policy = (
+            "RESPONSE LENGTH: Cover every required subtopic; each subtopic gets 2–3 bullet points. "
+            "Do not merge into one paragraph."
+        )
+        interaction_policy = (
+            "After all subtopic blocks, you may add ONE short closing question. "
+            "Do not add a question before finishing every subtopic. "
+            "Never write figure captions, 'Fig. 2.x' lines, or 'Page N' lines — figures are shown separately."
+        )
+        explanation_structure = _EXPLANATION_STRUCTURE_DIRECT
+        answer_instruction = (
+            "Use the mandatory main-section format in TEXTBOOK SCOPE: "
+            "one **bold subtopic** heading per instrument/topic, then • bullet points."
+        )
+        user_closing = (
+            "Write the answer now using **bold subtopic headings** and • bullets for EACH subtopic "
+            "listed in TEXTBOOK SCOPE (in order). Do not use a single paragraph."
+        )
+
+    system = _SYSTEM_PROMPT_TEMPLATE.format(
+        student_name=display_name,
+        grade_label=grade_label,
+        board=board or "General",
+        subject=subject_name or "General",
+        chapter=chapter or "Current chapter",
+        complexity_rule=complexity,
+        class_band_rule=class_band,
+        length_policy=length_policy,
+        answer_instruction=instruction,
+        interaction_policy=interaction_policy,
+        explanation_structure=explanation_structure,
+    )
+    section_block = ""
+    if section_instruction.strip():
+        section_block = f"\n\nTEXTBOOK SCOPE:\n{section_instruction.strip()}\n"
+
+    user = _USER_PROMPT_TEMPLATE.format(
+        context=context or "(No chapter text retrieved — use accurate general knowledge.)",
+        question=query,
+        user_closing=user_closing,
+    )
+    if section_block:
+        user = section_block + user
+    return [
+        {"role": "system", "content": system},
+        {"role": "user", "content": user},
+    ]
+
+
 def _build_prompt(
     query: str,
     context: str,
@@ -328,28 +617,19 @@ def _build_prompt(
     board: str = "",
     subject_name: str = "",
     chapter: str = "",
+    student_name: str = "",
 ) -> str:
-    answer_type = detect_answer_type(query)
-    grade_label = _GRADE_LABELS.get(class_level, class_level or "School student")
-    complexity = _GRADE_COMPLEXITY.get(class_level, "Use clear, age-appropriate language.")
-    raw_instruction = _ANSWER_INSTRUCTIONS.get(answer_type, _ANSWER_INSTRUCTIONS["short-answer"])
-    # Fill subject/chapter placeholders in the greeting instruction
-    instruction = raw_instruction.format(
-        subject=subject_name or "your subject",
-        chapter=chapter or "the current chapter",
-    ) if answer_type == "greeting" else raw_instruction
-
-    return _SYSTEM_PROMPT_TEMPLATE.format(
-        grade_label=grade_label,
-        board=board or "General",
-        subject=subject_name or "General",
-        chapter=chapter or "Current chapter",
-        complexity_rule=complexity,
-        answer_instruction=instruction,
-        context=context,
-        question=query,
-        answer_type=answer_type,
+    """Legacy single-string prompt (used by old /chat path)."""
+    msgs = _build_chat_messages(
+        query,
+        context,
+        class_level=class_level,
+        board=board,
+        subject_name=subject_name,
+        chapter=chapter,
+        student_name=student_name,
     )
+    return f"{msgs[0]['content']}\n\n{msgs[1]['content']}"
 
 
 # ── Context assembly ─────────────────────────────────────────────────────────
@@ -375,16 +655,17 @@ def _format_chunk_for_context(doc) -> str:
     return f"{tag}\n{body}"
 
 
-def _join_context_within_budget(docs: list) -> str:
+def _join_context_within_budget(docs: list, char_budget: int | None = None) -> str:
+    budget = char_budget if char_budget is not None else CONTEXT_CHAR_BUDGET
     parts: list[str] = []
     used = 0
     for d in docs:
         block = _format_chunk_for_context(d)
         add = len(block) + (2 if parts else 0)
-        if parts and used + add > CONTEXT_CHAR_BUDGET:
+        if parts and used + add > budget:
             break
-        if not parts and len(block) > CONTEXT_CHAR_BUDGET:
-            parts.append(block[:CONTEXT_CHAR_BUDGET])
+        if not parts and len(block) > budget:
+            parts.append(block[:budget])
             break
         parts.append(block)
         used += add
@@ -393,6 +674,66 @@ def _join_context_within_budget(docs: list) -> str:
 
 # ── Mistral API calls (async) ────────────────────────────────────────────────
 
+def _answer_word_count(text: str) -> int:
+    return len((text or "").split())
+
+
+async def _expand_short_answer(
+    messages: list[dict[str, str]],
+    answer: str,
+    query: str,
+    *,
+    heading_scope: Any | None = None,
+) -> str:
+    """One retry when the model stops too early despite length instructions."""
+    from app.services.section_heading import HeadingScope
+
+    if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
+        return answer
+    atype = detect_answer_type(query)
+    if atype in ("greeting", "one-word", "brief"):
+        return answer
+    min_w = _ANSWER_MIN_WORDS.get(atype, 120)
+    if _answer_word_count(answer) >= int(min_w * 0.65):
+        return answer
+    logger.info(
+        "Answer too short (%d words, need ~%d); requesting expansion for query=%r",
+        _answer_word_count(answer),
+        min_w,
+        query[:60],
+    )
+    if _structure_tier(atype) == "full":
+        expand_hint = (
+            "Include ALL sections with emoji headers: "
+            "🌱 Concept Overview, 📚 Detailed Explanation, 🌍 Real-Life Example, "
+            "📝 Key Points to Remember (3-5 bullets), ❓ Quick Check."
+        )
+    else:
+        expand_hint = (
+            "Continue in plain paragraphs only — NO emoji section headers, "
+            "no 'Concept Overview' / 'Quick Check' labels."
+        )
+    extend_msgs = [
+        *messages,
+        {"role": "assistant", "content": answer},
+        {
+            "role": "user",
+            "content": (
+                f"Your answer was too short ({_answer_word_count(answer)} words). "
+                f"Continue and expand until the full answer is at least {min_w} words. "
+                f"{expand_hint}"
+            ),
+        },
+    ]
+    try:
+        extra = await _call_mistral_async(extend_msgs)
+        if extra.strip():
+            return f"{answer.strip()}\n\n{extra.strip()}"
+    except Exception as exc:
+        logger.warning("Short-answer expansion failed: %s", exc)
+    return answer
+
+
 def _ensure_mistral_config() -> None:
     if not MISTRAL_API_KEY:
         raise FileNotFoundError(
@@ -400,7 +741,7 @@ def _ensure_mistral_config() -> None:
         )
 
 
-async def _call_mistral_async(prompt: str) -> str:
+async def _call_mistral_async(messages: list[dict[str, str]]) -> str:
     """Non-blocking Mistral chat completion via httpx.AsyncClient."""
     _ensure_mistral_config()
     logger.debug("Mistral request model=%s max_tokens=%d", MISTRAL_MODEL, MISTRAL_MAX_TOKENS)
@@ -414,7 +755,7 @@ async def _call_mistral_async(prompt: str) -> str:
             },
             json={
                 "model": MISTRAL_MODEL,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": messages,
                 "max_tokens": MISTRAL_MAX_TOKENS,
                 "temperature": MISTRAL_TEMPERATURE,
             },
@@ -432,7 +773,7 @@ async def _call_mistral_async(prompt: str) -> str:
     return text or "The answer is not found in the document."
 
 
-async def _stream_mistral_async(prompt: str) -> AsyncIterator[str]:
+async def _stream_mistral_async(messages: list[dict[str, str]]) -> AsyncIterator[str]:
     """Yield tokens from Mistral SSE stream for use with StreamingResponse."""
     _ensure_mistral_config()
     logger.debug("Mistral streaming request model=%s", MISTRAL_MODEL)
@@ -447,7 +788,7 @@ async def _stream_mistral_async(prompt: str) -> AsyncIterator[str]:
             },
             json={
                 "model": MISTRAL_MODEL,
-                "messages": [{"role": "user", "content": prompt}],
+                "messages": messages,
                 "max_tokens": MISTRAL_MAX_TOKENS,
                 "temperature": MISTRAL_TEMPERATURE,
                 "stream": True,
@@ -505,6 +846,7 @@ async def chapter_aware_qa(
     chapter: str = "",
     chapter_names: list[str] | None = None,
     conversation_history: list[dict] | None = None,
+    student_name: str = "",
 ) -> tuple[str, list[dict]]:
     """
     Retrieve relevant chunks from ChromaDB and answer via Mistral (async).
@@ -517,41 +859,42 @@ async def chapter_aware_qa(
         set_cached_answer,
     )
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
-    from app.services.image_service.textbook_image_retrieval import related_images_for_query
-    from app.services.vector_service import retrieve_from_collection
+    from app.services.section_retrieval import retrieve_for_tutor_query
 
     conv = resolve_conversation_context(
         query, conversation_history=conversation_history, chapter=chapter
     )
     retrieval_query = conv.retrieval_query or query
-    img_allowed = should_retrieve_images(conv, chapter_ids=chapter_ids)
 
     cached = await get_cached_answer(collection_name, chapter_ids, query)
     if cached:
         answer, _ = deserialize_tutor_cache(cached)
         # Images are never stored in cache — re-rank fresh per query.
         imgs: list[dict] = []
+        docs_for_imgs, scope, _ = retrieve_for_tutor_query(
+            retrieval_query,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+        )
+        img_allowed = should_retrieve_images(
+            conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
+        )
         if chapter_ids and img_allowed:
-            docs_for_imgs = retrieve_from_collection(
-                retrieval_query,
-                collection_name=collection_name,
-                chapter_ids=chapter_ids,
-                k=RETRIEVAL_K,
-            )
+            img_top_n = _image_top_n_for_scope(scope, docs=docs_for_imgs)
             if docs_for_imgs:
                 try:
                     imgs = await asyncio.wait_for(
                         asyncio.to_thread(
-                            related_images_for_query,
-                            collection_name,
-                            chapter_ids,
-                            chapter_names or [],
-                            chapter,
-                            query,
-                            docs_for_imgs,
-                            answer_text=answer,
-                            top_n=TOP_RELATED_IMAGES,
+                            _fetch_related_images,
+                            scope,
+                            collection_name=collection_name,
+                            chapter_ids=chapter_ids,
+                            chapter_names=chapter_names or [],
+                            chapter=chapter,
+                            query=query,
+                            docs=docs_for_imgs,
                             conversation_history=conversation_history,
+                            top_n=img_top_n,
                         ),
                         timeout=IMAGE_RETRIEVAL_TIMEOUT_SEC,
                     )
@@ -559,27 +902,34 @@ async def chapter_aware_qa(
                     logger.warning("Image retrieval on cache hit failed: %s", exc)
         return answer, imgs
 
-    docs = retrieve_from_collection(
+    docs, scope, section_instruction = retrieve_for_tutor_query(
         retrieval_query,
         collection_name=collection_name,
         chapter_ids=chapter_ids,
-        k=RETRIEVAL_K,
+    )
+    img_allowed = should_retrieve_images(
+        conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
     )
     if not docs:
         return "The answer is not found in the document.", []
 
     context = _join_context_within_budget(docs)
-    prompt = _build_prompt(
+    messages = _build_chat_messages(
         query,
         context,
         class_level=class_level,
         board=board,
         subject_name=subject_name,
         chapter=chapter,
+        student_name=student_name,
+        section_instruction=section_instruction,
+        heading_scope=scope,
     )
+    img_top_n = _image_top_n_for_scope(scope, docs=docs)
 
     try:
-        answer = await _call_mistral_async(prompt)
+        answer = await _call_mistral_async(messages)
+        answer = await _expand_short_answer(messages, answer, query, heading_scope=scope)
     except FileNotFoundError:
         answer = _best_chunk_fallback(query, docs)
     except Exception as exc:
@@ -591,16 +941,16 @@ async def chapter_aware_qa(
         try:
             related = await asyncio.wait_for(
                 asyncio.to_thread(
-                    related_images_for_query,
-                    collection_name,
-                    chapter_ids,
-                    chapter_names or [],
-                    chapter,
-                    query,
-                    docs,
-                    answer_text=answer,
-                    top_n=TOP_RELATED_IMAGES,
+                    _fetch_related_images,
+                    scope,
+                    collection_name=collection_name,
+                    chapter_ids=chapter_ids,
+                    chapter_names=chapter_names or [],
+                    chapter=chapter,
+                    query=query,
+                    docs=docs,
                     conversation_history=conversation_history,
+                    top_n=img_top_n,
                 ),
                 timeout=IMAGE_RETRIEVAL_TIMEOUT_SEC,
             )
@@ -623,6 +973,44 @@ async def chapter_aware_qa(
     return answer, related
 
 
+def _image_top_n_for_scope(scope, *, docs: list | None = None) -> int:
+    from app.services.section_heading import HeadingScope, subtopics_for_main_section
+
+    if isinstance(scope, HeadingScope) and scope.is_main_section:
+        n = len(subtopics_for_main_section(scope, docs or []))
+        if n == 0:
+            n = len(scope.child_headings or [])
+        return min(12, max(TOP_RELATED_IMAGES, n + 1))
+    return TOP_RELATED_IMAGES
+
+
+def _fetch_related_images(
+    scope,
+    *,
+    collection_name: str,
+    chapter_ids: list[str],
+    chapter_names: list[str],
+    chapter: str,
+    query: str,
+    docs: list,
+    conversation_history: list[dict] | None,
+    top_n: int,
+) -> list[dict]:
+    from app.services.section_retrieval import related_images_for_heading_scope
+
+    return related_images_for_heading_scope(
+        scope,
+        collection_name=collection_name,
+        chapter_ids=chapter_ids,
+        chapter_names=chapter_names,
+        chapter_single=chapter,
+        query=query,
+        retrieved_docs=docs,
+        conversation_history=conversation_history,
+        fallback_top_n=top_n,
+    )
+
+
 async def chapter_aware_qa_stream(
     query: str,
     *,
@@ -635,6 +1023,11 @@ async def chapter_aware_qa_stream(
     chapter_names: list[str] | None = None,
     emit_related_images: Callable[[list[dict]], Awaitable[None]] | None = None,
     conversation_history: list[dict] | None = None,
+    student_name: str = "",
+    voice_mode: bool = False,
+    tutor_state: str = "TEACHING",
+    understanding_scores: dict | None = None,
+    learner_snapshot: dict | None = None,
 ) -> AsyncIterator[str]:
     """
     Streaming version of chapter_aware_qa.
@@ -642,6 +1035,7 @@ async def chapter_aware_qa_stream(
     Optionally invokes *emit_related_images* when ranked images are ready
     (usually during the first tokens, without blocking retrieval).
     """
+    from app.config import VOICE_CONTEXT_CHAR_BUDGET, VOICE_RETRIEVAL_K
     from app.core.cache import (
         deserialize_tutor_cache,
         get_cached_answer,
@@ -649,41 +1043,47 @@ async def chapter_aware_qa_stream(
     )
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
     from app.services.image_service.textbook_image_retrieval import early_related_images_for_query, related_images_for_query
-    from app.services.vector_service import retrieve_from_collection
+    from app.services.section_retrieval import retrieve_for_tutor_query
+
+    retrieval_k = VOICE_RETRIEVAL_K if voice_mode else RETRIEVAL_K
+    context_budget = VOICE_CONTEXT_CHAR_BUDGET if voice_mode else CONTEXT_CHAR_BUDGET
 
     conv = resolve_conversation_context(
         query, conversation_history=conversation_history, chapter=chapter
     )
     retrieval_query = conv.retrieval_query or query
-    img_allowed = should_retrieve_images(conv, chapter_ids=chapter_ids)
 
-    cached = await get_cached_answer(collection_name, chapter_ids, query)
+    cached = None if voice_mode else await get_cached_answer(collection_name, chapter_ids, query)
     if cached:
         answer, _ = deserialize_tutor_cache(cached)
         # Images are never stored in cache — always retrieve fresh so they match
         # this specific query rather than a previous one with a similar answer.
         imgs: list[dict] = []
+        docs_for_imgs, scope, _ = retrieve_for_tutor_query(
+            retrieval_query,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+            k=retrieval_k,
+        )
+        img_allowed = should_retrieve_images(
+            conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
+        )
         if chapter_ids and img_allowed:
-            docs_for_imgs = retrieve_from_collection(
-                retrieval_query,
-                collection_name=collection_name,
-                chapter_ids=chapter_ids,
-                k=RETRIEVAL_K,
-            )
+            img_top_n = _image_top_n_for_scope(scope, docs=docs_for_imgs)
             if docs_for_imgs:
                 try:
                     imgs = await asyncio.wait_for(
                         asyncio.to_thread(
-                            related_images_for_query,
-                            collection_name,
-                            chapter_ids,
-                            chapter_names or [],
-                            chapter,
-                            query,
-                            docs_for_imgs,
-                            answer_text=answer,
-                            top_n=TOP_RELATED_IMAGES,
+                            _fetch_related_images,
+                            scope,
+                            collection_name=collection_name,
+                            chapter_ids=chapter_ids,
+                            chapter_names=chapter_names or [],
+                            chapter=chapter,
+                            query=query,
+                            docs=docs_for_imgs,
                             conversation_history=conversation_history,
+                            top_n=img_top_n,
                         ),
                         timeout=IMAGE_RETRIEVAL_TIMEOUT_SEC,
                     )
@@ -695,12 +1095,16 @@ async def chapter_aware_qa_stream(
         yield answer
         return
 
-    docs = retrieve_from_collection(
+    docs, scope, section_instruction = retrieve_for_tutor_query(
         retrieval_query,
         collection_name=collection_name,
         chapter_ids=chapter_ids,
-        k=RETRIEVAL_K,
+        k=retrieval_k,
     )
+    img_allowed = should_retrieve_images(
+        conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
+    )
+    img_top_n = _image_top_n_for_scope(scope, docs=docs)
     if not docs:
         if emit_related_images:
             await emit_related_images([])
@@ -710,15 +1114,49 @@ async def chapter_aware_qa_stream(
     if emit_related_images and not img_allowed:
         await emit_related_images([])
 
-    context = _join_context_within_budget(docs)
-    prompt = _build_prompt(
-        query,
-        context,
-        class_level=class_level,
-        board=board,
-        subject_name=subject_name,
-        chapter=chapter,
-    )
+    context = _join_context_within_budget(docs, char_budget=context_budget)
+
+    if voice_mode:
+        from app.services.voice_tutor import (
+            TutorState,
+            UnderstandingScores,
+            LearnerProfileSnapshot,
+            build_voice_mistral_messages,
+            voice_expand_requested,
+        )
+
+        scores = UnderstandingScores(**understanding_scores) if understanding_scores else UnderstandingScores()
+        learner = LearnerProfileSnapshot(**learner_snapshot) if learner_snapshot else None
+        try:
+            state = TutorState(tutor_state)
+        except ValueError:
+            state = TutorState.TEACHING
+        messages = build_voice_mistral_messages(
+            query,
+            context,
+            class_level=class_level,
+            board=board,
+            subject_name=subject_name,
+            chapter=chapter,
+            student_name=student_name,
+            conversation_history=conversation_history,
+            tutor_state=state,
+            understanding=scores,
+            learner=learner,
+            expand_deep=voice_expand_requested(query),
+        )
+    else:
+        messages = _build_chat_messages(
+            query,
+            context,
+            class_level=class_level,
+            board=board,
+            subject_name=subject_name,
+            chapter=chapter,
+            student_name=student_name,
+            section_instruction=section_instruction,
+            heading_scope=scope,
+        )
 
     last_imgs: list[dict] = []
     images_emitted = False
@@ -729,16 +1167,16 @@ async def chapter_aware_qa_stream(
         try:
             return await asyncio.wait_for(
                 asyncio.to_thread(
-                    related_images_for_query,
-                    collection_name,
-                    chapter_ids,
-                    chapter_names or [],
-                    chapter,
-                    query,
-                    docs,
-                    answer_text=answer_text,
-                    top_n=TOP_RELATED_IMAGES,
+                    _fetch_related_images,
+                    scope,
+                    collection_name=collection_name,
+                    chapter_ids=chapter_ids,
+                    chapter_names=chapter_names or [],
+                    chapter=chapter,
+                    query=query,
+                    docs=docs,
                     conversation_history=conversation_history,
+                    top_n=img_top_n,
                 ),
                 timeout=IMAGE_RETRIEVAL_TIMEOUT_SEC,
             )
@@ -765,7 +1203,7 @@ async def chapter_aware_qa_stream(
                 chapter_ids,
                 docs,
                 query,
-                top_n=TOP_RELATED_IMAGES,
+                top_n=img_top_n,
                 conversation_history=conversation_history,
                 chapter_single=chapter,
             )
@@ -778,7 +1216,8 @@ async def chapter_aware_qa_stream(
             return
         from app.config import EARLY_IMAGE_MIN_CHARS
 
-        if len(answer_so_far) < EARLY_IMAGE_MIN_CHARS:
+        min_chars = 60 if voice_mode else EARLY_IMAGE_MIN_CHARS
+        if len(answer_so_far) < min_chars:
             return
         if early_img_task is not None and early_img_task.done():
             try:
@@ -803,17 +1242,29 @@ async def chapter_aware_qa_stream(
 
     try:
         full_answer: list[str] = []
-        async for token in _stream_mistral_async(prompt):
+        async for token in _stream_mistral_async(messages):
             full_answer.append(token)
             await _maybe_emit_bootstrap_images("".join(full_answer))
             yield token
         answer_text = "".join(full_answer)
+        if not voice_mode:
+            original_len = len(answer_text)
+            try:
+                answer_text = await _expand_short_answer(
+                    messages, answer_text, query, heading_scope=scope
+                )
+                if len(answer_text) > original_len:
+                    supplement = answer_text[original_len:]
+                    if supplement:
+                        yield supplement
+            except Exception as exc:
+                logger.warning("Stream answer expansion failed: %s", exc)
         final_imgs = await _retrieve_images_for_answer(answer_text)
         last_imgs = final_imgs
         _log_image_stage("final_emit", final_imgs)
         if emit_related_images:
             await emit_related_images(final_imgs)
-        if answer_text:
+        if answer_text and not voice_mode:
             await set_cached_answer(
                 collection_name,
                 chapter_ids,
@@ -870,9 +1321,12 @@ def get_qa_chain(vectorstore):
                 if loop.is_running():
                     import concurrent.futures
                     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                        future = pool.submit(asyncio.run, _call_mistral_async(prompt))
+                        legacy_msgs = [{"role": "user", "content": prompt}]
+                        future = pool.submit(asyncio.run, _call_mistral_async(legacy_msgs))
                         return future.result(timeout=90)
-                return loop.run_until_complete(_call_mistral_async(prompt))
+                return loop.run_until_complete(
+                    _call_mistral_async([{"role": "user", "content": prompt}])
+                )
             except Exception:
                 return _best_chunk_fallback(query, docs)
 

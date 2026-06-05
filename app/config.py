@@ -14,7 +14,7 @@ MODEL_PATH = os.environ.get("LLAMA_MODEL_PATH", os.path.join(PROJECT_ROOT, "mode
 # Mistral API settings (used by the /chat endpoint and voice fallback).
 MISTRAL_API_KEY = os.environ.get("MISTRAL_API_KEY")
 MISTRAL_MODEL = os.environ.get("MISTRAL_MODEL", "mistral-small-latest")
-MISTRAL_TEMPERATURE = float(os.environ.get("MISTRAL_TEMPERATURE", "0.1"))
+MISTRAL_TEMPERATURE = float(os.environ.get("MISTRAL_TEMPERATURE", "0.35"))
 MISTRAL_MAX_TOKENS = int(os.environ.get("MISTRAL_MAX_TOKENS", "1024"))
 CHROMA_PATH = "chroma_db"
 UPLOADS_DIR = os.path.join(PROJECT_ROOT, "uploads")
@@ -25,6 +25,10 @@ CHUNK_OVERLAP_TOKENS = int(os.environ.get("CHUNK_OVERLAP_TOKENS", "51"))
 
 # Top-k chunks sent to the LLM (typical practice: 3–5).
 RETRIEVAL_K = int(os.environ.get("RETRIEVAL_K", "5"))
+
+# Voice mode: smaller retrieval for conversational answers.
+VOICE_RETRIEVAL_K = int(os.environ.get("VOICE_RETRIEVAL_K", "3"))
+VOICE_CONTEXT_CHAR_BUDGET = int(os.environ.get("VOICE_CONTEXT_CHAR_BUDGET", "6000"))
 
 # Rough cap on retrieved context size (~4k tokens; avoids huge prompts / latency).
 CONTEXT_CHAR_BUDGET = int(os.environ.get("CONTEXT_CHAR_BUDGET", "14000"))
@@ -158,3 +162,10 @@ OCR_LANG = os.environ.get("OCR_LANG", "eng")
 OCR_MIN_CHARS_PER_PAGE = int(os.environ.get("OCR_MIN_CHARS_PER_PAGE", "80"))
 # DPI for rasterising scanned pages before OCR
 OCR_DPI = int(os.environ.get("OCR_DPI", "200"))
+
+# Figure extraction: save page overlays (caption=red, candidates=green, final=blue)
+DEBUG_FIGURE_BBOXES = os.environ.get("DEBUG_FIGURE_BBOXES", "false").lower() in (
+    "1",
+    "true",
+    "yes",
+)
