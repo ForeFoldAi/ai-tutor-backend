@@ -37,14 +37,17 @@ chroma_db/
 # Hugging Face / local model cache
 .cache/
 
-# Model files (large GGUF binaries)
+# Model files (large binaries — not committed)
 models/*.gguf
 models/*.bin
+models/**/*.pt
 
 # Temp / uploads
 temp_*.pdf
 *.tmp
 uploads/_layout_validation/
+uploads/_extraction_test/
+uploads/_extraction_reports/
 uploads/_audit_extraction_report.json
 uploads/
 

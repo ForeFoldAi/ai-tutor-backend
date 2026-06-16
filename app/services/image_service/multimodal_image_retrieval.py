@@ -93,8 +93,16 @@ def related_images_multimodal(
             logger.warning("[IMAGES] no textbook_images rows for chapter_ids=%s", chapter_ids)
             return []
 
-        # ── Step 1–5: symbolic filtering on ALL chapter images ─────────────────
-        filtered = filter_chapter_candidates(intent, all_images)
+        from app.services.image_service.textbook_image_retrieval import _attach_upload_refs
+
+        _attach_upload_refs(all_images, uploads)
+
+        from app.services.image_service.content_kind_retrieval import resolve_content_kind_pool
+
+        kind_pool = resolve_content_kind_pool(all_images, intent)
+
+        # ── Step 1–5: symbolic filtering on content-kind pool ───────────────────
+        filtered = filter_chapter_candidates(intent, kind_pool)
         if not filtered:
             logger.info(
                 "[MULTIMODAL] 0 symbolic survivors (query=%r)",
@@ -110,7 +118,7 @@ def related_images_multimodal(
                 max_n=top_n,
                 context_excerpt=context_excerpt,
                 pages_by_upload=pages_by_upload,
-                pool_images=all_images,
+                pool_images=kind_pool,
                 intent=intent,
             )
 
@@ -173,6 +181,6 @@ def related_images_multimodal(
             max_n=top_n,
             context_excerpt=context_excerpt,
             pages_by_upload=pages_by_upload,
-            pool_images=all_images,
+            pool_images=kind_pool,
             intent=intent,
         )

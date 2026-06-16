@@ -411,37 +411,41 @@ def delete_textbook_upload(
 student_router = APIRouter(prefix="/auth/catalog", tags=["student-catalog"])
 
 
-@student_router.get("/textbook-images/{upload_id}/{filename}")
+@student_router.get("/textbook-images/{upload_id}/{file_path:path}")
 def get_textbook_image_file(
     upload_id: uuid.UUID,
-    filename: str,
+    file_path: str,
     db: Annotated[Session, Depends(get_db)],
     _current_user: Annotated[User, Depends(get_current_user_bearer_or_query)],
 ):
-    """Serve an extracted textbook diagram (authenticated students and staff)."""
-    from app.services.image_service.textbook_image_extraction import IMAGE_ROOT
+    """Serve an extracted textbook asset (figures, tables, or formulas)."""
+    from app.services.image_service.textbook_image_extraction import image_disk_path
 
-    safe = os.path.basename(filename.strip())
-    if not safe or safe != filename.strip():
-        raise HTTPException(status_code=400, detail="Invalid filename.")
+    safe = file_path.strip().replace("\\", "/").lstrip("/")
+    if not safe or ".." in safe.split("/"):
+        raise HTTPException(status_code=400, detail="Invalid file path.")
+    allowed_prefixes = ("figures/", "tables/", "formulas/")
+    if "/" in safe and not safe.startswith(allowed_prefixes):
+        raise HTTPException(status_code=400, detail="Invalid file path.")
 
+    basename = os.path.basename(safe)
     row = db.scalar(
         select(TextbookImage).where(
             TextbookImage.textbook_upload_id == upload_id,
-            TextbookImage.file_name == safe,
+            TextbookImage.file_name.in_([safe, basename]),
         )
     )
     if row is None:
         raise HTTPException(status_code=404, detail="Image not found.")
 
-    path = os.path.join(IMAGE_ROOT, str(upload_id), safe)
+    path = image_disk_path(upload_id, row.file_name)
     if not os.path.isfile(path):
         raise HTTPException(status_code=404, detail="Image file missing.")
 
     from app.services.image_service.textbook_image_display import can_serve_file_directly, encode_browser_jpeg
 
     if can_serve_file_directly(path):
-        return FileResponse(path, media_type="image/jpeg", filename=safe)
+        return FileResponse(path, media_type="image/jpeg", filename=basename)
 
     body = encode_browser_jpeg(path)
     if not body:

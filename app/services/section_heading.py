@@ -35,10 +35,21 @@ _PEDAGOGY_BOX_TITLE_RE = re.compile(
 
 # Captions/snippets that are sidebars, not the main teaching figure for a subtopic.
 _SIDEBAR_FIGURE_RE = re.compile(
-    r"think\s+about|let'?s\s+(explore|remember)|don'?t\s+miss|acclimatise|illustration\s+—\s+think|"
-    r"automated\s+weather\s+station|aws\s+at\s+a\s+glacial",
+    r"think\s+about|let'?s\s+(explore|remember)|don'?t\s+miss|acclimatise|illustration\s+—\s+think",
     re.I,
 )
+
+
+def _normalize_apostrophes(text: str) -> str:
+    return (text or "").replace("\u2019", "'").replace("\u2018", "'")
+
+
+def is_pedagogy_box_text(text: str) -> bool:
+    """True when text contains a textbook activity / pedagogy box heading."""
+    for line in (text or "").splitlines():
+        if _PEDAGOGY_BOX_TITLE_RE.match(_normalize_apostrophes(line.strip())):
+            return True
+    return False
 
 
 def normalize_title(text: str) -> str:
@@ -88,6 +99,7 @@ def parse_section_hint(hint: str) -> tuple[str, str, int] | None:
 def query_topic_phrase(query: str) -> str:
     q = (query or "").strip()
     q = _QUERY_PREFIX_RE.sub("", q).strip()
+    q = re.sub(r"^(?:the|a|an)\s+", "", q, flags=re.I).strip()
     q = re.sub(r"[?.!]+$", "", q).strip()
     return q
 
@@ -678,7 +690,7 @@ RULES:
 
 
 def is_sidebar_figure_caption(caption: str | None) -> bool:
-    return bool(_SIDEBAR_FIGURE_RE.search(caption or ""))
+    return bool(_SIDEBAR_FIGURE_RE.search(_normalize_apostrophes(caption or "")))
 
 
 def figure_number_matches(figure_number: str | None, targets: list[str]) -> bool:

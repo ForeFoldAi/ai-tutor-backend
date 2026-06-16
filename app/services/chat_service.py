@@ -139,7 +139,7 @@ def detect_answer_type(query: str) -> str:
     return "short-answer"
 
 
-_COMPACT_TYPES = frozenset({"greeting", "one-word", "brief"})
+_COMPACT_TYPES = frozenset({"greeting", "one-word", "brief", "affirmation", "personal-response"})
 # Only exam-style questions use the five emoji section template
 _FULL_STRUCTURE_TYPES = frozenset({"exam-format"})
 
@@ -155,6 +155,8 @@ def _structure_tier(answer_type: str) -> str:
 _ANSWER_MIN_WORDS: dict[str, int] = {
     "one-word": 1,
     "brief": 15,
+    "affirmation": 30,
+    "personal-response": 45,
     "greeting": 40,
     "short-answer": 70,
     "concept": 100,
@@ -214,6 +216,25 @@ _ANSWER_INSTRUCTIONS: dict[str, str] = {
         "Answer the question first, then add one helpful example if useful. "
         "NO emoji section headers, NO Quick Check section, NO five-part template. "
         "Do NOT use labels like 'Concept Overview' or 'Key Points to Remember'."
+    ),
+    "affirmation": (
+        "The student confirmed they understood your PREVIOUS explanation (see conversation above). "
+        "Write 2-3 short sentences only (about 35-55 words). "
+        "Do NOT teach new facts or repeat the prior explanation. "
+        "Use this shape: warm acknowledgment (e.g. 'Great!') + "
+        "'Now that you know what [topic] is…' + ONE question with clear choices: "
+        "real-life example, quick quiz, next part of this topic (name it briefly), "
+        "or explore other topics. "
+        "Example tone: 'Great! Now that you know what weather is, would you like a real-life example, "
+        "a quick quiz, or to learn how we measure weather — or explore other topics?'"
+    ),
+    "personal-response": (
+        "The student answered YOUR follow-up question with a real-life example or experience "
+        "(see conversation above). Write 2-4 sentences (about 40-70 words). "
+        "(1) Acknowledge their specific example warmly — use their details (e.g. sunny, rain). "
+        "(2) Briefly connect it to the concept you taught (1 sentence). "
+        "(3) End with ONE short question: offer quiz, next topic part, or other topics. "
+        "Do NOT ignore what they shared. Do NOT repeat your full prior lesson."
     ),
     "greeting": (
         "The student is greeting or making small talk. Greet them personally by first name. "
@@ -458,11 +479,33 @@ RESPONSE LENGTH — CRITICAL:
 _INTERACTION_LONG = """\
 INTERACTIVE TEACHING (after every non-greeting answer):
 1. End with ONE follow-up question to check understanding (e.g. "Does this make sense so far?").
-2. Encourage curiosity and invite doubts briefly."""
+2. Encourage curiosity and invite doubts briefly.
+3. Never write figure captions, 'Fig. 2.x' lines, or 'Page N' lines — figures are shown separately."""
 
 _INTERACTION_BRIEF = """\
 INTERACTIVE TEACHING:
 - Do NOT add a follow-up question — the student asked for a short answer only."""
+
+_INTERACTION_ACKNOWLEDGE = """\
+INTERACTIVE TEACHING (student confirmed understanding):
+- Reply like a friendly live tutor — warm, brief, conversational (2-3 sentences max).
+- Do NOT teach new content, repeat the prior answer, or start a lecture.
+- Briefly celebrate that they understood, then offer clear choices in ONE question.
+- Always include options like: a real-life example, a quick quiz, the next part of this topic,
+  and whether they want to explore other topics — adapted to what was just explained."""
+
+_INTERACTION_PERSONAL = """\
+INTERACTIVE TEACHING (student shared a personal example):
+- Listen first — reference their specific story (weather, place, what changed).
+- Connect it briefly to the lesson, then guide with ONE choice question.
+- Stay conversational; do not lecture or list instruments unless they choose that next."""
+
+_AFFIRMATION_RE = re.compile(
+    r"^(?:yes|yeah|yep|yup|ok|okay|sure|right|correct|exactly|got\s+it|"
+    r"(?:i\s+)?(?:understand|understood)|makes\s+sense|that\s+helps|"
+    r"clear\s+now|sounds\s+good)(?:\s+.*)?[.!?]*$",
+    re.I,
+)
 
 _LEGACY_PROMPT_TEMPLATE = """\
 You are a friendly AI Tutor helping school students learn clearly and confidently.
@@ -496,6 +539,61 @@ PROMPT = PromptTemplate(
 )
 
 
+_PERSONAL_EXAMPLE_RE = re.compile(
+    r"\b(i was|it was|when i|where i|one day|one time|suddenly|yesterday|last\s+(?:week|month|year)|"
+    r"started\s+(?:rain|snow)|raining|sunny|cloudy|snowing|storm)\b",
+    re.I,
+)
+
+
+def _last_assistant_text(conversation_history: list[dict] | None) -> str:
+    if not conversation_history:
+        return ""
+    for turn in reversed(conversation_history):
+        if (turn.get("role") or "").lower() == "assistant":
+            return (turn.get("content") or "").strip()
+    return ""
+
+
+def _is_personal_dialogue_response(
+    query: str, conversation_history: list[dict] | None
+) -> bool:
+    """Student answered the tutor's question with an example or personal experience."""
+    q = (query or "").strip()
+    if not q or not conversation_history:
+        return False
+    last_asst = _last_assistant_text(conversation_history)
+    if "?" not in last_asst:
+        return False
+    words = q.split()
+    if len(words) >= 8:
+        return True
+    if "," in q and len(words) >= 5:
+        return True
+    if _PERSONAL_EXAMPLE_RE.search(q):
+        return True
+    return False
+
+
+def _is_affirmation_followup(query: str, conversation_history: list[dict] | None) -> bool:
+    """True when the student gives a short bare acknowledgment (not a story or answer)."""
+    if not conversation_history:
+        return False
+    q = (query or "").strip()
+    if not q or not _AFFIRMATION_RE.match(q):
+        return False
+    if not _last_assistant_text(conversation_history):
+        return False
+    words = q.split()
+    if len(words) > 7:
+        return False
+    if "," in q and len(words) > 4:
+        return False
+    if _PERSONAL_EXAMPLE_RE.search(q):
+        return False
+    return True
+
+
 def _build_chat_messages(
     query: str,
     context: str,
@@ -507,10 +605,16 @@ def _build_chat_messages(
     student_name: str = "",
     section_instruction: str = "",
     heading_scope: Any | None = None,
+    conversation_history: list[dict] | None = None,
 ) -> list[dict[str, str]]:
     from app.services.section_heading import HeadingScope
 
-    answer_type = detect_answer_type(query)
+    if _is_personal_dialogue_response(query, conversation_history):
+        answer_type = "personal-response"
+    elif _is_affirmation_followup(query, conversation_history):
+        answer_type = "affirmation"
+    else:
+        answer_type = detect_answer_type(query)
     min_words = _ANSWER_MIN_WORDS.get(answer_type, 120)
     grade_label = _GRADE_LABELS.get(class_level, class_level or "School student")
     complexity = _GRADE_COMPLEXITY.get(class_level, "Use clear, age-appropriate language.")
@@ -532,16 +636,33 @@ def _build_chat_messages(
     tier = _structure_tier(answer_type)
 
     if tier == "compact":
-        length_policy = _LENGTH_POLICY_BRIEF if answer_type in ("brief", "one-word") else (
-            "RESPONSE LENGTH: 2-3 sentences only."
-        )
-        interaction_policy = _INTERACTION_BRIEF if answer_type in ("brief", "one-word") else ""
-        explanation_structure = ""
-        user_closing = (
-            f"Write your SHORT answer now ({answer_type} — 2-4 sentences max, no sections):"
-            if answer_type in ("brief", "one-word")
-            else "Write your greeting now:"
-        )
+        if answer_type == "affirmation":
+            length_policy = "RESPONSE LENGTH: 2-3 sentences only (about 35-55 words). Stay conversational."
+            interaction_policy = _INTERACTION_ACKNOWLEDGE
+            explanation_structure = ""
+            user_closing = (
+                "The student understood your last explanation. Reply now with a warm acknowledgment "
+                "and ONE question offering: real-life example, quick quiz, next part of this topic, "
+                "or other topics — do not teach new content yet:"
+            )
+        elif answer_type == "personal-response":
+            length_policy = "RESPONSE LENGTH: 2-4 sentences (about 40-70 words). Stay conversational."
+            interaction_policy = _INTERACTION_PERSONAL
+            explanation_structure = ""
+            user_closing = (
+                "The student shared a real-life example in answer to your question. "
+                "Acknowledge their story, connect it briefly to the lesson, then offer next steps:"
+            )
+        elif answer_type in ("brief", "one-word"):
+            length_policy = _LENGTH_POLICY_BRIEF
+            interaction_policy = _INTERACTION_BRIEF
+            explanation_structure = ""
+            user_closing = f"Write your SHORT answer now ({answer_type} — 2-4 sentences max, no sections):"
+        else:
+            length_policy = "RESPONSE LENGTH: 2-3 sentences only."
+            interaction_policy = ""
+            explanation_structure = ""
+            user_closing = "Write your greeting now:"
     elif tier == "full":
         length_policy = _LENGTH_POLICY_LONG.format(min_words=min_words)
         interaction_policy = _INTERACTION_LONG
@@ -570,7 +691,7 @@ def _build_chat_messages(
             "Never write figure captions, 'Fig. 2.x' lines, or 'Page N' lines — figures are shown separately."
         )
         explanation_structure = _EXPLANATION_STRUCTURE_DIRECT
-        answer_instruction = (
+        instruction = (
             "Use the mandatory main-section format in TEXTBOOK SCOPE: "
             "one **bold subtopic** heading per instrument/topic, then • bullet points."
         )
@@ -603,10 +724,16 @@ def _build_chat_messages(
     )
     if section_block:
         user = section_block + user
-    return [
-        {"role": "system", "content": system},
-        {"role": "user", "content": user},
-    ]
+
+    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
+    if conversation_history:
+        for turn in conversation_history[-10:]:
+            role = (turn.get("role") or "").lower()
+            content = (turn.get("content") or "").strip()
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content})
+    messages.append({"role": "user", "content": user})
+    return messages
 
 
 def _build_prompt(
@@ -861,6 +988,12 @@ async def chapter_aware_qa(
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
     from app.services.section_retrieval import retrieve_for_tutor_query
 
+    from app.services.chapter_scope import chapter_scope_mismatch_message, resolve_chapter_scope_message
+
+    scope_msg = chapter_scope_mismatch_message(query, chapter_names)
+    if scope_msg:
+        return scope_msg, []
+
     conv = resolve_conversation_context(
         query, conversation_history=conversation_history, chapter=chapter
     )
@@ -876,6 +1009,18 @@ async def chapter_aware_qa(
             collection_name=collection_name,
             chapter_ids=chapter_ids,
         )
+        topic_msg = resolve_chapter_scope_message(
+            query,
+            docs=docs_for_imgs,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+            chapter_names=chapter_names,
+            board=board,
+            class_level=class_level,
+            subject_name=subject_name,
+        )
+        if topic_msg:
+            return topic_msg, []
         img_allowed = should_retrieve_images(
             conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
         )
@@ -907,6 +1052,19 @@ async def chapter_aware_qa(
         collection_name=collection_name,
         chapter_ids=chapter_ids,
     )
+    topic_msg = resolve_chapter_scope_message(
+        query,
+        docs=docs,
+        collection_name=collection_name,
+        chapter_ids=chapter_ids,
+        chapter_names=chapter_names,
+        board=board,
+        class_level=class_level,
+        subject_name=subject_name,
+    )
+    if topic_msg:
+        return topic_msg, []
+
     img_allowed = should_retrieve_images(
         conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
     )
@@ -924,12 +1082,17 @@ async def chapter_aware_qa(
         student_name=student_name,
         section_instruction=section_instruction,
         heading_scope=scope,
+        conversation_history=conversation_history,
     )
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
 
     try:
         answer = await _call_mistral_async(messages)
-        answer = await _expand_short_answer(messages, answer, query, heading_scope=scope)
+        if not (
+            _is_affirmation_followup(query, conversation_history)
+            or _is_personal_dialogue_response(query, conversation_history)
+        ):
+            answer = await _expand_short_answer(messages, answer, query, heading_scope=scope)
     except FileNotFoundError:
         answer = _best_chunk_fallback(query, docs)
     except Exception as exc:
@@ -1048,6 +1211,15 @@ async def chapter_aware_qa_stream(
     retrieval_k = VOICE_RETRIEVAL_K if voice_mode else RETRIEVAL_K
     context_budget = VOICE_CONTEXT_CHAR_BUDGET if voice_mode else CONTEXT_CHAR_BUDGET
 
+    from app.services.chapter_scope import chapter_scope_mismatch_message, resolve_chapter_scope_message
+
+    scope_msg = chapter_scope_mismatch_message(query, chapter_names)
+    if scope_msg:
+        if emit_related_images:
+            await emit_related_images([])
+        yield scope_msg
+        return
+
     conv = resolve_conversation_context(
         query, conversation_history=conversation_history, chapter=chapter
     )
@@ -1065,6 +1237,21 @@ async def chapter_aware_qa_stream(
             chapter_ids=chapter_ids,
             k=retrieval_k,
         )
+        topic_msg = resolve_chapter_scope_message(
+            query,
+            docs=docs_for_imgs,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+            chapter_names=chapter_names,
+            board=board,
+            class_level=class_level,
+            subject_name=subject_name,
+        )
+        if topic_msg:
+            if emit_related_images:
+                await emit_related_images([])
+            yield topic_msg
+            return
         img_allowed = should_retrieve_images(
             conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
         )
@@ -1101,6 +1288,22 @@ async def chapter_aware_qa_stream(
         chapter_ids=chapter_ids,
         k=retrieval_k,
     )
+    topic_msg = resolve_chapter_scope_message(
+        query,
+        docs=docs,
+        collection_name=collection_name,
+        chapter_ids=chapter_ids,
+        chapter_names=chapter_names,
+        board=board,
+        class_level=class_level,
+        subject_name=subject_name,
+    )
+    if topic_msg:
+        if emit_related_images:
+            await emit_related_images([])
+        yield topic_msg
+        return
+
     img_allowed = should_retrieve_images(
         conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
     )
@@ -1156,6 +1359,7 @@ async def chapter_aware_qa_stream(
             student_name=student_name,
             section_instruction=section_instruction,
             heading_scope=scope,
+            conversation_history=conversation_history,
         )
 
     last_imgs: list[dict] = []
@@ -1210,14 +1414,26 @@ async def chapter_aware_qa_stream(
         )
         img_task = asyncio.create_task(_retrieve_images_for_answer(bootstrap_ctx))
 
+    async def _emit_early_images_when_ready() -> None:
+        nonlocal images_emitted, last_imgs
+        if early_img_task is None or not emit_related_images or not img_allowed:
+            return
+        try:
+            imgs = await early_img_task
+        except Exception:
+            imgs = []
+        if imgs and not images_emitted:
+            last_imgs = imgs
+            _log_image_stage("early_emit", imgs)
+            await emit_related_images(imgs)
+            images_emitted = True
+
+    if chapter_ids and img_allowed and early_img_task is not None:
+        asyncio.create_task(_emit_early_images_when_ready())
+
     async def _maybe_emit_bootstrap_images(answer_so_far: str = "") -> None:
         nonlocal images_emitted, last_imgs
         if images_emitted or not emit_related_images or not img_allowed:
-            return
-        from app.config import EARLY_IMAGE_MIN_CHARS
-
-        min_chars = 60 if voice_mode else EARLY_IMAGE_MIN_CHARS
-        if len(answer_so_far) < min_chars:
             return
         if early_img_task is not None and early_img_task.done():
             try:
@@ -1229,6 +1445,11 @@ async def chapter_aware_qa_stream(
                 await emit_related_images(last_imgs)
                 images_emitted = True
                 return
+        from app.config import EARLY_IMAGE_MIN_CHARS
+
+        min_chars = 60 if voice_mode else EARLY_IMAGE_MIN_CHARS
+        if len(answer_so_far) < min_chars:
+            return
         if img_task is None or not img_task.done():
             return
         try:
@@ -1247,7 +1468,10 @@ async def chapter_aware_qa_stream(
             await _maybe_emit_bootstrap_images("".join(full_answer))
             yield token
         answer_text = "".join(full_answer)
-        if not voice_mode:
+        if not voice_mode and not (
+            _is_affirmation_followup(query, conversation_history)
+            or _is_personal_dialogue_response(query, conversation_history)
+        ):
             original_len = len(answer_text)
             try:
                 answer_text = await _expand_short_answer(

@@ -57,7 +57,35 @@ def _enrich_metadata(docs: list[Document], source: str, extra: dict | None = Non
 
 
 def _load_pdf(file_path: str) -> list[Document]:
+    from app.services.pdf_extract_pipeline import get_cached_pipeline_result, pipeline_enabled
+    from app.services.pdf_extract_pipeline.cache import set_cached_pipeline_result
+    from app.services.pdf_extract_pipeline.pipeline import PdfExtractionPipeline
+    from app.services.pdf_extract_pipeline.to_documents import pipeline_to_documents
+
+    if pipeline_enabled():
+        from app.services.pdf_extract_pipeline.bridge import MlPipelineExtractionError
+
+        pipeline = get_cached_pipeline_result(file_path)
+        if pipeline is None:
+            pipeline = PdfExtractionPipeline().process_pdf(file_path)
+            set_cached_pipeline_result(file_path, pipeline)
+        if not pipeline.pages:
+            raise MlPipelineExtractionError(
+                f"ML pipeline returned no pages for {file_path}"
+            )
+        docs = pipeline_to_documents(
+            pipeline,
+            source_basename=os.path.basename(file_path) or "document.pdf",
+            pdf_path=file_path,
+        )
+        if not docs:
+            raise MlPipelineExtractionError(
+                f"ML pipeline produced no text for {file_path}"
+            )
+        return docs
+
     from langchain_community.document_loaders import PyPDFLoader
+
     loader = PyPDFLoader(file_path)
     return loader.load()
 

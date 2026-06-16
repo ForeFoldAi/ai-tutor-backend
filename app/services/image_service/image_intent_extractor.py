@@ -108,6 +108,9 @@ _HARD_NEGATIVE_RULES: list[tuple[str, list[str]]] = [
 
 # Query type classification patterns
 _QUERY_TYPE_RULES: list[tuple[str, str]] = [
+    (r"\b(show|display|see|refer\s+to)\s+(?:the\s+)?table\b", "table_request"),
+    (r"\b(table|tabular|rows?\s+and\s+columns?|data\s+table)\b", "table_request"),
+    (r"\b(formula|equation|equations|latex|derive|calculate|solve\s+for)\b", "formula_request"),
     (r"\b(what\s+is|what\s+are|define|definition|meaning)\b", "concept_definition"),
     (r"\b(how\s+does|how\s+do|how\s+is|how\s+are|mechanism|works?|function)\b", "process"),
     (r"\b(diagram|figure|picture|map|show|draw|illustrat)\b", "diagram_request"),
@@ -116,6 +119,17 @@ _QUERY_TYPE_RULES: list[tuple[str, str]] = [
     (r"\b(list|name|mention|give|write)\b", "enumeration"),
     (r"\b(example|instance|case)\b", "example_request"),
 ]
+
+_CONTENT_KIND_RULES: list[tuple[str, list[str]]] = [
+    (r"\b(show|display|see|refer\s+to)\s+(?:the\s+)?table\b", ["table"]),
+    (r"\b(table|tabular|rows?\s+and\s+columns?)\b", ["table"]),
+    (r"\b(formula|equation|equations|latex|derive|calculate)\b", ["formula"]),
+    (r"\b(compare|comparison|difference|versus|vs\.?|contrast|statistics|percentage|ratio|values?|data)\b",
+     ["table", "figure"]),
+]
+
+_TABLE_REF_QUERY_RE = re.compile(r"(?i)\b(?:table|tbl\.?)\s*(\d+(?:\.\d+)*)")
+_FORMULA_REF_QUERY_RE = re.compile(r"(?i)\b(?:formula|equation|eq\.?)\s*(\d+(?:\.\d+)*)")
 
 # Patterns to extract divergent examples from RAG text
 _EXAMPLE_PATTERNS = re.compile(
@@ -184,6 +198,9 @@ class ImageIntent:
     concept_tokens: frozenset[str]          # tokenised core concept
     rag_section_tokens: frozenset[str] = field(default_factory=frozenset)
     entities: list[str] = field(default_factory=list)
+    preferred_content_kinds: list[str] = field(default_factory=lambda: ["figure"])
+    referenced_asset_number: str | None = None
+    referenced_asset_kind: str | None = None  # table | formula | figure
     requested_visuals: bool = False
 
     @property
@@ -356,6 +373,35 @@ def _get_type_preferences(question: str, query_type: str) -> tuple[list[str], li
     return preferred, excluded
 
 
+def _get_content_kind_preferences(question: str, query_type: str) -> list[str]:
+    if query_type == "table_request":
+        return ["table"]
+    if query_type == "formula_request":
+        return ["formula"]
+
+    kinds: list[str] = []
+    for pattern, ckinds in _CONTENT_KIND_RULES:
+        if re.search(pattern, question, re.I):
+            for k in ckinds:
+                if k not in kinds:
+                    kinds.append(k)
+    if query_type == "comparison" and "table" not in kinds:
+        kinds.append("table")
+    if not kinds:
+        kinds = ["figure"]
+    return kinds
+
+
+def _extract_referenced_asset(question: str) -> tuple[str | None, str | None]:
+    m = _TABLE_REF_QUERY_RE.search(question)
+    if m:
+        return m.group(1), "table"
+    m = _FORMULA_REF_QUERY_RE.search(question)
+    if m:
+        return m.group(1), "formula"
+    return None, None
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -392,6 +438,17 @@ def extract_image_intent(
     negative_terms = _extract_negative_terms(core_concept, required_terms, chunks)
     query_type = _classify_query_type(effective_question)
     preferred_types, excluded_types = _get_type_preferences(effective_question, query_type)
+    preferred_content_kinds = _get_content_kind_preferences(effective_question, query_type)
+    referenced_asset_number, referenced_asset_kind = _extract_referenced_asset(effective_question)
+
+    if query_type == "table_request" and "table" not in preferred_types:
+        preferred_types.insert(0, "table")
+    if query_type == "formula_request" and "formula" not in preferred_types:
+        preferred_types.insert(0, "formula")
+    if query_type == "comparison":
+        for t in ("table", "chart"):
+            if t not in preferred_types:
+                preferred_types.append(t)
 
     # Broad atmospheric definition queries ("what is weather?") should not pull
     # instruments/AWS — those are taught in later measurement sections.
@@ -445,6 +502,9 @@ def extract_image_intent(
         query_type=query_type,
         preferred_types=preferred_types,
         excluded_types=excluded_types,
+        preferred_content_kinds=preferred_content_kinds,
+        referenced_asset_number=referenced_asset_number,
+        referenced_asset_kind=referenced_asset_kind,
         concept_tokens=_tokenize(core_concept),
         entities=entities,
         rag_section_tokens=rag_section_tokens,

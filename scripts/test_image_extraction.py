@@ -68,11 +68,12 @@ def main() -> int:
 
         img_dir = Path(IMAGE_ROOT) / str(row.id)
         if img_dir.is_dir():
-            files = sorted(img_dir.glob("*"))
+            files = sorted(img_dir.rglob("*.jpg"))
             print("files on disk:", len(files))
-            for p in files[:5]:
-                print("  ", p.name, p.stat().st_size, "bytes")
-            if len(files) > 5:
+            for p in files[:8]:
+                rel = p.relative_to(img_dir)
+                print("  ", rel, p.stat().st_size, "bytes")
+            if len(files) > 8:
                 print("  …")
         else:
             print("IMAGE_DIR (missing):", img_dir)

@@ -345,6 +345,8 @@ _ROLE_TAGS: dict[str, str] = {
 }
 
 _TYPE_TAGS: dict[str, str] = {
+    "table": "table|data|comparison|statistics",
+    "formula": "formula|equation|expression|calculation",
     "weather_station": "instrument|measurement|meteorology",
     "instrument": "instrument|measurement",
     "diagram": "diagram|structure",
@@ -412,7 +414,7 @@ _CAPTION_FIG_PREFIX_RE = re.compile(
 )
 
 # Curriculum concept tag patterns — maps pattern → concept label
-_CONCEPT_TAG_PATTERNS: dict[str, list[str]] = {
+CURRICULUM_CONCEPT_TAGS: dict[str, list[str]] = {
     # Physics
     "light_optics":    ["refraction", "reflection", "lens", "mirror", "prism", "spectrum", "optics"],
     "heat_transfer":   ["conduction", "convection", "radiation", "heat transfer", "thermometer", "calorimeter"],
@@ -547,7 +549,7 @@ def generate_educational_title(
         if t
     ).lower()
     concept_tags: list[str] = []
-    for tag_name, kw_list in _CONCEPT_TAG_PATTERNS.items():
+    for tag_name, kw_list in CURRICULUM_CONCEPT_TAGS.items():
         if any(re.search(r"\b" + re.escape(kw) + r"\b", blob) for kw in kw_list):
             concept_tags.append(tag_name)
             if len(concept_tags) >= 5:

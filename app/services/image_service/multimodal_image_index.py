@@ -21,13 +21,9 @@ from app.services.image_service.multimodal_encoder import (
     current_model_name,
     encode_image_file,
 )
-from app.services.image_service.textbook_image_extraction import IMAGE_ROOT
+from app.services.image_service.textbook_image_extraction import image_disk_path
 
 logger = logging.getLogger(__name__)
-
-
-def _image_disk_path(upload_id: uuid.UUID, file_name: str) -> str:
-    return os.path.join(IMAGE_ROOT, str(upload_id), file_name)
 
 
 def index_upload_images(db: Session, upload: TextbookUpload) -> int:
@@ -65,7 +61,7 @@ def index_upload_images(db: Session, upload: TextbookUpload) -> int:
     indexed = 0
 
     for im in images:
-        path = _image_disk_path(upload.id, im.file_name)
+        path = image_disk_path(upload.id, im.file_name)
         vec = encode_image_file(path)
         if vec is None:
             im.multimodal_indexed = False

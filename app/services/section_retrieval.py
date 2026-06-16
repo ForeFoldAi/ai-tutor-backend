@@ -10,20 +10,22 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from langchain_core.documents import Document
-
-from app.config import CONTEXT_CHAR_BUDGET, RETRIEVAL_K
+from app.config import RETRIEVAL_K
 from app.services.section_heading import (
     HeadingScope,
     SubtopicInfo,
     enrich_chunks_with_section_metadata,
-    figure_number_matches,
+    extract_headings_from_chunks,
     is_sidebar_figure_caption,
-    normalize_title,
     resolve_heading_scope,
     scope_instruction_for_prompt,
     select_chunks_for_scope,
     subtopics_detail_for_main_section,
+)
+from app.services.subtopic_figure_match import (
+    is_panel_subfigure,
+    primary_figure_numbers,
+    score_image_for_subtopic,
 )
 from app.services.vector_service import fetch_chapter_chunks, retrieve_from_collection
 
@@ -32,6 +34,40 @@ logger = logging.getLogger(__name__)
 SECTION_WIDE_K = max(RETRIEVAL_K, 12)
 MAIN_SECTION_MAX_CHUNKS = 40
 SUBSECTION_MAX_CHUNKS = 12
+_MIN_SUBTOPIC_IMAGE_SCORE = 25.0
+
+
+def _catalog_for_heading_scope(
+    chapter_ids: list[str] | None,
+    chapter_chunks: list[Any],
+    semantic: list[Any],
+) -> list[Any]:
+    """
+    Prefer PDF text-layer chunks when embedded Chroma bodies are too sparse
+    for heading / subtopic detection (common with ML-only PDF extraction).
+    """
+    base = chapter_chunks if chapter_chunks else semantic
+    if not chapter_ids:
+        return base
+
+    if extract_headings_from_chunks(base):
+        return base
+
+    from app.services.pdf_text_layer import load_pdf_text_chunks_for_uploads
+
+    pdf_chunks = load_pdf_text_chunks_for_uploads(chapter_ids)
+    if not pdf_chunks:
+        return base
+
+    enrich_chunks_with_section_metadata(pdf_chunks)
+    if extract_headings_from_chunks(pdf_chunks):
+        logger.info(
+            "[SECTION] using PDF text-layer catalog (%d pages) — Chroma chunks lack headings",
+            len(pdf_chunks),
+        )
+        return pdf_chunks
+
+    return base
 
 
 def retrieve_for_tutor_query(
@@ -65,14 +101,14 @@ def retrieve_for_tutor_query(
     chapter_chunks = fetch_chapter_chunks(collection_name, chapter_ids)
     if chapter_chunks:
         enrich_chunks_with_section_metadata(chapter_chunks)
-    catalog = chapter_chunks if chapter_chunks else semantic
+    catalog = _catalog_for_heading_scope(chapter_ids, chapter_chunks, semantic)
     scope = resolve_heading_scope(query, catalog)
 
     max_chunks = MAIN_SECTION_MAX_CHUNKS if scope.is_main_section else (
         SUBSECTION_MAX_CHUNKS if scope.is_subsection else semantic_k
     )
     docs = select_chunks_for_scope(
-        chapter_chunks or semantic,
+        catalog or semantic,
         scope,
         semantic_ranked=semantic,
         max_chunks=max_chunks,
@@ -90,63 +126,20 @@ def retrieve_for_tutor_query(
     return docs, scope, scope_instruction_for_prompt(scope, chunks=docs)
 
 
-_SUBTOPIC_IMAGE_QUERY_HINTS: dict[str, str] = {
-    "precipitation": "rain gauge rainfall",
-    "temperature": "thermometer temperature scale",
-    "atmospheric pressure": "barometer pressure",
-    "wind": "anemometer wind vane wind sock",
-    "humidity": "hygrometer relative humidity",
-}
+def _pool_image_for_candidate(pool: list[Any], candidate: dict) -> Any | None:
+    fn = (candidate.get("figure_number") or "").strip()
+    url = (candidate.get("url") or "").strip()
+    for im in pool:
+        if fn and (getattr(im, "figure_number", None) or "").strip() == fn:
+            return im
+        fname = getattr(im, "file_name", None) or ""
+        if fname and url.endswith(fname):
+            return im
+    return None
 
 
-def _score_image_for_subtopic(im: Any, sub: SubtopicInfo) -> float:
-    """Rank one textbook figure for a lettered subtopic (higher = better)."""
-    cap = " ".join(
-        x for x in (getattr(im, "caption", None), getattr(im, "page_text_snippet", None)) if x
-    )
-    if is_sidebar_figure_caption(cap):
-        return -1.0
-
-    score = 0.0
-    page = int(getattr(im, "page_index", 0) or 0) + 1
-    fig = getattr(im, "figure_number", None)
-
-    if sub.figure_numbers and figure_number_matches(fig, sub.figure_numbers):
-        score += 120.0
-    for fn in sub.figure_numbers:
-        if fn and fn in (cap or ""):
-            score += 90.0
-
-    if sub.pages:
-        dist = min(abs(page - p) for p in sub.pages)
-        score += max(0.0, 35.0 - dist * 8.0)
-
-    sub_key = sub.normalized_title
-    for field in ("subsection_title", "section_title"):
-        val = getattr(im, field, None) or ""
-        if sub_key and sub_key in normalize_title(val):
-            score += 45.0
-
-    hint = _SUBTOPIC_IMAGE_QUERY_HINTS.get(sub_key, "")
-    blob = (cap or "").lower()
-    if hint:
-        for token in hint.split():
-            if token in blob:
-                score += 12.0
-    if sub_key == "humidity":
-        if any(w in blob for w in ("wind vane", "anemometer", "tarmac", "wind sock")):
-            return -1.0
-        if not any(
-            w in blob for w in ("hygrometer", "humidity", "humid", "moisture", "vapour", "vapor")
-        ):
-            return -1.0
-    if sub_key == "wind" and "hygrometer" in blob and "anemometer" not in blob:
-        score -= 60.0
-
-    if getattr(im, "is_decorative", False):
-        score -= 40.0
-    score += float(getattr(im, "educational_salience", 0.5) or 0.5) * 10.0
-    return score
+def _subtopic_image_allowed(im: Any, sub: SubtopicInfo) -> bool:
+    return score_image_for_subtopic(im, sub) >= _MIN_SUBTOPIC_IMAGE_SCORE
 
 
 def _pick_subtopic_image(
@@ -158,13 +151,35 @@ def _pick_subtopic_image(
     from app.services.image_service.textbook_image_retrieval import _payload_row
 
     used = used_figures or set()
-    ranked = [(_score_image_for_subtopic(im, sub), im) for im in images]
+
+    def _row_for_image(im: Any, score: float) -> dict:
+        row = {**_payload_row(im, score, None, subtopic=sub.title), "subtopic": sub.title}
+        if getattr(im, "figure_number", None):
+            row["figure_number"] = im.figure_number
+        return row
+
+    # Textbook subtopic blocks list figures in reading order — prefer the first
+    # unused primary figure so e.g. Wind keeps 2.9 and Humidity can use 2.10.
+    ordered_figs = primary_figure_numbers(sub) or list(sub.figure_numbers or [])
+    for fn in ordered_figs:
+        if fn in used:
+            continue
+        im = next(
+            (x for x in images if (getattr(x, "figure_number", None) or "").strip() == fn),
+            None,
+        )
+        if not im:
+            continue
+        score = score_image_for_subtopic(im, sub)
+        if score >= _MIN_SUBTOPIC_IMAGE_SCORE:
+            return _row_for_image(im, score)
+
+    ranked = [(score_image_for_subtopic(im, sub), im) for im in images]
 
     def _allowed(s: float, im: Any) -> bool:
-        if s < 25.0:
+        if s < _MIN_SUBTOPIC_IMAGE_SCORE:
             return False
         fn = (getattr(im, "figure_number", None) or "").strip()
-        url = getattr(im, "file_name", None) or ""
         if fn and fn in used:
             return False
         return True
@@ -174,10 +189,7 @@ def _pick_subtopic_image(
         return None
     ranked.sort(key=lambda x: -x[0])
     score, im = ranked[0]
-    row = {**_payload_row(im, score, None), "subtopic": sub.title}
-    if getattr(im, "figure_number", None):
-        row["figure_number"] = im.figure_number
-    return row
+    return _row_for_image(im, score)
 
 
 def related_images_for_heading_scope(
@@ -198,6 +210,7 @@ def related_images_for_heading_scope(
     from app.core.database import SessionLocal
     from app.modules.catalog.models import TextbookImage
     from app.services.image_service.textbook_image_retrieval import (
+        _attach_upload_refs,
         _list_images,
         _load_uploads,
         related_images_for_query,
@@ -234,6 +247,7 @@ def related_images_for_heading_scope(
             uploads = _load_uploads(db, chapter_ids)
             if uploads:
                 pool = _list_images(db, list(uploads.keys()))
+                _attach_upload_refs(pool, uploads)
     except Exception as exc:
         logger.debug("Could not load textbook images for section scope: %s", exc)
 
@@ -247,8 +261,7 @@ def related_images_for_heading_scope(
         if pool:
             row = _pick_subtopic_image(pool, sub, used_figures=seen_figures)
         if not row:
-            hint = _SUBTOPIC_IMAGE_QUERY_HINTS.get(sub.normalized_title, "")
-            sub_q = f"{parent} {sub.title} {hint}".strip()
+            sub_q = f"{parent} {sub.title}".strip()
             try:
                 hits = related_images_for_query(
                     collection_name,
@@ -268,12 +281,21 @@ def related_images_for_heading_scope(
                 if is_sidebar_figure_caption(cap):
                     continue
                 fn = (candidate.get("figure_number") or "").strip()
+                if is_panel_subfigure(fn) and primary_figure_numbers(sub):
+                    continue
+                pool_im = _pool_image_for_candidate(pool, candidate)
+                if pool_im and not _subtopic_image_allowed(pool_im, sub):
+                    continue
                 url = (candidate.get("url") or "").strip()
                 if fn and fn in seen_figures:
                     continue
                 if url and url in seen_urls:
                     continue
                 row = {**candidate, "subtopic": sub.title}
+                if pool_im:
+                    from app.services.image_service.pdf_figure_context import resolve_display_caption
+
+                    row["caption"] = resolve_display_caption(pool_im, subtopic=sub.title)
                 break
         if not row:
             continue

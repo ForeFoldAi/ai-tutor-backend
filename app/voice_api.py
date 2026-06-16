@@ -115,6 +115,19 @@ class ChapterVoiceRequest(BaseModel):
     chapter_names: list[str] | None = None
 
 
+async def _stream_answer_frames(answer: str, imgs: list | None = None) -> AsyncIterator[bytes]:
+    if imgs is not None:
+        yield _frame(_FRAME_IMAGES, json.dumps(imgs).encode("utf-8"))
+    for word in answer.split():
+        yield _frame(_FRAME_TEXT, (word + " ").encode())
+    for part in re.split(r"(?<=[.?!])\s+", answer):
+        if not part.strip():
+            continue
+        async for framed in _stream_mp3_frames(part.strip()):
+            yield framed
+    yield _frame(_FRAME_DONE, b"")
+
+
 @router.post("/auth/voice-stream")
 async def chapter_voice_stream(req: ChapterVoiceRequest):
     """
@@ -127,24 +140,33 @@ async def chapter_voice_stream(req: ChapterVoiceRequest):
         FRAME_DONE   (3) – end of stream
     """
     from app.core.cache import deserialize_tutor_cache, get_cached_answer
+    from app.services.chapter_scope import resolve_chapter_scope_with_retrieval
     from app.services.chat_service import chapter_aware_qa_stream
 
     collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
 
     async def generate() -> AsyncIterator[bytes]:
+        if req.board and req.subject_name and req.chapter_ids:
+            scope_msg = resolve_chapter_scope_with_retrieval(
+                req.message,
+                collection_name=collection,
+                chapter_ids=req.chapter_ids,
+                chapter_names=req.chapter_names,
+                board=req.board,
+                class_level=req.class_level,
+                subject_name=req.subject_name,
+            )
+            if scope_msg:
+                async for framed in _stream_answer_frames(scope_msg, []):
+                    yield framed
+                return
+
         if req.board and req.subject_name:
             cached = await get_cached_answer(collection, req.chapter_ids, req.message)
             if cached:
                 answer, imgs = deserialize_tutor_cache(cached)
-                yield _frame(_FRAME_IMAGES, json.dumps(imgs).encode("utf-8"))
-                for word in answer.split():
-                    yield _frame(_FRAME_TEXT, (word + " ").encode())
-                for part in re.split(r"(?<=[.?!])\s+", answer):
-                    if not part.strip():
-                        continue
-                    async for framed in _stream_mp3_frames(part.strip()):
-                        yield framed
-                yield _frame(_FRAME_DONE, b"")
+                async for framed in _stream_answer_frames(answer, imgs):
+                    yield framed
                 return
 
         sentence_buf = ""

@@ -26,7 +26,7 @@ from sqlalchemy import select
 
 from app.core.database import SessionLocal
 from app.modules.catalog.models import TextbookUpload
-from app.services.image_service.pdf_layout_extraction import extract_document_layout, validation_report_dict
+from app.services.image_service.pdf_extraction_types import extract_document_layout, validation_report_dict
 from app.services.image_service.textbook_image_extraction import reextract_textbook_images
 
 
@@ -48,8 +48,8 @@ def main() -> int:
     parser.add_argument(
         "--report-dir",
         type=str,
-        default=str(BACKEND_ROOT / "uploads" / "_layout_validation"),
-        help="Directory for validation JSON reports",
+        default=str(BACKEND_ROOT / "uploads" / "_extraction_reports"),
+        help="Directory for extraction JSON reports",
     )
     parser.add_argument("--dry-run", action="store_true", help="Validation report only, no DB changes")
     parser.add_argument("--pdf-path", type=str, help="PDF path for validation-only (no DB)")

@@ -1,7 +1,7 @@
 """
 Extract embedded images from uploaded textbook PDFs and DOCX files.
 
-Stores files under ``uploads/_textbook_images/<upload_id>/`` and persists
+Stores files under ``uploads/_textbook_images/<upload_id>/{figures,tables,formulas}/`` and persists
 ``TextbookImage`` rows. Idempotent per upload when rows already exist unless
 forced purge is called first (re-processing).
 """
@@ -26,6 +26,14 @@ from app.modules.catalog.models import TextbookImage, TextbookUpload
 logger = logging.getLogger(__name__)
 
 IMAGE_ROOT = os.path.join(UPLOADS_DIR, "_textbook_images")
+FIGURES_SUBDIR = "figures"
+TABLES_SUBDIR = "tables"
+FORMULAS_SUBDIR = "formulas"
+_CONTENT_KIND_SUBDIR = {
+    "figure": FIGURES_SUBDIR,
+    "table": TABLES_SUBDIR,
+    "formula": FORMULAS_SUBDIR,
+}
 _MAX_IMAGES_PER_UPLOAD = 96
 _MIN_PIXELS = 4096  # skip tiny icons / bullets (Stage 9)
 _MIN_WH = 64        # minimum pixel dimension (Stage 9)
@@ -35,7 +43,7 @@ _MAX_FIGURE_AREA = 12_000_000
 
 # Labels: NCERT (Fig./Figure), ICSE (Plate, Exhibit), state-board (Diagram N, Illustration N, Scheme N).
 # Requires a digit after the label to avoid matching prose occurrences of "diagram".
-# Keep in sync with pdf_layout_extraction._FIG_MARKER_RE (optional punctuation before number).
+# Figure label regex for DOCX slot parsing and caption normalization.
 _FIG_MARKER_RE = re.compile(
     r"(?i)\b(fig\.?|figure|diagram|illustration|plate|exhibit|scheme)\s*[\.\s:]*\s*(\d+(?:\.\d+)*)"
 )
@@ -208,6 +216,33 @@ def detect_section_titles(page_text: str) -> tuple[str | None, str | None]:
 
 def _upload_image_dir(upload_id: uuid.UUID) -> str:
     return os.path.join(IMAGE_ROOT, str(upload_id))
+
+
+def _asset_subdir(content_kind: str) -> str:
+    return _CONTENT_KIND_SUBDIR.get(content_kind, FIGURES_SUBDIR)
+
+
+def _upload_asset_dir(upload_id: uuid.UUID, content_kind: str) -> str:
+    return os.path.join(_upload_image_dir(upload_id), _asset_subdir(content_kind))
+
+
+def image_disk_path(upload_id: uuid.UUID, file_name: str) -> str:
+    """
+    Resolve on-disk path for a stored asset.
+
+    Supports new layout ``<upload_id>/<kind>/file.jpg`` and legacy flat files.
+    """
+    root = _upload_image_dir(upload_id)
+    normalized = file_name.replace("\\", "/").lstrip("/")
+    direct = os.path.join(root, normalized)
+    if os.path.isfile(direct):
+        return direct
+    base = os.path.basename(normalized)
+    for sub in (FIGURES_SUBDIR, TABLES_SUBDIR, FORMULAS_SUBDIR):
+        candidate = os.path.join(root, sub, base)
+        if os.path.isfile(candidate):
+            return candidate
+    return direct
 
 
 def purge_textbook_images_disk_and_rows(db: Session, upload_id: uuid.UUID) -> None:
@@ -519,6 +554,7 @@ def _enrich_image_row(
     upload: TextbookUpload,
     nearby_before: str = "",
     nearby_after: str = "",
+    page_markdown: str = "",
 ) -> None:
     """
     Populate production metadata fields on a freshly created TextbookImage row.
@@ -526,7 +562,21 @@ def _enrich_image_row(
     Called for both PDF and DOCX extractions. Uses caption_generator for
     uncaptioned / minimal-label figures, and derives grade_level / subject from
     the parent upload to avoid joins at retrieval time.
+
+    Tables and formulas use BGE-based ML topic tagging (structured_asset_tagger).
     """
+    content_kind = getattr(row, "content_kind", None) or "figure"
+    if content_kind in ("table", "formula"):
+        from app.services.image_service.structured_asset_tagger import enrich_structured_asset_tags
+
+        enrich_structured_asset_tags(
+            row,
+            image_bytes=image_bytes,
+            upload=upload,
+            page_markdown=page_markdown,
+        )
+        return
+
     from app.services.image_service.caption_generator import (
         generate_contextual_caption,
         extract_semantic_keywords,
@@ -779,6 +829,7 @@ def _save_blob(
     seq: int,
     blob: bytes,
     *,
+    content_kind: str = "figure",
     figure_number: str | None = None,
     preferred_name: str | None = None,
 ) -> str | None:
@@ -788,32 +839,141 @@ def _save_blob(
     if not jpeg:
         return None
     if preferred_name:
-        name = preferred_name
+        name = os.path.basename(preferred_name)
     elif figure_number:
-        from app.services.image_service.figure_reconstruction import figure_number_to_filename
+        from app.services.image_service.pdf_extraction_types import figure_number_to_filename
 
         name = figure_number_to_filename(figure_number, page_index, seq)
     else:
         name = f"p{page_index}_{seq}.jpg"
-    out_dir = _upload_image_dir(upload_id)
+    subdir = _asset_subdir(content_kind)
+    out_dir = _upload_asset_dir(upload_id, content_kind)
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, name)
     with open(path, "wb") as f:
         f.write(jpeg)
-    return name
+    return f"{subdir}/{name}"
+
+
+def _ml_asset_filename(asset: Any, page_index: int, seq: int) -> str:
+    kind = getattr(asset, "content_kind", "figure")
+    fig_num = getattr(asset, "figure_number", None)
+    if kind == "table":
+        if fig_num:
+            return f"table_{fig_num.replace('.', '_')}_p{page_index}.jpg"
+        return f"table_p{page_index}_{seq}.jpg"
+    if kind == "formula":
+        return f"formula_p{page_index}_{seq}.jpg"
+    if fig_num:
+        from app.services.image_service.pdf_extraction_types import figure_number_to_filename
+
+        return figure_number_to_filename(fig_num, page_index, seq)
+    return f"p{page_index}_{seq}.jpg"
+
+
+def _persist_ml_asset_row(
+    db: Session,
+    upload: TextbookUpload,
+    asset: Any,
+    *,
+    chapter_title: str | None,
+    seen_phashes: dict[int, str],
+) -> bool:
+    """Persist a table or formula ML asset as a TextbookImage row."""
+    from app.services.image_service.pdf_extraction_types import BBox, bbox_to_json
+
+    ph = compute_phash(asset.image_bytes)
+    if ph is not None:
+        for existing_ph, existing_fname in seen_phashes.items():
+            if phash_hamming(ph, existing_ph) <= _PHASH_HAMMING_THRESHOLD:
+                logger.debug(
+                    "[PHASH-DUP] ML %s skipped (matches %s)",
+                    asset.content_kind,
+                    existing_fname,
+                )
+                return False
+
+    fname = _save_blob(
+        upload.id,
+        asset.page_index,
+        asset.sequence,
+        asset.image_bytes,
+        content_kind=asset.content_kind,
+        figure_number=asset.figure_number,
+        preferred_name=_ml_asset_filename(asset, asset.page_index, asset.sequence),
+    )
+    if not fname:
+        return False
+
+    if ph is not None:
+        seen_phashes[ph] = fname
+
+    cap = asset.caption or ""
+    structured = asset.structured_content or ""
+    page_md = getattr(asset, "page_markdown", "") or ""
+    img_type = asset.content_kind
+    section_title = None
+    if page_md:
+        from app.services.image_service.structured_asset_tagger import detect_section_from_page_text
+
+        section_title = detect_section_from_page_text(page_md)
+    fig_ctx = "\n".join(p for p in (chapter_title, cap, structured, page_md[:1500]) if p and str(p).strip())
+
+    bbox_json = None
+    if asset.image_bbox:
+        bbox_json = bbox_to_json(
+            BBox(
+                asset.image_bbox[0],
+                asset.image_bbox[1],
+                asset.image_bbox[2],
+                asset.image_bbox[3],
+            )
+        )
+
+    row = TextbookImage(
+        id=uuid.uuid4(),
+        textbook_upload_id=upload.id,
+        page_index=asset.page_index,
+        sequence=asset.sequence,
+        file_name=fname,
+        caption=cap or None,
+        page_text_snippet=_page_snippet(fig_ctx, [cap] if cap else []),
+        image_type=img_type,
+        caption_normalized=normalize_caption(cap),
+        is_decorative=False,
+        educational_salience=compute_educational_salience(cap or structured),
+        figure_number=asset.figure_number,
+        chapter_title=chapter_title,
+        section_title=section_title,
+        has_caption=bool(cap.strip()),
+        figure_context=fig_ctx or None,
+        image_bbox=bbox_json,
+        source_type=asset.source_type,
+        caption_source="detected" if cap else "none",
+        phash=ph,
+        content_kind=asset.content_kind,
+        structured_content=structured or None,
+    )
+    _enrich_image_row(
+        row,
+        image_bytes=asset.image_bytes,
+        upload=upload,
+        page_markdown=page_md,
+    )
+    db.add(row)
+    return True
 
 
 def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
     """
-  Layout-aware PDF extraction (PyMuPDF): spatial caption pairing, no index matching.
+    Layout-aware PDF extraction with optional native ML pipeline (tables/formulas).
     """
     from app.services.image_service.figure_context_gates import is_minimal_figure_caption
-    from app.services.image_service.pdf_layout_extraction import (
+    from app.services.image_service.pdf_extraction_types import (
         bbox_to_json,
         extract_document_layout,
         validation_report_dict,
     )
-
     path = upload.file_path or ""
     if not path or not os.path.isfile(path):
         return 0
@@ -824,6 +984,7 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
         max_figures=_MAX_IMAGES_PER_UPLOAD,
         chapter_title=chapter_title,
     )
+    ml_assets: list[Any] = list(getattr(result, "ml_assets", None) or [])
 
     report = validation_report_dict(result)
     logger.info(
@@ -866,6 +1027,7 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
             pf.page_index,
             pf.sequence,
             pf.image_bytes,
+            content_kind="figure",
             figure_number=pf.figure_number,
             preferred_name=pf.preferred_file_name,
         )
@@ -923,6 +1085,7 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
             caption_source=pf.caption_source,
             page_coverage=pf.page_coverage if pf.page_coverage else None,
             phash=ph,
+            content_kind="figure",
         )
         _enrich_image_row(
             row,
@@ -942,6 +1105,20 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
             "distance": cap_dist,
             "extraction_confidence": conf,
         })
+
+    for asset in ml_assets:
+        if asset.content_kind not in ("table", "formula"):
+            continue
+        if created >= _MAX_IMAGES_PER_UPLOAD:
+            break
+        if _persist_ml_asset_row(
+            db,
+            upload,
+            asset,
+            chapter_title=chapter_title,
+            seen_phashes=seen_phashes,
+        ):
+            created += 1
 
     if audit_rows:
         generate_extraction_audit_report(audit_rows, upload_id=upload.id)
@@ -996,7 +1173,7 @@ def extract_docx_images(db: Session, upload: TextbookUpload) -> int:
     created = 0
     for seq in range(take):
         blob, _ = ranked_blobs[seq]
-        fname = _save_blob(upload.id, 0, seq, blob)
+        fname = _save_blob(upload.id, 0, seq, blob, content_kind="figure")
         if not fname:
             continue
         slot = figure_slots[seq]
@@ -1058,13 +1235,44 @@ def image_count_for_upload(db: Session, upload_id: uuid.UUID) -> int:
     )
 
 
+def upload_disk_assets_missing(db: Session, upload_id: uuid.UUID, *, sample_limit: int = 12) -> bool:
+    """
+    True when the upload has image rows in Postgres but none of the sampled
+    assets are readable on disk (e.g. DB restored without ``_textbook_images``).
+    """
+    rows = list(
+        db.scalars(
+            select(TextbookImage)
+            .where(TextbookImage.textbook_upload_id == upload_id)
+            .limit(sample_limit)
+        )
+    )
+    if not rows:
+        return False
+
+    from app.services.image_service.textbook_image_display import image_has_visible_content
+
+    for im in rows:
+        if image_has_visible_content(image_disk_path(im.textbook_upload_id, im.file_name)):
+            return False
+    return True
+
+
 def ensure_textbook_images_extracted(db: Session, upload: TextbookUpload) -> int:
     """
     If the upload has no image rows yet, extract from disk file and commit.
 
+    When rows exist but on-disk assets are missing, purge and re-extract once.
+
     Returns number of new rows created (0 if already extracted or failed).
     """
     if image_count_for_upload(db, upload.id) > 0:
+        if upload_disk_assets_missing(db, upload.id):
+            logger.warning(
+                "Textbook image rows exist but disk assets are missing for upload %s — re-extracting",
+                upload.id,
+            )
+            return reextract_textbook_images(db, upload)
         return 0
     if not upload.file_path or not os.path.isfile(upload.file_path):
         return 0

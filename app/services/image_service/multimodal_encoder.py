@@ -85,10 +85,10 @@ def _features_tensor(model: Any, raw: Any, *, branch: str) -> Any:
     else:
         raise TypeError(f"Unexpected CLIP {branch} output type: {type(raw)}")
 
-    if branch == "text" and hasattr(model, "text_projection"):
-        return model.text_projection(feats)
-    if branch == "image" and hasattr(model, "visual_projection"):
-        return model.visual_projection(feats)
+    proj = getattr(model, "text_projection" if branch == "text" else "visual_projection", None)
+    # Transformers 5.x get_*_features may already return projected embeddings (e.g. 512-dim).
+    if proj is not None and feats.shape[-1] == proj.in_features:
+        feats = proj(feats)
     return feats
 
 

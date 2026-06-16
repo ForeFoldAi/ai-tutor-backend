@@ -167,6 +167,8 @@ class TextbookImage(Base):
     source_type: Mapped[str | None] = mapped_column(String(32), nullable=True, default="embedded_image")
     caption_source: Mapped[str | None] = mapped_column(String(32), nullable=True, default="none")
     page_coverage: Mapped[float | None] = mapped_column(Float, nullable=True)
+    content_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="figure")
+    structured_content: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
 
     upload: Mapped["TextbookUpload"] = relationship("TextbookUpload", back_populates="images")

@@ -10,7 +10,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from app.services.pdf_service import process_pdf
+from app.services.document_service import process_document
 from app.services.vector_service import create_vector_store, load_vector_store
 from app.config import RETRIEVAL_K
 from app.services.chat_service import chapter_aware_qa, chapter_aware_qa_stream, get_qa_chain
@@ -227,7 +227,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         f.write(await file.read())
 
     try:
-        docs = process_pdf(file_path)
+        docs = process_document(file_path)
         vectorstore = create_vector_store(docs)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to process PDF: {e}")

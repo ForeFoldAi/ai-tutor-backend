@@ -30,7 +30,7 @@ from app.modules.catalog.models import TextbookImage, TextbookUpload
 from app.services.query_match import document_page, keyword_match_score
 from app.services.image_service.textbook_image_display import image_has_visible_content
 from app.services.image_service.textbook_image_extraction import (
-    IMAGE_ROOT,
+    image_disk_path,
     classify_image_type,
     compute_educational_salience,
     ensure_textbook_images_extracted,
@@ -71,6 +71,8 @@ _TYPE_PEDAGOGICAL_SALIENCE: dict[str, float] = {
     "landscape":       60.0,
     "historical_photo": 55.0,
     "wildlife":        40.0,
+    "table":           85.0,
+    "formula":         80.0,
     "unknown":         50.0,
 }
 
@@ -133,9 +135,9 @@ def _chapter_label_match_score(upload_chapter: str | None, chapter_hints: list[s
 
 
 def _topic_keyword_score(query: str, context_excerpt: str, image: TextbookImage) -> float:
-    blob = " ".join(
-        x for x in (image.caption or "", image.page_text_snippet or "", image.file_name or "") if x
-    )
+    from app.services.image_service.content_kind_retrieval import asset_retrieval_text
+
+    blob = asset_retrieval_text(image)
     q = f"{query}\n{context_excerpt[:2400]}"
     return float(keyword_match_score(q, blob)) * 2.8
 
@@ -272,6 +274,12 @@ def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> floa
     - No required phrases like "weather station" appear
     - Result: ~10-15 (well below the 25-point hard-reject threshold)
     """
+    from app.services.image_service.content_kind_retrieval import (
+        asset_retrieval_text,
+        concept_tag_overlap_score,
+        get_content_kind,
+        referenced_asset_matches,
+    )
     from app.services.image_service.figure_context_gates import (
         figure_descriptive_text_for_gates,
         is_core_definition_figure,
@@ -282,13 +290,19 @@ def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> floa
     sec = _get_section_title(im)
     subsec = (getattr(im, "subsection_title", None) or "").strip()
     gate_text = figure_descriptive_text_for_gates(im, cap)
+    if not gate_text.strip() and get_content_kind(im) in ("table", "formula"):
+        gate_text = asset_retrieval_text(im)
     topic_text = gate_text
     caption_text = " ".join(
         p for p in (cap, sec, subsec) if p
     ).lower()
 
+    if referenced_asset_matches(intent, im):
+        return 98.0
+
     if not topic_text.strip():
-        return 0.0
+        tag_only = concept_tag_overlap_score(intent, im)
+        return tag_only if tag_only > 0 else 0.0
 
     core = getattr(intent, "core_concept", None) or ""
     query_type = getattr(intent, "query_type", "") or ""
@@ -353,7 +367,14 @@ def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> floa
     if tok_match and isinstance(intent, ImageIntent) and level3_overlap_allowed(intent, tok_match):
         ratio = len(tok_match) / max(1, len(concept_tokens))
         raw = ratio * 30.0 + _sup_bonus() - _neg_penalty()
-        return max(0.0, min(30.0, raw))
+        base = max(0.0, min(30.0, raw))
+        tag_boost = concept_tag_overlap_score(intent, im)
+        return min(100.0, base + tag_boost * 0.45)
+
+    tag_boost = concept_tag_overlap_score(intent, im)
+    if tag_boost >= 40.0:
+        return min(85.0, tag_boost)
+
     # ── Level 4: nothing matches ──────────────────────────────────────────────
     return max(0.0, 0.0 - _neg_penalty())
 
@@ -368,10 +389,10 @@ def _section_overlap_score(intent: "ImageIntent", im: TextbookImage) -> float:
     if not rag_tokens:
         return 0.0
     # Include stored section_title for extra signal
+    from app.services.image_service.content_kind_retrieval import asset_retrieval_text
+
     sec = _get_section_title(im)
-    img_tokens = _tokenize(
-        f"{_get_caption_normalized(im)} {im.page_text_snippet or ''} {sec}"
-    )
+    img_tokens = _tokenize(f"{asset_retrieval_text(im)} {sec}")
     if not img_tokens:
         return 0.0
     common = img_tokens & rag_tokens
@@ -526,7 +547,7 @@ def filter_chapter_candidates(
         if reject:
             logger.debug("[SYMBOLIC] rejected %s — %s", im.file_name, reason)
             continue
-        disk_path = os.path.join(IMAGE_ROOT, str(im.textbook_upload_id), im.file_name)
+        disk_path = image_disk_path(im.textbook_upload_id, im.file_name)
         if not image_has_visible_content(disk_path):
             continue
         spec = _concept_specificity_score(intent, im)
@@ -556,10 +577,9 @@ def _bge_scores_batch(
     except Exception:
         return [0.0] * len(candidates)
 
-    texts = [
-        (f"{_get_caption_normalized(im)} {im.page_text_snippet or ''}")[:1600] or im.file_name
-        for im in candidates
-    ]
+    from app.services.image_service.content_kind_retrieval import asset_retrieval_text
+
+    texts = [(asset_retrieval_text(im))[:1600] or im.file_name for im in candidates]
     try:
         mat = np.array(model.embed_documents(texts), dtype=np.float32)
         sims = _cosine_matrix(qv, mat)
@@ -837,16 +857,38 @@ def _selection_thresholds(requests_images: bool) -> dict[str, float]:
     }
 
 
-def _payload_row(im: TextbookImage, score: float, clip_similarity: float | None = None) -> dict:
+def _payload_row(
+    im: TextbookImage,
+    score: float,
+    clip_similarity: float | None = None,
+    *,
+    subtopic: str | None = None,
+) -> dict:
+    from app.services.image_service.content_kind_retrieval import get_content_kind
+    from app.services.image_service.pdf_figure_context import resolve_display_caption
+
+    from app.services.image_service.pdf_figure_context import _CAPTION_FIG_PREFIX_RE
+
+    effective_caption = resolve_display_caption(im, subtopic=subtopic)
+    if getattr(im, "figure_number", None):
+        effective_caption = _CAPTION_FIG_PREFIX_RE.sub("", effective_caption).strip(" .:;-")
     row = {
         "url": f"/auth/catalog/textbook-images/{im.textbook_upload_id}/{im.file_name}",
-        "caption": im.caption,
+        "caption": effective_caption,
         "page": int(im.page_index) + 1,
         "textbook_upload_id": str(im.textbook_upload_id),
         "relevance": round(score, 2),
+        "content_kind": get_content_kind(im),
+        "file_name": im.file_name,
     }
     if clip_similarity is not None:
         row["clip_similarity"] = round(clip_similarity, 4)
+    if getattr(im, "concept_tags", None):
+        row["concept_tags"] = [t for t in im.concept_tags.split("|") if t]
+    if getattr(im, "title", None):
+        row["title"] = im.title
+    if getattr(im, "figure_number", None):
+        row["figure_number"] = im.figure_number
     return row
 
 
@@ -896,7 +938,7 @@ def _select_relevant_images(
         key = (im.textbook_upload_id, im.file_name)
         if key in seen:
             continue
-        disk_path = os.path.join(IMAGE_ROOT, str(im.textbook_upload_id), im.file_name)
+        disk_path = image_disk_path(im.textbook_upload_id, im.file_name)
         if not image_has_visible_content(disk_path):
             continue
 
@@ -965,6 +1007,7 @@ def _guaranteed_citation_figures(
     max_n: int,
     query: str = "",
     intent: "ImageIntent | None" = None,
+    subtopic: str | None = None,
 ) -> list[dict]:
     """
     Last-resort: visible figures nearest to RAG citation pages that share
@@ -989,12 +1032,15 @@ def _guaranteed_citation_figures(
             score = prox + topic * 2.0
         else:
             score = prox
-        disk_path = os.path.join(IMAGE_ROOT, str(im.textbook_upload_id), im.file_name)
+        disk_path = image_disk_path(im.textbook_upload_id, im.file_name)
         if not image_has_visible_content(disk_path):
             continue
         ranked.append((score, im))
     ranked.sort(key=lambda x: -x[0])
-    return [_payload_row(im, score + 20.0, None) for score, im in ranked[:max_n]]
+    return [
+        _payload_row(im, score + 20.0, None, subtopic=subtopic)
+        for score, im in ranked[:max_n]
+    ]
 
 
 def finalize_related_images(
@@ -1027,6 +1073,10 @@ def finalize_related_images(
 
     out = _select_relevant_images(scored, max_n=max_n, thresholds=th, pages_by_upload=pages)
     if not out and pool_images:
+        if intent is not None:
+            from app.services.image_service.content_kind_retrieval import resolve_content_kind_pool
+
+            pool_images = resolve_content_kind_pool(pool_images, intent)
         out = _page_proximity_fallback(
             pool_images, pages, retrieval_text, max_n=max_n, thresholds=th, intent=intent
         )
@@ -1075,6 +1125,17 @@ def _list_images(db: Session, upload_ids: list[uuid.UUID]) -> list[TextbookImage
     )
 
 
+def _attach_upload_refs(
+    images: list[TextbookImage],
+    uploads: dict[uuid.UUID, TextbookUpload],
+) -> None:
+    """Attach upload rows so PDF text backfill can resolve file paths."""
+    for im in images:
+        up = uploads.get(im.textbook_upload_id)
+        if up is not None:
+            im.upload = up
+
+
 # ---------------------------------------------------------------------------
 # Primary pedagogy ranker
 # ---------------------------------------------------------------------------
@@ -1097,9 +1158,17 @@ def _pedagogy_rank(
     """
     from app.config import MAX_GROUNDED_IMAGES
 
-    filtered = filter_chapter_candidates(intent, images)
+    from app.services.image_service.content_kind_retrieval import resolve_content_kind_pool
+
+    kind_pool = resolve_content_kind_pool(images, intent)
+    filtered = filter_chapter_candidates(intent, kind_pool)
     if not filtered:
-        logger.info("[RANK] 0 candidates after symbolic filters (query=%r)", intent.query[:60])
+        logger.info(
+            "[RANK] 0 candidates after symbolic filters (query=%r kinds=%s pool=%d)",
+            intent.query[:60],
+            getattr(intent, "preferred_content_kinds", ["figure"]),
+            len(kind_pool),
+        )
         return []
 
     stages = run_topic_centric_retrieval(
@@ -1116,9 +1185,10 @@ def _pedagogy_rank(
 
     rows = assemble_payload_rows(stages)
     logger.info(
-        "[RANK] query=%r | pool=%d | filtered=%d | mandatory=%d | supporting=%d | rejected=%d",
+        "[RANK] query=%r | kinds=%s | pool=%d | filtered=%d | mandatory=%d | supporting=%d | rejected=%d",
         intent.query[:60],
-        len(images),
+        getattr(intent, "preferred_content_kinds", ["figure"]),
+        len(kind_pool),
         len(filtered),
         len(stages.mandatory_images),
         len(stages.supporting_images),
@@ -1197,6 +1267,7 @@ def related_images_payload(
         if not images:
             return []
 
+        _attach_upload_refs(images, uploads)
         min_score = MIN_FINAL_SCORE * 0.85 if intent.requested_visuals else MIN_FINAL_SCORE
 
         out = _pedagogy_rank(
@@ -1214,8 +1285,11 @@ def related_images_payload(
 
         retrieval_text = _build_retrieval_text(query, context_excerpt)
         th = _selection_thresholds(intent.requested_visuals)
+        from app.services.image_service.content_kind_retrieval import resolve_content_kind_pool
+
+        kind_pool = resolve_content_kind_pool(images, intent)
         fb = _page_proximity_fallback(
-            images, pages_by_upload, retrieval_text, max_n=top_n, thresholds=th, intent=intent
+            kind_pool, pages_by_upload, retrieval_text, max_n=top_n, thresholds=th, intent=intent
         )
         if fb:
             logger.info("[IMAGES] page-proximity fallback (query=%r)", query[:60])
@@ -1338,11 +1412,16 @@ def early_related_images_for_query(
         images = _list_images(db, list(uploads.keys()))
         if not images:
             return []
+        _attach_upload_refs(images, uploads)
         pages_by_upload = _pages_by_upload_from_docs(retrieved_docs)
         if not pages_by_upload:
             return []
         effective_query = conv.retrieval_query or query
         intent = extract_image_intent(effective_query, retrieved_docs, conversation_context=conv)
+        from app.services.image_service.content_kind_retrieval import resolve_content_kind_pool
+
+        images = resolve_content_kind_pool(images, intent)
+        subtopic_hint = (intent.core_concept or intent.intent_text or "").strip() or None
         from app.services.image_service.figure_context_gates import (
             _BROAD_DEFINITION_CORES,
             is_core_definition_figure,
@@ -1363,14 +1442,19 @@ def early_related_images_for_query(
                     )
                 )
                 return [
-                    _payload_row(im, 72.0, None)
+                    _payload_row(im, 72.0, None, subtopic=subtopic_hint)
                     for im in defs[:top_n]
                     if image_has_visible_content(
-                        os.path.join(IMAGE_ROOT, str(im.textbook_upload_id), im.file_name)
+                        image_disk_path(im.textbook_upload_id, im.file_name)
                     )
                 ]
         return _guaranteed_citation_figures(
-            images, pages_by_upload, max_n=top_n, query=effective_query, intent=intent
+            images,
+            pages_by_upload,
+            max_n=top_n,
+            query=effective_query,
+            intent=intent,
+            subtopic=subtopic_hint,
         )
 
 
@@ -1419,7 +1503,7 @@ def debug_rank_figures(
     visible = [
         im for im in images
         if image_has_visible_content(
-            os.path.join(IMAGE_ROOT, str(im.textbook_upload_id), im.file_name)
+            image_disk_path(im.textbook_upload_id, im.file_name)
         )
     ]
     filtered = filter_chapter_candidates(intent, visible)

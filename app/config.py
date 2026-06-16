@@ -19,7 +19,7 @@ MISTRAL_MAX_TOKENS = int(os.environ.get("MISTRAL_MAX_TOKENS", "1024"))
 CHROMA_PATH = "chroma_db"
 UPLOADS_DIR = os.path.join(PROJECT_ROOT, "uploads")
 
-# RAG chunking: ~512-token targets with ~10% overlap (tiktoken cl100k_base in pdf_service).
+# RAG chunking: ~512-token targets with ~10% overlap (tiktoken cl100k_base).
 CHUNK_SIZE_TOKENS = int(os.environ.get("CHUNK_SIZE_TOKENS", "512"))
 CHUNK_OVERLAP_TOKENS = int(os.environ.get("CHUNK_OVERLAP_TOKENS", "51"))
 
@@ -163,9 +163,32 @@ OCR_MIN_CHARS_PER_PAGE = int(os.environ.get("OCR_MIN_CHARS_PER_PAGE", "80"))
 # DPI for rasterising scanned pages before OCR
 OCR_DPI = int(os.environ.get("OCR_DPI", "200"))
 
-# Figure extraction: save page overlays (caption=red, candidates=green, final=blue)
-DEBUG_FIGURE_BBOXES = os.environ.get("DEBUG_FIGURE_BBOXES", "false").lower() in (
-    "1",
-    "true",
-    "yes",
+# ---------------------------------------------------------------------------
+# Native multi-model PDF extraction (layout → formula → OCR → table VLM)
+# ---------------------------------------------------------------------------
+
+PDF_EXTRACTION_MODELS_DIR = os.environ.get(
+    "PDF_EXTRACTION_MODELS_DIR",
+    os.environ.get(
+        "PDF_EXTRACT_KIT_ROOT",
+        os.path.join(PROJECT_ROOT, "models"),
+    ),
 )
+PDF_EXTRACTION_PIPELINE_ENABLED = os.environ.get(
+    "PDF_EXTRACTION_PIPELINE_ENABLED",
+    os.environ.get("PDF_EXTRACT_PIPELINE_ENABLED", "true"),
+).lower() in ("1", "true", "yes")
+PDF_EXTRACTION_CONFIG_PATH = os.environ.get(
+    "PDF_EXTRACTION_CONFIG_PATH",
+    os.environ.get(
+        "PDF_EXTRACT_CONFIG_PATH",
+        os.path.join(PROJECT_ROOT, "configs", "pdf_extraction_pipeline.yaml"),
+    ),
+)
+PDF_EXTRACTION_DPI = int(
+    os.environ.get("PDF_EXTRACTION_DPI", os.environ.get("PDF_EXTRACT_DPI", "144"))
+)
+PDF_EXTRACTION_ENABLE_TABLE_VLM = os.environ.get(
+    "PDF_EXTRACTION_ENABLE_TABLE_VLM",
+    os.environ.get("PDF_EXTRACT_ENABLE_TABLE_VLM", "false"),
+).lower() in ("1", "true", "yes")

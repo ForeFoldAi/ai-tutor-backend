@@ -34,10 +34,13 @@ from app.services.image_service.textbook_image_extraction import build_figure_co
 logger = logging.getLogger(__name__)
 
 _FIG_REF_RE = re.compile(r"(?i)\b(?:fig\.?|figure)\s*([0-9]+(?:\.[0-9]+)*)")
+_TABLE_REF_RE = re.compile(r"(?i)\b(?:table|tbl\.?)\s*([0-9]+(?:\.[0-9]+)*)")
+_FORMULA_REF_RE = re.compile(r"(?i)\b(?:formula|equation|eq\.?)\s*([0-9]+(?:\.[0-9]+)*)")
 
 # Preferred teaching types (subject-agnostic categories)
 _PREFERRED_TYPES: frozenset[str] = frozenset({
     "diagram", "process", "instrument", "map", "chart", "weather_station",
+    "table", "formula",
 })
 _LOW_PRIORITY_TYPES: frozenset[str] = frozenset({
     "wildlife", "landscape", "decorative", "unknown",
@@ -243,15 +246,35 @@ def _rag_citation_pages(rag_docs: list[Any] | None) -> dict[str, set[int]]:
     return out
 
 
-def _figure_referenced_in_rag(fig_number: str | None, rag_docs: list[Any] | None) -> bool:
-    if not fig_number or not rag_docs:
+def _asset_referenced_in_rag(
+    asset_number: str | None,
+    rag_docs: list[Any] | None,
+    *,
+    kind: str = "figure",
+) -> bool:
+    if not asset_number or not rag_docs:
         return False
-    pats = [f"fig. {fig_number}", f"fig.{fig_number}", f"figure {fig_number}"]
+    if kind == "table":
+        pats = [
+            f"table {asset_number}", f"table.{asset_number}", f"tbl. {asset_number}",
+            f"tbl {asset_number}",
+        ]
+    elif kind == "formula":
+        pats = [
+            f"formula {asset_number}", f"equation {asset_number}",
+            f"eq. {asset_number}", f"eq {asset_number}",
+        ]
+    else:
+        pats = [f"fig. {asset_number}", f"fig.{asset_number}", f"figure {asset_number}"]
     for d in rag_docs:
         text = (getattr(d, "page_content", None) or "").lower()
         if any(p in text for p in pats):
             return True
     return False
+
+
+def _figure_referenced_in_rag(fig_number: str | None, rag_docs: list[Any] | None) -> bool:
+    return _asset_referenced_in_rag(fig_number, rag_docs, kind="figure")
 
 
 def _figure_referenced_in_context(im: TextbookImage, fig_number: str | None) -> bool:
@@ -320,9 +343,34 @@ def classify_mandatory_figure(
     ):
         return False, False, "offtopic_broad_definition"
 
+    from app.services.image_service.content_kind_retrieval import (
+        get_content_kind,
+        referenced_asset_matches,
+    )
+
+    if referenced_asset_matches(intent, im):
+        reasons.append("referenced_asset_match")
+        topic_anchor = True
+
     rag_ref = _figure_referenced_in_rag(fig_num, rag_docs) or _figure_referenced_in_context(
         im, fig_num
     )
+    kind = get_content_kind(im)
+    if kind == "table":
+        table_num = getattr(im, "figure_number", None)
+        if not table_num and im.caption:
+            m = _TABLE_REF_RE.search(im.caption)
+            table_num = m.group(1) if m else None
+        if _asset_referenced_in_rag(table_num, rag_docs, kind="table"):
+            reasons.append("table_content_reference")
+    elif kind == "formula":
+        formula_num = getattr(im, "figure_number", None)
+        if not formula_num and im.caption:
+            m = _FORMULA_REF_RE.search(im.caption)
+            formula_num = m.group(1) if m else None
+        if _asset_referenced_in_rag(formula_num, rag_docs, kind="formula"):
+            reasons.append("formula_content_reference")
+
     if rag_ref:
         if intent.query_type == "concept_definition" and core in _BROAD_DEFINITION_CORES:
             if is_core_definition_figure(im, core):
