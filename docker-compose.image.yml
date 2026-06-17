@@ -1,0 +1,72 @@
+# Run a pre-built image on another machine (no source build).
+#
+#   ENV_FILE=/path/to/.env docker compose -f docker-compose.image.yml up -d
+#
+# Or copy .env into this folder and use the default:
+#   docker compose -f docker-compose.image.yml up -d
+#
+# Build the image elsewhere first:
+#   docker build -t ai-tutor-backend:latest .
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_tutor
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_tutor"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    image: ${API_IMAGE:-ai-tutor-backend:latest}
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - ${ENV_FILE:-.env}
+    environment:
+      # Override .env localhost URLs so the API reaches Compose services.
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/ai_tutor
+      REDIS_URL: redis://redis:6379/0
+      USE_MULTIMODAL_IMAGE_RETRIEVAL: "true"
+      WARM_MULTIMODAL_ON_STARTUP: "true"
+      PDF_EXTRACTION_PIPELINE_ENABLED: "true"
+      PDF_EXTRACTION_MODELS_DIR: /app/models
+      OCR_ENABLED: "true"
+      ENABLE_VISUAL_INTENT_DETECTION: "true"
+      ENABLE_STREAM_SAFE_INSERTION: "true"
+      REQUIRED_TERM_GATE_ENABLED: "true"
+      PDF_EXTRACTION_ENABLE_TABLE_VLM: "false"
+    volumes:
+      - uploads_data:/app/uploads
+      - chroma_data:/app/chroma_db
+      - models_data:/app/models
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  uploads_data:
+  chroma_data:
+  models_data:
+  hf_cache:

@@ -1,0 +1,26 @@
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+
+chroma_db/
+uploads/
+models/
+debug_figure_detection/
+*.log
+.DS_Store
+
+# Large / local-only artifacts
+*.gguf
+*.pt
+temp_*.pdf

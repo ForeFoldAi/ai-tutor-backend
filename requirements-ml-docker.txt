@@ -1,0 +1,10 @@
+# ML stack for Docker (CPU). Omits struct-eqtable (CUDA-only Table VLM) and
+# unimernet (eva-decord has no Linux aarch64 wheels). Layout + OCR still work;
+# formula recognition is skipped when UniMERNet is not installed.
+doclayout-yolo==0.0.3
+ultralytics>=8.2.85
+opencv-python-headless>=4.8.0
+
+paddlepaddle>=2.6.0; platform_system != "Darwin"
+paddleocr>=2.7.3
+pytesseract>=0.3.10

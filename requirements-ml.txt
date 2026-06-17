@@ -2,7 +2,7 @@
 # Install: pip install -r requirements-ml.txt
 #
 # Layout (required for pipeline — HF fallback if local weights missing):
-doclayout-yolo==0.0.2
+doclayout-yolo==0.0.3
 ultralytics>=8.2.85
 opencv-python-headless>=4.8.0
 
@@ -13,6 +13,7 @@ omegaconf>=2.3.0
 # OCR (optional stage):
 paddlepaddle>=2.6.0; platform_system != "Darwin"
 paddleocr>=2.7.3
+pytesseract>=0.3.10
 
 # Table VLM (optional — requires CUDA):
 struct-eqtable

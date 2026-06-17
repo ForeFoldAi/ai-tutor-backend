@@ -1,0 +1,42 @@
+# Nuitka-compiled API — cloud Postgres/Redis from external .env (no local db, no migrations).
+#
+# Build:
+#   docker build -f Dockerfile.nuitka -t ai-tutor-backend:nuitka .
+#
+# Run:
+#   ENV_FILE=/path/to/.env docker compose -f docker-compose.nuitka.yml up -d
+#
+# .env must set DATABASE_URL (cloud Postgres) and REDIS_URL (cloud Redis or override below).
+
+services:
+  api:
+    image: ${API_IMAGE:-ai-tutor-backend:nuitka}
+    build:
+      context: .
+      dockerfile: Dockerfile.nuitka
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - ${ENV_FILE:-.env}
+    environment:
+      PDF_EXTRACTION_MODELS_DIR: /app/models
+      PDF_EXTRACTION_PIPELINE_ENABLED: "true"
+      OCR_ENABLED: "true"
+      USE_MULTIMODAL_IMAGE_RETRIEVAL: "true"
+      WARM_MULTIMODAL_ON_STARTUP: "true"
+      ENABLE_VISUAL_INTENT_DETECTION: "true"
+      ENABLE_STREAM_SAFE_INSERTION: "true"
+      REQUIRED_TERM_GATE_ENABLED: "true"
+      PDF_EXTRACTION_ENABLE_TABLE_VLM: "false"
+    volumes:
+      - uploads_data:/app/uploads
+      - chroma_data:/app/chroma_db
+      - models_data:/app/models
+      - hf_cache:/root/.cache/huggingface
+
+volumes:
+  uploads_data:
+  chroma_data:
+  models_data:
+  hf_cache:

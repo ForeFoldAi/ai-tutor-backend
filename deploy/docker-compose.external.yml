@@ -1,0 +1,47 @@
+# Team setup — cloud Postgres + Docker Hub image
+#
+# Use when DATABASE_URL in .env points to your hosted Postgres (not a local db container).
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    image: ${API_IMAGE:?Set API_IMAGE e.g. yourdockerhubuser/ai-tutor-backend:latest}
+    pull_policy: missing
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - ${ENV_FILE:?Set ENV_FILE to your .env path}
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      USE_MULTIMODAL_IMAGE_RETRIEVAL: "true"
+      WARM_MULTIMODAL_ON_STARTUP: "true"
+      PDF_EXTRACTION_PIPELINE_ENABLED: "true"
+      PDF_EXTRACTION_MODELS_DIR: /app/models
+      OCR_ENABLED: "true"
+      ENABLE_VISUAL_INTENT_DETECTION: "true"
+      ENABLE_STREAM_SAFE_INSERTION: "true"
+      REQUIRED_TERM_GATE_ENABLED: "true"
+      PDF_EXTRACTION_ENABLE_TABLE_VLM: "false"
+    volumes:
+      - uploads_data:/app/uploads
+      - chroma_data:/app/chroma_db
+      - models_data:/app/models
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  uploads_data:
+  chroma_data:
+  models_data:
+  hf_cache:

@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Self
 
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field, field_validator, model_validator
@@ -90,7 +90,7 @@ class CreateSchoolAdminRequest(AdminCreateUserRequest):
         return s if s else None
 
     @model_validator(mode="after")
-    def _school_name_when_new(self) -> CreateSchoolAdminRequest:
+    def _school_name_when_new(self) -> Self:
         if self.school_id is None:
             sn = self.school_name or ""
             if len(sn) < 2:

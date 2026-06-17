@@ -1,0 +1,66 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_tutor
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ai_tutor"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-tutor-backend:latest
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/ai_tutor
+      REDIS_URL: redis://redis:6379/0
+      # Full feature set (tutor chat, voice, multimodal images, ML PDF extraction, OCR)
+      USE_MULTIMODAL_IMAGE_RETRIEVAL: "true"
+      WARM_MULTIMODAL_ON_STARTUP: "true"
+      PDF_EXTRACTION_PIPELINE_ENABLED: "true"
+      PDF_EXTRACTION_MODELS_DIR: /app/models
+      OCR_ENABLED: "true"
+      ENABLE_VISUAL_INTENT_DETECTION: "true"
+      ENABLE_STREAM_SAFE_INSERTION: "true"
+      REQUIRED_TERM_GATE_ENABLED: "true"
+      # Table VLM needs NVIDIA GPU — leave off unless you add a GPU runtime
+      PDF_EXTRACTION_ENABLE_TABLE_VLM: "false"
+    volumes:
+      - uploads_data:/app/uploads
+      - chroma_data:/app/chroma_db
+      - models_data:/app/models
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  uploads_data:
+  chroma_data:
+  models_data:
+  hf_cache:
