@@ -66,10 +66,10 @@ class TeachingClassAssignment(BaseModel):
     @classmethod
     def _strip_grade(cls, v: object) -> str:
         if v is None:
-            raise ValueError("grade is required")
+            raise ValueError("Please select your class.")
         s = str(v).strip()
         if not s:
-            raise ValueError("grade cannot be empty")
+            raise ValueError("Please select your class.")
         return s
 
     @field_validator("sections", mode="before")
@@ -83,7 +83,7 @@ class TeachingClassAssignment(BaseModel):
             if s:
                 out.append(s[:20])
         if not out:
-            raise ValueError("At least one section (e.g. A, B) is required per class.")
+            raise ValueError("Please enter your section (for example A or B).")
         return out[:24]
 
 
@@ -146,7 +146,7 @@ class CreateStudentRequest(AdminCreateUserRequest):
     @model_validator(mode="after")
     def _single_section_only(self) -> Self:
         if len(self.teaching_classes[0].sections) != 1:
-            raise ValueError("Student enrollment must include exactly one section.")
+            raise ValueError("Please enter your section (for example A or B).")
         return self
 
 
@@ -179,7 +179,7 @@ class UpdateStudentRequest(BaseModel):
     @model_validator(mode="after")
     def _single_section_only(self) -> Self:
         if len(self.teaching_classes[0].sections) != 1:
-            raise ValueError("Student enrollment must include exactly one section.")
+            raise ValueError("Please enter your section (for example A or B).")
         return self
 
 
@@ -335,7 +335,7 @@ class MeProfileUpdateRequest(BaseModel):
     def _strip_full_name(cls, v: object) -> str:
         s = str(v).strip()
         if len(s) < 2:
-            raise ValueError("full_name must be at least 2 characters.")
+            raise ValueError("Please enter your full name (at least 2 letters).")
         return s
 
     @field_validator("current_password", "new_password", mode="before")
@@ -349,5 +349,51 @@ class MeProfileUpdateRequest(BaseModel):
     @model_validator(mode="after")
     def _new_password_requires_current(self) -> Self:
         if self.new_password and not self.current_password:
-            raise ValueError("Current password is required to set a new password.")
+            raise ValueError("Enter your current password before choosing a new one.")
         return self
+
+
+class UserSettingsResponse(BaseModel):
+    user_id: uuid.UUID
+    username: str | None
+    language: str
+    theme: str
+    notify_email: bool
+    notify_push: bool
+    notify_assignments: bool
+    notify_sessions: bool
+    notify_messages: bool
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class UserSettingsUpdateRequest(BaseModel):
+    username: str | None = Field(default=None, min_length=2, max_length=64)
+    language: str | None = Field(default=None, min_length=2, max_length=32)
+    theme: str | None = Field(default=None, pattern=r"^(light|dark)$")
+    notify_email: bool | None = None
+    notify_push: bool | None = None
+    notify_assignments: bool | None = None
+    notify_sessions: bool | None = None
+    notify_messages: bool | None = None
+
+    @field_validator("username", "language", mode="before")
+    @classmethod
+    def _strip_optional_str(cls, v: object) -> str | None:
+        if v is None:
+            return None
+        s = str(v).strip()
+        return s if s else None
+
+    @field_validator("username")
+    @classmethod
+    def _username_chars(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        if not v.replace("_", "").replace("-", "").isalnum():
+            raise ValueError(
+                "Username can only use letters, numbers, hyphens (-), and underscores (_)."
+            )
+        return v

@@ -235,7 +235,7 @@ async def main() -> None:
         llm_ok = False
         llm_note = "not run"
         try:
-            answer, qa_imgs = await chapter_aware_qa(
+            answer, qa_imgs, _math_lesson = await chapter_aware_qa(
                 q,
                 collection_name=COLLECTION,
                 chapter_ids=[UPLOAD_ID],

@@ -43,3 +43,27 @@ class User(Base):
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),
     )
+
+
+class UserSettings(Base):
+    __tablename__ = "user_settings"
+
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    username: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True, index=True)
+    language: Mapped[str] = mapped_column(String(32), nullable=False, default="en")
+    theme: Mapped[str] = mapped_column(String(16), nullable=False, default="light")
+    notify_email: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    notify_push: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    notify_assignments: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    notify_sessions: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    notify_messages: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+    )

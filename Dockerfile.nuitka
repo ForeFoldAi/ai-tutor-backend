@@ -76,9 +76,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Reuse wheels built in the builder stage (avoids recompiling native deps like stringzilla).
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-
-# Nuitka standalone distribution (compiled app + launcher).
-COPY --from=builder /build/nuitka-out/nuitka_launcher.dist /app/nuitka.dist
+COPY --from=builder /build/nuitka-out/app*.so /usr/local/lib/python3.11/site-packages/
 
 COPY configs/ Ultralytics/ ./
 COPY docker-entrypoint-nuitka.sh docker-entrypoint.sh

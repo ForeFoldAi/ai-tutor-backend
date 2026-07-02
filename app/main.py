@@ -14,6 +14,7 @@ from app.services.document_service import process_document
 from app.services.vector_service import create_vector_store, load_vector_store
 from app.config import RETRIEVAL_K
 from app.services.chat_service import chapter_aware_qa, chapter_aware_qa_stream, get_qa_chain
+from app.core.student_messages import ANSWER_NOT_IN_CHAPTER, PDF_ONLY
 from app.services.query_match import document_page, keyword_match_score
 from app.voice_api import router as voice_router
 from app.voice_ws import ws_router
@@ -163,12 +164,12 @@ def _fallback_answer_from_docs(query: str):
     """
     global vectorstore
     if vectorstore is None:
-        return "The answer is not found in the document."
+        return ANSWER_NOT_IN_CHAPTER
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": RETRIEVAL_K})
     docs = retriever.invoke(query)
     if not docs:
-        return "The answer is not found in the document."
+        return ANSWER_NOT_IN_CHAPTER
 
     best_text = ""
     best_score = -1
@@ -185,7 +186,7 @@ def _fallback_answer_from_docs(query: str):
             best_text = text
 
     if not best_text:
-        return "The answer is not found in the document."
+        return ANSWER_NOT_IN_CHAPTER
 
     parts = re.split(r"(?<=[.?!])\s+", best_text)
     snippet = " ".join(parts[:2]).strip()
@@ -220,7 +221,7 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     filename = file.filename or "document.pdf"
     if not filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+        raise HTTPException(status_code=400, detail=PDF_ONLY)
 
     file_path = f"temp_{file.filename}"
     with open(file_path, "wb") as f:
@@ -273,7 +274,7 @@ async def chapter_chat(
         if req.conversation_history
         else None
     )
-    answer, related_images = await chapter_aware_qa(
+    answer, related_images, math_lesson = await chapter_aware_qa(
         req.query,
         collection_name=collection,
         chapter_ids=req.chapter_ids,
@@ -285,7 +286,7 @@ async def chapter_chat(
         conversation_history=history,
         student_name=_current_user.full_name,
     )
-    return {"answer": answer, "related_images": related_images}
+    return {"answer": answer, "related_images": related_images, "math_lesson": math_lesson}
 
 
 @app.post("/auth/chat/stream")
@@ -299,6 +300,7 @@ async def chapter_chat_stream(
     Each line is a JSON object:
       {"type":"token","content":"..."}
       {"type":"related_images","images":[...]}  (may appear mid-answer)
+      {"type":"math_lesson","lesson":{...},"clean_answer":"..."}  (after answer completes)
       {"type":"done"}
     """
     collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
@@ -313,6 +315,19 @@ async def chapter_chat_stream(
         async def emit_imgs(imgs: list[dict]) -> None:
             pending.append(
                 (json.dumps({"type": "related_images", "images": imgs}, ensure_ascii=False) + "\n").encode()
+            )
+
+        async def emit_lesson(lesson: dict | None, clean_answer: str) -> None:
+            if not lesson:
+                return
+            pending.append(
+                (
+                    json.dumps(
+                        {"type": "math_lesson", "lesson": lesson, "clean_answer": clean_answer},
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                ).encode()
             )
 
         history = (
@@ -330,6 +345,7 @@ async def chapter_chat_stream(
             chapter=req.chapter or "",
             chapter_names=req.chapter_names,
             emit_related_images=emit_imgs,
+            emit_math_lesson=emit_lesson,
             conversation_history=history,
             student_name=_current_user.full_name,
         ):

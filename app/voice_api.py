@@ -17,6 +17,8 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from app.core.student_messages import EMPTY_VOICE_MESSAGE
+
 from app.services.edge_tts_service import (
     FALLBACK_VOICE,
     PRIMARY_VOICE,
@@ -91,7 +93,7 @@ async def chat_voice(req: ChatVoiceRequest):
     """
     text = req.message.strip()
     if not text:
-        raise HTTPException(status_code=400, detail="Empty message")
+        raise HTTPException(status_code=400, detail=EMPTY_VOICE_MESSAGE)
 
     return StreamingResponse(
         _chat_voice_mp3_stream(text),
@@ -162,10 +164,12 @@ async def chapter_voice_stream(req: ChapterVoiceRequest):
                 return
 
         if req.board and req.subject_name:
-            cached = await get_cached_answer(collection, req.chapter_ids, req.message)
+            cached = await get_cached_answer(
+                collection, req.chapter_ids, req.message, req.class_level
+            )
             if cached:
-                answer, imgs = deserialize_tutor_cache(cached)
-                async for framed in _stream_answer_frames(answer, imgs):
+                answer, _math_lesson = deserialize_tutor_cache(cached)
+                async for framed in _stream_answer_frames(answer, []):
                     yield framed
                 return
 

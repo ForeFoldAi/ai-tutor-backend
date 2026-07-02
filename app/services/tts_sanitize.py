@@ -54,6 +54,12 @@ _LINK_PHRASE = "You can visit the provided link for more information."
 _CODE_PHRASE = "There is a code example here."
 
 
+def _strip_latex_for_speech(text: str) -> str:
+    from app.services.math_speech import math_to_speech
+
+    return math_to_speech(text)
+
+
 def _replace_code_blocks(text: str) -> str:
     if "```" in text:
         text = _CODE_FENCE_RE.sub(_CODE_PHRASE, text)
@@ -140,6 +146,7 @@ def sanitize_for_tts(text: str) -> str:
     t = _replace_links_and_urls(t)
     t = _strip_markdown_structure(t)
     t = _strip_emphasis(t)
+    t = _strip_latex_for_speech(t)
     t = _lists_to_sentences(t)
     t = _normalize_whitespace_and_punctuation(t)
 

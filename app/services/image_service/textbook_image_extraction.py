@@ -71,6 +71,7 @@ _IMAGE_TYPE_PATTERNS: list[tuple[str, str]] = [
     (r"\b(students?|children|people\s+performing|activity|exercise|experiment|practis|practis)\b",
      "activity"),
     (r"\b(diagram|cross.?section|structure|illustrat|schematic|labelled)\b", "diagram"),
+    (r"\b(algebraic identity|binomial|polynomial|cube|square|number line|place value|mensuration)\b", "diagram"),
     (r"\b(fort|palace|temple|mosque|church|monument|heritage|ancient|ruins|museum|historical)\b",
      "historical_photo"),
     (r"\b(mountain|himalaya|peak|glacier|waterfall|falls|desert|sand\s+dune|dunes|"
@@ -212,6 +213,22 @@ def detect_section_titles(page_text: str) -> tuple[str | None, str | None]:
                 section = line
 
     return section, subsection
+
+
+def _is_mathematics_upload(upload: TextbookUpload) -> bool:
+    s = (upload.subject_name or "").lower()
+    return any(k in s for k in ("math", "algebra", "geometry", "arithmetic", "trigonometry"))
+
+
+def _image_dimensions(image_bytes: bytes) -> tuple[int, int]:
+    try:
+        from PIL import Image
+        from io import BytesIO
+
+        im = Image.open(BytesIO(image_bytes))
+        return im.size
+    except Exception:
+        return 0, 0
 
 
 def _upload_image_dir(upload_id: uuid.UUID) -> str:
@@ -911,6 +928,21 @@ def _persist_ml_asset_row(
     cap = asset.caption or ""
     structured = asset.structured_content or ""
     page_md = getattr(asset, "page_markdown", "") or ""
+
+    if asset.content_kind == "formula":
+        from app.services.image_service.math_extraction import is_oversized_formula_prose_crop
+
+        img_w, img_h = _image_dimensions(asset.image_bytes)
+        if is_oversized_formula_prose_crop(structured, width=img_w, height=img_h):
+            logger.info(
+                "[MATH-FILTER] Skipped oversized prose formula crop p%d seq=%d (%dx%d)",
+                asset.page_index + 1,
+                asset.sequence,
+                img_w,
+                img_h,
+            )
+            return False
+
     img_type = asset.content_kind
     section_title = None
     if page_md:
@@ -1022,6 +1054,27 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
             if is_dup:
                 continue
 
+        cap = pf.caption or ""
+        fig_ctx = pf.figure_context or ""
+        img_w, img_h = _image_dimensions(pf.image_bytes)
+        if _is_mathematics_upload(upload):
+            from app.services.image_service.math_extraction import is_decorative_math_figure
+
+            if is_decorative_math_figure(
+                caption=cap,
+                figure_context=fig_ctx,
+                figure_number=pf.figure_number,
+                width=img_w,
+                height=img_h,
+            ):
+                logger.info(
+                    "[MATH-FILTER] Skipped decorative figure p%d seq=%d caption=%r",
+                    pf.page_number,
+                    pf.sequence,
+                    (cap or "")[:80],
+                )
+                continue
+
         fname = _save_blob(
             upload.id,
             pf.page_index,
@@ -1037,8 +1090,6 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
         if ph is not None:
             seen_phashes[ph] = fname
 
-        cap = pf.caption or ""
-        fig_ctx = pf.figure_context or ""
         snippet = _page_snippet(fig_ctx, [cap] if cap else [])
         img_type = classify_image_type(cap, fig_ctx)
         has_cap = not is_minimal_figure_caption(cap)

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import decode_token
+from app.core.student_messages import ACCOUNT_INACTIVE, NOT_SIGNED_IN
 from app.modules.auth.constants import Role
 from app.modules.auth.exceptions import AuthException
 from app.modules.users.models import User
@@ -19,17 +20,17 @@ def get_current_user(
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
     if not credentials:
-        raise AuthException("Not authenticated.", status.HTTP_401_UNAUTHORIZED)
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     try:
         payload = decode_token(credentials.credentials)
     except ValueError as exc:
-        raise AuthException("Invalid access token.", status.HTTP_401_UNAUTHORIZED) from exc
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED) from exc
     if payload.get("type") != "access":
-        raise AuthException("Invalid access token.", status.HTTP_401_UNAUTHORIZED)
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     user_id = payload.get("sub")
     user = db.get(User, user_id)
     if not user:
-        raise AuthException("User not found.", status.HTTP_401_UNAUTHORIZED)
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     return user
 
 
@@ -45,17 +46,17 @@ def get_current_user_bearer_or_query(
     elif access_token:
         raw = access_token
     if not raw:
-        raise AuthException("Not authenticated.", status.HTTP_401_UNAUTHORIZED)
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     try:
         payload = decode_token(raw)
     except ValueError as exc:
-        raise AuthException("Invalid access token.", status.HTTP_401_UNAUTHORIZED) from exc
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED) from exc
     if payload.get("type") != "access":
-        raise AuthException("Invalid access token.", status.HTTP_401_UNAUTHORIZED)
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     user_id = payload.get("sub")
     user = db.get(User, user_id)
     if not user:
-        raise AuthException("User not found.", status.HTTP_401_UNAUTHORIZED)
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     return user
 
 
@@ -63,7 +64,7 @@ def require_active_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     if not current_user.is_active:
-        raise AuthException("Inactive account.", status.HTTP_403_FORBIDDEN)
+        raise AuthException(ACCOUNT_INACTIVE, status.HTTP_403_FORBIDDEN)
     return current_user
 
 
@@ -72,7 +73,10 @@ def require_roles(*roles: Role) -> Callable:
 
     def _dep(current_user: Annotated[User, Depends(require_active_user)]) -> User:
         if current_user.role not in allowed:
-            raise AuthException("Insufficient permissions.", status.HTTP_403_FORBIDDEN)
+            raise AuthException(
+                "You don't have access to this page.",
+                status.HTTP_403_FORBIDDEN,
+            )
         return current_user
 
     return _dep

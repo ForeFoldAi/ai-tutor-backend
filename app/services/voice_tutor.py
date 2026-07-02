@@ -1,7 +1,9 @@
 """
-Voice Tutor mode — conversational prompts, state machine, and lightweight understanding.
+Voice Tutor mode — state machine and understanding heuristics.
 
-Separate from text chat tutoring (chat_service._SYSTEM_PROMPT_TEMPLATE).
+Mathematics voice uses the same structured tutor prompts as text chat
+(chat_service._build_chat_messages). Other subjects use the short
+conversational VOICE_SYSTEM_PROMPT for live one-on-one teaching.
 """
 
 from __future__ import annotations
@@ -74,8 +76,11 @@ LANGUAGE:
 VOICE RULES (CRITICAL):
 - Maximum {max_words} words this turn (target 30-80 words, hard cap {max_words}).
 - Teach ONE small idea per turn — never a full lecture.
-- Use 2-4 short spoken sentences. Conversational tone.
+- Use 2-4 short spoken sentences. Conversational tone — like a real teacher in a one-on-one class.
+- Use simple everyday words. Avoid jargon unless you explain it in plain language.
 - Use a simple everyday example when it helps.
+- For math: speak formulas in words (say "x squared", "a over b", "the integral of"); one step at a time.
+- NEVER use dollar signs, LaTeX, backslashes, or symbols like \\frac — only plain spoken English.
 - NEVER use section headers, emoji labels, bullet lists, or numbered lists.
 - NEVER say "Concept Overview", "Key Points", "Quick Check", or similar.
 - Do NOT try to be complete — prioritize dialogue over coverage.

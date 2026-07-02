@@ -95,8 +95,31 @@ def extract_responsive_chunks(buf: str) -> tuple[list[str], str]:
     )
 
 
+def has_unclosed_math_delimiters(buf: str) -> bool:
+    """True when buffer ends inside an unfinished $ or $$ math block (hold for more tokens)."""
+    i = 0
+    n = len(buf)
+    while i < n:
+        if buf.startswith("$$", i):
+            close = buf.find("$$", i + 2)
+            if close == -1:
+                return True
+            i = close + 2
+            continue
+        if buf[i] == "$":
+            close = buf.find("$", i + 1)
+            if close == -1:
+                return True
+            i = close + 1
+            continue
+        i += 1
+    return False
+
+
 def extract_voice_chunks(buf: str) -> tuple[list[str], str]:
     """Voice tutor: faster first audio — 8 words / 35 chars."""
+    if has_unclosed_math_delimiters(buf):
+        return [], buf
     return _extract_chunks(
         buf,
         min_words=VOICE_MIN_WORDS,

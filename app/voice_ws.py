@@ -19,12 +19,15 @@ from typing import AsyncIterator, Awaitable, Callable
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 
+from app.core.student_messages import VOICE_ANSWER_FAILED, VOICE_SERVER_ERROR
+
 from app.services.edge_tts_service import stream_edge_tts
 from app.services.tts_sanitize import sanitize_chunk_for_tts
 from app.services.voice_chunking import (
     VoicePipelineTiming,
     VOICE_IDLE_FLUSH_SEC,
     extract_voice_chunks,
+    has_unclosed_math_delimiters,
 )
 
 logger = logging.getLogger(__name__)
@@ -98,6 +101,8 @@ async def _idle_flush_loop(
             chunk = state.buf.strip()
             idle = time.monotonic() - state.last_token_at
             if not chunk or idle < VOICE_IDLE_FLUSH_SEC:
+                continue
+            if has_unclosed_math_delimiters(chunk):
                 continue
             state.buf = ""
 
@@ -248,24 +253,12 @@ async def _general_answer_stream(
     understanding_scores: dict | None = None,
     learner_snapshot: dict | None = None,
 ) -> AsyncIterator[str]:
-    """General (no-chapter) voice answers — uses VOICE_SYSTEM_PROMPT."""
-    from app.services.voice_tutor import (
-        TutorState,
-        UnderstandingScores,
-        LearnerProfileSnapshot,
-        build_voice_mistral_messages,
-        voice_expand_requested,
-    )
-    from app.services.chat_service import _stream_mistral_async
+    """General (no-chapter) voice answers — same format as text chat."""
+    from app.services.chat_service import _build_chat_messages, _stream_mistral_async
 
-    try:
-        current_state = TutorState(session.tutor_state)
-    except ValueError:
-        current_state = TutorState.TEACHING
+    del understanding_scores, learner_snapshot
 
-    scores = UnderstandingScores(**understanding_scores) if understanding_scores else UnderstandingScores()
-    learner = LearnerProfileSnapshot(**learner_snapshot) if learner_snapshot else None
-    messages = build_voice_mistral_messages(
+    messages = _build_chat_messages(
         question,
         "(No chapter excerpt — use accurate general knowledge briefly.)",
         class_level=session.class_level,
@@ -274,10 +267,6 @@ async def _general_answer_stream(
         chapter=session.chapter,
         student_name=session.student_name,
         conversation_history=session.history,
-        tutor_state=current_state,
-        understanding=scores,
-        learner=learner,
-        expand_deep=voice_expand_requested(question),
     )
     async for token in _stream_mistral_async(messages):
         yield token
@@ -403,6 +392,7 @@ async def _stream_answer(
     await _send(ws, {"type": "thinking"})
 
     full_tokens: list[str] = []
+    clean_answer_holder: list[str] = []
     speaking = False
 
     async def on_speaking() -> None:
@@ -422,6 +412,21 @@ async def _stream_answer(
             return
         await _send(ws, {"type": "related_images", "images": imgs})
 
+    async def _emit_lesson(lesson: dict | None, clean_answer: str) -> None:
+        if stop.is_set() or not lesson:
+            return
+        if clean_answer:
+            clean_answer_holder.clear()
+            clean_answer_holder.append(clean_answer)
+        await _send(
+            ws,
+            {
+                "type": "math_lesson",
+                "lesson": lesson,
+                "clean_answer": clean_answer,
+            },
+        )
+
     try:
         if session.has_context:
             token_iter = chapter_aware_qa_stream(
@@ -434,6 +439,7 @@ async def _stream_answer(
                 chapter=session.chapter,
                 chapter_names=session.chapter_names,
                 emit_related_images=_emit_imgs,
+                emit_math_lesson=_emit_lesson,
                 conversation_history=session.history,
                 student_name=session.student_name,
                 voice_mode=True,
@@ -457,7 +463,7 @@ async def _stream_answer(
     except Exception as exc:
         logger.error("Voice generation error: %s", exc, exc_info=True)
         if not stop.is_set():
-            await _send(ws, {"type": "error", "message": "Answer generation failed."})
+            await _send(ws, {"type": "error", "message": VOICE_ANSWER_FAILED})
         return
     finally:
         await sentence_queue.put(_TTS_STOP)
@@ -477,7 +483,7 @@ async def _stream_answer(
     await _send(ws, {"type": "done"})
     logger.info("[voice %s] Timing %s", turn_id, timing.summary())
 
-    full_answer = "".join(full_tokens)
+    full_answer = clean_answer_holder[0] if clean_answer_holder else "".join(full_tokens)
     session.remember("user", question)
     session.remember("assistant", full_answer)
     session.tutor_state = next_tutor_state(
@@ -577,7 +583,7 @@ async def voice_ws(
     except Exception as exc:
         logger.error("Voice WS fatal error: %s", exc, exc_info=True)
         try:
-            await _send(websocket, {"type": "error", "message": "Server error."})
+            await _send(websocket, {"type": "error", "message": VOICE_SERVER_ERROR})
         except Exception:
             pass
     finally:

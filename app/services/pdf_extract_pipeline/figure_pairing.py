@@ -14,6 +14,17 @@ from typing import Any
 import fitz
 from PIL import Image
 
+from app.services.image_service.figure_filters import (
+    is_near_duplicate_box,
+    is_prose_figure_region,
+)
+from app.services.image_service.math_extraction import (
+    extract_formula_text_from_pdf,
+    merge_formula_structured_text,
+    section_heading_above_figure,
+)
+from app.services.image_service.formula_bbox import expand_formula_bbox
+from app.services.pdf_extract_pipeline.embedded_figure_refinement import refine_figure_box
 from app.services.pdf_extract_pipeline.raster import image_box_to_pdf_rect, pdf_rect_to_image_box
 from app.services.pdf_extract_pipeline.types import ExtractedAsset, LayoutElement, PageExtraction
 
@@ -37,6 +48,11 @@ def _horizontal_gap(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) 
 
 def _horizontal_overlap(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> int:
     return max(0, min(a[2], b[2]) - max(a[0], b[0]))
+
+
+def _crop_formula_box(image: Image.Image, box: tuple[int, int, int, int]) -> bytes:
+    expanded = expand_formula_bbox(box, image.size)
+    return _crop_box(image, expanded, padding=0)
 
 
 def _crop_box(image: Image.Image, box: tuple[int, int, int, int], padding: int = 5) -> bytes:
@@ -278,6 +294,8 @@ def extract_assets_from_page(
     dpi: int,
     document_has_fig_numbers: bool,
     table_structured: dict[int, str] | None = None,
+    assigned_fig_numbers: set[str] | None = None,
+    assigned_figure_boxes: list[tuple[int, int, int, int]] | None = None,
 ) -> list[ExtractedAsset]:
     image = page_extraction.pil_image
     if image is None:
@@ -310,6 +328,8 @@ def extract_assets_from_page(
         caption["text"] = _text_from_region(page, caption["box"], image_size, dpi)
 
     assets: list[ExtractedAsset] = []
+    global_assigned_numbers = assigned_fig_numbers or set()
+    page_assigned_boxes = list(assigned_figure_boxes or [])
     figure_labels = _find_figure_labels(page, figures, figure_captions, dpi)
     assignments = _assign_labels_to_figures(figure_labels, figures)
     assigned_numbers = {lbl["fig_number"] for lbl, _ in assignments}
@@ -320,6 +340,14 @@ def extract_assets_from_page(
         if _box_area(box) < 4000:
             continue
         fig_number = label["fig_number"]
+        box = refine_figure_box(
+            page,
+            layout_box=box,
+            label_box=label["label_box"],
+            fig_number=fig_number,
+            image_size=image_size,
+            dpi=dpi,
+        )
         nearby_before, nearby_after = _nearby_text_for_figure(page, box, image_size, dpi)
         layout_cap = _caption_from_layout(box, figure_captions, page, image_size, dpi)
         caption = (
@@ -341,57 +369,79 @@ def extract_assets_from_page(
                 source="layout",
             )
         )
+        page_assigned_boxes.append(box)
 
     for label in figure_labels:
-        if label["fig_number"] in assigned_numbers:
+        fig_number = label["fig_number"]
+        if fig_number in assigned_numbers or fig_number in global_assigned_numbers:
             continue
         box = _fallback_figure_box(label["label_box"], image_size)
         if _box_area(box) < 4000:
+            continue
+        caption = (
+            _caption_for_label(page, label["label_box"], image_size, dpi)
+            or label.get("context")
+            or label["label_text"]
+        )
+        if is_prose_figure_region(page, box, image_size, dpi, caption=caption):
             continue
         assets.append(
             ExtractedAsset(
                 asset_type="figure",
                 page_no=page_no,
                 image_bytes=_crop_box(image, box),
-                number=label["fig_number"],
-                caption=_caption_for_label(page, label["label_box"], image_size, dpi)
-                or label.get("context")
-                or label["label_text"],
+                number=fig_number,
+                caption=caption,
                 bbox=box,
                 source="layout_fallback",
             )
         )
+        page_assigned_boxes.append(box)
 
-    if not document_has_fig_numbers:
-        for fig in figures:
-            if id(fig) in assigned_ids:
-                continue
-            box = fig["box"]
-            if _box_area(box) < 4000:
-                continue
-            assets.append(
-                ExtractedAsset(
-                    asset_type="figure",
-                    page_no=page_no,
-                    image_bytes=_crop_box(image, box),
-                    number=None,
-                    caption="",
-                    bbox=box,
-                    source="layout_unnumbered",
-                )
+    orphan_source = "layout_unnumbered" if not document_has_fig_numbers else "layout_orphan"
+    for fig in figures:
+        if id(fig) in assigned_ids:
+            continue
+        box = fig["box"]
+        if _box_area(box) < 4000:
+            continue
+        if is_near_duplicate_box(box, page_assigned_boxes):
+            continue
+        nearby_before, nearby_after = _nearby_text_for_figure(page, box, image_size, dpi)
+        section = section_heading_above_figure(page, box, image_size, dpi)
+        caption = section or nearby_before.splitlines()[-1].strip()[:200] if nearby_before else ""
+        if is_prose_figure_region(page, box, image_size, dpi, caption=caption):
+            continue
+        assets.append(
+            ExtractedAsset(
+                asset_type="figure",
+                page_no=page_no,
+                image_bytes=_crop_box(image, box),
+                number=None,
+                caption=caption,
+                nearby_before=nearby_before,
+                nearby_after=nearby_after,
+                bbox=box,
+                source=orphan_source,
             )
+        )
+        page_assigned_boxes.append(box)
 
     for formula in formulas:
         box = formula["box"]
         if _box_area(box) < 400:
             continue
+        latex = formula["det"].latex or ""
+        pdf_math = extract_formula_text_from_pdf(page, box, image_size, dpi)
+        structured = merge_formula_structured_text(pdf_math, latex)
+        expanded_box = expand_formula_bbox(box, image_size)
         assets.append(
             ExtractedAsset(
                 asset_type="formula",
                 page_no=page_no,
-                image_bytes=_crop_box(image, box, padding=3),
-                structured_text=formula["det"].latex,
-                bbox=box,
+                image_bytes=_crop_formula_box(image, box),
+                structured_text=structured,
+                bbox=expanded_box,
                 source="layout",
             )
         )

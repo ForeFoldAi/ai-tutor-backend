@@ -80,3 +80,44 @@ def test_blockquote():
     out = sanitize_for_tts("> Important: review the chapter.")
     assert "Important" in out
     assert ">" not in out
+
+
+def test_latex_math_stripped_for_speech():
+    out = sanitize_for_tts(
+        "**Solution** Substituting: $$= 5 \\times 365$$ and $$\\frac{10}{2}$$"
+    )
+    assert "$$" not in out
+    assert "\\times" not in out
+    assert "times" in out
+    assert "10 over 2" in out
+    assert "Solution" in out
+
+
+def test_orphan_dollars_and_bare_frac():
+    out = sanitize_for_tts("The answer is $$\\frac{10}{2} and more")
+    assert "$$" not in out
+    assert "10 over 2" in out
+
+    out = sanitize_for_tts("Use \\frac{a}{b} for ratios")
+    assert "a over b" in out
+    assert "\\" not in out
+
+
+def test_unclosed_math_delimiter_hold():
+    from app.services.voice_chunking import has_unclosed_math_delimiters
+
+    assert has_unclosed_math_delimiters("Formula: $$\\frac{1}{2}")
+    assert not has_unclosed_math_delimiters("Formula: $$\\frac{1}{2}$$")
+
+
+def test_voice_live_teaching_vs_full_format():
+    from app.services.chat_service import _voice_should_use_text_format
+
+    assert _voice_should_use_text_format("Mathematics") is True
+    assert _voice_should_use_text_format("Science", voice_mode=True) is False
+    assert _voice_should_use_text_format("Mathematics", voice_mode=True) is True
+    assert _voice_should_use_text_format(
+        "Mathematics",
+        voice_mode=True,
+        understanding_scores={"wants_expansion": True},
+    ) is True

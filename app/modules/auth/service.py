@@ -7,6 +7,16 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.student_messages import (
+    ACCOUNT_INACTIVE,
+    CURRENT_PASSWORD_REQUIRED,
+    EMAIL_ALREADY_USED,
+    INVALID_LOGIN,
+    INVALID_RESET_TOKEN,
+    INVALID_VERIFY_TOKEN,
+    USERNAME_TAKEN,
+    WRONG_CURRENT_PASSWORD,
+)
 from app.core.security import (
     create_access_token,
     create_email_token,
@@ -31,12 +41,13 @@ from app.modules.auth.schemas import (
     TeachingClassAssignment,
     UpdateStudentRequest,
     UpdateTutorRequest,
+    UserSettingsUpdateRequest,
 )
 from app.modules.auth.security import create_refresh_session
 from app.modules.organizations.models import Organization
 from app.modules.schools.models import School
 from app.modules.sessions.models import SessionToken
-from app.modules.users.models import User
+from app.modules.users.models import User, UserSettings
 
 settings = get_settings()
 
@@ -76,12 +87,12 @@ def _validate_admin_create(actor: User, target_role: Role) -> None:
 
 def _ensure_active(user: User) -> None:
     if not user.is_active:
-        raise AuthException("Account is inactive.", status.HTTP_403_FORBIDDEN)
+        raise AuthException(ACCOUNT_INACTIVE, status.HTTP_403_FORBIDDEN)
 
 
 def signup_student(db: Session, payload: StudentSignupRequest) -> User:
     if _find_user_by_email(db, payload.email):
-        raise AuthException("Email is already registered.", status.HTTP_409_CONFLICT)
+        raise AuthException(EMAIL_ALREADY_USED, status.HTTP_409_CONFLICT)
 
     user = User(
         full_name=payload.full_name,
@@ -98,7 +109,7 @@ def signup_student(db: Session, payload: StudentSignupRequest) -> User:
 
 def signup_organization(db: Session, payload: OrganizationSignupRequest) -> User:
     if _find_user_by_email(db, payload.email):
-        raise AuthException("Email is already registered.", status.HTTP_409_CONFLICT)
+        raise AuthException(EMAIL_ALREADY_USED, status.HTTP_409_CONFLICT)
 
     org = Organization(name=payload.organization_name, phone=payload.phone, address=payload.address, is_active=True)
     db.add(org)
@@ -121,7 +132,7 @@ def signup_organization(db: Session, payload: OrganizationSignupRequest) -> User
 def login(db: Session, payload: LoginRequest, request: Request) -> tuple[User, str, str]:
     user = _find_user_by_login(db, payload.email)
     if not user or not verify_password(payload.password, user.password_hash):
-        raise AuthException("Invalid credentials.", status.HTTP_401_UNAUTHORIZED)
+        raise AuthException(INVALID_LOGIN, status.HTTP_401_UNAUTHORIZED)
     _ensure_active(user)
 
     refresh_token, session = create_refresh_session(
@@ -186,7 +197,7 @@ def admin_create_user(
 ) -> User:
     _validate_admin_create(actor, target_role)
     if _find_user_by_email(db, payload.email):
-        raise AuthException("Email is already registered.", status.HTTP_409_CONFLICT)
+        raise AuthException(EMAIL_ALREADY_USED, status.HTTP_409_CONFLICT)
 
     organization_id = payload.organization_id or actor.organization_id
     school_id = payload.school_id
@@ -267,7 +278,7 @@ def create_school_admin(
 ) -> User:
     _validate_admin_create(actor, Role.SCHOOL_ADMIN)
     if _find_user_by_email(db, payload.email):
-        raise AuthException("Email is already registered.", status.HTTP_409_CONFLICT)
+        raise AuthException(EMAIL_ALREADY_USED, status.HTTP_409_CONFLICT)
 
     if school_id is not None:
         school = db.get(School, school_id)
@@ -541,7 +552,7 @@ def update_tutor(db: Session, actor: User, user_id: uuid.UUID, payload: UpdateTu
 
     new_email = str(payload.email).lower()
     if new_email != user.email and _find_user_by_email(db, new_email):
-        raise AuthException("Email is already registered.", status.HTTP_409_CONFLICT)
+        raise AuthException(EMAIL_ALREADY_USED, status.HTTP_409_CONFLICT)
 
     user.full_name = payload.full_name.strip()
     user.email = new_email
@@ -592,7 +603,7 @@ def update_student(db: Session, actor: User, user_id: uuid.UUID, payload: Update
 
     new_email = str(payload.email).lower()
     if new_email != user.email and _find_user_by_email(db, new_email):
-        raise AuthException("Email is already registered.", status.HTTP_409_CONFLICT)
+        raise AuthException(EMAIL_ALREADY_USED, status.HTTP_409_CONFLICT)
 
     user.full_name = payload.full_name.strip()
     user.email = new_email
@@ -648,16 +659,16 @@ def update_me_profile(db: Session, user: User, payload: MeProfileUpdateRequest) 
     new_email = str(payload.email).lower().strip()
     if new_email != user.email:
         if _find_user_by_email(db, new_email):
-            raise AuthException("This email is already registered.", status.HTTP_409_CONFLICT)
+            raise AuthException(EMAIL_ALREADY_USED, status.HTTP_409_CONFLICT)
         user.email = new_email
 
     user.full_name = payload.full_name
 
     if payload.new_password:
         if not payload.current_password:
-            raise AuthException("Current password is required to set a new password.", status.HTTP_400_BAD_REQUEST)
+            raise AuthException(CURRENT_PASSWORD_REQUIRED, status.HTTP_400_BAD_REQUEST)
         if not verify_password(payload.current_password, user.password_hash):
-            raise AuthException("Current password is incorrect.", status.HTTP_403_FORBIDDEN)
+            raise AuthException(WRONG_CURRENT_PASSWORD, status.HTTP_403_FORBIDDEN)
         user.password_hash = hash_password(payload.new_password)
         db.execute(update(SessionToken).where(SessionToken.user_id == user.id).values(revoked=True))
 
@@ -687,7 +698,7 @@ def issue_reset_password_token(user: User) -> str:
 def verify_email_token(db: Session, token: str) -> None:
     payload = decode_token(token)
     if payload.get("type") != "verify_email":
-        raise AuthException("Invalid verification token.", status.HTTP_400_BAD_REQUEST)
+        raise AuthException(INVALID_VERIFY_TOKEN, status.HTTP_400_BAD_REQUEST)
     user = db.get(User, payload.get("sub"))
     if not user:
         raise AuthException("User not found.", status.HTTP_404_NOT_FOUND)
@@ -697,10 +708,77 @@ def verify_email_token(db: Session, token: str) -> None:
 def reset_password(db: Session, token: str, new_password: str) -> None:
     payload = decode_token(token)
     if payload.get("type") != "reset_password":
-        raise AuthException("Invalid reset token.", status.HTTP_400_BAD_REQUEST)
+        raise AuthException(INVALID_RESET_TOKEN, status.HTTP_400_BAD_REQUEST)
     user = db.get(User, payload.get("sub"))
     if not user:
         raise AuthException("User not found.", status.HTTP_404_NOT_FOUND)
     user.password_hash = hash_password(new_password)
     user.updated_at = datetime.now(UTC)
     db.execute(update(SessionToken).where(SessionToken.user_id == user.id).values(revoked=True))
+
+
+def _default_username(user: User) -> str:
+    local = (user.email or "").split("@", 1)[0].strip().lower()
+    return local or "user"
+
+
+def _find_settings_by_username(db: Session, username: str, exclude_user_id: uuid.UUID | None = None) -> UserSettings | None:
+    ident = (username or "").strip().lower()
+    if not ident:
+        return None
+    stmt = select(UserSettings).where(func.lower(UserSettings.username) == ident)
+    if exclude_user_id:
+        stmt = stmt.where(UserSettings.user_id != exclude_user_id)
+    return db.scalar(stmt)
+
+
+def get_or_create_user_settings(db: Session, user: User) -> UserSettings:
+    row = db.get(UserSettings, user.id)
+    if row:
+        return row
+    base_username = _default_username(user)
+    username = base_username
+    suffix = 1
+    while _find_settings_by_username(db, username):
+        username = f"{base_username}{suffix}"
+        suffix += 1
+    row = UserSettings(
+        user_id=user.id,
+        username=username,
+        language="en",
+        theme="light",
+    )
+    db.add(row)
+    db.flush()
+    return row
+
+
+def update_user_settings(db: Session, user: User, payload: UserSettingsUpdateRequest) -> UserSettings:
+    row = get_or_create_user_settings(db, user)
+    data = payload.model_dump(exclude_unset=True)
+
+    if "username" in data:
+        new_username = data["username"]
+        if new_username:
+            existing = _find_settings_by_username(db, new_username, exclude_user_id=user.id)
+            if existing:
+                raise AuthException(USERNAME_TAKEN, status.HTTP_409_CONFLICT)
+            row.username = new_username.lower()
+        else:
+            row.username = None
+
+    for field in ("language", "theme", "notify_email", "notify_push", "notify_assignments", "notify_sessions", "notify_messages"):
+        if field in data and data[field] is not None:
+            setattr(row, field, data[field])
+
+    row.updated_at = datetime.now(UTC)
+    db.flush()
+    return row
+
+
+def reset_user_settings(db: Session, user: User) -> UserSettings:
+    existing = db.get(UserSettings, user.id)
+    if existing:
+        db.delete(existing)
+        db.flush()
+    return get_or_create_user_settings(db, user)

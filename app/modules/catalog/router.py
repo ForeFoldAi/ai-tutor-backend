@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.config import UPLOADS_DIR
 from app.core.database import SessionLocal, get_db
+from app.core.student_messages import IMAGE_INVALID_PATH, IMAGE_NOT_AVAILABLE, PDF_ONLY
 from app.modules.auth.constants import Role
 from app.modules.auth.dependencies import get_current_user, get_current_user_bearer_or_query, require_roles
 from app.modules.auth.schemas import MessageResponse
@@ -423,10 +424,10 @@ def get_textbook_image_file(
 
     safe = file_path.strip().replace("\\", "/").lstrip("/")
     if not safe or ".." in safe.split("/"):
-        raise HTTPException(status_code=400, detail="Invalid file path.")
+        raise HTTPException(status_code=400, detail=IMAGE_INVALID_PATH)
     allowed_prefixes = ("figures/", "tables/", "formulas/")
     if "/" in safe and not safe.startswith(allowed_prefixes):
-        raise HTTPException(status_code=400, detail="Invalid file path.")
+        raise HTTPException(status_code=400, detail=IMAGE_INVALID_PATH)
 
     basename = os.path.basename(safe)
     row = db.scalar(
@@ -436,11 +437,11 @@ def get_textbook_image_file(
         )
     )
     if row is None:
-        raise HTTPException(status_code=404, detail="Image not found.")
+        raise HTTPException(status_code=404, detail=IMAGE_NOT_AVAILABLE)
 
     path = image_disk_path(upload_id, row.file_name)
     if not os.path.isfile(path):
-        raise HTTPException(status_code=404, detail="Image file missing.")
+        raise HTTPException(status_code=404, detail=IMAGE_NOT_AVAILABLE)
 
     from app.services.image_service.textbook_image_display import can_serve_file_directly, encode_browser_jpeg
 
@@ -449,7 +450,7 @@ def get_textbook_image_file(
 
     body = encode_browser_jpeg(path)
     if not body:
-        raise HTTPException(status_code=404, detail="Image not displayable.")
+        raise HTTPException(status_code=404, detail=IMAGE_NOT_AVAILABLE)
 
     return Response(content=body, media_type="image/jpeg")
 

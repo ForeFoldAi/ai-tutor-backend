@@ -11,6 +11,7 @@ from io import BytesIO
 
 from PIL import Image
 
+from app.services.image_service.figure_filters import figure_asset_priority
 from app.services.image_service.pdf_extraction_types import (
     BBox,
     DocumentExtractionResult,
@@ -83,6 +84,24 @@ def _asset_to_paired_figure(
     )
 
 
+def _dedupe_figure_assets(assets: list[ExtractedAsset]) -> list[ExtractedAsset]:
+    """Keep the best crop when multiple assets share a figure number."""
+    numbered: dict[str, ExtractedAsset] = {}
+    unnumbered: list[ExtractedAsset] = []
+    for asset in assets:
+        if asset.asset_type != "figure":
+            continue
+        if asset.number:
+            current = numbered.get(asset.number)
+            if current is None or figure_asset_priority(asset.source, asset.bbox) > figure_asset_priority(
+                current.source, current.bbox
+            ):
+                numbered[asset.number] = asset
+        else:
+            unnumbered.append(asset)
+    return list(numbered.values()) + unnumbered
+
+
 def _build_page_logs(pipeline: PipelineResult) -> list[PageExtractionLog]:
     logs: list[PageExtractionLog] = []
     for page in pipeline.pages:
@@ -129,7 +148,7 @@ def extract_with_ml_pipeline(
         raise MlPipelineExtractionError(f"ML pipeline returned no pages for {pdf_path}")
 
     ml_figures: list[PairedFigure] = []
-    figure_assets = [a for a in ml_result.assets if a.asset_type == "figure"]
+    figure_assets = _dedupe_figure_assets([a for a in ml_result.assets if a.asset_type == "figure"])
     for seq, asset in enumerate(figure_assets):
         if len(ml_figures) >= max_figures:
             break

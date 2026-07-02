@@ -30,6 +30,8 @@ from app.modules.auth.schemas import (
     UpdateStudentRequest,
     UpdateTutorRequest,
     UserResponse,
+    UserSettingsResponse,
+    UserSettingsUpdateRequest,
     UserStatusPatchRequest,
 )
 from app.modules.auth.service import (
@@ -57,6 +59,9 @@ from app.modules.auth.service import (
     update_school,
     update_student,
     update_tutor,
+    update_user_settings,
+    get_or_create_user_settings,
+    reset_user_settings,
     verify_email_token,
 )
 from app.modules.users.models import User
@@ -192,6 +197,40 @@ def patch_me_profile(
     db.commit()
     db.refresh(user)
     return UserResponse.model_validate(user)
+
+
+@router.get("/me/settings", response_model=UserSettingsResponse)
+def get_me_settings(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    settings_row = get_or_create_user_settings(db, current_user)
+    db.commit()
+    db.refresh(settings_row)
+    return UserSettingsResponse.model_validate(settings_row)
+
+
+@router.patch("/me/settings", response_model=UserSettingsResponse)
+def patch_me_settings(
+    payload: UserSettingsUpdateRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    settings_row = update_user_settings(db, current_user, payload)
+    db.commit()
+    db.refresh(settings_row)
+    return UserSettingsResponse.model_validate(settings_row)
+
+
+@router.delete("/me/settings", response_model=UserSettingsResponse)
+def delete_me_settings(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    settings_row = reset_user_settings(db, current_user)
+    db.commit()
+    db.refresh(settings_row)
+    return UserSettingsResponse.model_validate(settings_row)
 
 
 @router.get("/admin/organization", response_model=OrganizationDetailResponse)

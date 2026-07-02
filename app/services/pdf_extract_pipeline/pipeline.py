@@ -20,6 +20,7 @@ from typing import Any
 
 from PIL import Image
 
+from app.services.image_service.formula_bbox import expand_formula_bbox
 from app.services.pdf_extract_pipeline.config import (
     extraction_dpi,
     load_pipeline_config,
@@ -122,7 +123,9 @@ class PdfExtractionPipeline:
                     layout_dets.extend(mfd_dets)
                     if stage_enabled(self.config, "formula_recognition") and self.mfr.available():
                         for det in mfd_dets:
-                            xmin, ymin, xmax, ymax = det.bbox
+                            xmin, ymin, xmax, ymax = expand_formula_bbox(
+                                det.bbox, image.size
+                            )
                             formula_images.append(image.crop((xmin, ymin, xmax, ymax)))
                             formula_targets.append(det)
                 except Exception as exc:
@@ -212,6 +215,8 @@ class PdfExtractionPipeline:
         )
 
         assets = []
+        assigned_fig_numbers: set[str] = set()
+        assigned_figure_boxes: list[tuple[int, int, int, int]] = []
         for page_idx in range(n_pages):
             page_ex = pages[page_idx]
             page_assets = extract_assets_from_page(
@@ -220,7 +225,14 @@ class PdfExtractionPipeline:
                 dpi=self.dpi,
                 document_has_fig_numbers=document_has_fig_numbers,
                 table_structured=page_ex.table_structured,
+                assigned_fig_numbers=assigned_fig_numbers,
+                assigned_figure_boxes=assigned_figure_boxes,
             )
+            for asset in page_assets:
+                if asset.asset_type == "figure" and asset.number:
+                    assigned_fig_numbers.add(asset.number)
+                if asset.asset_type == "figure" and asset.bbox:
+                    assigned_figure_boxes.append(asset.bbox)
             assets.extend(page_assets)
 
         full_text = "\n\n".join(p.markdown for p in pages if p.markdown)

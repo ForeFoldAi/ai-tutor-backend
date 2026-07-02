@@ -1,8 +1,12 @@
 from unittest.mock import MagicMock, patch
 
 from app.services.chapter_scope import (
+    ChapterCoverageLevel,
+    ChapterScopeChoice,
+    assess_chapter_coverage,
     chapter_number_from_name,
     chapter_scope_mismatch_message,
+    detect_chapter_scope_choice,
     extract_mentioned_chapter_numbers,
     selected_chapter_numbers,
     substantive_query_terms,
@@ -37,6 +41,7 @@ def test_mismatch_when_different_chapter():
     assert msg is not None
     assert "Chapter 1" in msg
     assert "Chapter 2" in msg
+    assert "How would you like to continue?" in msg
 
 
 def test_no_mismatch_when_multiple_chapters_selected():
@@ -80,6 +85,7 @@ def test_topic_mismatch_desert_in_chapter_one(mock_retrieve, mock_labels):
     assert msg is not None
     assert "desert" in msg.lower()
     assert "Chapter 1" in msg
+    assert "How would you like to continue?" in msg
 
 
 @patch("app.services.chapter_scope._subject_upload_labels")
@@ -103,3 +109,37 @@ def test_no_topic_mismatch_for_weather_question(mock_retrieve, mock_labels):
         subject_name="Social",
     )
     assert msg is None
+
+
+@patch("app.services.chapter_scope._subject_upload_labels")
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_not_covered_when_no_term_in_selected_chapter(mock_other, mock_labels):
+    ch2_id = "22222222-2222-2222-2222-222222222222"
+    mock_labels.return_value = {ch2_id: "Chapter 2 - Understanding the Weather"}
+    mock_other.return_value = ("", 0, 0)
+
+    assessment = assess_chapter_coverage(
+        "what is democracy?",
+        docs=[_doc("Humidity measures moisture in the air.", ch2_id)],
+        collection_name="CBSE_CLASS_9_Social",
+        chapter_ids=[ch2_id],
+        chapter_names=["Chapter 2 - Understanding the Weather"],
+        board="CBSE",
+        class_level="CLASS_9",
+        subject_name="Social",
+    )
+    assert assessment.level == ChapterCoverageLevel.NONE
+
+
+def test_scope_choice_general():
+    history = [
+        {"role": "user", "content": "what is democracy?"},
+        {
+            "role": "assistant",
+            "content": "How would you like to continue?\na) Stay\nb) Switch\nc) General",
+        },
+    ]
+    assert detect_chapter_scope_choice("c", history) == ChapterScopeChoice.GENERAL
+    assert detect_chapter_scope_choice("general explanation", history) == ChapterScopeChoice.GENERAL
+    assert detect_chapter_scope_choice("I'll go with option B", history) == ChapterScopeChoice.SWITCH
+    assert detect_chapter_scope_choice("I choose option c please", history) == ChapterScopeChoice.GENERAL

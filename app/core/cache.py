@@ -13,7 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 import redis.asyncio as aioredis
 
@@ -38,9 +38,17 @@ def get_redis() -> aioredis.Redis:
     return _redis_client
 
 
-def _make_key(collection: str, chapter_ids: list[str] | None, query: str) -> str:
-    # v16: generic subtopic figure match + PDF captions (no subject hardcoding).
-    canonical = f"v16|{collection}|{','.join(sorted(chapter_ids or []))}|{query.strip().lower()}"
+def _make_key(
+    collection: str,
+    chapter_ids: list[str] | None,
+    query: str,
+    class_level: str = "",
+) -> str:
+    # v26: include class_level so answers never bleed across grades.
+    canonical = (
+        f"v26|{collection}|{class_level or ''}|"
+        f"{','.join(sorted(chapter_ids or []))}|{query.strip().lower()}"
+    )
     digest = hashlib.sha256(canonical.encode()).hexdigest()
     return f"tutor:qa:{digest}"
 
@@ -49,11 +57,12 @@ async def get_cached_answer(
     collection: str,
     chapter_ids: list[str] | None,
     query: str,
+    class_level: str = "",
 ) -> str | None:
     """Return cached answer string, or None on miss / error."""
     try:
         r = get_redis()
-        key = _make_key(collection, chapter_ids, query)
+        key = _make_key(collection, chapter_ids, query, class_level)
         value = await r.get(key)
         if value:
             logger.debug("Cache HIT for key=%s", key[:16])
@@ -63,22 +72,33 @@ async def get_cached_answer(
         return None
 
 
-def deserialize_tutor_cache(value: str) -> tuple[str, list[dict]]:
-    """Return answer text from cache. Images are never stored; always return empty list."""
+def deserialize_tutor_cache(value: str) -> tuple[str, dict[str, Any] | None]:
+    """Return (answer text, math_lesson dict) from cache. Images are never stored."""
     raw = (value or "").strip()
     if raw.startswith("{"):
         try:
             obj = json.loads(raw)
             if isinstance(obj, dict) and "answer" in obj:
-                return str(obj.get("answer") or ""), []
+                lesson = obj.get("math_lesson")
+                if isinstance(lesson, dict):
+                    return str(obj.get("answer") or ""), lesson
+                return str(obj.get("answer") or ""), None
         except Exception:
             pass
-    return raw, []
+    return raw, None
 
 
-def serialize_tutor_cache(answer: str, related_images: list[dict]) -> str:
+def serialize_tutor_cache(
+    answer: str,
+    related_images: list[dict],
+    *,
+    math_lesson: dict[str, Any] | None = None,
+) -> str:
     # Images are intentionally excluded — they are always re-ranked per request.
-    return json.dumps({"answer": answer}, ensure_ascii=False)
+    payload: dict[str, Any] = {"answer": answer}
+    if math_lesson:
+        payload["math_lesson"] = math_lesson
+    return json.dumps(payload, ensure_ascii=False)
 
 
 async def set_cached_answer(
@@ -89,12 +109,14 @@ async def set_cached_answer(
     ttl: int = 86_400,
     *,
     related_images: list[dict] | None = None,
+    math_lesson: dict[str, Any] | None = None,
+    class_level: str = "",
 ) -> None:
-    """Store only the answer text in cache. Images are never cached."""
+    """Store answer text (and optional math lesson) in cache. Images are never cached."""
     try:
         r = get_redis()
-        key = _make_key(collection, chapter_ids, query)
-        payload = serialize_tutor_cache(answer, [])
+        key = _make_key(collection, chapter_ids, query, class_level)
+        payload = serialize_tutor_cache(answer, [], math_lesson=math_lesson)
         await r.set(key, payload, ex=ttl)
         logger.debug("Cache SET key=%s ttl=%ds", key[:16], ttl)
     except Exception as exc:

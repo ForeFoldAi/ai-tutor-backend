@@ -889,6 +889,11 @@ def _payload_row(
         row["title"] = im.title
     if getattr(im, "figure_number", None):
         row["figure_number"] = im.figure_number
+    structured = getattr(im, "structured_content", None)
+    kind = get_content_kind(im)
+    if structured and kind in ("formula", "table"):
+        row["structured_content"] = structured.strip()[:2000]
+        row["content_kind"] = kind
     return row
 
 

@@ -24,6 +24,27 @@ _resolved_voice: str | None = None
 _voice_lock = asyncio.Lock()
 
 
+async def _aclose_async_gen(gen: AsyncIterator) -> None:
+    """Close an async generator so edge-tts aiohttp sessions are released."""
+    aclose = getattr(gen, "aclose", None)
+    if aclose is None:
+        return
+    try:
+        await aclose()
+    except Exception:
+        pass
+
+
+async def _iter_communicate_stream(communicate: edge_tts.Communicate) -> AsyncIterator[dict]:
+    """Wrap communicate.stream() and always aclose on early exit or cancel."""
+    stream = communicate.stream()
+    try:
+        async for chunk in stream:
+            yield chunk
+    finally:
+        await _aclose_async_gen(stream)
+
+
 async def resolve_voice() -> str:
     """Return a working Indian English neural voice (cached after first probe)."""
     global _resolved_voice
@@ -37,7 +58,7 @@ async def resolve_voice() -> str:
         for candidate in (PRIMARY_VOICE, FALLBACK_VOICE):
             try:
                 communicate = edge_tts.Communicate("Hello", voice=candidate)
-                async for chunk in communicate.stream():
+                async for chunk in _iter_communicate_stream(communicate):
                     if chunk["type"] == "audio" and chunk.get("data"):
                         _resolved_voice = candidate
                         logger.info("Edge TTS active voice: %s", candidate)
@@ -75,7 +96,7 @@ async def stream_edge_tts(
 
     try:
         communicate = edge_tts.Communicate(sentence, voice=voice_name)
-        async for chunk in communicate.stream():
+        async for chunk in _iter_communicate_stream(communicate):
             if stop_event.is_set():
                 return False
             if websocket.client_state != WebSocketState.CONNECTED:
@@ -116,7 +137,7 @@ async def iter_edge_tts_mp3(
 
     voice_name = voice or await resolve_voice()
     communicate = edge_tts.Communicate(sentence, voice=voice_name)
-    async for chunk in communicate.stream():
+    async for chunk in _iter_communicate_stream(communicate):
         if stop_event and stop_event.is_set():
             return
         if chunk.get("type") != "audio":
