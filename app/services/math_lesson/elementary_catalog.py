@@ -239,7 +239,7 @@ ELEMENTARY_TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str
         "A square has four equal sides; a rectangle has opposite sides equal.",
     ),
     (
-        re.compile(r"\b(2d|2\s*d|shape|square|rectangle|circle|triangle|pentagon|hexagon)\b", re.I),
+        re.compile(r"\b(2d|2\s*d|shape|square|rectangle|pentagon|hexagon)\b", re.I),
         lambda: _viz(
             "shapes-basic",
             "2D Shapes Explorer",

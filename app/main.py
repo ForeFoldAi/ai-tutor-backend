@@ -80,8 +80,86 @@ def _startup() -> None:
         except Exception as exc:
             logger.warning("CLIP pre-warm failed (non-fatal): %s", exc)
 
+    def _warm_embeddings():
+        try:
+            from app.services.voice_performance import warm_embeddings_sync
+
+            if warm_embeddings_sync():
+                logger.info("BGE embeddings pre-warmed for voice RAG")
+        except Exception as exc:
+            logger.warning("Embedding pre-warm failed (non-fatal): %s", exc)
+
+    def _warm_voice_protection():
+        try:
+            from app.services.voice_protection_preload import warm_voice_protection_models
+
+            warm_voice_protection_models()
+        except Exception as exc:
+            logger.warning("Voice protection preload failed (non-fatal): %s", exc)
+
     threading.Thread(target=_warm_tts, daemon=True).start()
+    threading.Thread(target=_warm_embeddings, daemon=True).start()
     threading.Thread(target=_warm_multimodal, daemon=True).start()
+    threading.Thread(target=_warm_voice_protection, daemon=True).start()
+
+
+@app.get("/health/voice")
+def voice_health():
+    """Voice stack readiness: VAD, noise, TTS, speaker, preload, queues."""
+    from app.config import (
+        NOISE_SUPPRESSION_ENABLED,
+        NOISE_SUPPRESSION_PROVIDER,
+        SPEAKER_VERIFICATION_ENABLED,
+        VAD_ENABLED,
+        VOICE_PROTECTION_ENABLED,
+        VOICE_SPEECH_QUEUE_MAXSIZE,
+        VOICE_TTS_PREFETCH,
+        VOICE_TTS_PREFETCH_DEPTH,
+        VOICE_WHISPER_ENABLED,
+    )
+    from app.services.edge_tts_service import PRIMARY_VOICE
+    from app.services.voice_noise_suppress import noise_status
+    from app.services.voice_protection_metrics import snapshot
+    from app.services.voice_protection_preload import preload_status
+    from app.services.voice_speaker import speaker_status
+    from app.services.voice_vad import vad_status
+    from app.services.voice_whisper_stt import whisper_available
+
+    preload = preload_status()
+    vad = vad_status()
+    noise = noise_status()
+    speaker = speaker_status()
+    ready = bool(
+        (not VAD_ENABLED or vad.get("available"))
+        and (not NOISE_SUPPRESSION_ENABLED or True)
+        and (not SPEAKER_VERIFICATION_ENABLED or speaker.get("backend"))
+    )
+    return {
+        "ok": ready,
+        "protection_enabled": VOICE_PROTECTION_ENABLED,
+        "vad": vad,
+        "noise": noise,
+        "noise_provider": NOISE_SUPPRESSION_PROVIDER,
+        "speaker": speaker,
+        "tts": {
+            "provider": "edge-tts",
+            "voice": PRIMARY_VOICE,
+            "prefetch": VOICE_TTS_PREFETCH,
+            "prefetch_depth": VOICE_TTS_PREFETCH_DEPTH,
+            "speech_queue_maxsize": VOICE_SPEECH_QUEUE_MAXSIZE,
+        },
+        "stt": {
+            "browser": True,
+            "whisper_enabled": VOICE_WHISPER_ENABLED,
+            "whisper_available": whisper_available(),
+        },
+        "models_loaded": preload,
+        "metrics": snapshot(),
+        "queue_health": {
+            "speech_queue_maxsize": VOICE_SPEECH_QUEUE_MAXSIZE,
+            "tts_queue_depth": snapshot().get("tts_queue_depth", 0),
+        },
+    }
 
 
 @app.get("/health/ai-models")
@@ -98,6 +176,7 @@ def ai_models_health():
     )
     from app.services.image_service.multimodal_encoder import clip_model_available, current_model_name
     from app.services.vector_service import is_embedding_model_loaded
+    from app.services.voice_whisper_stt import whisper_available
 
     clip_ok = False
     if USE_MULTIMODAL_IMAGE_RETRIEVAL:
@@ -132,6 +211,14 @@ def ai_models_health():
             },
             "voice_stt": {
                 "provider": "browser_webspeech",
+                "server_whisper": whisper_available(),
+                "postprocess": True,
+            },
+            "voice_protection": {
+                "enabled": True,
+                "vad": "silero",
+                "speaker": "ecapa_or_mfcc",
+                "noise": "spectral_gate",
             },
         }
     }
@@ -155,6 +242,7 @@ class ChapterChatRequest(BaseModel):
     chapter: str | None = None
     chapter_names: list[str] | None = None
     conversation_history: list[ConversationTurn] | None = None
+    images_only: bool = False
 
 
 def _fallback_answer_from_docs(query: str):
@@ -274,7 +362,7 @@ async def chapter_chat(
         if req.conversation_history
         else None
     )
-    answer, related_images, math_lesson = await chapter_aware_qa(
+    answer, related_images, math_lesson, science_experiment = await chapter_aware_qa(
         req.query,
         collection_name=collection,
         chapter_ids=req.chapter_ids,
@@ -285,8 +373,15 @@ async def chapter_chat(
         chapter_names=req.chapter_names,
         conversation_history=history,
         student_name=_current_user.full_name,
+        student_key=str(_current_user.id),
+        images_only=req.images_only,
     )
-    return {"answer": answer, "related_images": related_images, "math_lesson": math_lesson}
+    return {
+        "answer": answer,
+        "related_images": related_images,
+        "math_lesson": math_lesson,
+        "science_experiment": science_experiment,
+    }
 
 
 @app.post("/auth/chat/stream")
@@ -301,6 +396,7 @@ async def chapter_chat_stream(
       {"type":"token","content":"..."}
       {"type":"related_images","images":[...]}  (may appear mid-answer)
       {"type":"math_lesson","lesson":{...},"clean_answer":"..."}  (after answer completes)
+      {"type":"science_experiment","experiment":{...},"clean_answer":"..."}  (science subjects)
       {"type":"done"}
     """
     collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
@@ -317,6 +413,11 @@ async def chapter_chat_stream(
                 (json.dumps({"type": "related_images", "images": imgs}, ensure_ascii=False) + "\n").encode()
             )
 
+        async def emit_clean(clean: str) -> None:
+            pending.append(
+                (json.dumps({"type": "clean_answer", "content": clean}, ensure_ascii=False) + "\n").encode()
+            )
+
         async def emit_lesson(lesson: dict | None, clean_answer: str) -> None:
             if not lesson:
                 return
@@ -324,6 +425,23 @@ async def chapter_chat_stream(
                 (
                     json.dumps(
                         {"type": "math_lesson", "lesson": lesson, "clean_answer": clean_answer},
+                        ensure_ascii=False,
+                    )
+                    + "\n"
+                ).encode()
+            )
+
+        async def emit_experiment(experiment: dict | None, clean_answer: str) -> None:
+            if not experiment:
+                return
+            pending.append(
+                (
+                    json.dumps(
+                        {
+                            "type": "science_experiment",
+                            "experiment": experiment,
+                            "clean_answer": clean_answer,
+                        },
                         ensure_ascii=False,
                     )
                     + "\n"
@@ -345,9 +463,12 @@ async def chapter_chat_stream(
             chapter=req.chapter or "",
             chapter_names=req.chapter_names,
             emit_related_images=emit_imgs,
+            emit_clean_answer=emit_clean,
             emit_math_lesson=emit_lesson,
+            emit_science_experiment=emit_experiment,
             conversation_history=history,
             student_name=_current_user.full_name,
+            student_key=str(_current_user.id),
         ):
             while pending:
                 yield pending.pop(0)

@@ -27,7 +27,9 @@ _TOPIC_STOPWORDS = frozenset({
 
 _SKIP_TOPIC_SCOPE_RE = re.compile(
     r"^(hi|hello|hey|hii|thanks|thank you|yes|yeah|yep|no|ok|okay|sure|"
-    r"continue|go on|tell me more|explain more|simplify|summarize)\b",
+    r"continue|go on|tell me more|explain more|simplify|summarize|"
+    r"i\s+(?:did\s+not|don'?t)\s+understand|i\s+am\s+confused|"
+    r"what\s+do\s+you\s+mean|explain\s+again)\b",
     re.I,
 )
 

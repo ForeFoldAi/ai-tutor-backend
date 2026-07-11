@@ -35,7 +35,7 @@ def _asset_to_paired_figure(
     chapter_title: str | None,
 ) -> PairedFigure | None:
     try:
-        jpeg = normalize_image_blob(asset.image_bytes)
+        jpeg = normalize_image_blob(asset.image_bytes, preserve_figure_crop=True)
     except Exception:
         try:
             img = Image.open(BytesIO(asset.image_bytes)).convert("RGB")

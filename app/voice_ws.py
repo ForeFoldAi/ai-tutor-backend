@@ -2,7 +2,7 @@
 Real-time AI Voice Tutor via WebSocket.
 
 Concurrent pipeline:
-  LLM tokens → responsive chunking → asyncio.Queue → TTS worker → MP3 WebSocket frames
+  LLM tokens → speech-unit chunking → asyncio.Queue → TTS orchestrator (prefetch) → MP3 frames
 """
 
 from __future__ import annotations
@@ -10,126 +10,107 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import re
-import time
 import uuid
-from dataclasses import dataclass, field
 from typing import AsyncIterator, Awaitable, Callable
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 
+from app.config import VOICE_INTERRUPT_CANCEL_SEC
 from app.core.student_messages import VOICE_ANSWER_FAILED, VOICE_SERVER_ERROR
 
-from app.services.edge_tts_service import stream_edge_tts
-from app.services.tts_sanitize import sanitize_chunk_for_tts
-from app.services.voice_chunking import (
-    VoicePipelineTiming,
-    VOICE_IDLE_FLUSH_SEC,
-    extract_voice_chunks,
-    has_unclosed_math_delimiters,
+from app.services.edge_tts_service import stream_edge_tts, voice_for_gender
+from app.services.voice_stt_postprocess import postprocess_voice_transcript
+from app.services.voice_chunking import VoicePipelineTiming, extract_voice_chunks
+from app.services.voice_streaming import (
+    SpeechTokenBuffer,
+    create_speech_unit_queue,
+    enqueue_speech_unit,
+    flush_units_from_buffer,
+    idle_flush_loop,
 )
+from app.services.voice_tts_orchestrator import clear_speech_queue, tts_worker
 
 logger = logging.getLogger(__name__)
 
 ws_router = APIRouter()
 
-# Queue sentinel: end TTS worker for this turn
+# Queue sentinel: end TTS worker for this turn (shared with voice_tts_orchestrator)
 _TTS_STOP = None
 
 
-@dataclass
-class _ProducerState:
-    buf: str = ""
-    lock: asyncio.Lock = field(default_factory=asyncio.Lock)
-    last_token_at: float = field(default_factory=time.monotonic)
+async def _emit_stream_metrics(
+    ws: WebSocket,
+    timing: VoicePipelineTiming,
+    phase: str,
+    **extra: str,
+) -> None:
+    from app.services.voice_performance import export_voice_turn_metrics
+
+    export_voice_turn_metrics(timing, phase=phase, **extra)
+    await _send(
+        ws,
+        {"type": "stream_metrics", "metrics": timing.summary(), "phase": phase},
+    )
 
 
-async def _clear_queue(queue: asyncio.Queue[str | None]) -> None:
-    while True:
+async def _run_llm_producer(
+    ws: WebSocket,
+    token_iter: AsyncIterator[str],
+    sentence_queue: asyncio.Queue[str | None],
+    stop: asyncio.Event,
+    timing: VoicePipelineTiming,
+    full_tokens: list[str],
+) -> None:
+    """Producer: stream LLM tokens → speech units (Phase 2 bounded queue + metrics)."""
+    buffer = SpeechTokenBuffer()
+
+    async def emit_metrics(phase: str) -> None:
+        await _emit_stream_metrics(ws, timing, phase)
+
+    idle_task = asyncio.create_task(
+        idle_flush_loop(buffer, sentence_queue, stop, timing, emit_metrics=emit_metrics),
+        name="voice-idle-flush",
+    )
+    first_token = True
+
+    try:
+        async for token in token_iter:
+            if stop.is_set():
+                return
+
+            if first_token:
+                timing.mark_llm_first_token()
+                first_token = False
+
+            full_tokens.append(token)
+            await _send(ws, {"type": "ai_text_token", "token": token})
+
+            await buffer.append_token(token)
+            timing.record_tokens_streamed(buffer.tokens_streamed)
+            await flush_units_from_buffer(
+                buffer, sentence_queue, timing, emit_metrics=emit_metrics
+            )
+
+        async with buffer.lock:
+            remainder = buffer.buf.strip()
+            buffer.buf = ""
+
+        if remainder and not stop.is_set():
+            await enqueue_speech_unit(
+                sentence_queue,
+                timing,
+                remainder,
+                buffer,
+                emit_metrics=emit_metrics,
+            )
+
+    finally:
+        idle_task.cancel()
         try:
-            queue.get_nowait()
-        except asyncio.QueueEmpty:
-            break
-
-
-async def tts_worker(
-    websocket: WebSocket,
-    sentence_queue: asyncio.Queue[str | None],
-    stop_event: asyncio.Event,
-    timing: VoicePipelineTiming,
-    on_speaking: Callable[[], Awaitable[None]],
-) -> None:
-    """
-    Consumer: process sentences sequentially — one Edge-TTS stream at a time.
-    """
-    while True:
-        if stop_event.is_set():
-            await _clear_queue(sentence_queue)
-
-        try:
-            sentence = await asyncio.wait_for(sentence_queue.get(), timeout=0.25)
-        except asyncio.TimeoutError:
-            if stop_event.is_set():
-                await _clear_queue(sentence_queue)
-                continue
-            continue
-
-        if sentence is _TTS_STOP:
-            sentence_queue.task_done()
-            break
-
-        if stop_event.is_set() or not sentence:
-            sentence_queue.task_done()
-            continue
-
-        await on_speaking()
-        await stream_edge_tts(sentence, websocket, stop_event, timing=timing)
-        sentence_queue.task_done()
-
-
-async def _idle_flush_loop(
-    state: _ProducerState,
-    sentence_queue: asyncio.Queue[str | None],
-    stop_event: asyncio.Event,
-    timing: VoicePipelineTiming,
-) -> None:
-    """Flush partial buffer after token inactivity (500ms)."""
-    while not stop_event.is_set():
-        await asyncio.sleep(0.05)
-        async with state.lock:
-            chunk = state.buf.strip()
-            idle = time.monotonic() - state.last_token_at
-            if not chunk or idle < VOICE_IDLE_FLUSH_SEC:
-                continue
-            if has_unclosed_math_delimiters(chunk):
-                continue
-            state.buf = ""
-
-        await _enqueue_sanitized(sentence_queue, timing, chunk)
-
-
-async def _enqueue_sanitized(
-    sentence_queue: asyncio.Queue[str | None],
-    timing: VoicePipelineTiming,
-    raw_chunk: str,
-) -> None:
-    cleaned = sanitize_chunk_for_tts(raw_chunk)
-    if not cleaned:
-        return
-    timing.mark_sentence_queued(cleaned)
-    await sentence_queue.put(cleaned)
-
-
-async def _enqueue_from_buffer(
-    state: _ProducerState,
-    sentence_queue: asyncio.Queue[str | None],
-    timing: VoicePipelineTiming,
-) -> None:
-    async with state.lock:
-        chunks, state.buf = extract_voice_chunks(state.buf)
-    for chunk in chunks:
-        await _enqueue_sanitized(sentence_queue, timing, chunk)
+            await idle_task
+        except asyncio.CancelledError:
+            pass
 
 
 class _Session:
@@ -146,6 +127,8 @@ class _Session:
         "tutor_state",
         "last_topic",
         "learner_profile",
+        "_learner_load_task",
+        "tts_voice",
     )
 
     def __init__(self) -> None:
@@ -161,6 +144,8 @@ class _Session:
         self.tutor_state = "LISTENING"
         self.last_topic = ""
         self.learner_profile = None
+        self._learner_load_task: asyncio.Task | None = None
+        self.tts_voice: str | None = None
 
     def configure(self, msg: dict) -> None:
         self.board = msg.get("board", self.board)
@@ -174,6 +159,9 @@ class _Session:
             self.chapter_names = [str(x) for x in raw_names if str(x).strip()]
         elif isinstance(raw_names, str) and raw_names.strip():
             self.chapter_names = [raw_names.strip()]
+        picked = voice_for_gender(msg.get("voice_gender"), msg.get("tts_voice"))
+        if picked is not None:
+            self.tts_voice = picked
 
     def remember(self, role: str, content: str) -> None:
         self.history.append({"role": role, "content": content})
@@ -195,55 +183,6 @@ async def _send(ws: WebSocket, payload: dict) -> None:
             await ws.send_json(payload)
     except Exception:
         pass
-
-
-async def _run_llm_producer(
-    ws: WebSocket,
-    token_iter: AsyncIterator[str],
-    sentence_queue: asyncio.Queue[str | None],
-    stop: asyncio.Event,
-    timing: VoicePipelineTiming,
-    full_tokens: list[str],
-) -> None:
-    """Producer: consume LLM tokens without blocking on TTS."""
-    state = _ProducerState()
-    idle_task = asyncio.create_task(
-        _idle_flush_loop(state, sentence_queue, stop, timing),
-        name="voice-idle-flush",
-    )
-    first_token = True
-
-    try:
-        async for token in token_iter:
-            if stop.is_set():
-                return
-
-            if first_token:
-                timing.mark_llm_first_token()
-                first_token = False
-
-            full_tokens.append(token)
-            await _send(ws, {"type": "ai_text_token", "token": token})
-
-            async with state.lock:
-                state.buf += token
-                state.last_token_at = time.monotonic()
-
-            await _enqueue_from_buffer(state, sentence_queue, timing)
-
-        async with state.lock:
-            remainder = state.buf.strip()
-            state.buf = ""
-
-        if remainder and not stop.is_set():
-            await _enqueue_sanitized(sentence_queue, timing, remainder)
-
-    finally:
-        idle_task.cancel()
-        try:
-            await idle_task
-        except asyncio.CancelledError:
-            pass
 
 
 async def _general_answer_stream(
@@ -287,7 +226,7 @@ async def _play_session_greeting(ws: WebSocket, session: _Session) -> None:
     await _send(ws, {"type": "greeting_start", "text": text})
     try:
         await _send(ws, {"type": "speaking"})
-        await stream_edge_tts(text, ws, stop, timing=timing)
+        await stream_edge_tts(text, ws, stop, voice=session.tts_voice, timing=timing)
     finally:
         if not stop.is_set():
             await _send(ws, {"type": "done"})
@@ -300,6 +239,8 @@ async def _pipeline_cached_answer(
     answer: str,
     stop: asyncio.Event,
     timing: VoicePipelineTiming,
+    *,
+    tts_voice: str | None = None,
 ) -> None:
     speaking = False
 
@@ -309,9 +250,9 @@ async def _pipeline_cached_answer(
             await _send(ws, {"type": "speaking"})
             speaking = True
 
-    sentence_queue: asyncio.Queue[str | None] = asyncio.Queue()
+    sentence_queue = create_speech_unit_queue()
     tts_task = asyncio.create_task(
-        tts_worker(ws, sentence_queue, stop, timing, on_speaking),
+        tts_worker(ws, sentence_queue, stop, timing, on_speaking, voice=tts_voice),
         name="voice-tts-worker",
     )
 
@@ -320,10 +261,16 @@ async def _pipeline_cached_answer(
             break
         await _send(ws, {"type": "ai_text_token", "token": word + " "})
 
-    for part in re.split(r"(?<=[.?!])\s+", answer):
-        s = part.strip()
-        if s:
-            await _enqueue_sanitized(sentence_queue, timing, s)
+    buffer = SpeechTokenBuffer()
+    buf = answer
+    while buf.strip() and not stop.is_set():
+        chunks, buf = extract_voice_chunks(buf, chunks_emitted=buffer.chunks_emitted)
+        for s in chunks:
+            await enqueue_speech_unit(sentence_queue, timing, s, buffer)
+        if not chunks:
+            break
+    if buf.strip() and not stop.is_set():
+        await enqueue_speech_unit(sentence_queue, timing, buf.strip(), buffer)
 
     await sentence_queue.put(_TTS_STOP)
     await tts_task
@@ -336,7 +283,7 @@ async def _stream_answer(
     stop: asyncio.Event,
 ) -> None:
     from app.services.chat_service import chapter_aware_qa_stream
-    from app.services.learner_profile import load_learner_profile, save_learner_profile
+    from app.services.learner_profile import save_learner_profile
     from app.services.voice_tutor import (
         TutorState,
         evaluate_student_response,
@@ -365,11 +312,17 @@ async def _stream_answer(
     )
 
     if session.student_key:
-        if session.learner_profile is None:
-            session.learner_profile = await load_learner_profile(session.student_key)
-        topic = session.last_topic or question
-        session.learner_profile.apply_understanding(topic, scores)
-        await save_learner_profile(session.learner_profile)
+        from app.services.voice_performance import resolve_learner_profile
+
+        await resolve_learner_profile(session)
+        if session.learner_profile is not None:
+            topic = session.last_topic or question
+            session.learner_profile.apply_understanding(topic, scores)
+            # ponytail: fire-and-forget save — don't block first token
+            asyncio.create_task(
+                save_learner_profile(session.learner_profile),
+                name="voice-learner-save",
+            )
 
     session.last_topic = question
     understanding_payload = {
@@ -389,6 +342,10 @@ async def _stream_answer(
     if stop.is_set():
         return
 
+    student_hint = scores.to_student_hint(question)
+    if student_hint:
+        await _send(ws, {"type": "tutor_hint", "hint": student_hint})
+
     await _send(ws, {"type": "thinking"})
 
     full_tokens: list[str] = []
@@ -401,9 +358,9 @@ async def _stream_answer(
             await _send(ws, {"type": "speaking"})
             speaking = True
 
-    sentence_queue: asyncio.Queue[str | None] = asyncio.Queue()
+    sentence_queue = create_speech_unit_queue()
     tts_task = asyncio.create_task(
-        tts_worker(ws, sentence_queue, stop, timing, on_speaking),
+        tts_worker(ws, sentence_queue, stop, timing, on_speaking, voice=session.tts_voice),
         name="voice-tts-worker",
     )
 
@@ -427,6 +384,21 @@ async def _stream_answer(
             },
         )
 
+    async def _emit_experiment(experiment: dict | None, clean_answer: str) -> None:
+        if stop.is_set() or not experiment:
+            return
+        if clean_answer:
+            clean_answer_holder.clear()
+            clean_answer_holder.append(clean_answer)
+        await _send(
+            ws,
+            {
+                "type": "science_experiment",
+                "experiment": experiment,
+                "clean_answer": clean_answer,
+            },
+        )
+
     try:
         if session.has_context:
             token_iter = chapter_aware_qa_stream(
@@ -440,12 +412,14 @@ async def _stream_answer(
                 chapter_names=session.chapter_names,
                 emit_related_images=_emit_imgs,
                 emit_math_lesson=_emit_lesson,
+                emit_science_experiment=_emit_experiment,
                 conversation_history=session.history,
                 student_name=session.student_name,
                 voice_mode=True,
                 tutor_state=session.tutor_state,
                 understanding_scores=understanding_payload,
                 learner_snapshot=learner_snapshot,
+                pipeline_timing=timing,
             )
         else:
             token_iter = _general_answer_stream(
@@ -458,7 +432,7 @@ async def _stream_answer(
         await _run_llm_producer(ws, token_iter, sentence_queue, stop, timing, full_tokens)
 
     except asyncio.CancelledError:
-        await _clear_queue(sentence_queue)
+        await clear_speech_queue(sentence_queue)
         raise
     except Exception as exc:
         logger.error("Voice generation error: %s", exc, exc_info=True)
@@ -480,6 +454,7 @@ async def _stream_answer(
         logger.info("[voice %s] Interrupted — %s", turn_id, timing.summary())
         return
 
+    await _emit_stream_metrics(ws, timing, "turn_end")
     await _send(ws, {"type": "done"})
     logger.info("[voice %s] Timing %s", turn_id, timing.summary())
 
@@ -520,7 +495,7 @@ async def voice_ws(
         if gen_task and not gen_task.done():
             stop.set()
             try:
-                await asyncio.wait_for(asyncio.shield(gen_task), timeout=1.5)
+                await asyncio.wait_for(asyncio.shield(gen_task), timeout=VOICE_INTERRUPT_CANCEL_SEC)
             except (asyncio.TimeoutError, asyncio.CancelledError):
                 gen_task.cancel()
                 try:
@@ -547,6 +522,13 @@ async def voice_ws(
 
             if mtype == "session_start":
                 session.configure(msg)
+                from app.services.voice_performance import (
+                    schedule_learner_profile_load,
+                    schedule_session_prewarm,
+                )
+
+                schedule_session_prewarm(session)
+                schedule_learner_profile_load(session)
                 if msg.get("greet"):
                     asyncio.create_task(
                         _play_session_greeting(websocket, session),
@@ -556,7 +538,10 @@ async def voice_ws(
                     await _send(websocket, {"type": "listening"})
 
             elif mtype == "question":
-                text = (msg.get("text") or "").strip()
+                text = postprocess_voice_transcript(
+                    (msg.get("text") or "").strip(),
+                    subject_name=session.subject_name,
+                )
                 if not text or len(text) < 2:
                     continue
                 await _cancel_gen()
@@ -566,10 +551,18 @@ async def voice_ws(
                     name="voice-gen",
                 )
 
+            elif mtype == "set_voice":
+                picked = voice_for_gender(msg.get("voice_gender"), msg.get("tts_voice"))
+                if picked is not None:
+                    session.tts_voice = picked
+
             elif mtype == "interrupt":
+                stop.set()
+                from app.services.voice_conversation import emit_interrupt_listening
+
+                session.tutor_state = "LISTENING"
+                await emit_interrupt_listening(_send, websocket)
                 await _cancel_gen()
-                await _send(websocket, {"type": "interrupt_ack"})
-                await _send(websocket, {"type": "listening"})
 
             elif mtype == "stop":
                 await _cancel_gen()

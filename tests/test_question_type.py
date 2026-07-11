@@ -41,8 +41,8 @@ def test_moon_question_not_personal_dialogue_after_greeting():
     from app.services.chat_service import _build_chat_messages, _is_personal_dialogue_response
 
     greeting = (
-        "Hello Rajesh! Welcome back. I'm your AI Tutor. "
-        "What would you like to learn today?"
+        "Hi Rajesh, welcome back. "
+        "What would you like to learn today from Chapter 2?"
     )
     question = "If you travel 200 km every day, can you reach the Moon in 5 years?"
     history = [{"role": "assistant", "content": greeting}]
@@ -190,5 +190,155 @@ def test_animation_note_not_circle_for_shapes():
         "What is the difference between a square and a rectangle? Show me.",
         "CLASS_3",
     )
-    assert "matchstick-squares" in note or "shapes-basic" in note
+    assert "quadrilateral-morph" in note
     assert "quarter turns" not in note.lower()
+
+
+def test_science_class3_simple_what_is_uses_direct_format():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "What is photosynthesis?",
+        "Plants use sunlight to make food.",
+        subject_name="Science",
+        class_level="CLASS_3",
+    )
+    system = msgs[0]["content"]
+    assert "STRUCTURED TEACHING FORMAT" not in system
+    assert "plain prose" in system.lower() or "direct answer" in system.lower()
+
+
+def test_science_class3_detailed_uses_structured_teaching_format():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "Explain photosynthesis in detail",
+        "Plants use sunlight to make food.",
+        subject_name="Science",
+        class_level="CLASS_3",
+    )
+    system = msgs[0]["content"]
+    assert "STRUCTURED TEACHING FORMAT (Classes 1–5" in system
+    assert "**Topic**" in system
+    assert "**In Simple Words**" in system
+    assert "**Key Points**" in system
+    assert "**Detailed Explanation**" in system
+    assert "**Remember**" in system
+    assert "**Try This**" in system
+    assert "8-year-old" in system
+
+
+def test_science_class7_simple_what_is_uses_direct_format():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "What is photosynthesis?",
+        "Plants use sunlight to make food.",
+        subject_name="Science",
+        class_level="CLASS_7",
+    )
+    system = msgs[0]["content"]
+    assert "STRUCTURED TEACHING FORMAT" not in system
+
+
+def test_science_class7_detailed_uses_middle_structured_format():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "What is photosynthesis? Give a detailed explanation.",
+        "Plants use sunlight to make food.",
+        subject_name="Science",
+        class_level="CLASS_7",
+    )
+    system = msgs[0]["content"]
+    assert "STRUCTURED TEACHING FORMAT (Classes 6–8" in system
+    assert "**Important Terms**" in system
+    assert "12-year-old" in system
+
+
+def test_history_class10_uses_secondary_structured_format():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "Explain the causes of the French Revolution",
+        "Economic hardship and inequality...",
+        subject_name="History",
+        class_level="CLASS_10",
+    )
+    system = msgs[0]["content"]
+    assert "STRUCTURED TEACHING FORMAT (Classes 9–10" in system
+    assert "**Important Terms**" in system
+    assert "exam-oriented" in system.lower() or "exam-ready" in system.lower()
+
+
+def test_science_brief_skips_structured_format():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "Keep it short — what is rain?",
+        "Rain is water falling from clouds.",
+        subject_name="Science",
+        class_level="CLASS_5",
+    )
+    system = msgs[0]["content"]
+    assert "STRUCTURED TEACHING FORMAT" not in system
+    assert "SHORT answer" in system
+
+
+def test_science_stepwise_includes_steps_section():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "What are the steps of the water cycle?",
+        "Evaporation, condensation, precipitation...",
+        subject_name="Science",
+        class_level="CLASS_6",
+    )
+    system = msgs[0]["content"]
+    assert "**Steps**" in system
+    assert "Step 1" in system
+
+
+def test_science_quiz_uses_mentor_quiz_format():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "quiz me on photosynthesis",
+        "Plants use sunlight...",
+        subject_name="Science",
+        class_level="CLASS_7",
+    )
+    system = msgs[0]["content"]
+    assert "AI Mentor" in system
+    assert "QUIZ FORMAT" in system
+    assert "**Quiz Time**" in system
+
+
+def test_science_mentor_adaptive_on_confusion():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "I don't understand photosynthesis",
+        "Plants use sunlight...",
+        subject_name="Science",
+        class_level="CLASS_7",
+        understanding_scores={"confusion": 0.8, "wants_expansion": True},
+    )
+    system = msgs[0]["content"]
+    assert "ADAPTIVE MODE — SIMPLIFY" in system
+
+
+def test_science_learner_profile_weak_topics():
+    from app.services.chat_service import _build_chat_messages
+
+    msgs = _build_chat_messages(
+        "What is photosynthesis?",
+        "Plants use sunlight...",
+        subject_name="Science",
+        class_level="CLASS_7",
+        learner_snapshot={"weak_topics": ["photosynthesis"], "strong_topics": []},
+        resolved_topic="photosynthesis",
+    )
+    system = msgs[0]["content"]
+    assert "LEARNER PROFILE" in system
+    assert "struggled before with" in system

@@ -175,20 +175,32 @@ def build_universal_math_visual(query: str, class_level: str = "") -> dict[str, 
     return _lesson(short_title, f"Understand this idea by experimenting.", "Change values and observe.", viz, level)
 
 
-def match_math_visualization(query: str, class_level: str = "") -> dict[str, Any]:
+def match_math_visualization(
+    query: str,
+    class_level: str = "",
+    *,
+    conversation_history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
     """
     Match query to the best Class 1–10 visualization.
     Always returns a lesson (never None) for non-empty queries.
     """
-    q = (query or "").strip()
+    from app.services.math_lesson.visual_matcher import (
+        build_visualization_query,
+        pick_best_visualization_rule,
+    )
+
+    q = build_visualization_query(query, conversation_history)
     if not q:
         return build_universal_math_visual("mathematics", class_level)
     level = _display_level(class_level)
     class_num = _parse_class_num(class_level)
 
-    for pattern, spec_fn, concept, objective, explanation in _TOPIC_RULES + ELEMENTARY_TOPIC_RULES:
-        if pattern.search(q):
-            return _lesson(concept, objective, explanation, spec_fn(), level)
+    all_rules = _TOPIC_RULES + ELEMENTARY_TOPIC_RULES
+    picked = pick_best_visualization_rule(q, all_rules)
+    if picked:
+        spec_fn, concept, objective, explanation = picked
+        return _lesson(concept, objective, explanation, spec_fn(), level)
 
     return _grade_band_default(class_num, class_level)
 

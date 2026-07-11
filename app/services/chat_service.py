@@ -10,7 +10,7 @@ Key improvements over the original:
 - Question-type detection: factual, conceptual, analytical, opinion, problem-solving pedagogy
 - Subject guidelines: Science, Math, History, Geography, Economics, Language/Literature
 - Mathematics: mandatory section tutor format + SymPy math engine for verified steps
-- Redis cache: repeated questions answered instantly at zero LLM cost
+- Redis cache (opt-in via TUTOR_ANSWER_CACHE_ENABLED): off by default; every question hits the LLM
 - Fallback: keyword-chunk answer when Mistral key is missing
 """
 
@@ -110,8 +110,25 @@ _EXPLAIN_PATTERNS = re.compile(
     re.I,
 )
 _BULLET_PATTERNS = re.compile(
-    r"\b(bullet points?|list (the|all|some)|points? (on|about)|"
+    r"\b(bullet points?|key points?|list (the|all|some)|points? (on|about)|"
     r"give points|write points)\b",
+    re.I,
+)
+_DETAILED_PATTERNS = re.compile(
+    r"\b("
+    r"in detail|detailed(?:\s+explanation)?|explain in detail|explain fully|"
+    r"full explanation|elaborate(?:\s+on)?|comprehensive(?:\s+answer)?|"
+    r"with (?:all )?key points|important terms|complete explanation|"
+    r"tell me (?:more|everything)|everything about|go deeper|more detail"
+    r")\b",
+    re.I,
+)
+_FACTUAL_LIST_PATTERNS = re.compile(
+    r"\b("
+    r"what kind of|what types? of|what sort of|"
+    r"which materials?|what materials?|"
+    r"name the|list the|give the names? of|state the"
+    r")\b",
     re.I,
 )
 
@@ -131,9 +148,12 @@ def detect_answer_type(query: str) -> str:
         return "simplified"
     if _EXPLICIT_ONE_WORD.search(q):
         return "one-word"
-    # Honor explicit short/brief requests before "what is …" → full teaching mode
+    # Honor explicit short/brief requests before "what is …" → direct answer
     if _EXPLICIT_SHORT.search(q) or _EXPLICIT_BRIEF.search(q):
         return "brief"
+    # Explicit detail / section tags → full structured teaching format
+    if _DETAILED_PATTERNS.search(q):
+        return "paragraph"
     # Simple "what is X?" → direct answer; deep explain / exam → longer formats
     if _CONCEPT_STARTS.match(q):
         if _EXPLAIN_PATTERNS.search(q) or _EXAM_PATTERNS.search(q):
@@ -141,6 +161,8 @@ def detect_answer_type(query: str) -> str:
         return "short-answer"
     if _EXPLAIN_PATTERNS.search(q):
         return "paragraph"
+    if _FACTUAL_LIST_PATTERNS.search(q):
+        return "factual"
     return "short-answer"
 
 
@@ -291,9 +313,9 @@ _SUBJECT_GUIDELINES_MATH_CONCEPT = (
 
 _SUBJECT_CATEGORY_KEYWORDS: list[tuple[tuple[str, ...], str]] = [
     (("math", "algebra", "geometry", "calculus", "arithmetic", "trigonometry"), "Mathematics"),
-    (("physics", "chemistry", "biology", "science", "evs", "environmental"), "Science"),
-    (("history", "social studies", "civics", "political"), "History"),
     (("geography", "geo"), "Geography"),
+    (("physics", "chemistry", "biology", "science", "evs", "environmental"), "Science"),
+    (("history", "social studies", "social science", "civics", "political"), "History"),
     (("economics", "economy", "commerce", "business studies"), "Economics"),
     (("english", "literature", "hindi", "language", "grammar", "poem", "prose"), "Language/Literature"),
 ]
@@ -304,6 +326,9 @@ def _resolve_subject_category(subject_name: str) -> str | None:
     if not s:
         return None
     for keywords, category in _SUBJECT_CATEGORY_KEYWORDS:
+        # ponytail: "social science" substring-matches bare "science"
+        if category == "Science" and "social science" in s:
+            continue
         if any(kw in s for kw in keywords):
             return category
     return None
@@ -330,6 +355,10 @@ def _build_subject_guidelines(subject_name: str, *, math_format: str = "problem-
     return f"SUBJECT GUIDELINES ({category}):\n{_SUBJECT_GUIDELINES[category]}"
 
 
+def _is_science_subject(subject_name: str) -> bool:
+    return _resolve_subject_category(subject_name) == "Science"
+
+
 def _is_mathematics_subject(subject_name: str) -> bool:
     return _resolve_subject_category(subject_name) == "Mathematics"
 
@@ -339,23 +368,33 @@ def _voice_should_use_text_format(
     *,
     voice_mode: bool = False,
     understanding_scores: dict | None = None,
+    query: str = "",
+    heading_scope: Any | None = None,
 ) -> bool:
     """Text chat always uses the full tutor format.
 
-    Voice uses live conversational teaching for non-math subjects.
-    Mathematics voice matches text chat (sections, LaTeX, SymPy, visuals).
+    Voice uses live conversational teaching for all subjects by default.
+    Full written format when the student explicitly asks for detail, when the
+    question targets a main textbook section (e.g. weather instruments), or when
+    they request a complete step-by-step solution.
     """
     if not voice_mode:
         return True
-    if _is_mathematics_subject(subject_name):
+    from app.services.section_heading import HeadingScope
+
+    if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
         return True
+    from app.services.voice_tutor import voice_expand_requested, voice_wants_full_written_answer
+
     scores = understanding_scores or {}
-    if scores.get("wants_expansion"):
+    if scores.get("wants_expansion") or voice_expand_requested(query):
+        return True
+    if voice_wants_full_written_answer(query):
         return True
     return False
 
 
-_MATH_DIALOGUE_TYPES = frozenset({"greeting", "affirmation", "personal-response"})
+_MATH_DIALOGUE_TYPES = frozenset({"greeting", "affirmation", "personal-response", "clarification"})
 _MATH_SHORT_TYPES = frozenset({"brief", "one-word"})
 
 
@@ -587,9 +626,18 @@ def _apply_mathematics_prompt_overrides(
     )
 
 
-_COMPACT_TYPES = frozenset({"greeting", "one-word", "brief", "affirmation", "personal-response"})
+_COMPACT_TYPES = frozenset({
+    "greeting", "one-word", "brief", "affirmation", "personal-response", "clarification",
+})
 # Only exam-style questions use the five emoji section template
 _FULL_STRUCTURE_TYPES = frozenset({"exam-format"})
+# Full **Topic** / **Key Points** format — only when the student asks for detail or a tagged format
+_STRUCTURED_TEACHING_TYPES = frozenset({
+    "concept", "definition", "paragraph", "stepwise", "bullet-points", "simplified",
+    "summary", "factual",
+})
+_DIRECT_TYPES = frozenset({"short-answer"})
+_QUIZ_TYPES = frozenset({"quiz", "mcq"})
 
 
 def _structure_tier(answer_type: str) -> str:
@@ -597,6 +645,12 @@ def _structure_tier(answer_type: str) -> str:
         return "compact"
     if answer_type in _FULL_STRUCTURE_TYPES:
         return "full"
+    if answer_type in _QUIZ_TYPES:
+        return "quiz"
+    if answer_type in _STRUCTURED_TEACHING_TYPES:
+        return "structured"
+    if answer_type in _DIRECT_TYPES:
+        return "direct"
     return "direct"
 
 
@@ -605,8 +659,10 @@ _ANSWER_MIN_WORDS: dict[str, int] = {
     "brief": 15,
     "affirmation": 30,
     "personal-response": 45,
+    "clarification": 80,
     "greeting": 40,
-    "short-answer": 70,
+    "short-answer": 50,
+    "factual": 45,
     "concept": 100,
     "definition": 100,
     "paragraph": 120,
@@ -614,6 +670,9 @@ _ANSWER_MIN_WORDS: dict[str, int] = {
     "bullet-points": 100,
     "simplified": 90,
     "exam-format": 280,
+    "quiz": 80,
+    "mcq": 100,
+    "summary": 70,
 }
 
 _ANSWER_INSTRUCTIONS: dict[str, str] = {
@@ -628,23 +687,24 @@ _ANSWER_INSTRUCTIONS: dict[str, str] = {
         "You may start with a friendly opener like 'Sure!' then answer directly."
     ),
     "concept": (
-        "Write at least {min_words} words in clear flowing paragraphs. "
-        "Define the idea, explain why it matters, give one real-life example. "
-        "NO emoji section headers (no 🌱 Concept Overview, etc.). "
-        "You may use a short bullet list only if it genuinely helps."
+        "Use the mandatory structured teaching format with **bold** side headings. "
+        "Write at least {min_words} words. Start with **Topic** and its meaning, then explain clearly "
+        "with bullet points and a detailed section."
     ),
     "definition": (
-        "Write at least {min_words} words: definition first, then a short explanation and one example. "
-        "Plain prose only — NO emoji section headers."
+        "Use the mandatory structured teaching format with **bold** side headings. "
+        "Write at least {min_words} words. Put the definition under **Topic** / meaning, "
+        "then expand with **Key Points** and **Detailed Explanation**."
     ),
     "stepwise": (
-        "Write at least {min_words} words. Explain step by step (Step 1, Step 2, ...). "
-        "Plain headings only — NO emoji section headers. End with one short check question."
+        "Use the mandatory structured teaching format with **bold** side headings. "
+        "Write at least {min_words} words. Use **Steps** (Step 1, Step 2, …) for the process, "
+        "plus **Detailed Explanation** and **Example**."
     ),
     "paragraph": (
-        "Write at least {min_words} words in 2-4 clear paragraphs. "
-        "Cover the main idea, how it works, and one example. "
-        "NO emoji section headers. No padded sections."
+        "Use the mandatory structured teaching format with **bold** side headings. "
+        "Write at least {min_words} words across **In Simple Words**, **Key Points**, "
+        "and **Detailed Explanation**."
     ),
     "exam-format": (
         "MANDATORY: Write at least {min_words} words. Use the FULL five-section exam format with emoji headers: "
@@ -652,18 +712,36 @@ _ANSWER_INSTRUCTIONS: dict[str, str] = {
         "📝 Key Points to Remember (3-5 bullets), ❓ Quick Check."
     ),
     "simplified": (
-        "Write at least {min_words} words using the simplest everyday words. "
-        "2-3 short paragraphs, one example — NO emoji section headers."
+        "Use the mandatory structured teaching format with **bold** side headings. "
+        "Write at least {min_words} words using the simplest everyday words in every section."
     ),
     "bullet-points": (
-        "Write at least {min_words} words. Lead with a one-sentence intro, then use a clear bullet list "
-        "for the main points and one short closing sentence. NO emoji section headers."
+        "Use the mandatory structured teaching format with **bold** side headings. "
+        "Write at least {min_words} words. Make **Key Points** the main focus with clear bullets."
     ),
     "short-answer": (
-        "Write a clear, direct answer of about {min_words} words (roughly 2-4 short paragraphs). "
-        "Answer the question first, then add one helpful example if useful. "
-        "NO emoji section headers, NO Quick Check section, NO five-part template. "
-        "Do NOT use labels like 'Concept Overview' or 'Key Points to Remember'."
+        "Give a clear, direct answer in plain prose. "
+        "Open with the definition in 1–2 sentences. "
+        "You may add up to 3 short bullet points. "
+        "Do NOT use section headers (**Topic**, **Key Points**, etc.) — "
+        "textbook figures are shown separately."
+    ),
+    "factual": (
+        "The student asked a direct factual question (what/which/name/list). "
+        "Use the concise factual format only — answer in bullets, no long essay sections."
+    ),
+    "summary": (
+        "The student asked for a summary. Use the mentor recap format with **bold** side headings. "
+        "Write about {min_words} words — concise takeaways only, no full re-teaching."
+    ),
+    "quiz": (
+        "The student asked for a quiz. Act as a mentor giving a short practice test from the chapter. "
+        "Use the quiz format with **Quiz Time**, numbered **Questions**, and warm encouragement. "
+        "Do NOT reveal answers yet."
+    ),
+    "mcq": (
+        "The student asked for multiple-choice questions. Generate chapter-based MCQs in mentor tone. "
+        "Use a) b) c) d) options. Do NOT reveal correct answers yet."
     ),
     "affirmation": (
         "The student confirmed they understood your PREVIOUS explanation (see conversation above). "
@@ -684,10 +762,17 @@ _ANSWER_INSTRUCTIONS: dict[str, str] = {
         "(3) End with ONE short question: offer quiz, next topic part, or other topics. "
         "Do NOT ignore what they shared. Do NOT repeat your full prior lesson."
     ),
+    "clarification": (
+        "The student did NOT understand your PREVIOUS reply (see conversation above). "
+        "Re-explain that SAME answer in simpler, step-by-step language (about 80-140 words). "
+        "Do NOT switch to a different activity, page, or topic from the textbook. "
+        "Stay focused on exactly what you just told them — break it into smaller steps, "
+        "use a simple analogy, and end with ONE check question to confirm they follow."
+    ),
     "greeting": (
         "The student is greeting or making small talk. Greet them personally by first name. "
         "Reply WARMLY and BRIEFLY (2-3 sentences max) in a friendly teacher tone. "
-        "Example: 'Hello {student_name}! Welcome back. I'm your AI Tutor. "
+        "Example: 'Hello {student_name}! Welcome back. "
         "What would you like to learn today? Feel free to ask anything from {subject} or {chapter}!' "
         "Never become a social chatbot. Always stay as a helpful tutor."
     ),
@@ -813,20 +898,51 @@ def build_session_greeting(
     names = [n.strip() for n in (chapter_names or []) if n and str(n).strip()]
     if not names and chapter:
         names = [chapter.strip()]
-    if names:
-        if len(names) == 1:
-            scope = f"about {names[0]} in {subject}"
-        elif len(names) == 2:
-            scope = f"about {names[0]} and {names[1]} in {subject}"
-        else:
-            scope = f"about {names[0]}, {names[1]}, and more in {subject}"
+    if len(names) == 1:
+        from_topic = names[0]
+    elif len(names) == 2:
+        from_topic = f"{names[0]} and {names[1]}"
+    elif len(names) > 2:
+        from_topic = f"{names[0]}, {names[1]}, and more"
     else:
-        scope = f"from your {subject} textbook"
+        from_topic = subject
     return (
-        f"Hello {first}! Welcome back. I'm your AI Tutor. "
-        f"What would you like to learn today? "
-        f"Feel free to ask any question {scope}, from your homework, or about topics you're curious about."
+        f"Hi {first}, welcome back. "
+        f"What would you like to learn today from {from_topic}?"
     )
+
+
+_DIRECT_ANSWER_MAX_WORDS = 100
+_DIRECT_ANSWER_TOKEN_LIMIT = 160
+_STRUCTURED_HEADER_RE = re.compile(
+    r"\*\*(Topic|In Simple Words|Key Points|Detailed Explanation|Important Terms|"
+    r"Remember|Try This|Steps)\*\*",
+    re.I,
+)
+_FIG_CAPTION_LINE_RE = re.compile(
+    r"^\s*Fig\.?\s*\d+(?:\.\d+)*\s*(?:[.:—–-]\s*)?.+$",
+    re.I,
+)
+_PAGE_LINE_RE = re.compile(r"^\s*Page\s+\d+\s*$", re.I)
+
+
+def strip_embedded_figure_lines(text: str) -> str:
+    """Drop Fig./Page lines the model pasted — figures render as image cards."""
+    if not (text or "").strip():
+        return text or ""
+    kept: list[str] = []
+    for line in text.splitlines():
+        t = line.strip()
+        if not t:
+            if kept and kept[-1].strip():
+                kept.append("")
+            continue
+        if _FIG_CAPTION_LINE_RE.match(t) or _PAGE_LINE_RE.match(t):
+            continue
+        if kept and kept[-1].strip() == t:
+            continue
+        kept.append(line)
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip()
 
 
 def _class_band(class_level: str) -> str:
@@ -844,10 +960,23 @@ def _class_band(class_level: str) -> str:
 
 
 _SYSTEM_PROMPT_TEMPLATE = """\
-You are an AI Tutor designed to help students learn from textbooks, study materials, classroom notes, and educational content.
+You are an AI Mentor — a caring digital teacher who guides school students to truly understand, \
+remember, and grow confident in their learning. You are NOT a search engine or answer bot.
 
 PRIMARY OBJECTIVE:
-Help students understand the provided learning material accurately, clearly, and engagingly while remaining faithful to the source content.
+Help students understand the provided learning material accurately, clearly, and engagingly \
+while remaining faithful to the source content. Teach for long-term understanding and retention.
+
+MENTOR TEACHING STYLE:
+- Guide thinking — do not just dump facts. Connect ideas to what the student can relate to.
+- Be warm, patient, and encouraging like a trusted teacher who knows the student.
+- After teaching, naturally guide what to explore next (example, quiz, deeper dive, practice).
+- When the student struggles, simplify with empathy — never make them feel bad.
+- Celebrate real progress briefly; avoid empty praise on every message.
+
+{learner_guidance}
+
+{adaptive_guidance}
 
 SOURCE GROUNDING RULES (CRITICAL):
 1. Prioritize the selected chapter ({chapter}) and the learning material in the user message.
@@ -948,6 +1077,378 @@ ANSWER STYLE (required):
 - Use plain paragraphs only. Do NOT use emoji section headers or template labels.
 - Be clear and complete, but do not pad with extra sections the student did not ask for."""
 
+_EXPLANATION_STRUCTURE_SUBJECT_ELEMENTARY = """\
+STRUCTURED TEACHING FORMAT (Classes 1–5 — required for every teaching answer):
+Use these **bold** side headings in order. Each heading on its own line. NO # symbols, NO emoji.
+
+**Topic**
+Line 1: the topic name.
+Line 2: a one-line meaning — what it is in the simplest words.
+
+**In Simple Words**
+2–3 very short sentences a young child can understand. Use everyday words only.
+
+**Key Points**
+• 3–5 bullet points (•) — one simple idea per bullet.
+• Explain each idea clearly in plain language.
+
+**Detailed Explanation**
+2–3 short paragraphs that explain the topic more fully. Break big ideas into small steps.
+
+**Example**
+One fun real-life example (home, school, food, toys, nature).
+
+**Remember**
+• 2 short takeaway bullets the student should not forget.
+
+**Try This**
+One short, friendly check question (plain text on one or two lines)."""
+
+_EXPLANATION_STRUCTURE_SUBJECT_MIDDLE = """\
+STRUCTURED TEACHING FORMAT (Classes 6–8 — required for every teaching answer):
+Use these **bold** side headings in order. Each heading on its own line. NO # symbols, NO emoji.
+
+**Topic**
+Line 1: the topic name.
+Line 2: a one-line definition or meaning.
+
+**In Simple Words**
+2–4 sentences that introduce the idea clearly before the details.
+
+**Key Points**
+• 4–6 bullet points covering the main ideas.
+• Use correct subject terms but explain each term briefly in the same bullet.
+
+**Detailed Explanation**
+2–4 paragraphs with clear reasoning, cause-effect, or how-it-works detail.
+Use short paragraphs — not one long block.
+
+**Important Terms** (include only when new vocabulary appears)
+• Term — simple meaning in one line per term.
+
+**Example**
+One relatable real-life or textbook-based example.
+
+**Remember**
+• 2–4 takeaway bullets for revision.
+
+**Try This**
+One thoughtful check question tied to what you taught."""
+
+_EXPLANATION_STRUCTURE_SUBJECT_SECONDARY = """\
+STRUCTURED TEACHING FORMAT (Classes 9–10 — required for every teaching answer):
+Use these **bold** side headings in order. Each heading on its own line. NO # symbols, NO emoji.
+
+**Topic**
+Line 1: the topic name.
+Line 2: a precise academic definition or meaning.
+
+**In Simple Words**
+2–3 sentences that make the core idea easy to grasp before the detail.
+
+**Key Points**
+• 5–7 detailed bullet points covering concepts, causes, effects, or properties.
+• Each bullet should be complete enough to revise from.
+
+**Detailed Explanation**
+3–5 well-organised paragraphs: how it works, why it matters, significance, and links to related ideas.
+For compare/contrast questions, you may add a markdown table under this section.
+
+**Important Terms**
+• List key terms with clear one-line definitions (exam-ready vocabulary).
+
+**Example**
+One textbook-grounded or real-world application example.
+
+**Remember**
+• 3–5 exam-oriented takeaway points.
+
+**Try This**
+One check question that tests understanding, not just memory."""
+
+_EXPLANATION_STRUCTURE_SUBJECT_STEPWISE = """\
+For step-by-step / process questions, replace **Key Points** with:
+
+**Steps**
+Step 1: …
+Step 2: …
+(continue for each stage of the process)
+
+Keep all other sections (**Topic**, **In Simple Words**, **Detailed Explanation**, etc.)."""
+
+_LENGTH_POLICY_STRUCTURED_ELEMENTARY = """\
+RESPONSE LENGTH — STRUCTURED (Classes 1–5):
+- Write at least {min_words} words across all sections.
+- Keep each section short and easy to read aloud.
+- Never skip **Topic**, **Key Points**, or **Detailed Explanation**."""
+
+_LENGTH_POLICY_STRUCTURED_MIDDLE = """\
+RESPONSE LENGTH — STRUCTURED (Classes 6–8):
+- Write at least {min_words} words across all sections.
+- Balance bullets with enough detail in **Detailed Explanation**.
+- Never skip **Topic**, **Key Points**, or **Detailed Explanation**."""
+
+_LENGTH_POLICY_STRUCTURED_SECONDARY = """\
+RESPONSE LENGTH — STRUCTURED (Classes 9–10):
+- Write at least {min_words} words across all sections.
+- **Detailed Explanation** and **Key Points** should be thorough and exam-ready.
+- Never skip **Topic**, **Important Terms** (when relevant), or **Remember**."""
+
+_INTERACTION_STRUCTURED = """\
+FOLLOW-UP RULES (structured teaching):
+- End with the **Try This** section as your check question.
+- Do NOT add a second follow-up after **Try This**.
+- Never write figure captions, 'Fig. 2.x' lines, or 'Page N' lines — figures are shown separately."""
+
+_EXPLANATION_STRUCTURE_FACTUAL = """\
+FACTUAL ANSWER FORMAT (required — concise direct answer):
+Use these **bold** side headings only. NO emoji. Do NOT add extra sections.
+
+**Topic**
+One line: topic name.
+
+**Answer**
+• 3–5 bullet points that directly answer the question.
+• One clear fact per bullet — no filler or repetition.
+
+**Example** (optional — one short sentence only when it helps)"""
+
+_LENGTH_POLICY_FACTUAL = """\
+RESPONSE LENGTH — FACTUAL:
+- About {min_words}–80 words total across all sections.
+- Be direct: bullets first, no long paragraphs.
+- Do NOT add **In Simple Words**, **Detailed Explanation**, **Remember**, or **Try This**."""
+
+_INTERACTION_FACTUAL = """\
+FOLLOW-UP (factual):
+- You may end with ONE short optional question only if it fits naturally.
+- Never write figure captions, 'Fig. 2.x' lines, or 'Page N' lines — figures are shown separately."""
+
+_EXPLANATION_STRUCTURE_QUIZ = """\
+QUIZ FORMAT (mentor-style assessment):
+Use these **bold** side headings in order. NO emoji.
+
+**Quiz Time**
+One warm mentor line inviting the student to try (e.g. "Let's see what you remember!").
+
+**Questions**
+1. First question (clear, grade-appropriate)
+2. Second question
+3. Third question
+(Add 4–5 questions for Classes 9–10; 3 questions for Classes 1–5)
+
+**How to Answer**
+Tell the student to reply with their answers one by one — you will guide and check them like a mentor.
+
+**Encouragement**
+One short supportive line (effort matters, not perfection)."""
+
+_EXPLANATION_STRUCTURE_MCQ = """\
+MCQ QUIZ FORMAT (mentor-style):
+Use these **bold** side headings in order. NO emoji.
+
+**Quiz Time**
+One warm mentor line inviting the student to try.
+
+**Questions**
+For each question, use this shape:
+1. Question text?
+   a) option
+   b) option
+   c) option
+   d) option
+(3 questions for younger classes; 4–5 for Classes 9–10)
+
+**How to Answer**
+Ask the student to reply with the question number and letter (e.g. "1-b, 2-a").
+
+**Encouragement**
+One short supportive line. Do NOT reveal correct answers yet — check them after the student responds."""
+
+_EXPLANATION_STRUCTURE_SUMMARY = """\
+SUMMARY FORMAT (mentor recap):
+Use these **bold** side headings in order. NO emoji.
+
+**What We Covered**
+One-line topic name and meaning.
+
+**Key Takeaways**
+• 3–5 bullet points — only the most important ideas from this topic.
+
+**Remember for Exams** (Classes 6–10 only, skip for Classes 1–5)
+• 2–3 exam-ready revision bullets.
+
+**What's Next**
+One mentor question offering: practice quiz, real-life example, or next subtopic."""
+
+_LENGTH_POLICY_QUIZ = """\
+RESPONSE LENGTH — QUIZ:
+- About 80–200 words depending on number of questions.
+- Questions must match the student's class level and chapter content."""
+
+_INTERACTION_QUIZ = """\
+FOLLOW-UP (quiz):
+- Do NOT teach new content in this turn — only ask questions.
+- Wait for the student's answers in the next message before revealing solutions."""
+
+
+def _build_learner_guidance(learner_snapshot: dict | None) -> str:
+    if not learner_snapshot:
+        return ""
+    from app.services.voice_tutor import LearnerProfileSnapshot
+
+    snap = LearnerProfileSnapshot(
+        student_key=str(learner_snapshot.get("student_key") or ""),
+        strong_topics=list(learner_snapshot.get("strong_topics") or []),
+        weak_topics=list(learner_snapshot.get("weak_topics") or []),
+        recent_topics=list(learner_snapshot.get("recent_topics") or []),
+        quiz_scores=[float(x) for x in (learner_snapshot.get("quiz_scores") or [])],
+    )
+    hint = snap.to_prompt_hint()
+    if not hint:
+        return ""
+    return f"LEARNER PROFILE (use to personalize — do not mention explicitly):\n{hint}"
+
+
+def _build_adaptive_guidance(
+    *,
+    query: str,
+    topic: str,
+    understanding_scores: dict | None,
+    learner_snapshot: dict | None,
+) -> str:
+    parts: list[str] = []
+    scores = understanding_scores or {}
+    weak = list((learner_snapshot or {}).get("weak_topics") or [])
+    topic_l = (topic or query or "").lower()[:80]
+
+    if scores.get("confusion", 0) >= 0.55 or scores.get("wants_expansion"):
+        parts.append(
+            "ADAPTIVE MODE — SIMPLIFY: The student seems confused or asked for more help. "
+            "Use the simplest words, one analogy, and smaller steps. Do not add new topics."
+        )
+    elif any(w.lower() in topic_l or topic_l in w.lower() for w in weak[-8:] if w):
+        parts.append(
+            "ADAPTIVE MODE — REINFORCE: The student struggled with this topic before. "
+            "Use extra clarity, a fresh analogy, and connect to something familiar."
+        )
+    elif scores.get("understanding", 0) >= 0.75 and scores.get("is_affirmation"):
+        parts.append(
+            "ADAPTIVE MODE — ADVANCE: The student understood the last point. "
+            "Briefly acknowledge, then offer the next small step or a gentle challenge."
+        )
+    elif scores.get("wants_quiz"):
+        parts.append(
+            "ADAPTIVE MODE — ASSESS: The student wants to be tested. "
+            "Focus on quiz questions from the chapter — mentor tone, not exam pressure."
+        )
+    if not parts:
+        return ""
+    return "\n".join(parts)
+
+
+def _subject_structured_prompt(
+    *,
+    class_band: str,
+    answer_type: str,
+    min_words: int,
+) -> tuple[str, str, str, str]:
+    """Grade-banded structured format for all non-mathematics teaching answers."""
+    if class_band == "1-5":
+        structure = _EXPLANATION_STRUCTURE_SUBJECT_ELEMENTARY
+        length = _LENGTH_POLICY_STRUCTURED_ELEMENTARY.format(min_words=min_words)
+        closing = (
+            f"Write your complete structured answer now ({answer_type}, minimum {min_words} words). "
+            "Use ALL **bold** side headings in order for Classes 1–5:"
+        )
+    elif class_band == "6-8":
+        structure = _EXPLANATION_STRUCTURE_SUBJECT_MIDDLE
+        length = _LENGTH_POLICY_STRUCTURED_MIDDLE.format(min_words=min_words)
+        closing = (
+            f"Write your complete structured answer now ({answer_type}, minimum {min_words} words). "
+            "Use ALL **bold** side headings in order for Classes 6–8:"
+        )
+    else:
+        structure = _EXPLANATION_STRUCTURE_SUBJECT_SECONDARY
+        length = _LENGTH_POLICY_STRUCTURED_SECONDARY.format(min_words=min_words)
+        closing = (
+            f"Write your complete structured answer now ({answer_type}, minimum {min_words} words). "
+            "Use ALL **bold** side headings in order for Classes 9–10:"
+        )
+    if answer_type == "stepwise":
+        structure = structure + "\n\n" + _EXPLANATION_STRUCTURE_SUBJECT_STEPWISE
+    closing += (
+        " **Topic**, **In Simple Words**, **Key Points** (or **Steps**), "
+        "**Detailed Explanation**, **Example**, **Remember**, **Try This**."
+    )
+    return structure, length, _INTERACTION_STRUCTURED, closing
+
+
+def _subject_quiz_prompt(*, answer_type: str, min_words: int) -> tuple[str, str, str, str]:
+    if answer_type == "mcq":
+        structure = _EXPLANATION_STRUCTURE_MCQ
+    else:
+        structure = _EXPLANATION_STRUCTURE_QUIZ
+    length = _LENGTH_POLICY_QUIZ
+    closing = (
+        f"Write the mentor-style {'MCQ ' if answer_type == 'mcq' else ''}quiz now "
+        f"({answer_type}, about {min_words}+ words). Use **Quiz Time**, **Questions**, "
+        "**How to Answer**, and **Encouragement**."
+    )
+    return structure, length, _INTERACTION_QUIZ, closing
+
+
+async def _mentor_profile_for_turn(
+    student_key: str,
+    query: str,
+    conversation_history: list[dict] | None,
+    topic: str,
+) -> tuple[dict | None, dict]:
+    """Load learner snapshot and estimate understanding for adaptive mentoring."""
+    if not student_key:
+        return None, {}
+    from app.services.learner_profile import load_learner_profile
+    from app.services.voice_tutor import evaluate_student_response
+
+    profile = await load_learner_profile(student_key)
+    last_assistant = ""
+    for turn in reversed(conversation_history or []):
+        if (turn.get("role") or "").lower() == "assistant":
+            last_assistant = (turn.get("content") or "").strip()
+            break
+    scores = evaluate_student_response(query, last_assistant=last_assistant)
+    return profile.snapshot().__dict__, {
+        "understanding": scores.understanding,
+        "confidence": scores.confidence,
+        "confusion": scores.confusion,
+        "is_affirmation": scores.is_affirmation,
+        "wants_expansion": scores.wants_expansion,
+        "wants_quiz": scores.wants_quiz,
+    }
+
+
+async def _mentor_profile_after_turn(
+    student_key: str,
+    topic: str,
+    understanding_scores: dict,
+) -> None:
+    if not student_key:
+        return
+    from app.services.learner_profile import load_learner_profile, save_learner_profile
+    from app.services.voice_tutor import UnderstandingScores
+
+    profile = await load_learner_profile(student_key)
+    scores = UnderstandingScores(
+        understanding=float(understanding_scores.get("understanding", 0.5)),
+        confidence=float(understanding_scores.get("confidence", 0.5)),
+        confusion=float(understanding_scores.get("confusion", 0.0)),
+        is_affirmation=bool(understanding_scores.get("is_affirmation")),
+        wants_expansion=bool(understanding_scores.get("wants_expansion")),
+        wants_quiz=bool(understanding_scores.get("wants_quiz")),
+    )
+    profile.apply_understanding(topic, scores)
+    await save_learner_profile(profile)
+
 _LENGTH_POLICY_LONG = """\
 RESPONSE LENGTH — CRITICAL (read carefully):
 - For this answer you MUST write at least {min_words} words (count before finishing).
@@ -956,10 +1457,16 @@ RESPONSE LENGTH — CRITICAL (read carefully):
 - Default range: 100-500 words. Focus on understanding, not memorization."""
 
 _LENGTH_POLICY_DIRECT = """\
-RESPONSE LENGTH:
-- Write about {min_words} words (roughly 70-150 words unless the question needs more detail).
-- Be direct: answer the question in the first paragraph.
-- Do NOT force a five-section essay format."""
+RESPONSE LENGTH — CRITICAL (short direct answer):
+- MAXIMUM {max_words} words total. Count before finishing — stop when you hit the limit.
+- 1–2 short paragraphs, OR 1 paragraph plus up to 3 bullet points.
+- Answer the question in the first 1–2 sentences. Do not list every related subtopic.
+- Do NOT use **Topic**, **Key Points**, **Detailed Explanation**, or other section headers."""
+
+_INTERACTION_DIRECT = """\
+FOLLOW-UP (direct answer):
+- End with ONE short question offering: more detail, a real-life example, or a quick quiz.
+- Never write figure captions, 'Fig. 2.x' lines, or 'Page N' lines — figures are shown separately."""
 
 _LENGTH_POLICY_BRIEF = """\
 RESPONSE LENGTH — CRITICAL:
@@ -992,6 +1499,12 @@ INTERACTIVE TEACHING (student shared a personal example):
 - Listen first — reference their specific story (weather, place, what changed).
 - Connect it briefly to the lesson, then guide with ONE choice question.
 - Stay conversational; do not lecture or list instruments unless they choose that next."""
+
+_INTERACTION_CLARIFICATION = """\
+INTERACTIVE TEACHING (student is confused):
+- Re-explain your PREVIOUS answer only — do not introduce a new textbook activity or page.
+- Use simpler words, smaller steps, and one everyday analogy.
+- End with ONE short check question to see if they follow now."""
 
 _AFFIRMATION_RE = re.compile(
     r"^(?:yes|yeah|yep|yup|ok|okay|sure|right|correct|exactly|got\s+it|"
@@ -1039,7 +1552,13 @@ _PERSONAL_EXAMPLE_RE = re.compile(
 )
 
 _SESSION_GREETING_RE = re.compile(
-    r"\b(?:welcome back|i(?:'m| am) your ai tutor)\b.*\bwhat would you like to learn\b",
+    r"(?:"
+    r"\b(?:welcome back|i(?:'m| am) your ai tutor)\b.*\bwhat would you like to learn\b"
+    r"|"
+    r"\bhere are a few things you can ask me\b"
+    r"|"
+    r"\bpick one, or type your own question\b"
+    r")",
     re.I | re.S,
 )
 
@@ -1107,6 +1626,18 @@ def _is_affirmation_followup(query: str, conversation_history: list[dict] | None
     return True
 
 
+def _skip_answer_expansion(
+    query: str, conversation_history: list[dict] | None
+) -> bool:
+    from app.services.conversation_context import is_clarification_followup
+
+    return (
+        _is_affirmation_followup(query, conversation_history)
+        or _is_personal_dialogue_response(query, conversation_history)
+        or is_clarification_followup(query, conversation_history)
+    )
+
+
 def _prepare_math_engine_block(
     query: str,
     *,
@@ -1125,6 +1656,54 @@ def _prepare_math_engine_block(
     return result.to_prompt_block()
 
 
+def _resolve_answer_type(
+    query: str,
+    *,
+    subject_name: str = "",
+    conversation_history: list[dict] | None = None,
+    chapter: str = "",
+    conv: Any | None = None,
+) -> str:
+    """Shared answer-type routing for prompts, token limits, and post-processing."""
+    from app.services.conversation_context import (
+        ResponseMode,
+        answer_type_for_followup,
+        is_clarification_followup,
+        resolve_conversation_context,
+    )
+    from app.services.conversation_intent_classifier import FollowupType
+
+    q = (query or "").strip()
+    if conv is None:
+        conv = resolve_conversation_context(
+            q, conversation_history=conversation_history, chapter=chapter
+        )
+    if conv.response_mode == ResponseMode.QUIZ:
+        return "quiz"
+    if conv.response_mode == ResponseMode.MCQ:
+        return "mcq"
+    if conv.response_mode == ResponseMode.SUMMARY:
+        return "summary"
+    if _is_mathematics_subject(subject_name) and q:
+        return detect_answer_type(q)
+    if _is_personal_dialogue_response(q, conversation_history):
+        return "personal-response"
+    if _is_affirmation_followup(q, conversation_history):
+        return "affirmation"
+    if mapped := answer_type_for_followup(FollowupType(conv.followup_type)):
+        # ponytail: BGE can mislabel "what is X?" as ask_comparison after a greeting
+        if _CONCEPT_STARTS.match(q) and conv.followup_type in (
+            FollowupType.ASK_COMPARISON.value,
+            FollowupType.CONTINUE_EXPLANATION.value,
+            FollowupType.ASK_EXAMPLE.value,
+        ):
+            return detect_answer_type(q)
+        return mapped
+    if is_clarification_followup(q, conversation_history):
+        return "clarification"
+    return detect_answer_type(q)
+
+
 def _build_chat_messages(
     query: str,
     context: str,
@@ -1138,18 +1717,26 @@ def _build_chat_messages(
     heading_scope: Any | None = None,
     conversation_history: list[dict] | None = None,
     chapter_coverage_guidance: str = "",
+    learner_snapshot: dict | None = None,
+    understanding_scores: dict | None = None,
+    resolved_topic: str = "",
 ) -> list[dict[str, str]]:
     from app.services.section_heading import HeadingScope
 
+    from app.services.conversation_context import resolve_conversation_context
+
     q = (query or "").strip()
-    if _is_mathematics_subject(subject_name) and q:
-        answer_type = detect_answer_type(q)
-    elif _is_personal_dialogue_response(q, conversation_history):
-        answer_type = "personal-response"
-    elif _is_affirmation_followup(q, conversation_history):
-        answer_type = "affirmation"
-    else:
-        answer_type = detect_answer_type(q)
+    conv = resolve_conversation_context(
+        q, conversation_history=conversation_history, chapter=chapter
+    )
+    topic = (resolved_topic or conv.resolved_topic or q).strip()
+    answer_type = _resolve_answer_type(
+        q,
+        subject_name=subject_name,
+        conversation_history=conversation_history,
+        chapter=chapter,
+        conv=conv,
+    )
     min_words = _ANSWER_MIN_WORDS.get(answer_type, 120)
     grade_label = _GRADE_LABELS.get(class_level, class_level or "School student")
     complexity = _GRADE_COMPLEXITY.get(class_level, "Use clear, age-appropriate language.")
@@ -1188,6 +1775,14 @@ def _build_chat_messages(
                 "The student shared a real-life example in answer to your question. "
                 "Acknowledge their story, connect it briefly to the lesson, then offer next steps:"
             )
+        elif answer_type == "clarification":
+            length_policy = "RESPONSE LENGTH: About 80-140 words. Plain prose, step by step."
+            interaction_policy = _INTERACTION_CLARIFICATION
+            explanation_structure = ""
+            user_closing = (
+                "The student did not understand your last reply. Re-explain that SAME answer "
+                "more simply — do not switch to a different activity or page:"
+            )
         elif answer_type in ("brief", "one-word"):
             length_policy = _LENGTH_POLICY_BRIEF
             interaction_policy = _INTERACTION_BRIEF
@@ -1206,14 +1801,52 @@ def _build_chat_messages(
             f"Write your complete exam-style answer now ({answer_type}, minimum {min_words} words, "
             "all five emoji sections):"
         )
+    elif tier == "structured" and not _is_mathematics_subject(subject_name):
+        if answer_type == "summary":
+            explanation_structure = _EXPLANATION_STRUCTURE_SUMMARY
+            length_policy = _LENGTH_POLICY_STRUCTURED_MIDDLE.format(min_words=min_words)
+            interaction_policy = _INTERACTION_STRUCTURED
+            user_closing = (
+                f"Write the mentor recap now ({answer_type}, about {min_words} words). "
+                "Use **What We Covered**, **Key Takeaways**, and **What's Next**."
+            )
+        elif answer_type == "factual":
+            explanation_structure = _EXPLANATION_STRUCTURE_FACTUAL
+            length_policy = _LENGTH_POLICY_FACTUAL.format(min_words=min_words)
+            interaction_policy = _INTERACTION_FACTUAL
+            user_closing = (
+                f"Write your concise factual answer now ({answer_type}, about {min_words}–80 words). "
+                "Use **Topic**, **Answer**, and optional **Example** only:"
+            )
+        else:
+            explanation_structure, length_policy, interaction_policy, user_closing = (
+                _subject_structured_prompt(
+                    class_band=_class_band(class_level),
+                    answer_type=answer_type,
+                    min_words=min_words,
+                )
+            )
+    elif tier == "quiz":
+        explanation_structure, length_policy, interaction_policy, user_closing = (
+            _subject_quiz_prompt(answer_type=answer_type, min_words=min_words)
+        )
     else:
-        length_policy = _LENGTH_POLICY_DIRECT.format(min_words=min_words)
-        interaction_policy = _INTERACTION_LONG
+        length_policy = _LENGTH_POLICY_DIRECT.format(max_words=_DIRECT_ANSWER_MAX_WORDS)
+        interaction_policy = _INTERACTION_DIRECT
         explanation_structure = _EXPLANATION_STRUCTURE_DIRECT
         user_closing = (
-            f"Write your direct answer now ({answer_type}, about {min_words} words, "
-            "plain prose only — no emoji section headers):"
+            f"Write your direct answer now ({answer_type}, MAX {_DIRECT_ANSWER_MAX_WORDS} words, "
+            "plain prose only — no section headers):"
         )
+        if not _is_mathematics_subject(subject_name):
+            complexity = (
+                "Keep this answer very brief — a quick definition only. "
+                "Do not elaborate on every related idea."
+            )
+            class_band = (
+                "Direct definition mode: 2–4 sentences plus optional bullets. "
+                "Save deeper teaching for when the student asks for detail."
+            )
 
     if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
         length_policy = (
@@ -1228,11 +1861,13 @@ def _build_chat_messages(
         explanation_structure = _EXPLANATION_STRUCTURE_DIRECT
         instruction = (
             "Use the mandatory main-section format in TEXTBOOK SCOPE: "
-            "one **bold subtopic** heading per instrument/topic, then • bullet points."
+            "one **bold subtopic** heading per instrument/topic, then 1–2 short sentences "
+            "(or • bullets) under each heading."
         )
         user_closing = (
-            "Write the answer now using **bold subtopic headings** and • bullets for EACH subtopic "
-            "listed in TEXTBOOK SCOPE (in order). Do not use a single paragraph."
+            "Write the answer now using **bold subtopic headings** for EACH subtopic "
+            "listed in TEXTBOOK SCOPE (in order). Under each heading write 1–2 sentences "
+            "about that instrument only. Do not use a single paragraph."
         )
 
     qtype = detect_question_type(q)
@@ -1278,7 +1913,9 @@ def _build_chat_messages(
             query_requests_hints,
         )
 
-        catalog_hint = get_visualization_catalog_hint(q, class_level)
+        catalog_hint = get_visualization_catalog_hint(
+            q, class_level, conversation_history=conversation_history
+        )
         viz_appendix = get_visualization_appendix_prompt(q, elementary=elementary_math)
         explanation_structure = (
             (explanation_structure + "\n\n" + catalog_hint + "\n\n" + viz_appendix)
@@ -1327,11 +1964,53 @@ def _build_chat_messages(
                 f"{animation_note}{optional_note}"
             )
 
-    skip_question_type = answer_type in ("greeting", "affirmation", "personal-response")
+    from app.services.science_experiment.service import (
+        get_experiment_appendix_prompt,
+        should_use_interactive_science_experiment,
+    )
+
+    if should_use_interactive_science_experiment(
+        subject_name=subject_name,
+        answer_type=answer_type,
+        query=q,
+        heading_scope=heading_scope,
+        class_level=class_level,
+    ):
+        from app.services.science_experiment.fallbacks import get_experiment_catalog_hint
+
+        catalog_hint = get_experiment_catalog_hint(q, class_level)
+        exp_appendix = get_experiment_appendix_prompt()
+        explanation_structure = (
+            (explanation_structure + "\n\n" + catalog_hint + "\n\n" + exp_appendix)
+            if explanation_structure
+            else catalog_hint + "\n\n" + exp_appendix
+        )
+        user_closing = (
+            f"Write your complete science tutor answer now ({answer_type}) using structured headings. "
+            "You MUST append a complete ```science-experiment``` JSON block at the very end "
+            "(Interactive Experiment with three synchronized views is mandatory). "
+            "Do NOT use ```markdown fences."
+        )
+
+    skip_question_type = answer_type in (
+        "greeting", "affirmation", "personal-response", "clarification",
+        "quiz", "mcq", "summary", "short-answer",
+    )
     question_type_guidance = _build_question_type_guidance(
         query, skip=skip_question_type
     )
-    subject_guidelines = _build_subject_guidelines(subject_name, math_format=math_format)
+    subject_guidelines = (
+        ""
+        if tier == "direct" and not _is_mathematics_subject(subject_name)
+        else _build_subject_guidelines(subject_name, math_format=math_format)
+    )
+    learner_guidance = _build_learner_guidance(learner_snapshot)
+    adaptive_guidance = _build_adaptive_guidance(
+        query=q,
+        topic=topic,
+        understanding_scores=understanding_scores,
+        learner_snapshot=learner_snapshot,
+    )
 
     system = _SYSTEM_PROMPT_TEMPLATE.format(
         student_name=display_name,
@@ -1348,6 +2027,8 @@ def _build_chat_messages(
         answer_instruction=instruction,
         interaction_policy=interaction_policy,
         explanation_structure=explanation_structure,
+        learner_guidance=learner_guidance,
+        adaptive_guidance=adaptive_guidance,
     )
     section_block = ""
     if section_instruction.strip():
@@ -1453,6 +2134,81 @@ def _answer_word_count(text: str) -> int:
     return len((text or "").split())
 
 
+def _direct_answer_needs_shrink(answer: str) -> bool:
+    wc = _answer_word_count(answer)
+    if wc > _DIRECT_ANSWER_MAX_WORDS:
+        return True
+    return bool(_STRUCTURED_HEADER_RE.search(answer or ""))
+
+
+def _mistral_token_limit_for_answer_type(answer_type: str) -> int | None:
+    if _structure_tier(answer_type) == "direct":
+        return _DIRECT_ANSWER_TOKEN_LIMIT
+    return None
+
+
+async def _finalize_direct_answer(
+    messages: list[dict[str, str]],
+    answer: str,
+    query: str,
+    *,
+    answer_type: str,
+    heading_scope: Any | None = None,
+    conversation_history: list[dict] | None = None,
+) -> str:
+    """Shrink direct answers that leaked into long/structured form. Never expand them."""
+    from app.services.section_heading import HeadingScope
+
+    if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
+        return strip_embedded_figure_lines(answer.strip())
+    if _structure_tier(answer_type) != "direct":
+        if not _skip_answer_expansion(query, conversation_history):
+            answer = await _expand_short_answer(
+                messages, answer, query, heading_scope=heading_scope
+            )
+        return strip_embedded_figure_lines(answer.strip())
+    return strip_embedded_figure_lines(
+        (await _shrink_overlong_direct_answer(messages, answer, query)).strip()
+    )
+
+
+async def _shrink_overlong_direct_answer(
+    messages: list[dict[str, str]],
+    answer: str,
+    query: str,
+) -> str:
+    """One retry when the model ignores direct-answer length / format rules."""
+    if not _direct_answer_needs_shrink(answer):
+        return answer
+    logger.info(
+        "Direct answer too long or structured (%d words); shrinking for query=%r",
+        _answer_word_count(answer),
+        query[:60],
+    )
+    shrink_msgs = [
+        *messages,
+        {"role": "assistant", "content": answer},
+        {
+            "role": "user",
+            "content": (
+                f"Rewrite that answer in MAX {_DIRECT_ANSWER_MAX_WORDS} words. "
+                "Plain prose only — NO **Topic**, **Key Points**, **Detailed Explanation**, "
+                "**Remember**, or **Try This** headers. "
+                "Keep the definition, at most 3 bullets, and one short follow-up question."
+            ),
+        },
+    ]
+    try:
+        shorter = await _call_mistral_async(
+            shrink_msgs, max_tokens=_DIRECT_ANSWER_TOKEN_LIMIT
+        )
+        if shorter.strip() and _answer_word_count(shorter) <= _DIRECT_ANSWER_MAX_WORDS + 25:
+            return shorter.strip()
+    except Exception as exc:
+        logger.warning("Direct-answer shrink failed: %s", exc)
+    return answer
+
+
 async def _expand_short_answer(
     messages: list[dict[str, str]],
     answer: str,
@@ -1466,6 +2222,8 @@ async def _expand_short_answer(
     if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
         return answer
     atype = detect_answer_type(query)
+    if _structure_tier(atype) == "direct":
+        return answer
     if atype in ("greeting", "one-word", "brief"):
         return answer
     min_w = _ANSWER_MIN_WORDS.get(atype, 120)
@@ -1482,6 +2240,11 @@ async def _expand_short_answer(
             "Include ALL sections with emoji headers: "
             "🌱 Concept Overview, 📚 Detailed Explanation, 🌍 Real-Life Example, "
             "📝 Key Points to Remember (3-5 bullets), ❓ Quick Check."
+        )
+    elif _structure_tier(atype) == "structured":
+        expand_hint = (
+            "Include ALL **bold** side headings: **Topic**, **In Simple Words**, **Key Points**, "
+            "**Detailed Explanation**, **Example**, **Remember**, and **Try This**."
         )
     else:
         expand_hint = (
@@ -1516,10 +2279,15 @@ def _ensure_mistral_config() -> None:
         )
 
 
-async def _call_mistral_async(messages: list[dict[str, str]]) -> str:
+async def _call_mistral_async(
+    messages: list[dict[str, str]],
+    *,
+    max_tokens: int | None = None,
+) -> str:
     """Non-blocking Mistral chat completion via httpx.AsyncClient."""
     _ensure_mistral_config()
-    logger.debug("Mistral request model=%s max_tokens=%d", MISTRAL_MODEL, MISTRAL_MAX_TOKENS)
+    token_limit = max_tokens if max_tokens is not None else MISTRAL_MAX_TOKENS
+    logger.debug("Mistral request model=%s max_tokens=%d", MISTRAL_MODEL, token_limit)
 
     async with httpx.AsyncClient(timeout=90.0) as client:
         resp = await client.post(
@@ -1531,7 +2299,7 @@ async def _call_mistral_async(messages: list[dict[str, str]]) -> str:
             json={
                 "model": MISTRAL_MODEL,
                 "messages": messages,
-                "max_tokens": MISTRAL_MAX_TOKENS,
+                "max_tokens": token_limit,
                 "temperature": MISTRAL_TEMPERATURE,
             },
         )
@@ -1548,10 +2316,15 @@ async def _call_mistral_async(messages: list[dict[str, str]]) -> str:
     return text or ANSWER_NOT_IN_CHAPTER
 
 
-async def _stream_mistral_async(messages: list[dict[str, str]]) -> AsyncIterator[str]:
+async def _stream_mistral_async(
+    messages: list[dict[str, str]],
+    *,
+    max_tokens: int | None = None,
+) -> AsyncIterator[str]:
     """Yield tokens from Mistral SSE stream for use with StreamingResponse."""
     _ensure_mistral_config()
-    logger.debug("Mistral streaming request model=%s", MISTRAL_MODEL)
+    token_limit = max_tokens if max_tokens is not None else MISTRAL_MAX_TOKENS
+    logger.debug("Mistral streaming request model=%s max_tokens=%d", MISTRAL_MODEL, token_limit)
 
     async with httpx.AsyncClient(timeout=120.0) as client:
         async with client.stream(
@@ -1564,7 +2337,7 @@ async def _stream_mistral_async(messages: list[dict[str, str]]) -> AsyncIterator
             json={
                 "model": MISTRAL_MODEL,
                 "messages": messages,
-                "max_tokens": MISTRAL_MAX_TOKENS,
+                "max_tokens": token_limit,
                 "temperature": MISTRAL_TEMPERATURE,
                 "stream": True,
             },
@@ -1622,13 +2395,16 @@ async def chapter_aware_qa(
     chapter_names: list[str] | None = None,
     conversation_history: list[dict] | None = None,
     student_name: str = "",
-) -> tuple[str, list[dict], dict | None]:
+    student_key: str = "",
+    images_only: bool = False,
+) -> tuple[str, list[dict], dict | None, dict | None]:
     """
     Retrieve relevant chunks from ChromaDB and answer via Mistral (async).
 
-    Returns ``(answer_text, related_images, math_lesson)``. Checks Redis cache first.
+    Returns ``(answer_text, related_images, math_lesson, science_experiment)``. Checks Redis cache first.
     """
     from app.services.math_lesson.service import finalize_math_answer
+    from app.services.science_experiment.service import finalize_science_answer
     from app.core.cache import (
         deserialize_tutor_cache,
         get_cached_answer,
@@ -1660,19 +2436,27 @@ async def chapter_aware_qa(
         subject_name=subject_name,
     )
     if early:
-        return early, [], None
+        return early, [], None, None
 
     cached = await get_cached_answer(
         collection_name, chapter_ids, effective_query, class_level
     )
     if cached:
-        answer, cached_lesson = deserialize_tutor_cache(cached)
+        answer, cached_lesson, cached_experiment = deserialize_tutor_cache(cached)
         answer, math_lesson = finalize_math_answer(
             answer,
             effective_query,
             class_level=class_level,
             subject_name=subject_name,
             existing_lesson=cached_lesson,
+            conversation_history=conversation_history,
+        )
+        answer, science_experiment = finalize_science_answer(
+            answer,
+            effective_query,
+            class_level=class_level,
+            subject_name=subject_name,
+            existing_experiment=cached_experiment,
         )
         # Images are never stored in cache — re-rank fresh per query.
         imgs: list[dict] = []
@@ -1682,7 +2466,10 @@ async def chapter_aware_qa(
             chapter_ids=chapter_ids,
         )
         img_allowed = should_retrieve_images(
-            conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
+            conv,
+            chapter_ids=chapter_ids,
+            heading_scope_kind=scope.kind,
+            subject_name=subject_name,
         )
         if chapter_ids and img_allowed:
             img_top_n = _image_top_n_for_scope(scope, docs=docs_for_imgs)
@@ -1705,13 +2492,46 @@ async def chapter_aware_qa(
                     )
                 except Exception as exc:
                     logger.warning("Image retrieval on cache hit failed: %s", exc)
-        return answer, imgs, math_lesson
+        return answer, imgs, math_lesson, science_experiment
 
     img_allowed = should_retrieve_images(
-        conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
+        conv,
+        chapter_ids=chapter_ids,
+        heading_scope_kind=scope.kind,
+        subject_name=subject_name,
     )
+    if images_only:
+        related: list[dict] = []
+        if chapter_ids and img_allowed and docs:
+            img_top_n = _image_top_n_for_scope(scope, docs=docs)
+            try:
+                related = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        _fetch_related_images,
+                        scope,
+                        collection_name=collection_name,
+                        chapter_ids=chapter_ids,
+                        chapter_names=chapter_names or [],
+                        chapter=chapter,
+                        query=effective_query,
+                        docs=docs,
+                        conversation_history=conversation_history,
+                        top_n=img_top_n,
+                    ),
+                    timeout=IMAGE_RETRIEVAL_TIMEOUT_SEC,
+                )
+            except Exception as exc:
+                logger.warning("Image-only retrieval failed: %s", exc)
+        return "", related, None, None
     if not docs and not coverage_guidance:
-        return ANSWER_NOT_IN_CHAPTER, [], None
+        return ANSWER_NOT_IN_CHAPTER, [], None, None
+
+    learner_snapshot, understanding_scores = await _mentor_profile_for_turn(
+        student_key,
+        effective_query,
+        conversation_history,
+        conv.resolved_topic or effective_query,
+    )
 
     context = _join_context_within_budget(docs)
     messages = _build_chat_messages(
@@ -1726,18 +2546,30 @@ async def chapter_aware_qa(
         heading_scope=scope,
         conversation_history=conversation_history,
         chapter_coverage_guidance=coverage_guidance,
+        learner_snapshot=learner_snapshot,
+        understanding_scores=understanding_scores,
+        resolved_topic=conv.resolved_topic or effective_query,
     )
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
+    answer_type = _resolve_answer_type(
+        effective_query,
+        subject_name=subject_name,
+        conversation_history=conversation_history,
+        chapter=chapter,
+        conv=conv,
+    )
+    token_limit = _mistral_token_limit_for_answer_type(answer_type)
 
     try:
-        answer = await _call_mistral_async(messages)
-        if not (
-            _is_affirmation_followup(effective_query, conversation_history)
-            or _is_personal_dialogue_response(effective_query, conversation_history)
-        ):
-            answer = await _expand_short_answer(
-                messages, answer, effective_query, heading_scope=scope
-            )
+        answer = await _call_mistral_async(messages, max_tokens=token_limit)
+        answer = await _finalize_direct_answer(
+            messages,
+            answer,
+            effective_query,
+            answer_type=answer_type,
+            heading_scope=scope,
+            conversation_history=conversation_history,
+        )
     except FileNotFoundError:
         answer = _best_chunk_fallback(effective_query, docs)
     except Exception as exc:
@@ -1776,6 +2608,13 @@ async def chapter_aware_qa(
         effective_query,
         class_level=class_level,
         subject_name=subject_name,
+        conversation_history=conversation_history,
+    )
+    answer, science_experiment = finalize_science_answer(
+        answer,
+        effective_query,
+        class_level=class_level,
+        subject_name=subject_name,
     )
 
     await set_cached_answer(
@@ -1785,9 +2624,15 @@ async def chapter_aware_qa(
         answer,
         related_images=related,
         math_lesson=math_lesson,
+        science_experiment=science_experiment,
         class_level=class_level,
     )
-    return answer, related, math_lesson
+    await _mentor_profile_after_turn(
+        student_key,
+        conv.resolved_topic or effective_query,
+        understanding_scores,
+    )
+    return answer, related, math_lesson, science_experiment
 
 
 def _image_top_n_for_scope(scope, *, docs: list | None = None) -> int:
@@ -1839,13 +2684,17 @@ async def chapter_aware_qa_stream(
     chapter: str = "",
     chapter_names: list[str] | None = None,
     emit_related_images: Callable[[list[dict]], Awaitable[None]] | None = None,
+    emit_clean_answer: Callable[[str], Awaitable[None]] | None = None,
     emit_math_lesson: Callable[[dict | None, str], Awaitable[None]] | None = None,
+    emit_science_experiment: Callable[[dict | None, str], Awaitable[None]] | None = None,
     conversation_history: list[dict] | None = None,
     student_name: str = "",
+    student_key: str = "",
     voice_mode: bool = False,
     tutor_state: str = "TEACHING",
     understanding_scores: dict | None = None,
     learner_snapshot: dict | None = None,
+    pipeline_timing: Any | None = None,
 ) -> AsyncIterator[str]:
     """
     Streaming version of chapter_aware_qa.
@@ -1853,7 +2702,7 @@ async def chapter_aware_qa_stream(
     Optionally invokes *emit_related_images* when ranked images are ready
     (usually during the first tokens, without blocking retrieval).
     """
-    from app.config import CONTEXT_CHAR_BUDGET, EARLY_IMAGE_MIN_CHARS, RETRIEVAL_K
+    from app.config import CONTEXT_CHAR_BUDGET, EARLY_IMAGE_MIN_CHARS, RETRIEVAL_K, VOICE_EARLY_IMAGE_MIN_CHARS, VOICE_MAX_TOKENS, VOICE_CONTEXT_CHAR_BUDGET, VOICE_RETRIEVAL_K
     from app.core.cache import (
         deserialize_tutor_cache,
         get_cached_answer,
@@ -1862,10 +2711,11 @@ async def chapter_aware_qa_stream(
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
     from app.services.image_service.textbook_image_retrieval import early_related_images_for_query
     from app.services.math_lesson.service import finalize_math_answer
+    from app.services.science_experiment.service import finalize_science_answer
     from app.services.section_retrieval import retrieve_for_tutor_query
 
-    retrieval_k = RETRIEVAL_K
-    context_budget = CONTEXT_CHAR_BUDGET
+    retrieval_k = VOICE_RETRIEVAL_K if voice_mode else RETRIEVAL_K
+    context_budget = VOICE_CONTEXT_CHAR_BUDGET if voice_mode else CONTEXT_CHAR_BUDGET
 
     from app.services.chapter_scope import resolve_chapter_awareness_turn
 
@@ -1874,12 +2724,23 @@ async def chapter_aware_qa_stream(
     )
     retrieval_query = conv.retrieval_query or query
 
-    docs, scope, section_instruction = retrieve_for_tutor_query(
-        retrieval_query,
-        collection_name=collection_name,
-        chapter_ids=chapter_ids,
-        k=retrieval_k,
-    )
+    if voice_mode:
+        docs, scope, section_instruction = await asyncio.to_thread(
+            retrieve_for_tutor_query,
+            retrieval_query,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+            k=retrieval_k,
+        )
+        if pipeline_timing is not None:
+            pipeline_timing.mark_rag_done()
+    else:
+        docs, scope, section_instruction = retrieve_for_tutor_query(
+            retrieval_query,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+            k=retrieval_k,
+        )
     early, effective_query, _assessment, coverage_guidance = resolve_chapter_awareness_turn(
         query,
         docs=docs,
@@ -1901,6 +2762,8 @@ async def chapter_aware_qa_stream(
         subject_name,
         voice_mode=voice_mode,
         understanding_scores=understanding_scores,
+        query=effective_query,
+        heading_scope=scope,
     )
     voice_live_teaching = voice_mode and not use_text_format
 
@@ -1908,13 +2771,21 @@ async def chapter_aware_qa_stream(
         collection_name, chapter_ids, effective_query, class_level
     )
     if cached and not voice_live_teaching:
-        answer, cached_lesson = deserialize_tutor_cache(cached)
+        answer, cached_lesson, cached_experiment = deserialize_tutor_cache(cached)
         answer, math_lesson = finalize_math_answer(
             answer,
             effective_query,
             class_level=class_level,
             subject_name=subject_name,
             existing_lesson=cached_lesson,
+            conversation_history=conversation_history,
+        )
+        answer, science_experiment = finalize_science_answer(
+            answer,
+            effective_query,
+            class_level=class_level,
+            subject_name=subject_name,
+            existing_experiment=cached_experiment,
         )
         imgs: list[dict] = []
         docs_for_imgs, scope, _ = retrieve_for_tutor_query(
@@ -1924,7 +2795,11 @@ async def chapter_aware_qa_stream(
             k=retrieval_k,
         )
         img_allowed = should_retrieve_images(
-            conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
+            conv,
+            chapter_ids=chapter_ids,
+            heading_scope_kind=scope.kind,
+            subject_name=subject_name,
+            voice_mode=voice_mode,
         )
         if chapter_ids and img_allowed:
             img_top_n = _image_top_n_for_scope(scope, docs=docs_for_imgs)
@@ -1952,11 +2827,17 @@ async def chapter_aware_qa_stream(
             await emit_related_images(imgs)
         if emit_math_lesson and math_lesson:
             await emit_math_lesson(math_lesson, answer)
+        if emit_science_experiment and science_experiment:
+            await emit_science_experiment(science_experiment, answer)
         yield answer
         return
 
     img_allowed = should_retrieve_images(
-        conv, chapter_ids=chapter_ids, heading_scope_kind=scope.kind
+        conv,
+        chapter_ids=chapter_ids,
+        heading_scope_kind=scope.kind,
+        subject_name=subject_name,
+        voice_mode=voice_mode,
     )
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
     if not docs and not coverage_guidance:
@@ -1969,6 +2850,14 @@ async def chapter_aware_qa_stream(
         await emit_related_images([])
 
     context = _join_context_within_budget(docs, char_budget=context_budget)
+
+    if not voice_live_teaching and student_key and learner_snapshot is None:
+        learner_snapshot, understanding_scores = await _mentor_profile_for_turn(
+            student_key,
+            effective_query,
+            conversation_history,
+            conv.resolved_topic or effective_query,
+        )
 
     if voice_live_teaching:
         from app.services.voice_tutor import (
@@ -2023,10 +2912,24 @@ async def chapter_aware_qa_stream(
             heading_scope=scope,
             conversation_history=conversation_history,
             chapter_coverage_guidance=coverage_guidance,
+            learner_snapshot=learner_snapshot,
+            understanding_scores=understanding_scores,
+            resolved_topic=conv.resolved_topic or effective_query,
         )
 
     last_imgs: list[dict] = []
     images_emitted = False
+    early_image_min = VOICE_EARLY_IMAGE_MIN_CHARS if voice_live_teaching else EARLY_IMAGE_MIN_CHARS
+    answer_type = _resolve_answer_type(
+        effective_query,
+        subject_name=subject_name,
+        conversation_history=conversation_history,
+        chapter=chapter,
+        conv=conv,
+    )
+    voice_token_limit = VOICE_MAX_TOKENS if voice_live_teaching else None
+    if voice_token_limit is None:
+        voice_token_limit = _mistral_token_limit_for_answer_type(answer_type)
 
     async def _retrieve_images_for_answer(answer_text: str) -> list[dict]:
         if not chapter_ids or not img_allowed:
@@ -2123,7 +3026,7 @@ async def chapter_aware_qa_stream(
                 await emit_related_images(last_imgs)
                 images_emitted = True
                 return
-        min_chars = EARLY_IMAGE_MIN_CHARS
+        min_chars = early_image_min
         if len(answer_so_far) < min_chars:
             return
         if img_task is None or not img_task.done():
@@ -2139,54 +3042,71 @@ async def chapter_aware_qa_stream(
 
     try:
         full_answer: list[str] = []
-        async for token in _stream_mistral_async(messages):
+        async for token in _stream_mistral_async(messages, max_tokens=voice_token_limit):
             full_answer.append(token)
             await _maybe_emit_bootstrap_images("".join(full_answer))
             yield token
         answer_text = "".join(full_answer)
-        if not voice_live_teaching and not (
-            _is_affirmation_followup(query, conversation_history)
-            or _is_personal_dialogue_response(query, conversation_history)
-        ):
+        if not voice_live_teaching:
             original_len = len(answer_text)
             try:
-                answer_text = await _expand_short_answer(
-                    messages, answer_text, query, heading_scope=scope
+                answer_text = await _finalize_direct_answer(
+                    messages,
+                    answer_text,
+                    effective_query,
+                    answer_type=answer_type,
+                    heading_scope=scope,
+                    conversation_history=conversation_history,
                 )
-                if len(answer_text) > original_len:
+                if emit_clean_answer and answer_text and len(answer_text) != original_len:
+                    await emit_clean_answer(answer_text)
+                elif len(answer_text) > original_len:
                     supplement = answer_text[original_len:]
                     if supplement:
                         yield supplement
+                elif len(answer_text) < original_len:
+                    # ponytail: shrink replaced streamed text — client keeps full stream today;
+                    # cache stores the shorter final answer.
+                    pass
             except Exception as exc:
-                logger.warning("Stream answer expansion failed: %s", exc)
+                logger.warning("Stream answer finalize failed: %s", exc)
         math_lesson = None
+        science_experiment = None
         should_finalize_math = use_text_format or (
             voice_mode and _is_mathematics_subject(subject_name)
         )
+        should_finalize_science = use_text_format or (
+            voice_mode and _is_science_subject(subject_name)
+        )
         if should_finalize_math:
             from app.services.chapter_scope import detect_chapter_scope_choice
-            from app.services.math_lesson.fallbacks import query_requests_animation
 
             is_scope_choice = (
                 detect_chapter_scope_choice(effective_query, conversation_history) is not None
             )
-            allow_fallback = not is_scope_choice and (
-                _is_mathematics_subject(subject_name)
-                or use_text_format
-                or (voice_live_teaching and query_requests_animation(effective_query))
-            )
+            allow_fallback = not is_scope_choice and (use_text_format or voice_live_teaching)
             clean_answer, math_lesson = finalize_math_answer(
                 answer_text,
                 effective_query,
                 class_level=class_level,
                 subject_name=subject_name,
                 allow_fallback=allow_fallback,
+                conversation_history=conversation_history,
             )
             if math_lesson and emit_math_lesson:
                 await emit_math_lesson(math_lesson, clean_answer)
-            if use_text_format:
+            if use_text_format or voice_live_teaching:
                 answer_text = clean_answer
-            elif voice_live_teaching:
+        if should_finalize_science:
+            clean_answer, science_experiment = finalize_science_answer(
+                answer_text,
+                effective_query,
+                class_level=class_level,
+                subject_name=subject_name,
+            )
+            if science_experiment and emit_science_experiment:
+                await emit_science_experiment(science_experiment, clean_answer)
+            if use_text_format or (voice_mode and _is_science_subject(subject_name)):
                 answer_text = clean_answer
         if img_task is not None and not img_task.done():
             img_task.cancel()
@@ -2209,8 +3129,15 @@ async def chapter_aware_qa_stream(
                 answer_text,
                 related_images=last_imgs,
                 math_lesson=math_lesson,
+                science_experiment=science_experiment,
                 class_level=class_level,
             )
+            if student_key and understanding_scores:
+                await _mentor_profile_after_turn(
+                    student_key,
+                    conv.resolved_topic or effective_query,
+                    understanding_scores,
+                )
     except FileNotFoundError:
         fb = _best_chunk_fallback(query, docs)
         last_imgs = await _retrieve_images_for_answer(fb)

@@ -295,7 +295,7 @@ def encode_browser_jpeg(path: str) -> bytes | None:
         return None
 
 
-def normalize_image_blob(blob: bytes) -> bytes | None:
+def normalize_image_blob(blob: bytes, *, preserve_figure_crop: bool = False) -> bytes | None:
     """Normalize raw PDF/DOCX image bytes to browser-safe JPEG."""
     try:
         from PIL import Image
@@ -304,11 +304,13 @@ def normalize_image_blob(blob: bytes) -> bytes | None:
             rgb = _pil_to_display_rgb(im)
             if rgb is None or _is_blank_rgb(rgb) or _rgb_looks_like_disclaimer_plate(rgb):
                 return None
-            rgb = trim_display_margins(rgb)
-            diagram = _is_blue_diagram_rgb(rgb)
-            if not diagram:
-                rgb = trim_top_heading_band(rgb)
-                rgb = trim_text_side_margins(rgb)
+            if not preserve_figure_crop:
+                rgb = trim_display_margins(rgb)
+            if not preserve_figure_crop:
+                diagram = _is_blue_diagram_rgb(rgb)
+                if not diagram:
+                    rgb = trim_top_heading_band(rgb)
+                    rgb = trim_text_side_margins(rgb)
             w, h = rgb.size
             if w < 64 or h < 64 or w * h < 4096:
                 return None

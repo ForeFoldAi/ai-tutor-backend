@@ -19,7 +19,9 @@ def query_requests_animation(query: str) -> bool:
             r"quarter\s+turn|half\s+turn|full\s+turn|"
             r"drag|discover|explorer|tile|canvas|"
             r"show\s+me\s+how|show\s+how"
-            r")\b",
+            r")\b|"
+            r"interactive\s+image|generate.*interactive|"
+            r"interactive\s+(?:explor|visual|diagram|picture)",
             query or "",
             re.I,
         )
@@ -95,7 +97,12 @@ def query_requests_practice_mode(query: str) -> bool:
     )
 
 
-def build_fallback_math_lesson(query: str, class_level: str = "") -> dict[str, Any]:
+def build_fallback_math_lesson(
+    query: str,
+    class_level: str = "",
+    *,
+    conversation_history: list[dict[str, str]] | None = None,
+) -> dict[str, Any]:
     """
     Synthesize a Class 1–10 math-lesson visualization for every mathematics query.
     Never returns None for a non-empty query.
@@ -103,19 +110,32 @@ def build_fallback_math_lesson(query: str, class_level: str = "") -> dict[str, A
     q = (query or "").strip()
     if not q:
         return build_universal_math_visual("mathematics", class_level)
-    return match_math_visualization(q, class_level)
+    return match_math_visualization(q, class_level, conversation_history=conversation_history)
 
 
 _GENERIC_VIZ_TYPES = frozenset({"concept-explorer", "generic", ""})
-# LLM often picks these for specialized topics — prefer catalog when it has a specific match.
-_WEAK_LLM_VIZ_TYPES = frozenset({"concept-explorer", "generic", "", "shapes-basic"})
+_WEAK_LLM_VIZ_TYPES = frozenset({
+    "concept-explorer",
+    "generic",
+    "",
+    "shapes-basic",
+    "probability",
+    "bar-model",
+})
 
 
-def get_visualization_catalog_hint(query: str, class_level: str = "") -> str:
+def get_visualization_catalog_hint(
+    query: str,
+    class_level: str = "",
+    *,
+    conversation_history: list[dict[str, str]] | None = None,
+) -> str:
     """Short prompt hint so the LLM uses the catalog-matched visualizationType."""
     import json
 
-    catalog = build_fallback_math_lesson(query, class_level)
+    catalog = build_fallback_math_lesson(
+        query, class_level, conversation_history=conversation_history
+    )
     viz = catalog.get("visualization") or {}
     vtype = viz.get("visualizationType") or "concept-explorer"
     sliders = viz.get("sliders") or []
@@ -146,10 +166,12 @@ def merge_catalog_visualization(
 
     llm_viz = lesson.get("visualization") or {}
     llm_type = str(llm_viz.get("visualizationType") or "")
+    # Always prefer catalog when it has a specific visualization for this topic.
     use_catalog = (
         llm_type in _WEAK_LLM_VIZ_TYPES
         or llm_type != cat_type
         or not llm_viz.get("sliders")
+        or not llm_viz.get("buttons")
         or not str(llm_viz.get("title") or "").strip()
     )
     if not use_catalog:

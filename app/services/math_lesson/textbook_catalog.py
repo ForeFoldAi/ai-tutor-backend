@@ -356,6 +356,119 @@ def _circle_explorer_spec() -> dict[str, Any]:
 # (pattern, spec_builder, concept, objective, explanation)
 _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = [
     (
+        re.compile(
+            r"\bcircles?\b(?!\s*(?:of\s+)?(?:a\s+)?cylinder)|"
+            r"circumference|diameter.*circle|circle.*diameter|"
+            r"area\s+of\s+(?:a\s+)?circle|circle.*\barea\b",
+            re.I,
+        ),
+        _circle_explorer_spec,
+        "Circle Measurements",
+        "Explore radius, diameter, circumference and area.",
+        "C = 2πr, A = πr².",
+    ),
+    (
+        re.compile(
+            r"\b(die|dice)\b|roll\s+(?:a\s+)?die|thrown?\s+once",
+            re.I,
+        ),
+        _probability_dice_spec,
+        "Dice Probability",
+        "Roll many times; experimental → 1/6.",
+        "Law of large numbers for fair dice.",
+    ),
+    (
+        re.compile(
+            r"\b(solve|find)\b.*\b\d*\s*[a-z]\s*[\+\-]\s*\d+|\b\d*\s*[a-z]\s*[\+\-]\s*\d+\s*=|"
+            r"linear\s+equation|equation\s+in\s+one\s+variable|"
+            r"number\s+when\s+added|gives\s+\d+|cost\s+of\s+one",
+            re.I,
+        ),
+        _linear_graph_spec,
+        "Linear Equations",
+        "See how changing values affects the equation balance.",
+        "Isolate the variable using inverse operations.",
+    ),
+    (
+        re.compile(
+            r"\barea\b.*\b(triangle|parallelogram|rectangle)\b|"
+            r"\b(triangle|parallelogram)\b.*\barea\b|"
+            r"base\s+\d+.*height\s+\d+",
+            re.I,
+        ),
+        _area_resizer_spec,
+        "Areas of Plane Figures",
+        "Resize shapes and see areas change live.",
+        "Area of triangle = ½ × base × height.",
+    ),
+    (
+        re.compile(
+            r"\b(triangle|triangles)\b.*\b(angles?|find|sum|180)\b|"
+            r"\b(angles?|sum)\b.*\b(triangle|triangles)\b|"
+            r"\b(three|3)\s+angles?\b|"
+            r"\binterior\s+angles?\s+(of\s+)?(a\s+)?(triangle|triangles)\b|"
+            r"\bfind\s+angles?\s+[a-z]\b|"
+            r"angles?\s+[a-z]\s*=\s*\d+.*angles?\s+[a-z]\s*=\s*\d+|"
+            r"prove\b.*\b(triangle|180)\b",
+            re.I,
+        ),
+        _triangle_angle_sum_spec,
+        "Triangle Angle Sum",
+        "Prove interior angles of a triangle sum to 180°.",
+        "Three angles rearrange to form a straight line.",
+    ),
+    (
+        re.compile(
+            r"\b(triangle|triangles)\b.*\b(formula|formulas|property|properties|theorem)\b|"
+            r"\b(formula|formulas)\b.*\b(triangle|triangles)\b",
+            re.I,
+        ),
+        _triangle_angle_sum_spec,
+        "Triangle Formulas",
+        "Learn triangle formulas starting with the angle sum.",
+        "The three interior angles always add up to 180°.",
+    ),
+    (
+        re.compile(
+            r"\b(?:tell\s+me\s+about|explain|describe|what\s+(?:is|are)|about)\b.*\b(?:the\s+)?(?:triangle|triangles)\b",
+            re.I,
+        ),
+        _triangle_explorer_spec,
+        "Triangles",
+        "Explore triangles by dragging vertices.",
+        "Watch how sides and angles change as you move the corners.",
+    ),
+    (
+        re.compile(r"\b(triangle|triangles)\b", re.I),
+        _triangle_angle_sum_spec,
+        "Triangles",
+        "Explore triangle angle relationships interactively.",
+        "Interior angles of any triangle sum to 180°.",
+    ),
+    (
+        re.compile(r"\b(polynomial|monomial|binomial|trinomial|remainder\s+theorem)\b", re.I),
+        _factor_rectangle_spec,
+        "Polynomials & Factorisation",
+        "Explore factors using the rectangle area model.",
+        "Polynomials are sums of terms; factorisation splits expressions.",
+    ),
+    (
+        re.compile(r"\b(irrational|surd|rationali[sz]|represent.*sqrt|√\s*\d|number\s*line)\b", re.I),
+        lambda: _viz(
+            "number-line",
+            "Number Line Explorer",
+            "Place rational and irrational numbers on the line.",
+            sliders=[
+                {"id": "start", "label": "Start", "min": -10, "max": 10, "step": 1, "default": 0},
+                {"id": "jump", "label": "Jump", "min": -10, "max": 10, "step": 1, "default": 3},
+            ],
+            calcs=[{"id": "result", "label": "Position", "formula": "start + jump", "unit": ""}],
+        ),
+        "Real Numbers on the Number Line",
+        "Place √2 and other irrationals using geometry.",
+        "Every real number has a unique point on the number line.",
+    ),
+    (
         re.compile(r"\(a\s*\+\s*b\)\s*[\²^2]|a\s*[\²^2]\s*\+\s*b\s*[\²^2]|algebra\s*tile|missing\s*term|2ab", re.I),
         _algebra_tiles_spec,
         "Why (a+b)² ≠ a²+b²",
@@ -413,7 +526,11 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
         "Slope m controls steepness; c is the y-intercept.",
     ),
     (
-        re.compile(r"sum.*interior.*triangle|180.*triangle|angle\s*rearrang|angle\s*sum", re.I),
+        re.compile(
+            r"sum.*interior.*triangle|180.*triangle|angles?\s*rearrang|angles?\s*sums?|"
+            r"\b(three|3)\s+angles?\b",
+            re.I,
+        ),
         _triangle_angle_sum_spec,
         "Triangle Angle Sum",
         "Prove interior angles of a triangle sum to 180°.",
@@ -469,25 +586,11 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
         "More tosses bring experimental probability closer to ½.",
     ),
     (
-        re.compile(r"roll.*die|dice|experimental\s*probability|1000\s*times", re.I),
-        _probability_dice_spec,
-        "Dice Probability",
-        "Roll many times; experimental → 1/6.",
-        "Law of large numbers for fair dice.",
-    ),
-    (
         re.compile(r"tangent|point\s*of\s*contact", re.I),
         _circle_tangent_spec,
         "Tangent to a Circle",
         "A tangent touches the circle at exactly one point.",
         "The radius is perpendicular to the tangent at contact.",
-    ),
-    (
-        re.compile(r"circumference|circle.*radius|diameter.*circle", re.I),
-        _circle_explorer_spec,
-        "Circle Measurements",
-        "Explore radius, diameter, circumference and area.",
-        "C = 2πr, A = πr².",
     ),
     (
         re.compile(r"compass|ruler|perpendicular\s*bisector|construction|construct\s*a\s*triangle", re.I),

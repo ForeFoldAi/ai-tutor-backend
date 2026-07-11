@@ -51,11 +51,65 @@ def test_visual_request_required():
     assert should_retrieve_images(ctx, chapter_ids=["ch1"])
 
 
+def test_voice_mode_allows_chapter_images_for_broad_question():
+    ctx = resolve_conversation_context("can you tell me about the weather")
+    assert should_retrieve_images(ctx, chapter_ids=["ch1"], voice_mode=True)
+
+
+def test_voice_mode_blocks_greeting_images():
+    ctx = resolve_conversation_context("hello")
+    assert not should_retrieve_images(ctx, chapter_ids=["ch1"], voice_mode=True)
+
+    ctx = resolve_conversation_context("Solve 3x - 5 = 16")
+    assert ctx.visual_intent == VisualIntent.OPTIONAL_VISUALS
+    assert should_retrieve_images(
+        ctx, chapter_ids=["ch1"], subject_name="Mathematics"
+    )
+
+
+def test_math_greeting_still_blocks_images():
+    ctx = resolve_conversation_context("hello")
+    assert not should_retrieve_images(
+        ctx, chapter_ids=["ch1"], subject_name="Mathematics"
+    )
+
+
 def test_yes_continue_no_images():
     history = [{"role": "user", "content": "What is evaporation?"}]
     ctx = resolve_conversation_context("yes", conversation_history=history)
     assert ctx.followup_type == FollowupType.CONTINUE_EXPLANATION.value
     assert not should_retrieve_images(ctx, chapter_ids=["ch1"])
+
+
+def test_clarification_followup_reuses_prior_context():
+    history = [
+        {
+            "role": "user",
+            "content": "give a challenge on this chapter which i can put into implementation",
+        },
+        {
+            "role": "assistant",
+            "content": (
+                "According to the chapter, try this hands-on challenge: Observe how shadows "
+                "change during the day by placing a stick upright in sunlight."
+            ),
+        },
+    ]
+    ctx = resolve_conversation_context(
+        "i did not understand this challenge",
+        conversation_history=history,
+    )
+    assert ctx.followup_type == FollowupType.CLARIFICATION.value
+    assert ctx.response_mode == ResponseMode.FOLLOWUP
+    assert "shadow" in ctx.retrieval_query.lower()
+    assert "challenge" in ctx.retrieval_query.lower()
+    assert not should_retrieve_images(ctx, chapter_ids=["ch1"])
+
+
+def test_clarification_without_history_is_new_topic():
+    ctx = resolve_conversation_context("i did not understand this challenge")
+    assert ctx.followup_type == FollowupType.CLARIFICATION.value
+    assert ctx.retrieval_query == "i did not understand this challenge"
 
 
 def test_level3_overlap_strict():

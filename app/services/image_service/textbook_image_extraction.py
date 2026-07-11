@@ -70,6 +70,7 @@ _IMAGE_TYPE_PATTERNS: list[tuple[str, str]] = [
      r"formation|process\s+of|how\s+it\s+works)\b", "process"),
     (r"\b(students?|children|people\s+performing|activity|exercise|experiment|practis|practis)\b",
      "activity"),
+    (r"\b(sunflower|roots?|plant|seed|leaf|leaves|photosynthesis|soil|flower)\b", "diagram"),
     (r"\b(diagram|cross.?section|structure|illustrat|schematic|labelled)\b", "diagram"),
     (r"\b(algebraic identity|binomial|polynomial|cube|square|number line|place value|mensuration)\b", "diagram"),
     (r"\b(fort|palace|temple|mosque|church|monument|heritage|ancient|ruins|museum|historical)\b",
@@ -632,6 +633,22 @@ def _enrich_image_row(
                     compute_educational_salience(gen) * 0.8,
                 )
 
+    # Vision caption when PDF/OCR text is generic or broken (collage intro chapters, etc.)
+    from app.services.image_service.vision_caption_service import (
+        apply_vision_caption_to_row,
+        is_weak_text_caption,
+    )
+
+    effective_for_vision = (row.caption or row.generated_caption or "").strip()
+    if is_weak_text_caption(effective_for_vision):
+        apply_vision_caption_to_row(
+            row,
+            image_bytes=image_bytes,
+            upload=upload,
+            nearby_before=nearby_before,
+            nearby_after=nearby_after,
+        )
+
     # Semantic keywords from all available text
     effective_caption = row.caption or row.generated_caption or ""
     row.semantic_keywords = extract_semantic_keywords(
@@ -852,7 +869,9 @@ def _save_blob(
 ) -> str | None:
     from app.services.image_service.textbook_image_display import normalize_image_blob
 
-    jpeg = normalize_image_blob(blob)
+    jpeg = normalize_image_blob(
+        blob, preserve_figure_crop=(content_kind == "figure")
+    )
     if not jpeg:
         return None
     if preferred_name:

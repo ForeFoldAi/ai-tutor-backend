@@ -115,9 +115,35 @@ def test_voice_live_teaching_vs_full_format():
 
     assert _voice_should_use_text_format("Mathematics") is True
     assert _voice_should_use_text_format("Science", voice_mode=True) is False
-    assert _voice_should_use_text_format("Mathematics", voice_mode=True) is True
+    assert _voice_should_use_text_format("Mathematics", voice_mode=True) is False
     assert _voice_should_use_text_format(
         "Mathematics",
         voice_mode=True,
         understanding_scores={"wants_expansion": True},
+    ) is True
+    assert _voice_should_use_text_format(
+        "Mathematics",
+        voice_mode=True,
+        query="show me the full step by step solution",
+    ) is True
+
+    from app.services.section_heading import HeadingInfo, HeadingScope
+
+    main_scope = HeadingScope(
+        kind="main_section",
+        matched=HeadingInfo(
+            raw_hint="Weather Instruments",
+            section_number="2.6",
+            title="Weather Instruments",
+            level=1,
+            page=6,
+        ),
+        page_start=6,
+        page_end=12,
+    )
+    assert _voice_should_use_text_format(
+        "Social",
+        voice_mode=True,
+        query="what are weather instruments",
+        heading_scope=main_scope,
     ) is True

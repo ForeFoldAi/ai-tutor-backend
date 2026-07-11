@@ -235,6 +235,7 @@ def finalize_math_answer(
     subject_name: str = "",
     existing_lesson: dict[str, Any] | None = None,
     allow_fallback: bool = True,
+    conversation_history: list[dict[str, str]] | None = None,
 ) -> tuple[str, dict[str, Any] | None]:
     """Extract math-lesson JSON from answer, or synthesize a fallback for math subjects."""
     clean, lesson = extract_math_lesson_from_answer(answer)
@@ -244,7 +245,13 @@ def finalize_math_answer(
         return clean, lesson
     if lesson is None and not allow_fallback:
         return clean, None
-    catalog = build_fallback_math_lesson(query, class_level) if allow_fallback else None
+    catalog = (
+        build_fallback_math_lesson(
+            query, class_level, conversation_history=conversation_history
+        )
+        if allow_fallback
+        else None
+    )
     if lesson is None:
         if catalog is None:
             return clean, None

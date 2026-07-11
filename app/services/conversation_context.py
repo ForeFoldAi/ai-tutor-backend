@@ -1,8 +1,8 @@
 """
 Conversation context resolution and visual-retrieval gating for the AI Tutor.
 
-Resolves short follow-ups (yes, quiz me, simplify) using session history while
-keeping image retrieval scoped to the *current* turn intent (no image inheritance).
+Resolves short follow-ups (yes, quiz me, simplify) using hybrid regex + BGE intent
+classification while keeping image retrieval scoped to the *current* turn intent.
 """
 
 from __future__ import annotations
@@ -10,6 +10,25 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from enum import Enum
+
+from app.services.conversation_intent_classifier import (
+    FollowupType,
+    answer_type_for_followup,
+    classify_followup_intent,
+    is_clarification_followup,
+)
+
+__all__ = [
+    "FollowupType",
+    "VisualIntent",
+    "ResponseMode",
+    "ConversationContext",
+    "ConversationContextResolver",
+    "resolve_conversation_context",
+    "should_retrieve_images",
+    "is_clarification_followup",
+    "answer_type_for_followup",
+]
 
 
 class VisualIntent(str, Enum):
@@ -29,22 +48,6 @@ class ResponseMode(str, Enum):
     SMALL_TALK = "small_talk"
 
 
-class FollowupType(str, Enum):
-    NONE = "none"
-    CONTINUE_EXPLANATION = "continue_explanation"
-    SIMPLIFY = "simplify"
-    GENERATE_QUESTIONS = "generate_questions"
-    GENERATE_MCQ = "generate_mcq"
-    GREETING = "greeting"
-    SMALL_TALK = "small_talk"
-    ASK_EXAMPLE = "ask_example"
-    ASK_DIAGRAM = "ask_diagram"
-    ASK_VISUAL = "ask_visual"
-    ASK_SUMMARY = "ask_summary"
-    ASK_COMPARISON = "ask_comparison"
-    NEW_TOPIC = "new_topic"
-
-
 @dataclass
 class ConversationContext:
     resolved_topic: str
@@ -56,6 +59,8 @@ class ConversationContext:
     response_mode: ResponseMode = ResponseMode.EXPLANATION
     visual_intent: VisualIntent = VisualIntent.OPTIONAL_VISUALS
     retrieval_query: str = ""
+    intent_method: str = "regex"
+    intent_confidence: float = 0.0
 
     def to_debug(self) -> dict:
         return {
@@ -66,42 +71,16 @@ class ConversationContext:
             "visual_intent": self.visual_intent.value,
             "requires_visuals": self.requires_visuals,
             "inherited_entities": self.inherited_entities[:8],
+            "intent_method": self.intent_method,
+            "intent_confidence": self.intent_confidence,
         }
 
 
-_GREETING_RE = re.compile(
-    r"^(hi|hello|hey|good\s+(morning|afternoon|evening)|namaste|howdy)\b",
-    re.I,
-)
-_SMALL_TALK_RE = re.compile(
-    r"^(how are you|what'?s up|thanks|thank you|bye|goodbye|see you)\b",
-    re.I,
-)
-_THANKS_RE = re.compile(r"^(thanks|thank you|thx)\b", re.I)
-_QUIZ_RE = re.compile(
-    r"\b("
-    r"give\s+(me\s+)?\d+\s+questions?|"
-    r"\d+\s+questions?|"
-    r"quiz\s+me|"
-    r"practice\s+questions?|"
-    r"homework\s+questions?|"
-    r"test\s+me|"
-    r"mcq|multiple\s+choice|"
-    r"objective\s+questions?"
-    r")\b",
-    re.I,
-)
-_MCQ_RE = re.compile(r"\b(mcq|multiple\s+choice|objective\s+type)\b", re.I)
-_SUMMARY_RE = re.compile(r"\b(summarize|summary|in\s+short|briefly)\b", re.I)
-_SIMPLIFY_RE = re.compile(r"\b(simplify|simpler|easier|in\s+simple\s+words|eli5)\b", re.I)
-_CONTINUE_RE = re.compile(
-    r"^(yes|yeah|yep|ok|okay|sure|continue|go\s+on|explain\s+more|tell\s+me\s+more|"
-    r"more|next|carry\s+on)\s*[.!?]*$",
-    re.I,
-)
-_EXAMPLE_RE = re.compile(r"\b(example|for\s+instance|show\s+me\s+an\s+example)\b", re.I)
-_DIAGRAM_RE = re.compile(
-    r"\b(diagram|figure|illustration|picture|draw|sketch|flowchart|chart)\b",
+_CONCEPTUAL_RE = re.compile(
+    r"\b(explain|describe|what\s+is|what\s+are|how\s+does|why\s+does|define|"
+    r"tell\s+me\s+about|list|types?\s+of|name\s+the|"
+    r"process|formation|structure|location|region|climate|desert|river|mountain|map|"
+    r"instrument|instruments|weather|temperature|precipitation|humidity|wind|pressure)\b",
     re.I,
 )
 _VISUAL_RE = re.compile(
@@ -109,12 +88,21 @@ _VISUAL_RE = re.compile(
     r"with\s+(a\s+)?(diagram|image|picture)|visual|see\s+the\s+figure)\b",
     re.I,
 )
-_COMPARISON_RE = re.compile(r"\b(compare|difference\s+between|vs\.?|versus)\b", re.I)
-_CONCEPTUAL_RE = re.compile(
-    r"\b(explain|describe|what\s+is|what\s+are|how\s+does|why\s+does|define|"
-    r"tell\s+me\s+about|list|types?\s+of|name\s+the|"
-    r"process|formation|structure|location|region|climate|desert|river|mountain|map|"
-    r"instrument|instruments|weather|temperature|precipitation|humidity|wind|pressure)\b",
+_DIAGRAM_RE = re.compile(
+    r"\b(diagram|figure|illustration|picture|draw|sketch|flowchart|chart)\b",
+    re.I,
+)
+_MATH_SUBJECT_RE = re.compile(
+    r"\b(math|mathematics|algebra|geometry|arithmetic|trigonometry|calculus)\b",
+    re.I,
+)
+_MATH_TEACHING_RE = re.compile(
+    r"\b("
+    r"solve|find|calculate|factori[sz]e|prove|simplify|evaluate|"
+    r"area|volume|circumference|probability|mean|median|mode|"
+    r"circle|triangle|equation|graph|polynomial|remainder|tangent|"
+    r"parallel|transversal|construction|mensuration|statistics"
+    r")\b",
     re.I,
 )
 _PRONOUN_FOLLOWUP = re.compile(
@@ -146,6 +134,32 @@ def _last_assistant_snippet(history: list[dict], max_len: int = 200) -> str:
     return ""
 
 
+def _teaching_assistant_snippet(history: list[dict], max_len: int = 400) -> str:
+    """
+    Last assistant turn with substantive teaching (skip short follow-up questions).
+
+    When the student says they are confused, they usually refer to the lesson —
+    not the tutor's closing check question from the previous turn.
+    """
+    candidates: list[str] = []
+    for turn in reversed(history):
+        if (turn.get("role") or "").lower() != "assistant":
+            continue
+        content = (turn.get("content") or "").strip()
+        if not content:
+            continue
+        candidates.append(content)
+        words = content.split()
+        is_short_question = (
+            len(words) <= 18
+            and "?" in content
+            and not re.search(r"\b(step|activity|challenge|experiment|place|observe)\b", content, re.I)
+        )
+        if not is_short_question:
+            return content[:max_len]
+    return candidates[0][:max_len] if candidates else ""
+
+
 def _extract_entities_from_text(text: str) -> list[str]:
     from app.services.image_service.symbolic_image_filters import extract_educational_entities
 
@@ -153,35 +167,6 @@ def _extract_entities_from_text(text: str) -> list[str]:
         return []
     core = re.sub(r"\s+", " ", text.lower()).strip()[:80]
     return extract_educational_entities(text, core)[:12]
-
-
-def _classify_followup(query: str) -> FollowupType:
-    q = query.strip()
-    if not q:
-        return FollowupType.NONE
-    if _GREETING_RE.match(q):
-        return FollowupType.GREETING
-    if _SMALL_TALK_RE.match(q) or _THANKS_RE.match(q):
-        return FollowupType.SMALL_TALK
-    if _MCQ_RE.search(q):
-        return FollowupType.GENERATE_MCQ
-    if _QUIZ_RE.search(q):
-        return FollowupType.GENERATE_QUESTIONS
-    if _SIMPLIFY_RE.search(q):
-        return FollowupType.SIMPLIFY
-    if _SUMMARY_RE.search(q):
-        return FollowupType.ASK_SUMMARY
-    if _VISUAL_RE.search(q) or _DIAGRAM_RE.search(q):
-        return FollowupType.ASK_VISUAL if _VISUAL_RE.search(q) else FollowupType.ASK_DIAGRAM
-    if _EXAMPLE_RE.search(q):
-        return FollowupType.ASK_EXAMPLE
-    if _COMPARISON_RE.search(q):
-        return FollowupType.ASK_COMPARISON
-    if _CONTINUE_RE.match(q):
-        return FollowupType.CONTINUE_EXPLANATION
-    if len(q.split()) <= 3 and not _CONCEPTUAL_RE.search(q):
-        return FollowupType.CONTINUE_EXPLANATION
-    return FollowupType.NEW_TOPIC
 
 
 def _response_mode_for(followup: FollowupType, query: str) -> ResponseMode:
@@ -199,6 +184,7 @@ def _response_mode_for(followup: FollowupType, query: str) -> ResponseMode:
         return ResponseMode.SUMMARY
     if followup in (
         FollowupType.CONTINUE_EXPLANATION,
+        FollowupType.CLARIFICATION,
         FollowupType.SIMPLIFY,
         FollowupType.ASK_EXAMPLE,
         FollowupType.ASK_COMPARISON,
@@ -222,10 +208,13 @@ def _visual_intent_for(mode: ResponseMode, followup: FollowupType, query: str) -
         return VisualIntent.OPTIONAL_VISUALS
     if mode == ResponseMode.FOLLOWUP and followup in (
         FollowupType.CONTINUE_EXPLANATION,
+        FollowupType.CLARIFICATION,
         FollowupType.SIMPLIFY,
     ):
         return VisualIntent.NO_VISUALS
     if _CONCEPTUAL_RE.search(query):
+        return VisualIntent.OPTIONAL_VISUALS
+    if _MATH_TEACHING_RE.search(query):
         return VisualIntent.OPTIONAL_VISUALS
     return VisualIntent.NO_VISUALS
 
@@ -242,7 +231,9 @@ class ConversationContextResolver:
     ) -> ConversationContext:
         history = conversation_history or []
         q = (query or "").strip()
-        followup = _classify_followup(q)
+
+        classification = classify_followup_intent(q, history)
+        followup = classification.followup_type
         mode = _response_mode_for(followup, q)
         visual = _visual_intent_for(mode, followup, q)
 
@@ -261,6 +252,7 @@ class ConversationContextResolver:
 
         if followup in (
             FollowupType.CONTINUE_EXPLANATION,
+            FollowupType.CLARIFICATION,
             FollowupType.SIMPLIFY,
             FollowupType.ASK_EXAMPLE,
             FollowupType.ASK_SUMMARY,
@@ -268,13 +260,18 @@ class ConversationContextResolver:
             FollowupType.GENERATE_QUESTIONS,
             FollowupType.GENERATE_MCQ,
         ) and prior_user:
-            resolved_topic = prior_user
+            last_asst = _teaching_assistant_snippet(history, max_len=400)
             inherited_entities = _extract_entities_from_text(prior_user)
-            if followup == FollowupType.SIMPLIFY:
+            if followup == FollowupType.CLARIFICATION and last_asst:
+                resolved_topic = last_asst[:200]
+                inherited_entities = _extract_entities_from_text(
+                    f"{prior_user} {last_asst[:200]}"
+                )
+            elif followup == FollowupType.SIMPLIFY:
                 resolved_topic = f"{prior_user} (explain in simpler words)"
-            elif followup == FollowupType.GENERATE_QUESTIONS:
-                resolved_topic = prior_user
-            elif followup == FollowupType.GENERATE_MCQ:
+            elif followup in (FollowupType.ASK_EXAMPLE, FollowupType.ASK_COMPARISON):
+                resolved_topic = f"{prior_user} {q}"
+            else:
                 resolved_topic = prior_user
         elif followup == FollowupType.NEW_TOPIC or _CONCEPTUAL_RE.search(q):
             resolved_topic = q
@@ -284,6 +281,16 @@ class ConversationContextResolver:
             inherited_entities = _extract_entities_from_text(prior_user)
 
         retrieval_query = resolved_topic if resolved_topic else q
+        if followup == FollowupType.CLARIFICATION and history:
+            last_asst = _teaching_assistant_snippet(history, max_len=400)
+            if last_asst:
+                parts = [p for p in (prior_user, last_asst[:280]) if p]
+                retrieval_query = " ".join(parts)
+        elif followup == FollowupType.ASK_EXAMPLE and prior_user:
+            retrieval_query = f"{prior_user} real life example"
+        elif followup == FollowupType.ASK_COMPARISON and prior_user:
+            retrieval_query = f"{prior_user} {q}"
+
         requires_visuals = visual in (VisualIntent.REQUIRED_VISUALS, VisualIntent.OPTIONAL_VISUALS)
 
         return ConversationContext(
@@ -296,6 +303,8 @@ class ConversationContextResolver:
             response_mode=mode,
             visual_intent=visual,
             retrieval_query=retrieval_query or q,
+            intent_method=classification.method,
+            intent_confidence=classification.confidence,
         )
 
 
@@ -320,17 +329,49 @@ def should_retrieve_images(
     *,
     chapter_ids: list[str] | None = None,
     heading_scope_kind: str | None = None,
+    subject_name: str | None = None,
+    voice_mode: bool = False,
 ) -> bool:
     """
     Master gate: images only when chapter scope exists and pedagogy allows visuals.
+    Voice mode relaxes gating so chapter diagrams appear during spoken lessons.
     """
     from app.config import ENABLE_VISUAL_INTENT_DETECTION
 
     if not chapter_ids:
         return False
-    # Main-section chapter questions (e.g. "what are weather instruments") always allow figures.
     if heading_scope_kind == "main_section":
         return True
+    if voice_mode:
+        if ctx.response_mode in (
+            ResponseMode.QUIZ,
+            ResponseMode.MCQ,
+            ResponseMode.GREETING,
+            ResponseMode.SMALL_TALK,
+        ):
+            return False
+        if ctx.followup_type in (
+            FollowupType.GENERATE_QUESTIONS.value,
+            FollowupType.GENERATE_MCQ.value,
+            FollowupType.GREETING.value,
+            FollowupType.SMALL_TALK.value,
+        ):
+            return False
+        return True
+    if subject_name and _MATH_SUBJECT_RE.search(subject_name):
+        if ctx.response_mode not in (
+            ResponseMode.QUIZ,
+            ResponseMode.MCQ,
+            ResponseMode.GREETING,
+            ResponseMode.SMALL_TALK,
+        ):
+            if ctx.followup_type not in (
+                FollowupType.GENERATE_QUESTIONS.value,
+                FollowupType.GENERATE_MCQ.value,
+                FollowupType.GREETING.value,
+                FollowupType.SMALL_TALK.value,
+            ):
+                return True
     if not ENABLE_VISUAL_INTENT_DETECTION:
         return True
     if ctx.visual_intent == VisualIntent.NO_VISUALS:

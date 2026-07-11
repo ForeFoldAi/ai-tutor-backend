@@ -190,6 +190,60 @@ def test_optional_lesson_fields_kept_when_requested():
     assert trimmed["assessment"]
 
 
+def test_triangle_three_angles_catalog_match():
+    lesson = build_fallback_math_lesson(
+        "triangle has three angles",
+        "CLASS_9",
+    )
+    assert lesson["visualization"]["visualizationType"] == "triangle-angle-sum"
+
+
+def test_triangle_angles_plural_catalog_match():
+    lesson = build_fallback_math_lesson(
+        "can you tell me about triangles and angles",
+        "CLASS_9",
+    )
+    assert lesson["visualization"]["visualizationType"] == "triangle-angle-sum"
+
+
+def test_three_angles_with_conversation_context():
+    history = [{"role": "user", "content": "What is a triangle?"}]
+    lesson = build_fallback_math_lesson(
+        "it has three angles and also can you generate the interactive image for the explanation",
+        "CLASS_9",
+        conversation_history=history,
+    )
+    assert lesson["visualization"]["visualizationType"] == "triangle-angle-sum"
+
+
+def test_prefer_catalog_triangle_over_concept_explorer():
+    from app.services.math_lesson.fallbacks import merge_catalog_visualization
+
+    llm_lesson = {
+        "conceptName": "Triangles",
+        "visualization": {
+            "visualizationType": "concept-explorer",
+            "title": "Math Concept Explorer",
+            "sliders": [
+                {"id": "value1", "label": "Value A", "min": 1, "max": 20, "default": 5},
+                {"id": "value2", "label": "Value B", "min": 1, "max": 20, "default": 3},
+            ],
+        },
+    }
+    catalog = build_fallback_math_lesson("triangle has three angles", "CLASS_9")
+    merged = merge_catalog_visualization(llm_lesson, catalog)
+    assert merged["visualization"]["visualizationType"] == "triangle-angle-sum"
+
+
+def test_triangle_formula_voice_query():
+    lesson = build_fallback_math_lesson(
+        "can you tell me about the triangle with formula",
+        "CLASS_9",
+    )
+    assert lesson["visualization"]["visualizationType"] == "triangle-angle-sum"
+    assert "180" in lesson["visualization"]["title"] or "Angle" in lesson["visualization"]["title"]
+
+
 def test_matchstick_squares_catalog_match():
     lesson = build_fallback_math_lesson(
         "Can I make more than one square with the same matchsticks?",

@@ -1,9 +1,11 @@
 """
 Voice Tutor mode — state machine and understanding heuristics.
 
-Mathematics voice uses the same structured tutor prompts as text chat
-(chat_service._build_chat_messages). Other subjects use the short
-conversational VOICE_SYSTEM_PROMPT for live one-on-one teaching.
+All subjects use conversational live-teaching prompts in voice mode.
+Full text-chat format is reserved for explicit “full solution” or
+“explain in detail” requests (see voice_wants_full_written_answer).
+
+Prompt templates live in voice_prompts.py (Phase 5).
 """
 
 from __future__ import annotations
@@ -13,13 +15,18 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
-from app.services.chat_service import (
-    _GRADE_COMPLEXITY,
-    _GRADE_LABELS,
-    _class_band,
-    _CLASS_BAND_RULES,
-    _student_first_name,
+from app.services.voice_prompts import (
+    VOICE_SYSTEM_PROMPT,
+    build_voice_system_prompt,
+    build_voice_user_message,
+    voice_grade_band,
 )
+
+# Re-export for tests and callers that import from voice_tutor
+__all__ = [
+    "VOICE_SYSTEM_PROMPT",
+    "voice_grade_band",
+]
 
 VOICE_HISTORY_TURNS = 14  # 7 user/assistant pairs max injected into Mistral
 
@@ -56,57 +63,19 @@ _QUIZ_INTENT = re.compile(
     r"\b(quiz\s+me|test\s+me|ask\s+me\s+questions?|\d+\s+questions?)\b",
     re.I,
 )
-
-
-VOICE_SYSTEM_PROMPT = """\
-You are a friendly live AI Tutor having a real voice conversation with a school student.
-Speak naturally — like a caring teacher on a phone call, NOT like a textbook or chatbot.
-
-STUDENT CONTEXT:
-- Name: {student_name}
-- Class: {grade_label}
-- Board: {board}
-- Subject: {subject}
-- Chapter: {chapter}
-
-LANGUAGE:
-{complexity_rule}
-{class_band_rule}
-
-VOICE RULES (CRITICAL):
-- Maximum {max_words} words this turn (target 30-80 words, hard cap {max_words}).
-- Teach ONE small idea per turn — never a full lecture.
-- Use 2-4 short spoken sentences. Conversational tone — like a real teacher in a one-on-one class.
-- Use simple everyday words. Avoid jargon unless you explain it in plain language.
-- Use a simple everyday example when it helps.
-- For math: speak formulas in words (say "x squared", "a over b", "the integral of"); one step at a time.
-- NEVER use dollar signs, LaTeX, backslashes, or symbols like \\frac — only plain spoken English.
-- NEVER use section headers, emoji labels, bullet lists, or numbered lists.
-- NEVER say "Concept Overview", "Key Points", "Quick Check", or similar.
-- Do NOT try to be complete — prioritize dialogue over coverage.
-- End with exactly ONE short follow-up question when teaching (not when quizzing).
-- Wait for the student — do not continue the lesson in the same turn.
-
-SESSION STATE: {tutor_state}
-{state_guidance}
-{understanding_guidance}
-{learner_guidance}
-
-TEXTBOOK CONTEXT:
-Use the chapter excerpt in the user message first. If missing, use accurate general knowledge briefly.
-Never invent textbook page numbers or figure names.
-
-{expand_policy}"""
-
-
-VOICE_USER_TEMPLATE = """\
-CHAPTER EXCERPT (use for accuracy):
-{context}
-
-STUDENT SAID:
-{question}
-
-Reply in spoken conversational prose now ({max_words} words max):"""
+_FULL_WRITTEN_ANSWER = re.compile(
+    r"\b("
+    r"full\s+solution|complete\s+solution|step\s+by\s+step\s+solution|"
+    r"show\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?steps|solve\s+(?:it|this)\s+completely|"
+    r"write\s+(?:the\s+)?(?:full|complete)\s+answer|give\s+(?:me\s+)?(?:the\s+)?full\s+answer|"
+    r"detailed\s+written\s+answer|all\s+steps\s+written"
+    r")\b",
+    re.I,
+)
+_PROBLEM_ATTEMPT = re.compile(
+    r"\b(i\s+got|my\s+answer|i\s+think\s+it'?s|equals?|=\s*\d|step\s+\d)\b",
+    re.I,
+)
 
 
 @dataclass
@@ -122,18 +91,43 @@ class UnderstandingScores:
         if self.confusion >= 0.55:
             return (
                 "The student seems confused. Simplify language, use an analogy, "
-                "and give one concrete example. Do not add new topics."
+                "and give one concrete example. Echo what confused them, then clarify ONE point. "
+                "Do not add new topics."
             )
         if self.is_affirmation and self.understanding >= 0.65:
             return (
-                "The student understood the last point. Briefly acknowledge, then "
-                "teach the next small step on the same topic."
+                "The student understood the last point. Briefly acknowledge what they got right, "
+                "then teach the next small step on the same topic."
             )
         if self.wants_expansion:
-            return "The student asked for more detail. You may use up to 120 words this turn."
+            return (
+                "The student asked for more detail. You may use up to 120 words, "
+                "but keep 6–12 word sentences, pause every 1–2 lines, example-led."
+            )
         if self.wants_quiz:
             return "Ask ONE short quiz question orally. Wait for their answer next turn."
-        return ""
+        return (
+            "Use short spoken lines (6–12 words). Open with a quick nod to what they said, "
+            "then one example or 'Imagine…' — not a definition dump."
+        )
+
+    def to_student_hint(self, student_text: str = "") -> str:
+        """Short student-facing line for the voice UI."""
+        if self.confusion >= 0.55:
+            return "Let me explain that more simply…"
+        if self.wants_quiz:
+            return "Quick quiz for you…"
+        if self.is_affirmation:
+            return "Great — let's build on that"
+        if self.wants_expansion:
+            return "Going a bit deeper for you…"
+        q = (student_text or "").strip()
+        if not q:
+            return ""
+        words = q.split()
+        if len(words) <= 6:
+            return f'I heard: "{q}"'
+        return f'I heard: "{" ".join(words[:6])}…"'
 
 
 @dataclass
@@ -155,6 +149,26 @@ class LearnerProfileSnapshot:
 
 def voice_expand_requested(query: str) -> bool:
     return bool(_VOICE_EXPAND.search(query or ""))
+
+
+def voice_wants_full_written_answer(query: str) -> bool:
+    """True when the student explicitly wants a full written/step-by-step solution."""
+    return bool(_FULL_WRITTEN_ANSWER.search(query or ""))
+
+
+def build_acknowledgment_guidance(student_text: str, scores: UnderstandingScores) -> str:
+    """Prompt injection so the model echoes the student before teaching."""
+    q = (student_text or "").strip()
+    if not q:
+        return ""
+    parts = [f'Student\'s exact words: "{q[:200]}"']
+    if _PROBLEM_ATTEMPT.search(q):
+        parts.append(
+            "They shared a step or answer — respond to their attempt first before teaching anything new."
+        )
+    if scores.confusion >= 0.55:
+        parts.append("Acknowledge that this seems confusing for them.")
+    return " ".join(parts)
 
 
 def evaluate_student_response(
@@ -220,13 +234,19 @@ def next_tutor_state(
 
 def _state_guidance(state: TutorState) -> str:
     mapping = {
-        TutorState.LISTENING: "Student may speak next. Keep your reply short and welcoming.",
-        TutorState.TEACHING: "Introduce one small concept, then ask one check question.",
-        TutorState.CHECKING_UNDERSTANDING: (
-            "You asked a question last turn. Now evaluate their answer briefly and continue."
+        TutorState.LISTENING: "Student may speak next. One warm short line — don't teach yet.",
+        TutorState.TEACHING: (
+            "Teach one small idea. 6–12 word sentences, contractions, example before definition. "
+            "Pause after every 1–2 sentences. Optional check-in only if it helps."
         ),
-        TutorState.QUIZING: "Ask one oral quiz question only. Do not explain at length.",
-        TutorState.CLARIFYING: "Student needs simpler explanation. Use analogy + one example.",
+        TutorState.CHECKING_UNDERSTANDING: (
+            "You asked a question last turn. Echo their answer briefly, "
+            "say if they're on track, then ONE short hint or follow-up."
+        ),
+        TutorState.QUIZING: "One short oral quiz question. Don't explain at length.",
+        TutorState.CLARIFYING: (
+            "They're stuck. Simpler words, one 'Imagine…' example, two short sentences max."
+        ),
     }
     return mapping.get(state, mapping[TutorState.TEACHING])
 
@@ -256,43 +276,35 @@ def _build_voice_messages(
     learner: LearnerProfileSnapshot | None = None,
     expand_deep: bool = False,
 ) -> list[dict[str, str]]:
-    max_words = 120 if expand_deep else 80
-    grade_label = _GRADE_LABELS.get(class_level, class_level or "School student")
-    complexity = _GRADE_COMPLEXITY.get(class_level, "Use clear, age-appropriate spoken language.")
-    class_band = _CLASS_BAND_RULES.get(_class_band(class_level), _CLASS_BAND_RULES["6-8"])
-    display_name = _student_first_name(student_name)
     scores = understanding or UnderstandingScores()
-    learner_hint = learner.to_prompt_hint() if learner else ""
+    history = _normalize_history(conversation_history)
+    last_assistant = ""
+    for turn in reversed(history):
+        if turn.get("role") == "assistant":
+            last_assistant = turn.get("content") or ""
+            break
 
-    expand_policy = (
-        "The student asked for more detail — you may use up to 120 words."
-        if expand_deep
-        else "Keep this turn under 80 words unless the student explicitly asked for more."
-    )
-
-    system = VOICE_SYSTEM_PROMPT.format(
-        student_name=display_name,
-        grade_label=grade_label,
-        board=board or "General",
-        subject=subject_name or "General",
-        chapter=chapter or "Current chapter",
-        complexity_rule=complexity,
-        class_band_rule=class_band,
-        max_words=max_words,
-        tutor_state=tutor_state.value,
+    system = build_voice_system_prompt(
+        query,
+        class_level=class_level,
+        board=board,
+        subject_name=subject_name,
+        chapter=chapter,
+        student_name=student_name,
+        conversation_history=history,
+        tutor_state=tutor_state,
+        understanding=scores,
+        learner=learner,
+        expand_deep=expand_deep,
+        last_assistant=last_assistant,
         state_guidance=_state_guidance(tutor_state),
         understanding_guidance=scores.to_hint(),
-        learner_guidance=learner_hint,
-        expand_policy=expand_policy,
+        acknowledgment_guidance=build_acknowledgment_guidance(query, scores),
     )
-    user = VOICE_USER_TEMPLATE.format(
-        context=context or "(No chapter excerpt — use accurate general knowledge briefly.)",
-        question=query,
-        max_words=max_words,
-    )
+    user = build_voice_user_message(query, context, expand_deep=expand_deep)
 
     messages: list[dict[str, str]] = [{"role": "system", "content": system}]
-    for turn in _normalize_history(conversation_history):
+    for turn in history:
         messages.append(turn)
     messages.append({"role": "user", "content": user})
     return messages

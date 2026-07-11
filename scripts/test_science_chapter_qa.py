@@ -45,6 +45,9 @@ QUESTIONS = [
     "show me a diagram about the scientific process",
     "explain laboratory and field work in science",
     "what is the role of experiments in science",
+    # Vision-caption targets (BLIP-described figures in this chapter)
+    "show me a diagram of a sunflower with roots",
+    "what does a sunflower plant look like",
 ]
 
 SEP = "=" * 72

@@ -15,13 +15,32 @@ import edge_tts
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketState
 
+from app.config import VOICE_TTS_PITCH, VOICE_TTS_RATE
+
 logger = logging.getLogger(__name__)
 
-PRIMARY_VOICE = "en-IN-NeerjaNeural"
-FALLBACK_VOICE = "en-IN-PrabhatNeural"
+PRIMARY_VOICE = "en-IN-NeerjaNeural"  # female
+FALLBACK_VOICE = "en-IN-PrabhatNeural"  # male
+ALLOWED_VOICES = frozenset({PRIMARY_VOICE, FALLBACK_VOICE})
+_SEND_CHUNK_BYTES = 4096
 
 _resolved_voice: str | None = None
 _voice_lock = asyncio.Lock()
+
+
+def voice_for_gender(
+    gender: str | None = None,
+    voice: str | None = None,
+) -> str | None:
+    """Map male/female (or explicit Edge id) to Neerja/Prabhat. None → probe default."""
+    if voice and voice in ALLOWED_VOICES:
+        return voice
+    g = (gender or "").strip().lower()
+    if g in ("male", "m", "prabhat"):
+        return FALLBACK_VOICE
+    if g in ("female", "f", "neerja"):
+        return PRIMARY_VOICE
+    return None
 
 
 async def _aclose_async_gen(gen: AsyncIterator) -> None:
@@ -57,7 +76,7 @@ async def resolve_voice() -> str:
 
         for candidate in (PRIMARY_VOICE, FALLBACK_VOICE):
             try:
-                communicate = edge_tts.Communicate("Hello", voice=candidate)
+                communicate = _communicate("Hello", voice=candidate)
                 async for chunk in _iter_communicate_stream(communicate):
                     if chunk["type"] == "audio" and chunk.get("data"):
                         _resolved_voice = candidate
@@ -69,6 +88,16 @@ async def resolve_voice() -> str:
         _resolved_voice = FALLBACK_VOICE
         logger.warning("Edge TTS using fallback voice without probe: %s", FALLBACK_VOICE)
         return _resolved_voice
+
+
+def _communicate(text: str, *, voice: str) -> edge_tts.Communicate:
+    """Build Communicate with teaching-friendly prosody."""
+    return edge_tts.Communicate(
+        text,
+        voice=voice,
+        rate=VOICE_TTS_RATE,
+        pitch=VOICE_TTS_PITCH,
+    )
 
 
 async def stream_edge_tts(
@@ -95,7 +124,7 @@ async def stream_edge_tts(
         timing.mark_tts_started(sentence)
 
     try:
-        communicate = edge_tts.Communicate(sentence, voice=voice_name)
+        communicate = _communicate(sentence, voice=voice_name)
         async for chunk in _iter_communicate_stream(communicate):
             if stop_event.is_set():
                 return False
@@ -136,7 +165,7 @@ async def iter_edge_tts_mp3(
         return
 
     voice_name = voice or await resolve_voice()
-    communicate = edge_tts.Communicate(sentence, voice=voice_name)
+    communicate = _communicate(sentence, voice=voice_name)
     async for chunk in _iter_communicate_stream(communicate):
         if stop_event and stop_event.is_set():
             return
@@ -147,7 +176,42 @@ async def iter_edge_tts_mp3(
             yield data
 
 
-async def synthesize_mp3(text: str, *, voice: str | None = None) -> bytes:
+async def synthesize_mp3(text: str, *, voice: str | None = None, stop_event: asyncio.Event | None = None) -> bytes:
+    """Collect a full MP3 payload for a single speech unit (prefetch path)."""
+    parts: list[bytes] = []
+    async for chunk in iter_edge_tts_mp3(text, stop_event=stop_event, voice=voice):
+        parts.append(chunk)
+    return b"".join(parts)
+
+
+async def send_mp3_bytes(
+    data: bytes,
+    websocket: WebSocket,
+    stop_event: asyncio.Event,
+    *,
+    timing: Any | None = None,
+) -> bool:
+    """Stream a prefetched MP3 buffer as WebSocket binary frames."""
+    if not data or stop_event.is_set():
+        return False
+    if websocket.client_state != WebSocketState.CONNECTED:
+        return False
+    try:
+        for i in range(0, len(data), _SEND_CHUNK_BYTES):
+            if stop_event.is_set():
+                return False
+            chunk = data[i : i + _SEND_CHUNK_BYTES]
+            if timing is not None and timing.first_mp3_generated_at is None:
+                timing.mark_first_mp3_generated()
+            await websocket.send_bytes(chunk)
+            if timing is not None and timing.first_chunk_sent_at is None:
+                timing.mark_first_chunk_sent()
+        return not stop_event.is_set()
+    except Exception:
+        return False
+
+
+async def synthesize_mp3_legacy(text: str, *, voice: str | None = None) -> bytes:
     """Collect a full MP3 payload for a single utterance."""
     parts: list[bytes] = []
     async for chunk in iter_edge_tts_mp3(text, voice=voice):
@@ -164,5 +228,5 @@ async def synthesize_mp3_paragraph(text: str) -> bytes:
         s = part.strip()
         if not s:
             continue
-        buf.extend(await synthesize_mp3(s))
+        buf.extend(await synthesize_mp3_legacy(s))
     return bytes(buf)

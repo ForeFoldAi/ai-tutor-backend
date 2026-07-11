@@ -52,3 +52,64 @@ def test_fraction_simplify():
     assert result is not None
     assert result.solved
     assert "2/3" in result.final_answer
+
+
+def test_word_problem_linear():
+    result = try_solve("A number when added to 7 gives 51. Find the number.", class_level="CLASS_9")
+    assert result is not None
+    assert result.solved
+    assert result.kind == "linear_word_problem"
+    assert "44" in result.final_answer
+
+
+def test_statistics_mean_median_mode():
+    result = try_solve(
+        "Find mean median mode of marks 12, 15, 18, 15, 20",
+        class_level="CLASS_9",
+    )
+    assert result is not None
+    assert result.solved
+    assert result.kind == "statistics"
+    assert "16" in result.final_answer
+
+
+def test_cylinder_volume():
+    result = try_solve(
+        "Find volume of cylinder radius 7 cm height 10 cm",
+        class_level="CLASS_9",
+    )
+    assert result is not None
+    assert result.solved
+    assert result.kind == "cylinder_volume"
+
+
+def test_circle_mensuration():
+    result = try_solve(
+        "What is the area of a circle with radius 7 cm?",
+        class_level="CLASS_9",
+    )
+    assert result is not None
+    assert result.solved
+    assert result.kind == "circle_mensuration"
+
+
+def test_triangle_angle_sum():
+    result = try_solve(
+        "In a triangle angle A = 50 and angle B = 60 find angle C",
+        class_level="CLASS_9",
+    )
+    assert result is not None
+    assert result.solved
+    assert result.kind == "triangle_angle_sum"
+    assert "70" in result.final_answer
+
+
+def test_probability_dice_even():
+    result = try_solve(
+        "Probability of getting an even number when a die is thrown",
+        class_level="CLASS_9",
+    )
+    assert result is not None
+    assert result.solved
+    assert result.kind == "probability_dice"
+    assert "1/2" in result.final_answer

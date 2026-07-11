@@ -59,10 +59,8 @@ def embed_texts(texts: list[str]) -> list[np.ndarray | None]:
     if not texts:
         return []
     try:
-        from app.services.vector_service import _get_embedding_model, is_embedding_model_loaded
+        from app.services.vector_service import _get_embedding_model
 
-        if not is_embedding_model_loaded():
-            return [None] * len(texts)
         model = _get_embedding_model()
         if model is None:
             return [None] * len(texts)

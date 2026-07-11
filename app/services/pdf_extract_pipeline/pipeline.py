@@ -216,9 +216,9 @@ class PdfExtractionPipeline:
 
         assets = []
         assigned_fig_numbers: set[str] = set()
-        assigned_figure_boxes: list[tuple[int, int, int, int]] = []
         for page_idx in range(n_pages):
             page_ex = pages[page_idx]
+            page_assigned_boxes: list[tuple[int, int, int, int]] = []
             page_assets = extract_assets_from_page(
                 page_ex,
                 doc[page_idx],
@@ -226,13 +226,13 @@ class PdfExtractionPipeline:
                 document_has_fig_numbers=document_has_fig_numbers,
                 table_structured=page_ex.table_structured,
                 assigned_fig_numbers=assigned_fig_numbers,
-                assigned_figure_boxes=assigned_figure_boxes,
+                assigned_figure_boxes=page_assigned_boxes,
             )
             for asset in page_assets:
                 if asset.asset_type == "figure" and asset.number:
                     assigned_fig_numbers.add(asset.number)
                 if asset.asset_type == "figure" and asset.bbox:
-                    assigned_figure_boxes.append(asset.bbox)
+                    page_assigned_boxes.append(asset.bbox)
             assets.extend(page_assets)
 
         full_text = "\n\n".join(p.markdown for p in pages if p.markdown)

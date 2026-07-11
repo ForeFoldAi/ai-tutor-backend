@@ -17,6 +17,7 @@ from typing import Any, Optional
 
 import redis.asyncio as aioredis
 
+from app.config import TUTOR_ANSWER_CACHE_ENABLED
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,8 @@ async def get_cached_answer(
     class_level: str = "",
 ) -> str | None:
     """Return cached answer string, or None on miss / error."""
+    if not TUTOR_ANSWER_CACHE_ENABLED:
+        return None
     try:
         r = get_redis()
         key = _make_key(collection, chapter_ids, query, class_level)
@@ -72,20 +75,21 @@ async def get_cached_answer(
         return None
 
 
-def deserialize_tutor_cache(value: str) -> tuple[str, dict[str, Any] | None]:
-    """Return (answer text, math_lesson dict) from cache. Images are never stored."""
+def deserialize_tutor_cache(value: str) -> tuple[str, dict[str, Any] | None, dict[str, Any] | None]:
+    """Return (answer text, math_lesson dict, science_experiment dict) from cache."""
     raw = (value or "").strip()
     if raw.startswith("{"):
         try:
             obj = json.loads(raw)
             if isinstance(obj, dict) and "answer" in obj:
                 lesson = obj.get("math_lesson")
-                if isinstance(lesson, dict):
-                    return str(obj.get("answer") or ""), lesson
-                return str(obj.get("answer") or ""), None
+                experiment = obj.get("science_experiment")
+                math = lesson if isinstance(lesson, dict) else None
+                sci = experiment if isinstance(experiment, dict) else None
+                return str(obj.get("answer") or ""), math, sci
         except Exception:
             pass
-    return raw, None
+    return raw, None, None
 
 
 def serialize_tutor_cache(
@@ -93,11 +97,14 @@ def serialize_tutor_cache(
     related_images: list[dict],
     *,
     math_lesson: dict[str, Any] | None = None,
+    science_experiment: dict[str, Any] | None = None,
 ) -> str:
     # Images are intentionally excluded — they are always re-ranked per request.
     payload: dict[str, Any] = {"answer": answer}
     if math_lesson:
         payload["math_lesson"] = math_lesson
+    if science_experiment:
+        payload["science_experiment"] = science_experiment
     return json.dumps(payload, ensure_ascii=False)
 
 
@@ -110,13 +117,18 @@ async def set_cached_answer(
     *,
     related_images: list[dict] | None = None,
     math_lesson: dict[str, Any] | None = None,
+    science_experiment: dict[str, Any] | None = None,
     class_level: str = "",
 ) -> None:
-    """Store answer text (and optional math lesson) in cache. Images are never cached."""
+    """Store answer text (and optional interactive blocks) in cache. Images are never cached."""
+    if not TUTOR_ANSWER_CACHE_ENABLED:
+        return
     try:
         r = get_redis()
         key = _make_key(collection, chapter_ids, query, class_level)
-        payload = serialize_tutor_cache(answer, [], math_lesson=math_lesson)
+        payload = serialize_tutor_cache(
+            answer, [], math_lesson=math_lesson, science_experiment=science_experiment
+        )
         await r.set(key, payload, ex=ttl)
         logger.debug("Cache SET key=%s ttl=%ds", key[:16], ttl)
     except Exception as exc:

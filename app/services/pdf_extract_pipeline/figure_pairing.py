@@ -24,7 +24,10 @@ from app.services.image_service.math_extraction import (
     section_heading_above_figure,
 )
 from app.services.image_service.formula_bbox import expand_formula_bbox
-from app.services.pdf_extract_pipeline.embedded_figure_refinement import refine_figure_box
+from app.services.pdf_extract_pipeline.embedded_figure_refinement import (
+    refine_figure_box,
+    try_extract_embedded_jpeg_bytes,
+)
 from app.services.pdf_extract_pipeline.raster import image_box_to_pdf_rect, pdf_rect_to_image_box
 from app.services.pdf_extract_pipeline.types import ExtractedAsset, LayoutElement, PageExtraction
 
@@ -65,6 +68,53 @@ def _crop_box(image: Image.Image, box: tuple[int, int, int, int], padding: int =
     buf = io.BytesIO()
     cropped.save(buf, format="PNG")
     return buf.getvalue()
+
+
+def _render_figure_bytes(
+    page: fitz.Page,
+    box: tuple[int, int, int, int],
+    image_size: tuple[int, int],
+    dpi: int,
+    *,
+    padding: int = 2,
+) -> bytes:
+    """
+    Render figure pixels from the PDF vector page (not a pre-rasterized PIL crop).
+
+    NCERT diagrams keep correct colours/masks when rendered via PyMuPDF clip;
+    cropping the layout raster at pipeline DPI often disturbs Fig 3.3 / 3.4 quality.
+    """
+    rect = image_box_to_pdf_rect(box, page.rect, image_size, dpi)
+    pad = padding * (72.0 / max(dpi, 72))
+    clip = fitz.Rect(
+        max(0, rect.x0 - pad),
+        max(0, rect.y0 - pad),
+        min(page.rect.width, rect.x1 + pad),
+        min(page.rect.height, rect.y1 + pad),
+    )
+    scale = max(2.0, dpi / 72.0)
+    pix = page.get_pixmap(matrix=fitz.Matrix(scale, scale), clip=clip, alpha=False)
+    return pix.tobytes("png")
+
+
+def _figure_image_bytes(
+    page: fitz.Page,
+    image: Image.Image,
+    box: tuple[int, int, int, int],
+    image_size: tuple[int, int],
+    dpi: int,
+    *,
+    fig_number: str | None = None,
+) -> bytes:
+    if fig_number:
+        layout_rect = image_box_to_pdf_rect(box, page.rect, image_size, dpi)
+        raw = try_extract_embedded_jpeg_bytes(page, fig_number, layout_rect)
+        if raw:
+            return raw
+    try:
+        return _render_figure_bytes(page, box, image_size, dpi)
+    except Exception:
+        return _crop_box(image, box)
 
 
 def _text_from_region(page: fitz.Page, box: tuple[int, int, int, int], image_size: tuple[int, int], dpi: int) -> str:
@@ -287,6 +337,128 @@ def _find_table_number(text: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _caption_from_embedded_context(
+    page: fitz.Page,
+    rect: fitz.Rect,
+    nearby_before: str,
+    nearby_after: str,
+) -> str:
+    """Best caption for an embedded photo from PDF text layer (not layout OCR)."""
+    for blob in (nearby_after, nearby_before):
+        for line in (blob or "").splitlines():
+            line = re.sub(r"\s+", " ", line.strip())
+            if len(line) >= 24:
+                return line[:500]
+    below = page.get_text(
+        "text",
+        clip=fitz.Rect(rect.x0 - 20, rect.y1, rect.x1 + 40, min(page.rect.height, rect.y1 + 140)),
+    )
+    below = re.sub(r"\s+", " ", (below or "").strip())
+    if len(below) >= 16:
+        return below[:500]
+    return ""
+
+
+def _embedded_teaching_rects_in_image_box(
+    page: fitz.Page,
+    figure_box: tuple[int, int, int, int],
+    image_size: tuple[int, int],
+    *,
+    dpi: int,
+) -> list[fitz.Rect]:
+    """Embedded PDF photos whose center lies inside a layout figure box."""
+    from app.services.pdf_extract_pipeline.embedded_figure_refinement import (
+        list_embedded_figure_rects,
+    )
+
+    layout_rect = image_box_to_pdf_rect(figure_box, page.rect, image_size, dpi)
+    pw, ph = page.rect.width, page.rect.height
+    page_area = pw * ph
+    hits: list[fitz.Rect] = []
+    for rect in list_embedded_figure_rects(page):
+        if page_area > 0 and (rect.width * rect.height) / page_area > 0.40:
+            continue
+        if rect.width * rect.height < 8000:
+            continue
+        cx, cy = (rect.x0 + rect.x1) / 2, (rect.y0 + rect.y1) / 2
+        if layout_rect.contains(fitz.Point(cx, cy)):
+            hits.append(rect)
+    return hits
+
+
+def _layout_box_spans_multiple_photos(
+    page: fitz.Page,
+    figure_box: tuple[int, int, int, int],
+    image_size: tuple[int, int],
+    *,
+    dpi: int,
+) -> bool:
+    return len(_embedded_teaching_rects_in_image_box(page, figure_box, image_size, dpi=dpi)) >= 2
+
+
+def _extract_embedded_pdf_figures(
+    page: fitz.Page,
+    image: Image.Image,
+    *,
+    dpi: int,
+    page_no: int,
+    page_assigned_boxes: list[tuple[int, int, int, int]],
+) -> list[ExtractedAsset]:
+    """
+    Supplement layout YOLO with embedded PDF XObject images.
+
+    NCERT collage pages often place teaching photos as embedded JPEGs that YOLO
+  misses while detecting unrelated regions (e.g. activity photos at page bottom).
+    """
+    from app.services.pdf_extract_pipeline.embedded_figure_refinement import (
+        list_embedded_figure_rects,
+    )
+
+    pw, ph = page.rect.width, page.rect.height
+    page_area = pw * ph
+    out: list[ExtractedAsset] = []
+    assigned = list(page_assigned_boxes)
+
+    for rect in sorted(
+        list_embedded_figure_rects(page),
+        key=lambda r: -(r.width * r.height),
+    ):
+        if page_area > 0:
+            area_frac = (rect.width * rect.height) / page_area
+            if area_frac > 0.40:
+                continue
+        if rect.width * rect.height < 12000:
+            continue
+
+        box = pdf_rect_to_image_box(rect, dpi)
+        if _box_area(box) < 4000:
+            continue
+        if is_near_duplicate_box(box, assigned):
+            continue
+
+        nearby_before, nearby_after = _nearby_text_for_figure(page, box, image.size, dpi)
+        caption = _caption_from_embedded_context(page, rect, nearby_before, nearby_after)
+        if is_prose_figure_region(page, box, image.size, dpi, caption=caption):
+            continue
+
+        out.append(
+            ExtractedAsset(
+                asset_type="figure",
+                page_no=page_no,
+                image_bytes=_figure_image_bytes(page, image, box, image.size, dpi),
+                number=None,
+                caption=caption,
+                nearby_before=nearby_before,
+                nearby_after=nearby_after,
+                bbox=box,
+                source="embedded_pdf",
+            )
+        )
+        assigned.append(box)
+
+    return out
+
+
 def extract_assets_from_page(
     page_extraction: PageExtraction,
     page: fitz.Page,
@@ -360,7 +532,9 @@ def extract_assets_from_page(
             ExtractedAsset(
                 asset_type="figure",
                 page_no=page_no,
-                image_bytes=_crop_box(image, box),
+                image_bytes=_figure_image_bytes(
+                    page, image, box, image_size, dpi, fig_number=fig_number
+                ),
                 number=fig_number,
                 caption=caption,
                 nearby_before=nearby_before,
@@ -389,7 +563,9 @@ def extract_assets_from_page(
             ExtractedAsset(
                 asset_type="figure",
                 page_no=page_no,
-                image_bytes=_crop_box(image, box),
+                image_bytes=_figure_image_bytes(
+                    page, image, box, image_size, dpi, fig_number=fig_number
+                ),
                 number=fig_number,
                 caption=caption,
                 bbox=box,
@@ -407,6 +583,8 @@ def extract_assets_from_page(
             continue
         if is_near_duplicate_box(box, page_assigned_boxes):
             continue
+        if _layout_box_spans_multiple_photos(page, box, image_size, dpi=dpi):
+            continue
         nearby_before, nearby_after = _nearby_text_for_figure(page, box, image_size, dpi)
         section = section_heading_above_figure(page, box, image_size, dpi)
         caption = section or nearby_before.splitlines()[-1].strip()[:200] if nearby_before else ""
@@ -416,7 +594,7 @@ def extract_assets_from_page(
             ExtractedAsset(
                 asset_type="figure",
                 page_no=page_no,
-                image_bytes=_crop_box(image, box),
+                image_bytes=_figure_image_bytes(page, image, box, image_size, dpi),
                 number=None,
                 caption=caption,
                 nearby_before=nearby_before,
@@ -463,7 +641,7 @@ def extract_assets_from_page(
             ExtractedAsset(
                 asset_type="table",
                 page_no=page_no,
-                image_bytes=_crop_box(image, box),
+                image_bytes=_figure_image_bytes(page, image, box, image_size, dpi),
                 number=table_number,
                 caption=caption_text,
                 structured_text=structured,
@@ -471,5 +649,15 @@ def extract_assets_from_page(
                 source="layout",
             )
         )
+
+    assets.extend(
+        _extract_embedded_pdf_figures(
+            page,
+            image,
+            dpi=dpi,
+            page_no=page_no,
+            page_assigned_boxes=page_assigned_boxes,
+        )
+    )
 
     return assets

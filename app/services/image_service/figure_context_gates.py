@@ -149,6 +149,12 @@ def is_core_definition_figure(im: "TextbookImage", core_concept: str) -> bool:
             return True
         if not text:
             return True
+        # Unnumbered collage figures: page text defines the topic (e.g. eclipses on p.5).
+        if not fig_num and core in text:
+            return True
+        gate_blob = f"{im.caption or ''} {getattr(im, 'generated_caption', '') or ''} {text}".lower()
+        if not fig_num and core.rstrip("s") in gate_blob:
+            return True
 
     if not text:
         return False

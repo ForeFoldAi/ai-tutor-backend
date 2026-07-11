@@ -676,9 +676,8 @@ Required subtopics (in this order — do not skip any that appear in the context
 
 MANDATORY FORMAT for EACH subtopic (repeat for every item above):
 **Exact subtopic title from the list**  (e.g. **Precipitation**, not a different name)
-• What it is / what it measures (1–2 short points from the textbook)
-• Name the measuring instrument in plain words inside the bullets (e.g. rain gauge under Precipitation)
-• Why it matters or one short example (1 bullet)
+One or two short sentences about that subtopic only (what it measures and which instrument is used).
+You may use • bullets instead of sentences if you prefer.
 
 RULES:
 - Use the EXACT subtopic title from the textbook as the **bold** heading (do not rename subtopics).

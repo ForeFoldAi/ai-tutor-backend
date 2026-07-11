@@ -1,5 +1,8 @@
 """
-Responsive text chunking for low-latency voice TTS enqueueing.
+Speech-unit chunking for low-latency, continuous-sounding voice TTS.
+
+Splits on natural breath groups (clauses, discourse markers) — not every period.
+First unit is aggressive for sub-600ms first-audio; later units grow for prosody.
 """
 
 from __future__ import annotations
@@ -8,16 +11,166 @@ import re
 import time
 from dataclasses import dataclass, field
 
+from app.config import (
+    VOICE_IDLE_FLUSH_SEC,
+    VOICE_IDLE_FLUSH_STEADY_SEC,
+    VOICE_SPEECH_FIRST_CHARS,
+    VOICE_SPEECH_FIRST_WORDS,
+    VOICE_SPEECH_MAX_WORDS,
+    VOICE_SPEECH_STEADY_CHARS,
+    VOICE_SPEECH_STEADY_WORDS,
+)
+
+# Legacy defaults (text chat / non-voice)
 _IDLE_FLUSH_SEC = 0.5
 _MIN_WORDS = 15
 _MIN_CHARS = 60
 _SOFT_PUNCT_MIN_CHARS = 40
 
-# Voice pipeline: start TTS earlier (Phase 5).
-VOICE_IDLE_FLUSH_SEC = 0.35
-VOICE_MIN_WORDS = 8
-VOICE_MIN_CHARS = 35
-VOICE_SOFT_PUNCT_MIN_CHARS = 28
+# Clause / breath boundaries (prefer over hard sentence splits)
+_CLAUSE_SEPS = (", ", " — ", " - ", "; ", ": ")
+_DISCOURSE_SEPS = (
+    " because ",
+    " when ",
+    " while ",
+    " which ",
+    " that ",
+    " so ",
+    " but ",
+    " and ",
+    " or ",
+    " then ",
+    " also ",
+)
+_SENTENCE_END = re.compile(r"(?<=[.?!])\s+")
+
+
+def _word_count(text: str) -> int:
+    return len(text.split())
+
+
+def _find_best_split(
+    buf: str,
+    *,
+    min_chars: int,
+    target_words: int,
+    max_words: int,
+    lookahead_chars: int = 0,
+) -> int | None:
+    """Return split index (end of left chunk) or None.
+
+    look-ahead: prefer not cutting when only a tiny remainder exists and more
+    text is still streaming — reduces mid-thought TTS gaps.
+    """
+    n = len(buf)
+    if n < min_chars and _word_count(buf) < target_words:
+        return None
+
+    def _ok_remainder(end: int) -> bool:
+        if lookahead_chars <= 0:
+            return True
+        rem = n - end
+        if rem >= lookahead_chars:
+            return True
+        # Allow short remainder only when we must flush (hit max_words)
+        return _word_count(buf) >= max_words
+
+    # 1) Discourse markers — natural teacher pauses
+    best = -1
+    for sep in _DISCOURSE_SEPS:
+        pos = buf.rfind(sep, min_chars)
+        if pos >= min_chars:
+            end = pos + len(sep)
+            if _word_count(buf[:end]) <= max_words and _ok_remainder(end):
+                best = max(best, end)
+    if best > 0:
+        return best
+
+    # 2) Clause punctuation
+    for sep in _CLAUSE_SEPS:
+        pos = buf.rfind(sep, min_chars)
+        if pos >= min_chars:
+            end = pos + len(sep)
+            if _word_count(buf[:end]) <= max_words and _ok_remainder(end):
+                return end
+
+    # 3) Sentence end — only when unit is long enough to sound continuous
+    parts = _SENTENCE_END.split(buf)
+    if len(parts) > 1:
+        acc = ""
+        for part in parts[:-1]:
+            candidate = (acc + part).strip() if acc else part.strip()
+            if not candidate:
+                acc = part + " "
+                continue
+            wc = _word_count(candidate)
+            end = len(acc) + len(part) if acc else len(part)
+            if (
+                wc >= target_words
+                and wc <= max_words
+                and len(candidate) >= min_chars
+                and _ok_remainder(end)
+            ):
+                return end
+            acc = (acc + part + " ") if acc else part + " "
+
+    # 4) Word boundary fallback
+    if _word_count(buf) >= max_words:
+        words = buf.split()
+        left = " ".join(words[:max_words])
+        return len(left)
+
+    if n >= min_chars + 8:
+        pos = buf.rfind(" ", min_chars)
+        if pos > min_chars and _ok_remainder(pos):
+            return pos
+
+    return None
+
+
+def _thresholds(chunks_emitted: int) -> tuple[int, int, int, int]:
+    """(min_words, min_chars, target_words, max_words) — adaptive per turn."""
+    if chunks_emitted == 0:
+        return (
+            VOICE_SPEECH_FIRST_WORDS,
+            VOICE_SPEECH_FIRST_CHARS,
+            VOICE_SPEECH_FIRST_WORDS + 2,
+            VOICE_SPEECH_STEADY_WORDS,
+        )
+    return (
+        VOICE_SPEECH_STEADY_WORDS,
+        VOICE_SPEECH_STEADY_CHARS,
+        VOICE_SPEECH_STEADY_WORDS,
+        VOICE_SPEECH_MAX_WORDS,
+    )
+
+
+def _extract_speech_units(buf: str, *, chunks_emitted: int = 0) -> tuple[list[str], str]:
+    from app.config import VOICE_TTS_LOOKAHEAD_CHARS
+
+    out: list[str] = []
+    min_w, min_c, target_w, max_w = _thresholds(chunks_emitted)
+    lookahead = VOICE_TTS_LOOKAHEAD_CHARS if chunks_emitted > 0 else 0
+
+    while buf.strip():
+        split_at = _find_best_split(
+            buf,
+            min_chars=min_c,
+            target_words=target_w,
+            max_words=max_w,
+            lookahead_chars=lookahead,
+        )
+        if split_at is None:
+            break
+        chunk = buf[:split_at].strip()
+        buf = buf[split_at:].lstrip()
+        if chunk:
+            out.append(chunk)
+            chunks_emitted += 1
+            min_w, min_c, target_w, max_w = _thresholds(chunks_emitted)
+            lookahead = VOICE_TTS_LOOKAHEAD_CHARS
+
+    return out, buf
 
 
 def _extract_chunks(
@@ -27,31 +180,25 @@ def _extract_chunks(
     min_chars: int,
     soft_punct_min: int,
 ) -> tuple[list[str], str]:
+    """Legacy text-chat chunking."""
     out: list[str] = []
-
     while buf.strip():
-        progressed = False
-
-        parts = re.split(r"(?<=[.?!])\s+", buf)
+        parts = _SENTENCE_END.split(buf)
         if len(parts) > 1:
             for part in parts[:-1]:
                 chunk = part.strip()
                 if chunk:
                     out.append(chunk)
             buf = parts[-1]
-            progressed = True
             continue
-
         words = buf.split()
         if len(words) >= min_words:
             out.append(" ".join(words[:min_words]))
             buf = " ".join(words[min_words:])
-            progressed = True
             continue
-
         if len(buf) >= min_chars:
             flushed = False
-            for sep in (", ", "; ", ": "):
+            for sep in _CLAUSE_SEPS:
                 pos = buf.rfind(sep, soft_punct_min)
                 if pos >= soft_punct_min:
                     out.append(buf[: pos + len(sep)].strip())
@@ -66,37 +213,26 @@ def _extract_chunks(
                 else:
                     out.append(buf.strip())
                     buf = ""
-            progressed = True
             continue
-
         if len(buf) >= soft_punct_min:
             for sep in (", ", "; "):
                 pos = buf.rfind(sep, 20)
                 if pos >= 20:
                     out.append(buf[: pos + len(sep)].strip())
                     buf = buf[pos + len(sep) :].lstrip()
-                    progressed = True
                     break
-            if progressed:
-                continue
-
+            else:
+                break
+            continue
         break
-
     return out, buf
 
 
 def extract_responsive_chunks(buf: str) -> tuple[list[str], str]:
-    """Default thresholds — 15 words / 60 chars."""
-    return _extract_chunks(
-        buf,
-        min_words=_MIN_WORDS,
-        min_chars=_MIN_CHARS,
-        soft_punct_min=_SOFT_PUNCT_MIN_CHARS,
-    )
+    return _extract_chunks(buf, min_words=_MIN_WORDS, min_chars=_MIN_CHARS, soft_punct_min=_SOFT_PUNCT_MIN_CHARS)
 
 
 def has_unclosed_math_delimiters(buf: str) -> bool:
-    """True when buffer ends inside an unfinished $ or $$ math block (hold for more tokens)."""
     i = 0
     n = len(buf)
     while i < n:
@@ -116,16 +252,18 @@ def has_unclosed_math_delimiters(buf: str) -> bool:
     return False
 
 
-def extract_voice_chunks(buf: str) -> tuple[list[str], str]:
-    """Voice tutor: faster first audio — 8 words / 35 chars."""
+def extract_voice_chunks(buf: str, *, chunks_emitted: int = 0) -> tuple[list[str], str]:
+    """Speech-unit extraction for live voice (not sentence-per-TTS)."""
     if has_unclosed_math_delimiters(buf):
         return [], buf
-    return _extract_chunks(
-        buf,
-        min_words=VOICE_MIN_WORDS,
-        min_chars=VOICE_MIN_CHARS,
-        soft_punct_min=VOICE_SOFT_PUNCT_MIN_CHARS,
-    )
+    return _extract_speech_units(buf, chunks_emitted=chunks_emitted)
+
+
+def idle_flush_sec(*, chunks_emitted: int) -> float:
+    """Shorter idle flush for first unit; slightly longer once speech is flowing."""
+    if chunks_emitted == 0:
+        return VOICE_IDLE_FLUSH_SEC
+    return VOICE_IDLE_FLUSH_STEADY_SEC
 
 
 @dataclass
@@ -140,6 +278,19 @@ class VoicePipelineTiming:
     first_mp3_generated_at: float | None = None
     first_chunk_sent_at: float | None = None
     sentences_queued: int = 0
+    tts_prefetch_hits: int = 0
+    tts_prefetch_misses: int = 0
+    tts_units_played: int = 0
+    tts_queue_high_water: int = 0
+    tokens_streamed: int = 0
+    queue_depth: int = 0
+    rag_completed_at: float | None = None
+    _last_playback_gap_ms: float = 0.0
+
+    def mark_rag_done(self) -> None:
+        if self.rag_completed_at is None:
+            self.rag_completed_at = time.monotonic()
+            self._log("RAG complete", self.rag_completed_at)
 
     def _ms(self, t: float | None) -> str:
         if t is None:
@@ -154,9 +305,10 @@ class VoicePipelineTiming:
     def mark_sentence_queued(self, text: str) -> None:
         now = time.monotonic()
         self.sentences_queued += 1
+        self.tts_queue_high_water = max(self.tts_queue_high_water, self.sentences_queued)
         if self.first_sentence_queued_at is None:
             self.first_sentence_queued_at = now
-            self._log("Sentence queued", now, preview=text[:48])
+            self._log("Speech unit queued", now, preview=text[:48])
 
     def mark_tts_started(self, text: str) -> None:
         if self.tts_started_at is None:
@@ -173,14 +325,44 @@ class VoicePipelineTiming:
             self.first_chunk_sent_at = time.monotonic()
             self._log("First MP3 chunk sent", self.first_chunk_sent_at)
 
+    def mark_prefetch_hit(self) -> None:
+        self.tts_prefetch_hits += 1
+
+    def mark_prefetch_miss(self) -> None:
+        self.tts_prefetch_misses += 1
+
+    def mark_tts_unit_played(self) -> None:
+        self.tts_units_played += 1
+
+    def mark_playback_gap(self, gap_ms: float) -> None:
+        """Record inter-unit playback gap for continuity metrics."""
+        self._last_playback_gap_ms = gap_ms
+
+    def record_tts_units_played(self, count: int) -> None:
+        self.tts_units_played = count
+
+    def record_queue_depth(self, depth: int) -> None:
+        self.queue_depth = depth
+        self.tts_queue_high_water = max(self.tts_queue_high_water, depth)
+
+    def record_tokens_streamed(self, count: int) -> None:
+        self.tokens_streamed = count
+
     def summary(self) -> dict[str, str]:
         return {
             "llm_first_token": self._ms(self.llm_first_token_at),
-            "sentence_queued": self._ms(self.first_sentence_queued_at),
+            "speech_unit_queued": self._ms(self.first_sentence_queued_at),
             "tts_started": self._ms(self.tts_started_at),
             "first_mp3": self._ms(self.first_mp3_generated_at),
             "first_sent": self._ms(self.first_chunk_sent_at),
-            "sentences_queued": str(self.sentences_queued),
+            "speech_units": str(self.sentences_queued),
+            "tokens_streamed": str(self.tokens_streamed),
+            "queue_depth": str(self.queue_depth),
+            "prefetch_hits": str(self.tts_prefetch_hits),
+            "prefetch_misses": str(self.tts_prefetch_misses),
+            "tts_units_played": str(self.tts_units_played),
+            "queue_high_water": str(self.tts_queue_high_water),
+            "rag_complete": self._ms(self.rag_completed_at),
         }
 
     def _log(self, label: str, t: float, **extra: str) -> None:

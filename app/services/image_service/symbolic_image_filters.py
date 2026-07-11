@@ -219,6 +219,7 @@ def count_required_term_matches(
         (core and core in full_text)
         or any(len(m.split()) > 1 for m in matches)
         or len(matches) >= 2
+        or any(len(m) >= 7 for m in matches)  # distinctive single token (e.g. sunflower)
     )
     return matches, passes
 
