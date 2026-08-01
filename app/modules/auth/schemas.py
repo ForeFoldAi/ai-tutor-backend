@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 from typing import Any, Self
 
@@ -16,14 +15,6 @@ class StudentSignupRequest(BaseModel):
     board: str = Field(min_length=1, max_length=100)
 
 
-class OrganizationSignupRequest(BaseModel):
-    full_name: str = Field(min_length=2, max_length=255)
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
-    organization_name: str = Field(min_length=2, max_length=255)
-    phone: str | None = Field(default=None, max_length=50)
-    address: str | None = Field(default=None, max_length=500)
-
 
 class LoginRequest(BaseModel):
     email: str = Field(min_length=1, max_length=320)
@@ -39,12 +30,38 @@ class LogoutRequest(BaseModel):
     all_devices: bool = False
 
 
-class ForgotPasswordRequest(BaseModel):
+class ForgotPasswordLookupRequest(BaseModel):
     email: EmailStr
 
 
+class ForgotPasswordAccount(BaseModel):
+    id: int
+    full_name: str
+    username: str
+
+
+class ForgotPasswordLookupResponse(BaseModel):
+    accounts: list[ForgotPasswordAccount]
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+    user_id: int
+
+
+class VerifyResetOtpRequest(BaseModel):
+    email: EmailStr
+    user_id: int
+    otp: str = Field(min_length=4, max_length=12)
+
+
+class VerifyResetOtpResponse(BaseModel):
+    message: str
+    reset_token: str
+
+
 class ResetPasswordRequest(BaseModel):
-    token: str
+    reset_token: str
     new_password: str = Field(min_length=8, max_length=128)
 
 
@@ -52,8 +69,8 @@ class AdminCreateUserRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    organization_id: uuid.UUID | None = None
-    school_id: uuid.UUID | None = None
+    # Public school id (PK).
+    school_id: int | None = None
 
 
 class TeachingClassAssignment(BaseModel):
@@ -61,6 +78,8 @@ class TeachingClassAssignment(BaseModel):
 
     grade: str = Field(min_length=1, max_length=50, description="Class / grade label, e.g. 1–10")
     sections: list[str] = Field(min_length=1, max_length=24)
+    curriculum: str | None = Field(default=None, max_length=100)
+    school_class_id: int | None = None
 
     @field_validator("grade", mode="before")
     @classmethod
@@ -86,6 +105,14 @@ class TeachingClassAssignment(BaseModel):
             raise ValueError("Please enter your section (for example A or B).")
         return out[:24]
 
+    @field_validator("curriculum", mode="before")
+    @classmethod
+    def _strip_curriculum(cls, v: object) -> str | None:
+        if v is None:
+            return None
+        s = str(v).strip()
+        return s[:100] if s else None
+
 
 class CreateTutorRequest(AdminCreateUserRequest):
     """Onboard a tutor with school assignment and class/section scope."""
@@ -107,7 +134,7 @@ class UpdateTutorRequest(BaseModel):
 
     full_name: str = Field(min_length=2, max_length=255)
     email: EmailStr
-    school_id: uuid.UUID
+    school_id: int
     teaching_board: str | None = Field(default=None, max_length=100)
     teaching_classes: list[TeachingClassAssignment] = Field(min_length=1, max_length=40)
     new_password: str | None = Field(default=None, min_length=8, max_length=128)
@@ -155,7 +182,7 @@ class UpdateStudentRequest(BaseModel):
 
     full_name: str = Field(min_length=2, max_length=255)
     email: EmailStr
-    school_id: uuid.UUID
+    school_id: int
     teaching_board: str | None = Field(default=None, max_length=100)
     teaching_classes: list[TeachingClassAssignment] = Field(min_length=1, max_length=1)
     new_password: str | None = Field(default=None, min_length=8, max_length=128)
@@ -199,75 +226,38 @@ class MessageResponse(BaseModel):
 
 
 class UserResponse(BaseModel):
-    id: uuid.UUID
+    id: int
     full_name: str
     email: EmailStr
     role: Role
     is_active: bool
     is_verified: bool
-    organization_id: uuid.UUID | None
-    school_id: uuid.UUID | None
+    school_id: int | None
+    phone: str | None = None
+    designation: str | None = None
     teaching_board: str | None = None
+    teaching_subjects: list[str] | None = None
     teaching_classes: list[TeachingClassAssignment] | None = None
-    created_by: uuid.UUID | None
+    student_grade: str | None = None
+    curricula: list[str] | None = None
+    parent_email: str | None = None
+    favorite_subjects: list[str] | None = None
+    learning_goals: list[str] | None = None
+    preferred_learning_method: str | None = None
+    created_by: int | None
     created_at: datetime
     updated_at: datetime
 
-    model_config = {"from_attributes": True}
-
-    @model_validator(mode="before")
-    @classmethod
-    def _coerce_teaching_classes(cls, data: Any) -> Any:
-        """Coerce legacy JSON list[str] to [{grade, sections}]; normalize dict inputs."""
-        if data is None:
-            return data
-        if isinstance(data, dict):
-            raw = data.get("teaching_classes")
-            if isinstance(raw, list) and raw and isinstance(raw[0], str):
-                return {
-                    **data,
-                    "teaching_classes": [{"grade": str(g), "sections": ["A"]} for g in raw if str(g).strip()],
-                }
-            return data
-        if not hasattr(data, "teaching_classes"):
-            return data
-        inst = data
-        raw = getattr(inst, "teaching_classes", None)
-        if raw is None:
-            return inst
-        if isinstance(raw, list) and raw and isinstance(raw[0], str):
-            coerced = [{"grade": str(g), "sections": ["A"]} for g in raw if str(g).strip()]
-            return {
-                "id": inst.id,
-                "full_name": inst.full_name,
-                "email": inst.email,
-                "role": inst.role,
-                "is_active": inst.is_active,
-                "is_verified": inst.is_verified,
-                "organization_id": inst.organization_id,
-                "school_id": inst.school_id,
-                "teaching_board": inst.teaching_board,
-                "teaching_classes": coerced,
-                "created_by": inst.created_by,
-                "created_at": inst.created_at,
-                "updated_at": inst.updated_at,
-            }
-        return inst
-
 
 class SchoolAdminBrief(BaseModel):
-    id: uuid.UUID
+    id: int
     full_name: str
     email: EmailStr
     is_active: bool
 
-    model_config = {"from_attributes": True}
-
 
 class SchoolSummaryResponse(BaseModel):
-    id: uuid.UUID
-    organization_id: uuid.UUID
-    organization_name: str | None = None
+    id: int
     name: str
     branch: str | None
     board: str | None
@@ -281,8 +271,12 @@ class SchoolUpdateRequest(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=255)
     branch: str | None = Field(default=None, max_length=255)
     board: str | None = Field(default=None, max_length=100)
+    email: str | None = Field(default=None, max_length=320)
+    phone: str | None = Field(default=None, max_length=50)
+    website: str | None = Field(default=None, max_length=500)
+    address: str | None = Field(default=None, max_length=500)
 
-    @field_validator("branch", "board", mode="before")
+    @field_validator("branch", "board", "phone", "website", "address", mode="before")
     @classmethod
     def _blank_optional(cls, v: str | None) -> str | None:
         if v is None:
@@ -290,22 +284,42 @@ class SchoolUpdateRequest(BaseModel):
         s = v.strip()
         return s if s else None
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def _blank_email(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        s = str(v).strip().lower()
+        return s if s else None
 
-class OrganizationDetailResponse(BaseModel):
-    id: uuid.UUID
+
+class SchoolDetailResponse(BaseModel):
+    id: int
     name: str
+    branch: str | None
+    board: str | None
+    email: str | None
     phone: str | None
+    website: str | None
     address: str | None
+    grades_offered: str | None = None
+    student_strength: str | None = None
+    curricula: list[str] = Field(default_factory=list)
     is_active: bool
     created_at: datetime
 
-    model_config = {"from_attributes": True}
 
-
-class OrganizationUpdateRequest(BaseModel):
+class SchoolProfileUpdateRequest(BaseModel):
     name: str = Field(min_length=2, max_length=255)
+    branch: str | None = Field(default=None, max_length=255)
+    board: str | None = Field(default=None, max_length=100)
+    email: EmailStr | None = None
     phone: str | None = Field(default=None, max_length=50)
     address: str | None = Field(default=None, max_length=500)
+    website: str | None = Field(default=None, max_length=500)
+    grades_offered: str | None = Field(default=None, max_length=100)
+    student_strength: str | None = Field(default=None, max_length=100)
+    curricula: list[str] | None = None
 
     @field_validator("name", mode="before")
     @classmethod
@@ -315,18 +329,34 @@ class OrganizationUpdateRequest(BaseModel):
             raise ValueError("name must be at least 2 characters.")
         return s
 
-    @field_validator("phone", "address", mode="before")
+    @field_validator("branch", "board", "phone", "address", "website", "grades_offered", "student_strength", mode="before")
     @classmethod
-    def _blank_optional_org(cls, v: object) -> str | None:
+    def _blank_optional_profile(cls, v: object) -> str | None:
         if v is None:
             return None
         s = str(v).strip()
+        return s if s else None
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def _blank_email(cls, v: object) -> str | None:
+        if v is None:
+            return None
+        s = str(v).strip().lower()
         return s if s else None
 
 
 class MeProfileUpdateRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
     email: EmailStr
+    phone: str | None = Field(default=None, max_length=50)
+    designation: str | None = Field(default=None, max_length=100)
+    grade: str | None = Field(default=None, max_length=50)
+    curricula: list[str] | None = None
+    parent_email: EmailStr | None = None
+    favorite_subjects: list[str] | None = None
+    learning_goals: list[str] | None = None
+    preferred_learning_method: str | None = Field(default=None, max_length=32)
     current_password: str | None = Field(default=None, max_length=128)
     new_password: str | None = Field(default=None, min_length=8, max_length=128)
 
@@ -338,9 +368,9 @@ class MeProfileUpdateRequest(BaseModel):
             raise ValueError("Please enter your full name (at least 2 letters).")
         return s
 
-    @field_validator("current_password", "new_password", mode="before")
+    @field_validator("phone", "designation", "current_password", "new_password", mode="before")
     @classmethod
-    def _empty_password_fields(cls, v: str | None) -> str | None:
+    def _empty_optional_fields(cls, v: str | None) -> str | None:
         if v is None:
             return None
         s = str(v).strip()
@@ -354,7 +384,7 @@ class MeProfileUpdateRequest(BaseModel):
 
 
 class UserSettingsResponse(BaseModel):
-    user_id: uuid.UUID
+    user_id: int
     username: str | None
     language: str
     theme: str

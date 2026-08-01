@@ -1,7 +1,6 @@
-import uuid
 from typing import Annotated, Self
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Request, status
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy.orm import Session
 
@@ -11,59 +10,49 @@ from app.modules.auth.constants import Role
 from app.modules.auth.dependencies import get_current_user, require_roles
 from app.modules.auth.schemas import (
     AdminCreateUserRequest,
-    CreateStudentRequest,
-    CreateTutorRequest,
+    ForgotPasswordLookupRequest,
+    ForgotPasswordLookupResponse,
+    ForgotPasswordAccount,
     ForgotPasswordRequest,
     LoginRequest,
     LogoutRequest,
     MeProfileUpdateRequest,
     MessageResponse,
-    OrganizationDetailResponse,
-    OrganizationSignupRequest,
-    OrganizationUpdateRequest,
     RefreshRequest,
     ResetPasswordRequest,
     SchoolSummaryResponse,
     SchoolUpdateRequest,
-    StudentSignupRequest,
     TokenResponse,
-    UpdateStudentRequest,
-    UpdateTutorRequest,
     UserResponse,
     UserSettingsResponse,
     UserSettingsUpdateRequest,
     UserStatusPatchRequest,
+    VerifyResetOtpRequest,
+    VerifyResetOtpResponse,
 )
+from app.modules.auth.public_ids import to_user_response, to_user_settings_response, heal_tutor_teaching_curriculum
 from app.modules.auth.service import (
-    admin_create_user,
-    build_auth_tokens,
     create_school_admin,
     delete_school,
-    delete_student_user,
-    delete_tutor_user,
-    get_organization_for_org_admin,
-    issue_reset_password_token,
-    issue_verify_email_token,
+    issue_password_reset_otp,
+    lookup_forgot_password_accounts,
     list_schools_with_stats,
-    list_tutor_assigned_students,
     list_users,
     login,
     logout,
     refresh_access_token,
-    reset_password,
+    reset_password_with_token,
+    resolve_forgot_password_user,
     set_user_status,
-    signup_organization,
-    signup_student,
     update_me_profile,
-    update_organization_for_org_admin,
     update_school,
-    update_student,
-    update_tutor,
     update_user_settings,
     get_or_create_user_settings,
     reset_user_settings,
     verify_email_token,
+    verify_password_reset_otp,
 )
+from app.services.mail import send_password_otp_email
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -73,7 +62,7 @@ settings = get_settings()
 class CreateSchoolAdminRequest(AdminCreateUserRequest):
     """Create a new school + first admin, or add another admin to ``school_id``."""
 
-    school_id: uuid.UUID | None = None
+    school_id: int | None = None
     school_name: str | None = Field(default=None, max_length=255)
     branch: str | None = Field(default=None, max_length=255)
     board: str | None = Field(default=None, max_length=100)
@@ -102,25 +91,6 @@ class CreateSchoolAdminRequest(AdminCreateUserRequest):
                 raise ValueError("school_name is required (min 2 characters) when school_id is not provided.")
         return self
 
-
-@router.post("/signup/student", response_model=MessageResponse, status_code=201)
-def signup_student_route(payload: StudentSignupRequest, db: Annotated[Session, Depends(get_db)]):
-    user = signup_student(db, payload)
-    verify_token = issue_verify_email_token(user)
-    db.commit()
-    return MessageResponse(
-        message=f"Student signup successful. Verification token generated (hook): {verify_token[:16]}..."
-    )
-
-
-@router.post("/signup/organization", response_model=MessageResponse, status_code=201)
-def signup_organization_route(payload: OrganizationSignupRequest, db: Annotated[Session, Depends(get_db)]):
-    user = signup_organization(db, payload)
-    verify_token = issue_verify_email_token(user)
-    db.commit()
-    return MessageResponse(
-        message=f"Organization signup successful. Verification token generated (hook): {verify_token[:16]}..."
-    )
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -158,19 +128,57 @@ def logout_route(
     return MessageResponse(message="Logged out successfully.")
 
 
+@router.post("/forgot-password/lookup", response_model=ForgotPasswordLookupResponse)
+def forgot_password_lookup(
+    payload: ForgotPasswordLookupRequest,
+    db: Annotated[Session, Depends(get_db)],
+):
+    accounts = lookup_forgot_password_accounts(db, str(payload.email))
+    db.commit()  # may create missing username settings rows
+    return ForgotPasswordLookupResponse(
+        accounts=[ForgotPasswordAccount(**a) for a in accounts],
+    )
+
+
 @router.post("/forgot-password", response_model=MessageResponse)
 def forgot_password(payload: ForgotPasswordRequest, db: Annotated[Session, Depends(get_db)]):
-    # no user existence leakage
-    user = db.query(User).filter(User.email == payload.email.lower()).first()
-    if user:
-        token = issue_reset_password_token(user)
-        _ = token  # hook for email sender integration
-    return MessageResponse(message="If the account exists, reset instructions have been issued.")
+    from app.modules.auth.exceptions import AuthException
+
+    user = resolve_forgot_password_user(db, str(payload.email), payload.user_id)
+    if not user:
+        # no account leakage when lookup was skipped/stale
+        return MessageResponse(message="If the account exists, a reset code has been sent.")
+
+    otp = issue_password_reset_otp(db, user)
+    ok = send_password_otp_email(
+        to=user.email,
+        full_name=user.full_name,
+        otp=otp,
+        expire_minutes=settings.password_otp_expire_minutes,
+    )
+    if not ok:
+        db.rollback()
+        raise AuthException(
+            "We couldn't send the reset email. Please try again in a moment.",
+            status.HTTP_502_BAD_GATEWAY,
+        )
+    db.commit()
+    return MessageResponse(message="A reset code has been sent to your email.")
+
+
+@router.post("/forgot-password/verify-otp", response_model=VerifyResetOtpResponse)
+def forgot_password_verify_otp(
+    payload: VerifyResetOtpRequest,
+    db: Annotated[Session, Depends(get_db)],
+):
+    token = verify_password_reset_otp(db, str(payload.email), payload.user_id, payload.otp)
+    db.commit()
+    return VerifyResetOtpResponse(message="Code verified.", reset_token=token)
 
 
 @router.post("/reset-password", response_model=MessageResponse)
 def reset_password_route(payload: ResetPasswordRequest, db: Annotated[Session, Depends(get_db)]):
-    reset_password(db, payload.token, payload.new_password)
+    reset_password_with_token(db, payload.reset_token, payload.new_password)
     db.commit()
     return MessageResponse(message="Password reset successful.")
 
@@ -183,8 +191,14 @@ def verify_email(token: str, db: Annotated[Session, Depends(get_db)]):
 
 
 @router.get("/me", response_model=UserResponse)
-def me(current_user: Annotated[User, Depends(get_current_user)]):
-    return UserResponse.model_validate(current_user)
+def me(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+):
+    if heal_tutor_teaching_curriculum(db, current_user):
+        db.commit()
+        db.refresh(current_user)
+    return to_user_response(db, current_user)
 
 
 @router.patch("/me/profile", response_model=UserResponse)
@@ -196,7 +210,7 @@ def patch_me_profile(
     user = update_me_profile(db, current_user, payload)
     db.commit()
     db.refresh(user)
-    return UserResponse.model_validate(user)
+    return to_user_response(db, user)
 
 
 @router.get("/me/settings", response_model=UserSettingsResponse)
@@ -207,7 +221,7 @@ def get_me_settings(
     settings_row = get_or_create_user_settings(db, current_user)
     db.commit()
     db.refresh(settings_row)
-    return UserSettingsResponse.model_validate(settings_row)
+    return to_user_settings_response(current_user, settings_row)
 
 
 @router.patch("/me/settings", response_model=UserSettingsResponse)
@@ -219,7 +233,7 @@ def patch_me_settings(
     settings_row = update_user_settings(db, current_user, payload)
     db.commit()
     db.refresh(settings_row)
-    return UserSettingsResponse.model_validate(settings_row)
+    return to_user_settings_response(current_user, settings_row)
 
 
 @router.delete("/me/settings", response_model=UserSettingsResponse)
@@ -230,35 +244,14 @@ def delete_me_settings(
     settings_row = reset_user_settings(db, current_user)
     db.commit()
     db.refresh(settings_row)
-    return UserSettingsResponse.model_validate(settings_row)
-
-
-@router.get("/admin/organization", response_model=OrganizationDetailResponse)
-def get_my_organization(
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN))],
-):
-    org = get_organization_for_org_admin(db, current_user)
-    return OrganizationDetailResponse.model_validate(org)
-
-
-@router.patch("/admin/organization", response_model=OrganizationDetailResponse)
-def patch_my_organization(
-    payload: OrganizationUpdateRequest,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN))],
-):
-    org = update_organization_for_org_admin(db, current_user, payload)
-    db.commit()
-    db.refresh(org)
-    return OrganizationDetailResponse.model_validate(org)
+    return to_user_settings_response(current_user, settings_row)
 
 
 @router.post("/admin/create-school-admin", response_model=UserResponse, status_code=201)
 def create_school_admin_route(
     payload: CreateSchoolAdminRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.MASTER_ADMIN))],
+    current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     user = create_school_admin(
         db,
@@ -271,63 +264,24 @@ def create_school_admin_route(
     )
     db.commit()
     db.refresh(user)
-    return UserResponse.model_validate(user)
-
-
-@router.post("/admin/create-tutor", response_model=UserResponse, status_code=201)
-def create_tutor_route(
-    payload: CreateTutorRequest,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
-):
-    user = admin_create_user(
-        db,
-        current_user,
-        Role.TUTOR,
-        payload,
-        teaching_board=payload.teaching_board,
-        teaching_classes=payload.teaching_classes,
-    )
-    db.commit()
-    db.refresh(user)
-    return UserResponse.model_validate(user)
-
-
-@router.post("/admin/create-student", response_model=UserResponse, status_code=201)
-def create_student_route(
-    payload: CreateStudentRequest,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN, Role.TUTOR))],
-):
-    user = admin_create_user(
-        db,
-        current_user,
-        Role.STUDENT,
-        payload,
-        teaching_board=payload.teaching_board,
-        teaching_classes=payload.teaching_classes,
-    )
-    db.commit()
-    db.refresh(user)
-    return UserResponse.model_validate(user)
+    return to_user_response(db, user)
 
 
 @router.get("/admin/schools", response_model=list[SchoolSummaryResponse])
 def admin_schools(
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
-    organization_id: Annotated[uuid.UUID | None, Query(description="Master admin: filter by organization.")] = None,
+    current_user: Annotated[User, Depends(require_roles(Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
 ):
-    schools = list_schools_with_stats(db, current_user, organization_id=organization_id)
+    schools = list_schools_with_stats(db, current_user)
     return schools
 
 
 @router.patch("/admin/schools/{school_id}", response_model=SchoolSummaryResponse)
 def patch_school(
-    school_id: uuid.UUID,
+    school_id: int,
     payload: SchoolUpdateRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.MASTER_ADMIN))],
+    current_user: Annotated[User, Depends(require_roles(Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
 ):
     summary = update_school(db, current_user, school_id, payload)
     db.commit()
@@ -336,9 +290,9 @@ def patch_school(
 
 @router.delete("/admin/schools/{school_id}", response_model=MessageResponse)
 def remove_school(
-    school_id: uuid.UUID,
+    school_id: int,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.MASTER_ADMIN))],
+    current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     delete_school(db, current_user, school_id)
     db.commit()
@@ -348,77 +302,20 @@ def remove_school(
 @router.get("/admin/users", response_model=list[UserResponse])
 def admin_users(
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
+    current_user: Annotated[User, Depends(require_roles(Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
 ):
     users = list_users(db, current_user)
-    return [UserResponse.model_validate(u) for u in users]
-
-
-@router.get("/tutor/students", response_model=list[UserResponse])
-def tutor_students(
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.TUTOR))],
-):
-    students = list_tutor_assigned_students(db, current_user)
-    return [UserResponse.model_validate(u) for u in students]
+    return [to_user_response(db, u) for u in users]
 
 
 @router.patch("/admin/users/{user_id}/status", response_model=UserResponse)
 def patch_user_status(
-    user_id: uuid.UUID,
+    user_id: int,
     payload: UserStatusPatchRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
+    current_user: Annotated[User, Depends(require_roles(Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
 ):
     user = set_user_status(db, current_user, user_id, payload.is_active)
     db.commit()
     db.refresh(user)
-    return UserResponse.model_validate(user)
-
-
-@router.patch("/admin/users/{user_id}/tutor", response_model=UserResponse)
-def patch_tutor_user(
-    user_id: uuid.UUID,
-    payload: UpdateTutorRequest,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
-):
-    user = update_tutor(db, current_user, user_id, payload)
-    db.commit()
-    db.refresh(user)
-    return UserResponse.model_validate(user)
-
-
-@router.delete("/admin/users/{user_id}/tutor", response_model=MessageResponse)
-def remove_tutor_user(
-    user_id: uuid.UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
-):
-    delete_tutor_user(db, current_user, user_id)
-    db.commit()
-    return MessageResponse(message="Tutor removed.")
-
-
-@router.patch("/admin/users/{user_id}/student", response_model=UserResponse)
-def patch_student_user(
-    user_id: uuid.UUID,
-    payload: UpdateStudentRequest,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
-):
-    user = update_student(db, current_user, user_id, payload)
-    db.commit()
-    db.refresh(user)
-    return UserResponse.model_validate(user)
-
-
-@router.delete("/admin/users/{user_id}/student", response_model=MessageResponse)
-def remove_student_user(
-    user_id: uuid.UUID,
-    db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.ORG_ADMIN, Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
-):
-    delete_student_user(db, current_user, user_id)
-    db.commit()
-    return MessageResponse(message="Student removed.")
+    return to_user_response(db, user)

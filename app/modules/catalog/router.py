@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import os
-import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, status
@@ -10,7 +9,6 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.config import UPLOADS_DIR
 from app.core.database import SessionLocal, get_db
 from app.core.student_messages import IMAGE_INVALID_PATH, IMAGE_NOT_AVAILABLE, PDF_ONLY
 from app.modules.auth.constants import Role
@@ -48,7 +46,7 @@ router = APIRouter(prefix="/auth/admin/catalog", tags=["master-admin-catalog"])
 
 @router.get("/enums", response_model=CatalogEnumsResponse)
 def list_catalog_enums(
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     return CatalogEnumsResponse(boards=[b for b in BoardEnum], classes=[c for c in ClassEnum])
 
@@ -56,7 +54,7 @@ def list_catalog_enums(
 @router.get("/boards", response_model=list[BoardResponse])
 def list_boards(
     db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     rows = list(db.scalars(select(BoardDefinition).order_by(BoardDefinition.board)))
     return [BoardResponse.model_validate(r) for r in rows]
@@ -85,7 +83,7 @@ def create_board(
 
 @router.delete("/boards/{board_id}", response_model=MessageResponse)
 def delete_board(
-    board_id: uuid.UUID,
+    board_id: int,
     db: Annotated[Session, Depends(get_db)],
     _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
@@ -100,7 +98,7 @@ def delete_board(
 @router.get("/syllabus", response_model=list[SyllabusSubjectResponse])
 def list_syllabus(
     db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     rows = list(db.scalars(select(SyllabusSubject).order_by(SyllabusSubject.board, SyllabusSubject.class_level, SyllabusSubject.subject_name)))
     return [SyllabusSubjectResponse.model_validate(r) for r in rows]
@@ -110,7 +108,7 @@ def list_syllabus(
 def create_syllabus_bulk(
     payload: SyllabusBulkCreateRequest,
     db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     created: list[SyllabusSubject] = []
     for cls in payload.class_names:
@@ -137,7 +135,7 @@ def create_syllabus_bulk(
 @router.get("/textbook-uploads", response_model=list[TextbookUploadResponse])
 def list_textbook_uploads(
     db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     rows = list(db.scalars(select(TextbookUpload).order_by(TextbookUpload.upload_date.desc())))
     return [TextbookUploadResponse.model_validate(r) for r in rows]
@@ -147,7 +145,7 @@ def list_textbook_uploads(
 def create_textbook_upload(
     payload: TextbookUploadCreateRequest,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     row = TextbookUpload(
         file_name=payload.file_name,
@@ -165,29 +163,43 @@ def create_textbook_upload(
     return TextbookUploadResponse.model_validate(row)
 
 
-def _write_file_sync(path: str, content: bytes) -> None:
-    """Pure synchronous write — run inside asyncio.to_thread to avoid blocking."""
-    with open(path, "wb") as f:
-        f.write(content)
+# Uploads go through document storage backend (local or S3/MinIO).
 
 
 async def _save_upload_file(file: UploadFile, board: str, class_level: str, subject: str) -> str:
     """
     Save an uploaded file without blocking the event loop.
 
-    Reads the upload fully into memory (safe for typical textbook PDFs < 50 MB),
-    then offloads the disk write to a thread pool via asyncio.to_thread().
+    Returns a **relative** storage key (``board/class/subject/name``) suitable for
+    both local disk and S3/MinIO. Legacy absolute paths still resolve via
+    ``materialize_textbook_file``.
     """
-    dest_dir = os.path.join(UPLOADS_DIR, board, class_level, subject)
-    os.makedirs(dest_dir, exist_ok=True)
-    safe_name = f"{uuid.uuid4().hex[:8]}_{file.filename or 'document'}"
-    dest_path = os.path.join(dest_dir, safe_name)
+    import hashlib
+
     content = await file.read()
-    await asyncio.to_thread(_write_file_sync, dest_path, content)
-    return dest_path
+    digest = hashlib.sha256(content).hexdigest()[:10]
+    raw_name = file.filename or "document"
+    # Keep basename only; avoid path injection.
+    base = os.path.basename(raw_name).replace("..", "_") or "document"
+    safe_name = f"{digest}_{base}"
+    key = f"{board}/{class_level}/{subject}/{safe_name}"
+
+    def _store() -> None:
+        from app.services.image_service.storage_backend import get_document_storage_backend
+
+        get_document_storage_backend().save(key, content)
+
+    await asyncio.to_thread(_store)
+    return key
 
 
-def _process_upload_background(upload_id: uuid.UUID) -> None:
+def _local_path_for_upload(file_path: str | None) -> str:
+    from app.services.image_service.storage_backend import materialize_textbook_file
+
+    return materialize_textbook_file(file_path or "")
+
+
+def _process_upload_background(upload_id: int) -> None:
     """Background task: chunk the document and create embeddings."""
     db = SessionLocal()
     try:
@@ -202,6 +214,10 @@ def _process_upload_background(upload_id: uuid.UUID) -> None:
         from app.services.document_service import process_document
         from app.services.vector_service import add_documents_to_store
 
+        local_path = _local_path_for_upload(row.file_path)
+        if not local_path or not os.path.isfile(local_path):
+            raise FileNotFoundError(f"Source file missing for upload {upload_id}: {row.file_path}")
+
         extra_meta = {
             "board": str(row.board),
             "class_level": str(row.class_level),
@@ -210,7 +226,7 @@ def _process_upload_background(upload_id: uuid.UUID) -> None:
             "content_type": row.content_type or "",
             "content_label": row.content_label or "",
         }
-        chunks = process_document(row.file_path, extra_metadata=extra_meta)
+        chunks = process_document(local_path, extra_metadata=extra_meta)
         row.chunk_count = len(chunks)
         row.chunk_status = ProcessingStatusEnum.EMBEDDED
         db.commit()
@@ -249,7 +265,7 @@ def _process_upload_background(upload_id: uuid.UUID) -> None:
 async def upload_textbook_files(
     background_tasks: BackgroundTasks,
     db: Annotated[Session, Depends(get_db)],
-    current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
     files: list[UploadFile] = File(...),
     board: str = Form(...),
     class_name: str = Form(...),
@@ -300,16 +316,16 @@ async def upload_textbook_files(
 
 @router.post("/textbook-uploads/{upload_id}/process", response_model=ProcessResponse)
 def process_textbook_upload(
-    upload_id: uuid.UUID,
+    upload_id: int,
     background_tasks: BackgroundTasks,
     db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     """Manually trigger (re)processing for a single upload."""
     row = db.get(TextbookUpload, upload_id)
     if not row:
         raise HTTPException(status_code=404, detail="Upload not found.")
-    if not row.file_path or not os.path.isfile(row.file_path):
+    if not row.file_path or not os.path.isfile(_local_path_for_upload(row.file_path)):
         raise HTTPException(status_code=400, detail="Source file not found on disk.")
 
     row.chunk_status = ProcessingStatusEnum.QUEUED
@@ -332,7 +348,7 @@ def process_textbook_upload(
 @router.get("/embedding-stats", response_model=EmbeddingStatsResponse)
 def get_embedding_stats(
     db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     """Aggregated embedding pipeline metrics."""
     total = db.scalar(select(func.count()).select_from(TextbookUpload)) or 0
@@ -357,10 +373,10 @@ def get_embedding_stats(
 
 @router.patch("/textbook-uploads/{upload_id}/status", response_model=TextbookUploadResponse)
 def patch_textbook_upload_status(
-    upload_id: uuid.UUID,
+    upload_id: int,
     payload: TextbookUploadPatchStatusRequest,
     db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     row = db.get(TextbookUpload, upload_id)
     if not row:
@@ -375,9 +391,9 @@ def patch_textbook_upload_status(
 
 @router.delete("/textbook-uploads/{upload_id}", response_model=MessageResponse)
 def delete_textbook_upload(
-    upload_id: uuid.UUID,
+    upload_id: int,
     db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN, Role.ORG_ADMIN))],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
 ):
     row = db.get(TextbookUpload, upload_id)
     if not row:
@@ -404,6 +420,13 @@ def delete_textbook_upload(
             upload_id, collection, exc,
         )
 
+    try:
+        from app.services.image_service.storage_backend import delete_textbook_file
+
+        delete_textbook_file(row.file_path)
+    except Exception as exc:
+        logger.warning("Could not delete source file for upload %s: %s", upload_id, exc)
+
     db.delete(row)
     db.commit()
     return MessageResponse(message="Upload and associated vectors deleted.")
@@ -414,13 +437,16 @@ student_router = APIRouter(prefix="/auth/catalog", tags=["student-catalog"])
 
 @student_router.get("/textbook-images/{upload_id}/{file_path:path}")
 def get_textbook_image_file(
-    upload_id: uuid.UUID,
+    upload_id: int,
     file_path: str,
     db: Annotated[Session, Depends(get_db)],
     _current_user: Annotated[User, Depends(get_current_user_bearer_or_query)],
 ):
     """Serve an extracted textbook asset (figures, tables, or formulas)."""
-    from app.services.image_service.textbook_image_extraction import image_disk_path
+    from app.services.image_service.textbook_image_extraction import (
+        image_disk_path,
+        image_storage_key,
+    )
 
     safe = file_path.strip().replace("\\", "/").lstrip("/")
     if not safe or ".." in safe.split("/"):
@@ -439,7 +465,24 @@ def get_textbook_image_file(
     if row is None:
         raise HTTPException(status_code=404, detail=IMAGE_NOT_AVAILABLE)
 
-    path = image_disk_path(upload_id, row.file_name)
+    upload = db.get(TextbookUpload, upload_id)
+
+    # Prefer CDN redirect when configured (stable URLs; avoid short-lived presigns).
+    try:
+        from app.config import CDN_BASE_URL, STORAGE_BACKEND
+        from fastapi.responses import RedirectResponse
+
+        if upload is not None and (STORAGE_BACKEND or "").lower() == "s3" and (CDN_BASE_URL or "").strip():
+            from app.services.image_service.storage_backend import get_storage_backend
+
+            return RedirectResponse(
+                get_storage_backend().get_url(image_storage_key(upload, row.file_name)),
+                status_code=302,
+            )
+    except Exception:
+        pass
+
+    path = image_disk_path(upload_id, row.file_name, upload=upload)
     if not os.path.isfile(path):
         raise HTTPException(status_code=404, detail=IMAGE_NOT_AVAILABLE)
 
@@ -455,23 +498,68 @@ def get_textbook_image_file(
     return Response(content=body, media_type="image/jpeg")
 
 
-def _resolve_student_board_class(user: User) -> tuple[BoardEnum | None, ClassEnum | None]:
-    board = None
-    if user.teaching_board:
-        try:
-            board = BoardEnum(user.teaching_board)
-        except ValueError:
-            pass
+def _parse_class_level(raw: str | None) -> ClassEnum | None:
+    if not raw or not str(raw).strip():
+        return None
+    grade_str = str(raw).strip()
+    canon = f"CLASS_{grade_str}" if grade_str.isdigit() else grade_str
+    try:
+        return ClassEnum(canon)
+    except ValueError:
+        return None
 
-    class_level = None
-    grades = user.teaching_classes or []
-    if grades:
-        grade_str = grades[0].get("grade", "") if isinstance(grades[0], dict) else ""
-        canon = f"CLASS_{grade_str}" if grade_str.isdigit() else grade_str
+
+def _user_may_access_class(user: User, class_level: ClassEnum) -> bool:
+    if user.role in (Role.MASTER_ADMIN, Role.SCHOOL_ADMIN):
+        return True
+    grade_num = class_level.value.replace("CLASS_", "")
+    for entry in user.teaching_classes or []:
+        if not isinstance(entry, dict):
+            continue
+        if str(entry.get("grade", "")).strip() == grade_num:
+            return True
+    return False
+
+
+def _resolve_student_board_class(
+    user: User,
+    *,
+    class_level_param: str | None = None,
+    board_param: str | None = None,
+) -> tuple[BoardEnum | None, ClassEnum | None]:
+    board = None
+    candidates = [
+        str(board_param).strip() if board_param else "",
+    ]
+    # Prefer curriculum from teaching_classes over corrupted teaching_board (subject names).
+    raw = user.teaching_classes if isinstance(user.teaching_classes, list) else []
+    for item in raw:
+        if isinstance(item, dict):
+            cur = str(item.get("curriculum") or "").strip()
+            if cur:
+                candidates.append(cur)
+                break
+    if user.teaching_board and str(user.teaching_board).strip():
+        candidates.append(str(user.teaching_board).strip())
+
+    for label in candidates:
+        if not label:
+            continue
         try:
-            class_level = ClassEnum(canon)
+            board = BoardEnum(label)
+            break
         except ValueError:
-            pass
+            continue
+
+    class_level = _parse_class_level(class_level_param)
+    if class_level is None:
+        grades = user.teaching_classes or []
+        if grades:
+            grade_str = grades[0].get("grade", "") if isinstance(grades[0], dict) else ""
+            class_level = _parse_class_level(grade_str)
+
+    if class_level and not _user_may_access_class(user, class_level):
+        return board, None
 
     return board, class_level
 
@@ -480,15 +568,33 @@ def _resolve_student_board_class(user: User) -> tuple[BoardEnum | None, ClassEnu
 def list_my_subjects(
     db: Annotated[Session, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_user)],
+    class_level: str | None = None,
+    board: str | None = None,
 ):
-    board, class_level = _resolve_student_board_class(current_user)
-    if not board or not class_level:
+    """Students: class-mapped subjects. Tutors/admins: full syllabus for board+class."""
+    board_enum, class_enum = _resolve_student_board_class(
+        current_user,
+        class_level_param=class_level,
+        board_param=board,
+    )
+    if not board_enum or not class_enum:
         return []
+
+    if current_user.role == Role.STUDENT:
+        from app.modules.student_learning.enrollment import list_enrolled_subjects
+
+        subjects, _scope = list_enrolled_subjects(
+            db,
+            current_user,
+            board=board_enum,
+            class_level=class_enum,
+        )
+        return subjects
 
     subjects = list(
         db.scalars(
             select(SyllabusSubject)
-            .where(SyllabusSubject.board == board, SyllabusSubject.class_level == class_level)
+            .where(SyllabusSubject.board == board_enum, SyllabusSubject.class_level == class_enum)
             .order_by(SyllabusSubject.subject_name)
         )
     )
@@ -496,7 +602,7 @@ def list_my_subjects(
     textbooks = list(
         db.scalars(
             select(TextbookUpload)
-            .where(TextbookUpload.board == board, TextbookUpload.class_level == class_level)
+            .where(TextbookUpload.board == board_enum, TextbookUpload.class_level == class_enum)
             .order_by(TextbookUpload.chapter)
         )
     )

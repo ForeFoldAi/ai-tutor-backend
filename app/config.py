@@ -11,11 +11,80 @@ load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 # Keep MODEL_PATH for backwards-compatibility / optional local fallback.
 MODEL_PATH = os.environ.get("LLAMA_MODEL_PATH", os.path.join(PROJECT_ROOT, "models", "mistral.gguf"))
 
-# Mistral API settings (used by the /chat endpoint and voice fallback).
-MISTRAL_API_KEY = os.environ.get("MISTRAL_API_KEY")
-MISTRAL_MODEL = os.environ.get("MISTRAL_MODEL", "mistral-small-latest")
-MISTRAL_TEMPERATURE = float(os.environ.get("MISTRAL_TEMPERATURE", "0.35"))
-MISTRAL_MAX_TOKENS = int(os.environ.get("MISTRAL_MAX_TOKENS", "1024"))
+# OpenAI-compatible LLM (default = Mistral). LLM_* wins; MISTRAL_* is the legacy alias.
+def _env_first(*names: str, default: str = "") -> str:
+    for name in names:
+        val = os.environ.get(name)
+        if val is not None and val.strip() != "":
+            return val.strip()
+    return default
+
+
+LLM_BASE_URL = _env_first("LLM_BASE_URL", default="https://api.mistral.ai/v1").rstrip("/")
+LLM_API_KEY = _env_first("LLM_API_KEY", "MISTRAL_API_KEY") or None
+LLM_MODEL = _env_first("LLM_MODEL", "MISTRAL_MODEL", default="mistral-small-latest")
+LLM_TEMPERATURE = float(_env_first("LLM_TEMPERATURE", "MISTRAL_TEMPERATURE", default="0.35"))
+LLM_MAX_TOKENS = int(_env_first("LLM_MAX_TOKENS", "MISTRAL_MAX_TOKENS", default="1024"))
+
+# Optional per-feature model overrides (empty → LLM_MODEL).
+LLM_CHAT_MODEL = _env_first("LLM_CHAT_MODEL")
+LLM_VOICE_MODEL = _env_first("LLM_VOICE_MODEL")
+LLM_LESSON_MODEL = _env_first("LLM_LESSON_MODEL")
+LLM_ASSISTANT_MODEL = _env_first("LLM_ASSISTANT_MODEL")
+
+# Optional per-feature API key / base URL (empty → LLM_API_KEY / LLM_BASE_URL).
+LLM_CHAT_API_KEY = _env_first("LLM_CHAT_API_KEY") or None
+LLM_VOICE_API_KEY = _env_first("LLM_VOICE_API_KEY") or None
+LLM_LESSON_API_KEY = _env_first("LLM_LESSON_API_KEY") or None
+LLM_ASSISTANT_API_KEY = _env_first("LLM_ASSISTANT_API_KEY") or None
+
+LLM_CHAT_BASE_URL = _env_first("LLM_CHAT_BASE_URL")
+LLM_VOICE_BASE_URL = _env_first("LLM_VOICE_BASE_URL")
+LLM_LESSON_BASE_URL = _env_first("LLM_LESSON_BASE_URL")
+LLM_ASSISTANT_BASE_URL = _env_first("LLM_ASSISTANT_BASE_URL")
+
+_LLM_FEATURE_MODELS = {
+    "chat": LLM_CHAT_MODEL,
+    "voice": LLM_VOICE_MODEL,
+    "lesson": LLM_LESSON_MODEL,
+    "assistant": LLM_ASSISTANT_MODEL,
+}
+_LLM_FEATURE_KEYS = {
+    "chat": LLM_CHAT_API_KEY,
+    "voice": LLM_VOICE_API_KEY,
+    "lesson": LLM_LESSON_API_KEY,
+    "assistant": LLM_ASSISTANT_API_KEY,
+}
+_LLM_FEATURE_BASE_URLS = {
+    "chat": LLM_CHAT_BASE_URL,
+    "voice": LLM_VOICE_BASE_URL,
+    "lesson": LLM_LESSON_BASE_URL,
+    "assistant": LLM_ASSISTANT_BASE_URL,
+}
+
+
+def llm_model_for(feature: str = "chat") -> str:
+    """Resolve model for a feature; falls back to LLM_MODEL."""
+    override = _LLM_FEATURE_MODELS.get(feature) or ""
+    return override or LLM_MODEL
+
+
+def llm_api_key_for(feature: str = "chat") -> str | None:
+    """Resolve API key for a feature; falls back to LLM_API_KEY."""
+    return _LLM_FEATURE_KEYS.get(feature) or LLM_API_KEY
+
+
+def llm_base_url_for(feature: str = "chat") -> str:
+    """Resolve base URL for a feature; falls back to LLM_BASE_URL."""
+    override = (_LLM_FEATURE_BASE_URLS.get(feature) or "").rstrip("/")
+    return override or LLM_BASE_URL
+
+
+# Back-compat aliases — same resolved values so existing imports keep working.
+MISTRAL_API_KEY = LLM_API_KEY
+MISTRAL_MODEL = LLM_MODEL
+MISTRAL_TEMPERATURE = LLM_TEMPERATURE
+MISTRAL_MAX_TOKENS = LLM_MAX_TOKENS
 
 # Edge TTS prosody — near-natural rate (was -6%; slightly faster = less robotic)
 VOICE_TTS_RATE = os.environ.get("VOICE_TTS_RATE", "-2%")
@@ -76,6 +145,13 @@ INTERRUPT_WEIGHT_VAD = float(os.environ.get("INTERRUPT_WEIGHT_VAD", "0.4"))
 INTERRUPT_WEIGHT_SPEAKER = float(os.environ.get("INTERRUPT_WEIGHT_SPEAKER", "0.4"))
 INTERRUPT_WEIGHT_INTENT = float(os.environ.get("INTERRUPT_WEIGHT_INTENT", "0.2"))
 
+# Session-scoped voice profile (bootstrap from first question, auto-delete on session end)
+VOICE_SESSION_PROFILE = _env_bool("VOICE_SESSION_PROFILE", "true")
+VOICE_SESSION_PROFILE_MIN_MS = int(os.environ.get("VOICE_SESSION_PROFILE_MIN_MS", "1200"))
+VOICE_SESSION_TTL_SEC = int(os.environ.get("VOICE_SESSION_TTL_SEC", "14400"))
+VOICE_SESSION_REDIS = _env_bool("VOICE_SESSION_REDIS", "true")
+VOICE_SSML_PROSODY = _env_bool("VOICE_SSML_PROSODY", "true")
+
 # TTS continuity
 VOICE_TTS_PREFETCH_DEPTH = int(os.environ.get("VOICE_TTS_PREFETCH_DEPTH", "2"))
 VOICE_TTS_LOOKAHEAD_CHARS = int(os.environ.get("VOICE_TTS_LOOKAHEAD_CHARS", "24"))
@@ -87,9 +163,6 @@ UPLOADS_DIR = os.path.join(PROJECT_ROOT, "uploads")
 # RAG chunking: ~512-token targets with ~10% overlap (tiktoken cl100k_base).
 CHUNK_SIZE_TOKENS = int(os.environ.get("CHUNK_SIZE_TOKENS", "512"))
 CHUNK_OVERLAP_TOKENS = int(os.environ.get("CHUNK_OVERLAP_TOKENS", "51"))
-
-# Redis-backed tutor Q&A cache (LLM answers). Off by default — every question hits the LLM.
-TUTOR_ANSWER_CACHE_ENABLED = _env_bool("TUTOR_ANSWER_CACHE_ENABLED", "false")
 
 # Top-k chunks sent to the LLM (typical practice: 3–5).
 RETRIEVAL_K = int(os.environ.get("RETRIEVAL_K", "5"))
@@ -234,8 +307,8 @@ MIN_CONCEPT_SCORE = float(os.environ.get("MIN_CONCEPT_SCORE", "0.0"))
 # Storage backend
 # ---------------------------------------------------------------------------
 
-# "local" (default) or "s3"
-STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "local")
+# "s3" (default) or "local"
+STORAGE_BACKEND = os.environ.get("STORAGE_BACKEND", "s3")
 S3_BUCKET = os.environ.get("S3_BUCKET", "")
 S3_ENDPOINT_URL = os.environ.get("S3_ENDPOINT_URL", "")
 S3_REGION = os.environ.get("S3_REGION", "ap-south-1")
@@ -245,6 +318,16 @@ AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
 CDN_BASE_URL = os.environ.get("CDN_BASE_URL", "")
 # Thumbnail dimensions "WxH", e.g. "320x240". Empty = no thumbnails.
 IMAGE_THUMB_SIZE = os.environ.get("IMAGE_THUMB_SIZE", "")
+
+# ---------------------------------------------------------------------------
+# Vector backend
+# ---------------------------------------------------------------------------
+
+# "qdrant" (default) or "chroma" (local persist)
+VECTOR_BACKEND = os.environ.get("VECTOR_BACKEND", "qdrant").strip().lower() or "qdrant"
+QDRANT_URL = os.environ.get("QDRANT_URL", "http://localhost:6333").rstrip("/")
+QDRANT_API_KEY = os.environ.get("QDRANT_API_KEY", "")
+QDRANT_TIMEOUT = float(os.environ.get("QDRANT_TIMEOUT", "60") or "60")
 
 # ---------------------------------------------------------------------------
 # OCR service

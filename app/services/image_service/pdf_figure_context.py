@@ -95,6 +95,8 @@ def caption_line_from_pdf(
     if not pdf_path or not figure_number:
         return ""
 
+    from app.services.image_service.figure_context_gates import is_corrupt_ml_caption
+
     lines = list(_page_lines(pdf_path, page_index))
     pat = re.compile(rf"(?i)\bfig\.?\s*{re.escape(figure_number)}\b")
     fallback = ""
@@ -102,13 +104,13 @@ def caption_line_from_pdf(
         if not pat.search(line):
             continue
         cleaned = re.sub(r"\s+", " ", line.strip())
-        if len(cleaned) < 6:
+        if len(cleaned) < 6 or is_corrupt_ml_caption(cleaned):
             continue
         if re.match(rf"(?i)^fig\.?\s*{re.escape(figure_number)}", cleaned):
             return cleaned[:500]
         if not fallback:
             fallback = cleaned
-    return fallback[:500]
+    return fallback[:500] if fallback and not is_corrupt_ml_caption(fallback) else ""
 
 
 def best_caption_line_from_pdf(
@@ -263,10 +265,17 @@ def _caption_from_nearby_page(
 def resolve_display_caption(im, *, subtopic: str | None = None) -> str:
     """
     Short student-facing caption (label only — figure number is sent separately).
+    Never returns OCR/layout garbage; falls back to PDF text, vision, or topic.
     """
     from app.services.image_service.figure_context_gates import is_corrupt_ml_caption
 
     raw = (getattr(im, "caption", None) or getattr(im, "title", None) or "").strip()
+    generated = (getattr(im, "generated_caption", None) or "").strip()
+    # Prefer vision/contextual generated caption when stored OCR caption is junk.
+    if is_corrupt_ml_caption(raw) and generated and not is_corrupt_ml_caption(generated):
+        raw = generated
+    elif is_corrupt_ml_caption(raw):
+        raw = ""
 
     pdf_path = pdf_path_for_image(im)
     fig = getattr(im, "figure_number", None)
@@ -274,23 +283,31 @@ def resolve_display_caption(im, *, subtopic: str | None = None) -> str:
 
     if pdf_path and fig:
         pdf_cap = best_caption_line_from_pdf(pdf_path, page_idx, str(fig))
-        label = _short_figure_label(pdf_cap)
-        if label:
-            return label
-        if _is_minimal_figure_line(pdf_cap, fig) or _is_minimal_figure_line(raw, fig):
+        if pdf_cap and not is_corrupt_ml_caption(pdf_cap):
+            label = _short_figure_label(pdf_cap)
+            if label:
+                return label
+        if _is_minimal_figure_line(pdf_cap, fig) or _is_minimal_figure_line(raw, fig) or not pdf_cap:
             nearby = _caption_from_nearby_page(
                 im, pdf_path, page_idx, str(fig), subtopic=subtopic
             )
-            if nearby:
+            if nearby and not is_corrupt_ml_caption(nearby):
                 return nearby
 
-    raw_label = _short_figure_label(raw)
-    if raw_label:
-        return raw_label
+    if generated and not is_corrupt_ml_caption(generated):
+        gen_label = _short_figure_label(generated)
+        if gen_label:
+            return gen_label
+
+    # Only keep stored OCR when it is a real descriptive caption (not "33" / "x").
+    if raw and not _caption_needs_backfill(raw):
+        raw_label = _short_figure_label(raw)
+        if raw_label and not is_corrupt_ml_caption(raw_label):
+            return raw_label
 
     if pdf_path and fig:
         nearby = _caption_from_nearby_page(im, pdf_path, page_idx, str(fig), subtopic=subtopic)
-        if nearby:
+        if nearby and not is_corrupt_ml_caption(nearby):
             return nearby
 
     if subtopic and fig and not is_corrupt_ml_caption(subtopic):
@@ -299,9 +316,10 @@ def resolve_display_caption(im, *, subtopic: str | None = None) -> str:
     chapter = (getattr(im, "chapter_title", None) or "").strip()
     if chapter and fig:
         topic = re.sub(r"(?i)^chapter\s+\d+\s*[-–—:]\s*", "", chapter).strip()
-        if topic and len(topic) >= 4:
+        if topic and len(topic) >= 4 and not is_corrupt_ml_caption(topic):
             return topic[:120]
 
     if fig:
         return "Textbook illustration"
-    return raw[:120] if raw and not _caption_needs_backfill(raw) else "Textbook illustration"
+    clean = raw[:120] if raw and not _caption_needs_backfill(raw) else "Textbook illustration"
+    return clean if not is_corrupt_ml_caption(clean) else "Textbook illustration"

@@ -1,8 +1,6 @@
-import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, Identity, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -11,9 +9,9 @@ from app.core.database import Base
 class SessionToken(Base):
     __tablename__ = "sessions"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

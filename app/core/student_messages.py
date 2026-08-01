@@ -32,6 +32,10 @@ PDF_ONLY = "Please upload a PDF file (textbook or notes)."
 
 # Auth — student-facing
 INVALID_LOGIN = "Wrong username or password. Please try again."
+LOGIN_USE_USERNAME = (
+    "More than one account shares that email or phone. "
+    "Sign in with your username instead."
+)
 ACCOUNT_INACTIVE = (
     "Your account is paused. Please ask your teacher or school admin for help."
 )
@@ -49,6 +53,9 @@ INVALID_VERIFY_TOKEN = (
 )
 INVALID_RESET_TOKEN = (
     "This password reset link is invalid or expired. Request a new one."
+)
+INVALID_RESET_OTP = (
+    "This password reset code is invalid or expired. Request a new one."
 )
 
 # Legacy alias — older clients may still receive this string

@@ -1,3 +1,11 @@
+# AI Tutor backend — Compose stack
+#
+# Defaults: local uploads + Chroma (existing behavior).
+# Opt-in shared backends (see deploy/MULTI_REPLICA.md + README cutover):
+#   STORAGE_BACKEND=s3      → MinIO / AWS S3
+#   VECTOR_BACKEND=qdrant   → Qdrant
+#   CELERY_AUTOSTART=false  → required when scaling API replicas
+#
 services:
   db:
     image: postgres:16-alpine
@@ -23,6 +31,52 @@ services:
       timeout: 3s
       retries: 10
 
+  # Optional object store (used only when STORAGE_BACKEND=s3). Defaults keep local disk.
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    entrypoint: >
+      /bin/sh -c "
+      sleep 3;
+      mc alias set local http://minio:9000 $${AWS_ACCESS_KEY_ID:-minioadmin} $${AWS_SECRET_ACCESS_KEY:-minioadmin};
+      mc mb --ignore-existing local/$${S3_BUCKET:-ai-tutor};
+      exit 0;
+      "
+    environment:
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-minioadmin}
+      S3_BUCKET: ${S3_BUCKET:-ai-tutor}
+
+  # Optional vector DB (used only when VECTOR_BACKEND=qdrant). Defaults keep Chroma.
+  qdrant:
+    image: qdrant/qdrant:v1.13.2
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
   api:
     build:
       context: .
@@ -36,6 +90,12 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/ai_tutor
       REDIS_URL: redis://redis:6379/0
+      # Opt-in backends (defaults keep local + chroma; override via .env)
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      VECTOR_BACKEND: ${VECTOR_BACKEND:-chroma}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_BUCKET: ${S3_BUCKET:-ai-tutor}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
       # Full feature set (tutor chat, voice, multimodal images, ML PDF extraction, OCR)
       USE_MULTIMODAL_IMAGE_RETRIEVAL: "true"
       WARM_MULTIMODAL_ON_STARTUP: "true"
@@ -57,6 +117,43 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # Optional: started alongside API; unused until STORAGE_BACKEND=s3 / VECTOR_BACKEND=qdrant
+      minio:
+        condition: service_started
+      qdrant:
+        condition: service_started
+
+  lesson_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-tutor-backend:latest
+    restart: unless-stopped
+    command: celery -A app.core.celery_app.celery_app worker --loglevel=info -Q lesson-generate,lesson-export,lesson-autosave,lesson-regenerate --concurrency=2
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/ai_tutor
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-local}
+      VECTOR_BACKEND: ${VECTOR_BACKEND:-chroma}
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-http://minio:9000}
+      S3_BUCKET: ${S3_BUCKET:-ai-tutor}
+      QDRANT_URL: ${QDRANT_URL:-http://qdrant:6333}
+    volumes:
+      - uploads_data:/app/uploads
+      - chroma_data:/app/chroma_db
+      - models_data:/app/models
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      qdrant:
+        condition: service_started
 
 volumes:
   pg_data:
@@ -64,3 +161,5 @@ volumes:
   chroma_data:
   models_data:
   hf_cache:
+  minio_data:
+  qdrant_data:

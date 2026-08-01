@@ -33,6 +33,32 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
+def create_bucket_kwargs(
+    bucket: str, *, region: str = "ap-south-1", endpoint_url: str | None = None
+) -> dict:
+    """
+    Args for s3.create_bucket.
+
+    Custom endpoints (MinIO) use a bare CreateBucket.
+    AWS us-east-1 also uses bare CreateBucket; other AWS regions need LocationConstraint.
+    """
+    kwargs: dict = {"Bucket": bucket}
+    if endpoint_url:
+        return kwargs
+    region = (region or "us-east-1").strip() or "us-east-1"
+    if region != "us-east-1":
+        kwargs["CreateBucketConfiguration"] = {"LocationConstraint": region}
+    return kwargs
+
+
+def _s3_error_code(exc: BaseException) -> str:
+    resp = getattr(exc, "response", None) or {}
+    err = resp.get("Error") if isinstance(resp, dict) else None
+    if isinstance(err, dict) and err.get("Code"):
+        return str(err["Code"])
+    return type(exc).__name__
+
+
 # ---------------------------------------------------------------------------
 # Abstract base
 # ---------------------------------------------------------------------------
@@ -64,6 +90,9 @@ class StorageBackend(ABC):
     @abstractmethod
     def get_bytes(self, relative_path: str) -> Optional[bytes]:
         """Return raw bytes for the object, or None if not found."""
+
+    def delete_prefix(self, prefix: str) -> None:
+        """Remove all objects under *prefix* (trailing slash optional). Default: no-op."""
 
     # ------------------------------------------------------------------
     # Shared helpers
@@ -162,6 +191,13 @@ class LocalStorageBackend(StorageBackend):
         except OSError:
             return None
 
+    def delete_prefix(self, prefix: str) -> None:
+        abs_dir = self._abs(prefix.strip("/"))
+        if os.path.isdir(abs_dir):
+            import shutil
+
+            shutil.rmtree(abs_dir, ignore_errors=True)
+
 
 # ---------------------------------------------------------------------------
 # S3 / S3-compatible backend
@@ -172,6 +208,7 @@ class S3StorageBackend(StorageBackend):
     Store images in an S3 bucket (or S3-compatible store such as MinIO / GCS).
 
     Requires boto3 (`pip install boto3`).
+    Auto-creates the bucket on init / first write if it does not exist.
     """
 
     def __init__(
@@ -188,6 +225,8 @@ class S3StorageBackend(StorageBackend):
     ) -> None:
         self.bucket = bucket
         self.prefix = prefix.strip("/")
+        self.region = region or "ap-south-1"
+        self.endpoint_url = (endpoint_url or "").rstrip("/") or None
         self.cdn_base_url = (cdn_base_url or "").rstrip("/")
         self.thumb_size = thumb_size
         try:
@@ -198,13 +237,39 @@ class S3StorageBackend(StorageBackend):
                 session_kwargs["aws_access_key_id"] = access_key
                 session_kwargs["aws_secret_access_key"] = secret_key
             session = boto3.Session(**session_kwargs)
-            client_kwargs: dict = {"region_name": region}
-            if endpoint_url:
-                client_kwargs["endpoint_url"] = endpoint_url
+            client_kwargs: dict = {"region_name": self.region}
+            if self.endpoint_url:
+                client_kwargs["endpoint_url"] = self.endpoint_url
             self._client = session.client("s3", **client_kwargs)
+            self._ensure_bucket()
             logger.info("[STORAGE] S3 backend ready (bucket=%s prefix=%s)", bucket, prefix)
         except ImportError as exc:
             raise ImportError("S3StorageBackend requires boto3: pip install boto3") from exc
+
+    def _ensure_bucket(self) -> None:
+        """Create the bucket if missing (MinIO / S3). Idempotent."""
+        try:
+            self._client.head_bucket(Bucket=self.bucket)
+            return
+        except Exception:
+            pass
+        kwargs = create_bucket_kwargs(
+            self.bucket, region=self.region, endpoint_url=self.endpoint_url
+        )
+        try:
+            self._client.create_bucket(**kwargs)
+            logger.info("[STORAGE] Created S3 bucket %s", self.bucket)
+        except Exception as exc:
+            code = _s3_error_code(exc)
+            if code in ("BucketAlreadyOwnedByYou", "BucketAlreadyExists", "bucket_already_owned_by_you"):
+                return
+            # Race: another worker created it between head and create
+            try:
+                self._client.head_bucket(Bucket=self.bucket)
+                return
+            except Exception:
+                logger.error("[STORAGE] Could not ensure bucket %s: %s", self.bucket, exc)
+                raise
 
     def _key(self, relative_path: str) -> str:
         return f"{self.prefix}/{relative_path}" if self.prefix else relative_path
@@ -223,13 +288,36 @@ class S3StorageBackend(StorageBackend):
         except Exception:
             pass  # Object not found or other error — proceed with upload
 
-        self._client.put_object(
-            Bucket=self.bucket,
-            Key=key,
-            Body=data,
-            ContentType="image/jpeg",
-            Metadata={"content-hash": content_hash},
-        )
+        content_type = "image/jpeg"
+        lower = relative_path.lower()
+        if lower.endswith(".png"):
+            content_type = "image/png"
+        elif lower.endswith(".pdf"):
+            content_type = "application/pdf"
+        elif lower.endswith(".docx"):
+            content_type = (
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+        try:
+            self._client.put_object(
+                Bucket=self.bucket,
+                Key=key,
+                Body=data,
+                ContentType=content_type,
+                Metadata={"content-hash": content_hash},
+            )
+        except Exception as exc:
+            if _s3_error_code(exc) == "NoSuchBucket":
+                self._ensure_bucket()
+                self._client.put_object(
+                    Bucket=self.bucket,
+                    Key=key,
+                    Body=data,
+                    ContentType=content_type,
+                    Metadata={"content-hash": content_hash},
+                )
+            else:
+                raise
 
         if self.thumb_size:
             thumb = self._make_thumbnail(data, self.thumb_size)
@@ -278,6 +366,29 @@ class S3StorageBackend(StorageBackend):
             return resp["Body"].read()
         except Exception:
             return None
+
+    def delete_prefix(self, prefix: str) -> None:
+        """Delete all keys under prefix/ (S3 list + batch delete)."""
+        key_prefix = self._key(prefix.strip("/"))
+        if not key_prefix.endswith("/"):
+            key_prefix += "/"
+        try:
+            paginator = self._client.get_paginator("list_objects_v2")
+            to_delete: list[dict[str, str]] = []
+            for page in paginator.paginate(Bucket=self.bucket, Prefix=key_prefix):
+                for obj in page.get("Contents") or ():
+                    to_delete.append({"Key": obj["Key"]})
+                    if len(to_delete) >= 1000:
+                        self._client.delete_objects(
+                            Bucket=self.bucket, Delete={"Objects": to_delete}
+                        )
+                        to_delete = []
+            if to_delete:
+                self._client.delete_objects(
+                    Bucket=self.bucket, Delete={"Objects": to_delete}
+                )
+        except Exception as exc:
+            logger.debug("[STORAGE] S3 delete_prefix error %s: %s", key_prefix, exc)
 
 
 # ---------------------------------------------------------------------------
@@ -362,3 +473,126 @@ def get_storage_backend() -> StorageBackend:
     )
     logger.info("[STORAGE] Using local backend at %s", image_root)
     return _backend_instance
+
+_doc_backend_instance: StorageBackend | None = None
+
+
+def get_document_storage_backend() -> StorageBackend:
+    """
+    Storage for textbook PDF/DOCX uploads.
+
+    Local root = UPLOADS_DIR (same layout as today).
+    S3 prefix = ``textbooks/``.
+    """
+    global _doc_backend_instance
+    if _doc_backend_instance is not None:
+        return _doc_backend_instance
+
+    from app.config import UPLOADS_DIR
+
+    try:
+        from app.config import (
+            STORAGE_BACKEND,
+            S3_BUCKET,
+            S3_ENDPOINT_URL,
+            S3_REGION,
+            CDN_BASE_URL,
+            AWS_ACCESS_KEY_ID,
+            AWS_SECRET_ACCESS_KEY,
+        )
+    except ImportError:
+        STORAGE_BACKEND = "local"
+        S3_BUCKET = ""
+        S3_ENDPOINT_URL = ""
+        S3_REGION = "ap-south-1"
+        CDN_BASE_URL = ""
+        AWS_ACCESS_KEY_ID = ""
+        AWS_SECRET_ACCESS_KEY = ""
+
+    backend_name = (STORAGE_BACKEND or "local").lower()
+    if backend_name == "s3" and S3_BUCKET:
+        try:
+            _doc_backend_instance = S3StorageBackend(
+                bucket=S3_BUCKET,
+                prefix="textbooks",
+                region=S3_REGION or "ap-south-1",
+                endpoint_url=S3_ENDPOINT_URL or None,
+                cdn_base_url=CDN_BASE_URL or "",
+                thumb_size=None,
+                access_key=AWS_ACCESS_KEY_ID or None,
+                secret_key=AWS_SECRET_ACCESS_KEY or None,
+            )
+            return _doc_backend_instance
+        except Exception as exc:
+            logger.warning("[STORAGE] document S3 init failed, using local: %s", exc)
+
+    _doc_backend_instance = LocalStorageBackend(
+        root_dir=UPLOADS_DIR,
+        cdn_base_url="",
+        thumb_size=None,
+    )
+    logger.info("[STORAGE] Document local backend at %s", UPLOADS_DIR)
+    return _doc_backend_instance
+
+
+def textbook_document_key(board: str, class_level: str, subject: str, safe_name: str) -> str:
+    """Relative key stored in TextbookUpload.file_path for new uploads."""
+    return f"{board}/{class_level}/{subject}/{safe_name}"
+
+
+def materialize_textbook_file(file_path: str) -> str:
+    """
+    Return a local filesystem path for PDF/DOCX processing.
+
+    Absolute or already-local paths (legacy rows) are returned unchanged when the
+    file exists. Relative storage keys are fetched into UPLOADS_DIR on demand.
+    """
+    if not file_path:
+        return ""
+    if os.path.isfile(file_path):
+        return file_path
+    from app.config import UPLOADS_DIR
+
+    local = file_path if os.path.isabs(file_path) else os.path.join(UPLOADS_DIR, file_path)
+    if os.path.isfile(local):
+        return local
+    try:
+        backend = get_document_storage_backend()
+        key = file_path
+        if os.path.isabs(file_path) and file_path.startswith(UPLOADS_DIR):
+            key = os.path.relpath(file_path, UPLOADS_DIR)
+        data = backend.get_bytes(key.replace("\\", "/"))
+        if data:
+            os.makedirs(os.path.dirname(local) or ".", exist_ok=True)
+            with open(local, "wb") as f:
+                f.write(data)
+            return local
+    except Exception as exc:
+        logger.debug("[STORAGE] materialize_textbook_file failed: %s", exc)
+    return file_path
+
+
+def delete_textbook_file(file_path: str | None) -> None:
+    """Delete a textbook PDF/DOCX from the configured document backend + local cache."""
+    if not file_path:
+        return
+    from app.config import UPLOADS_DIR
+
+    try:
+        backend = get_document_storage_backend()
+        key = file_path
+        if os.path.isabs(file_path) and file_path.startswith(UPLOADS_DIR):
+            key = os.path.relpath(file_path, UPLOADS_DIR)
+        elif os.path.isabs(file_path):
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+            return
+        backend.delete(key.replace("\\", "/"))
+    except Exception as exc:
+        logger.debug("[STORAGE] delete_textbook_file backend: %s", exc)
+    local = file_path if os.path.isabs(file_path) else os.path.join(UPLOADS_DIR, file_path)
+    if os.path.isfile(local):
+        try:
+            os.remove(local)
+        except OSError:
+            pass

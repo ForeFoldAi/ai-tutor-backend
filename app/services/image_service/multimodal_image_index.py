@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 import os
-import uuid
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -61,7 +60,7 @@ def index_upload_images(db: Session, upload: TextbookUpload) -> int:
     indexed = 0
 
     for im in images:
-        path = image_disk_path(upload.id, im.file_name)
+        path = image_disk_path(upload.id, im.file_name, upload=upload)
         vec = encode_image_file(path)
         if vec is None:
             im.multimodal_indexed = False

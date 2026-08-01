@@ -19,37 +19,105 @@ from app.services.query_match import document_page, keyword_match_score
 from app.voice_api import router as voice_router
 from app.voice_ws import ws_router
 from app.modules.auth.router import router as auth_router
+from app.modules.auth.signup.router import router as signup_router
 from app.modules.auth.dependencies import get_current_user
+from app.modules.users.models import User
 from app.modules.auth.bootstrap import seed_test_users_if_missing
 from app.modules.catalog.router import router as catalog_router, student_router as student_catalog_router
-from app.modules.users.models import User
+from app.modules.teacher.lesson_planner.router import router as lesson_planner_router
+from app.modules.teacher.lesson_planner.metrics_router import metrics_router as lesson_planner_metrics_router
+from app.modules.teacher.lesson_planner.ws import lesson_planner_ws_router
+from app.modules.teacher.students.router import router as tutor_students_router
+from app.modules.teacher.assignments.router import router as tutor_assignments_router
+from app.modules.teacher.assignments.student_router import router as student_assignments_router
+from app.modules.school_admin.router import router as school_admin_router
+from app.modules.student_learning.router import router as student_learning_router
+from app.modules.student_dashboard.router import router as student_dashboard_router
+from app.modules.teacher.dashboard.router import router as tutor_dashboard_router
+from app.modules.teacher.progress_analytics.router import router as tutor_progress_analytics_router
+from app.modules.student_assistant.router import router as student_assistant_router
+from app.modules.live_sessions.router import tutor_router as live_sessions_tutor_router
+from app.modules.live_sessions.router import student_router as live_sessions_student_router
+from app.modules.search.router import router as search_router
+from app.modules.events.ws import events_ws_router
+from app.modules.events.middleware import DomainEventMiddleware
+from app.modules.learning_intelligence.router import internal_router as lia_internal_router
+from app.modules.learning_intelligence.router import tutor_router as lia_tutor_router
+from app.modules.notifications.router import router as notifications_router
 
 app = FastAPI()
 
 vectorstore = None
 
-# Restrict origins in production: replace "*" with your frontend domain(s).
-# Example: allow_origins=["https://app.yourdomain.com"]
-_ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*").split(",")
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    """Lightweight liveness probe for Railway/Docker (no model loading)."""
+    return {"status": "ok"}
+
+
+# Browsers reject Allow-Origin: * when credentials are on — list frontends explicitly.
+_DEFAULT_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173"
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", _DEFAULT_ORIGINS).strip()
+_ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip() and o.strip() != "*"]
+if "*" in _raw_origins and not _ALLOWED_ORIGINS:
+    logger.warning(
+        "ALLOWED_ORIGINS=* is ignored with credentials — set explicit frontend URLs in production"
+    )
+_ALLOW_ORIGIN_REGEX = os.environ.get(
+    "ALLOWED_ORIGIN_REGEX",
+    r"https?://(localhost|127\.0\.0\.1)(:\d+)?|https?://.*\.ngrok(-free)?\.(app|io|dev)",
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
+    allow_origin_regex=_ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(DomainEventMiddleware)
 
 app.include_router(voice_router)
 app.include_router(ws_router)      # WebSocket: /ws/voice
 app.include_router(auth_router)
+app.include_router(signup_router)
 app.include_router(catalog_router)
 app.include_router(student_catalog_router)
+app.include_router(lesson_planner_router)
+app.include_router(lesson_planner_metrics_router)
+app.include_router(lesson_planner_ws_router)
+app.include_router(tutor_students_router)
+app.include_router(tutor_assignments_router)
+app.include_router(student_assignments_router)
+app.include_router(school_admin_router)
+app.include_router(student_learning_router)
+app.include_router(student_dashboard_router)
+app.include_router(tutor_dashboard_router)
+app.include_router(tutor_progress_analytics_router)
+app.include_router(student_assistant_router)
+app.include_router(live_sessions_tutor_router)
+app.include_router(live_sessions_student_router)
+app.include_router(search_router)
+app.include_router(events_ws_router)
+app.include_router(lia_internal_router)
+app.include_router(lia_tutor_router)
+app.include_router(notifications_router)
 
 
 @app.on_event("startup")
 def _startup() -> None:
+    from app.core.production_checks import validate_production_settings
+
+    validate_production_settings()
     seed_test_users_if_missing()
+    try:
+        from app.core.celery_autostart import start_celery_sidecar
+
+        start_celery_sidecar()
+    except Exception as exc:
+        logger.warning("CELERY_AUTOSTART skipped (non-fatal): %s", exc)
     import threading
 
     def _warm_tts():
@@ -102,6 +170,39 @@ def _startup() -> None:
     threading.Thread(target=_warm_multimodal, daemon=True).start()
     threading.Thread(target=_warm_voice_protection, daemon=True).start()
 
+    def _seed_lia_concept_graph():
+        import os
+
+        if os.environ.get("LIA_ENABLED", "true").lower() not in ("1", "true", "yes"):
+            return
+        if os.environ.get("LIA_SEED_CONCEPT_GRAPH", "true").lower() not in ("1", "true", "yes"):
+            return
+        try:
+            from app.core.database import SessionLocal
+            from app.services.learning_intelligence.algorithms.concept_graph import seed_concept_graph
+
+            db = SessionLocal()
+            try:
+                result = seed_concept_graph(db)
+                db.commit()
+                logger.info("LIA concept graph seeded: %s", result)
+            finally:
+                db.close()
+        except Exception as exc:
+            logger.warning("LIA concept graph seed failed (non-fatal): %s", exc)
+
+    threading.Thread(target=_seed_lia_concept_graph, daemon=True).start()
+
+
+@app.on_event("shutdown")
+def _shutdown() -> None:
+    try:
+        from app.core.celery_autostart import stop_celery_sidecar
+
+        stop_celery_sidecar()
+    except Exception as exc:
+        logger.warning("CELERY_AUTOSTART stop failed (non-fatal): %s", exc)
+
 
 @app.get("/health/voice")
 def voice_health():
@@ -112,6 +213,8 @@ def voice_health():
         SPEAKER_VERIFICATION_ENABLED,
         VAD_ENABLED,
         VOICE_PROTECTION_ENABLED,
+        VOICE_SESSION_PROFILE,
+        VOICE_SESSION_REDIS,
         VOICE_SPEECH_QUEUE_MAXSIZE,
         VOICE_TTS_PREFETCH,
         VOICE_TTS_PREFETCH_DEPTH,
@@ -124,6 +227,7 @@ def voice_health():
     from app.services.voice_speaker import speaker_status
     from app.services.voice_vad import vad_status
     from app.services.voice_whisper_stt import whisper_available
+    from app.services.voice_session_profile import _backend_name as session_voice_backend
 
     preload = preload_status()
     vad = vad_status()
@@ -133,6 +237,7 @@ def voice_health():
         (not VAD_ENABLED or vad.get("available"))
         and (not NOISE_SUPPRESSION_ENABLED or True)
         and (not SPEAKER_VERIFICATION_ENABLED or speaker.get("backend"))
+        and (not VOICE_WHISPER_ENABLED or whisper_available())
     )
     return {
         "ok": ready,
@@ -153,6 +258,11 @@ def voice_health():
             "whisper_enabled": VOICE_WHISPER_ENABLED,
             "whisper_available": whisper_available(),
         },
+        "session_voice": {
+            "enabled": VOICE_SESSION_PROFILE,
+            "redis_enabled": VOICE_SESSION_REDIS,
+            "backend": session_voice_backend(),
+        },
         "models_loaded": preload,
         "metrics": snapshot(),
         "queue_health": {
@@ -169,10 +279,15 @@ def ai_models_health():
     """
     from app.config import (
         HF_TOKEN,
+        LLM_BASE_URL,
+        LLM_MODEL,
         MISTRAL_API_KEY,
         MISTRAL_MODEL,
         MULTIMODAL_IMAGE_MODEL,
         USE_MULTIMODAL_IMAGE_RETRIEVAL,
+        llm_api_key_for,
+        llm_base_url_for,
+        llm_model_for,
     )
     from app.services.image_service.multimodal_encoder import clip_model_available, current_model_name
     from app.services.vector_service import is_embedding_model_loaded
@@ -185,12 +300,34 @@ def ai_models_health():
         except Exception:
             clip_ok = False
 
+    provider = "mistral_api" if "mistral.ai" in LLM_BASE_URL else "openai_compatible"
+
     return {
         "models": {
             "text_chat": {
-                "provider": "mistral_api",
+                "provider": provider,
                 "model": MISTRAL_MODEL,
                 "configured": bool(MISTRAL_API_KEY),
+                "base_url": LLM_BASE_URL,
+                "default_model": LLM_MODEL,
+                "models_by_feature": {
+                    "chat": llm_model_for("chat"),
+                    "voice": llm_model_for("voice"),
+                    "lesson": llm_model_for("lesson"),
+                    "assistant": llm_model_for("assistant"),
+                },
+                "base_url_by_feature": {
+                    "chat": llm_base_url_for("chat"),
+                    "voice": llm_base_url_for("voice"),
+                    "lesson": llm_base_url_for("lesson"),
+                    "assistant": llm_base_url_for("assistant"),
+                },
+                "api_key_configured_by_feature": {
+                    "chat": bool(llm_api_key_for("chat")),
+                    "voice": bool(llm_api_key_for("voice")),
+                    "lesson": bool(llm_api_key_for("lesson")),
+                    "assistant": bool(llm_api_key_for("assistant")),
+                },
             },
             "text_rag_embeddings": {
                 "model": "BAAI/bge-base-en-v1.5",
@@ -243,6 +380,7 @@ class ChapterChatRequest(BaseModel):
     chapter_names: list[str] | None = None
     conversation_history: list[ConversationTurn] | None = None
     images_only: bool = False
+    agent_mode: str | None = None  # ask | practice | explain
 
 
 def _fallback_answer_from_docs(query: str):
@@ -375,6 +513,7 @@ async def chapter_chat(
         student_name=_current_user.full_name,
         student_key=str(_current_user.id),
         images_only=req.images_only,
+        agent_mode=req.agent_mode,
     )
     return {
         "answer": answer,
@@ -469,6 +608,7 @@ async def chapter_chat_stream(
             conversation_history=history,
             student_name=_current_user.full_name,
             student_key=str(_current_user.id),
+            agent_mode=req.agent_mode,
         ):
             while pending:
                 yield pending.pop(0)

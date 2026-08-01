@@ -124,6 +124,8 @@ def _normalize_whitespace_and_punctuation(text: str) -> str:
     text = re.sub(r"\?{2,}", "?", text)
     text = re.sub(r"\.{4,}", "...", text)
     text = re.sub(r"\.{2,}(?!\.)", ".", text)
+    # Streaming LLM chunks often flush lone markdown symbols — drop them
+    text = re.sub(r"[*#_`\\$]+", " ", text)
     # Remove isolated bracket-only fragments from JSON/templates
     text = re.sub(r"\s*[\[\]{}]\s*", " ", text)
     text = re.sub(r"\s+", " ", text)
@@ -165,7 +167,10 @@ def sanitize_chunk_for_tts(text: str) -> str:
     cleaned = sanitize_for_tts(text)
     if not cleaned:
         return ""
-    # Skip chunks that are only punctuation / symbols
+    # Skip streaming fragments that are mostly punctuation / symbols
+    letters = re.sub(r"[\W\s\d_]", "", cleaned)
+    if len(letters) < 2:
+        return ""
     if re.fullmatch(r"[\s\W]+", cleaned):
         return ""
     return cleaned

@@ -1,0 +1,18 @@
+{
+  "cases": [
+    {
+      "question": "What is the Peninsular Plateau?",
+      "expected_keywords": ["plateau", "peninsula"],
+      "must_include": ["plateau"],
+      "forbidden": ["photosynthesis"],
+      "answer_contains_any": ["plateau", "India", "land"]
+    },
+    {
+      "question": "Describe the Thar Desert.",
+      "expected_keywords": ["desert", "thar"],
+      "must_include": ["desert"],
+      "forbidden": [],
+      "answer_contains_any": ["desert", "Thar", "Rajasthan", "sand"]
+    }
+  ]
+}

@@ -247,12 +247,13 @@ _KEYWORD_STOPWORDS: frozenset[str] = frozenset({
 
 _EDUCATIONAL_DOMAIN_TERMS: frozenset[str] = frozenset({
     # Science / Geography
-    "photosynthesis", "evaporation", "condensation", "precipitation", "transpiration",
+    "photosynthesis", "evaporation", "condensation", "precipitation", "rainfall", "transpiration",
     "osmosis", "diffusion", "digestion", "respiration", "circulation", "reproduction",
     "ecosystem", "habitat", "biodiversity", "conservation", "pollution", "climate",
     "latitude", "longitude", "altitude", "topography", "erosion", "weathering",
     "sediment", "stratum", "strata", "mineral", "volcano", "earthquake", "tectonic",
     "monsoon", "cyclone", "tsunami", "drought", "flood", "irrigation", "agriculture",
+    "hygrometer", "anemometer", "barometer", "thermometer",
     # Biology
     "nucleus", "mitochondria", "chloroplast", "chromosome", "enzyme", "protein",
     "membrane", "cytoplasm", "organism", "species", "evolution", "adaptation",
@@ -434,9 +435,9 @@ CURRICULUM_CONCEPT_TAGS: dict[str, list[str]] = {
     "ecology":         ["ecosystem", "food chain", "predator", "prey", "habitat", "biodiversity", "food web"],
     "reproduction":    ["reproduction", "fertilisation", "embryo", "gamete", "ovum", "sperm", "zygote"],
     # Geography
-    "weather_climate": ["weather", "climate", "monsoon", "rainfall", "temperature", "humidity", "wind speed"],
+    "weather_climate": ["weather", "climate", "monsoon", "rainfall", "precipitation", "rain gauge", "temperature", "humidity", "wind speed"],
     "landforms":       ["mountain", "plateau", "plain", "valley", "river", "delta", "canyon", "glacier", "peninsula"],
-    "water_cycle":     ["water cycle", "evaporation", "precipitation", "transpiration", "groundwater"],
+    "water_cycle":     ["water cycle", "evaporation", "precipitation", "rainfall", "rain gauge", "transpiration", "groundwater"],
     "maps_cartography": ["map", "scale", "latitude", "longitude", "contour", "atlas", "legend", "grid"],
     "natural_disasters": ["earthquake", "volcano", "tsunami", "cyclone", "flood", "drought", "landslide"],
     # History

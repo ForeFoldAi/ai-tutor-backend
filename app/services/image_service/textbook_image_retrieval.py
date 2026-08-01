@@ -17,7 +17,6 @@ from __future__ import annotations
 import logging
 import os
 import re
-import uuid
 from collections import defaultdict
 from typing import Any
 
@@ -292,6 +291,10 @@ def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> floa
     gate_text = figure_descriptive_text_for_gates(im, cap)
     if not gate_text.strip() and get_content_kind(im) in ("table", "formula"):
         gate_text = asset_retrieval_text(im)
+    # Let stored keywords contribute when enrichment already wrote them.
+    sem = (getattr(im, "semantic_keywords", None) or "").strip()
+    if sem:
+        gate_text = f"{gate_text} {sem}".strip()
     topic_text = gate_text
     caption_text = " ".join(
         p for p in (cap, sec, subsec) if p
@@ -547,7 +550,7 @@ def filter_chapter_candidates(
         if reject:
             logger.debug("[SYMBOLIC] rejected %s — %s", im.file_name, reason)
             continue
-        disk_path = image_disk_path(im.textbook_upload_id, im.file_name)
+        disk_path = image_disk_path(im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None))
         if not image_has_visible_content(disk_path):
             continue
         spec = _concept_specificity_score(intent, im)
@@ -919,7 +922,7 @@ def _select_relevant_images(
 
     scored = sorted(scored, key=lambda x: -x[0])
     top_score = scored[0][0]
-    seen: set[tuple[uuid.UUID, str]] = set()
+    seen: set[tuple[int, str]] = set()
     out: list[dict] = []
     prev_score: float | None = None
 
@@ -943,7 +946,7 @@ def _select_relevant_images(
         key = (im.textbook_upload_id, im.file_name)
         if key in seen:
             continue
-        disk_path = image_disk_path(im.textbook_upload_id, im.file_name)
+        disk_path = image_disk_path(im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None))
         if not image_has_visible_content(disk_path):
             continue
 
@@ -1037,7 +1040,7 @@ def _guaranteed_citation_figures(
             score = prox + topic * 2.0
         else:
             score = prox
-        disk_path = image_disk_path(im.textbook_upload_id, im.file_name)
+        disk_path = image_disk_path(im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None))
         if not image_has_visible_content(disk_path):
             continue
         ranked.append((score, im))
@@ -1107,22 +1110,22 @@ def finalize_related_images(
 # DB helpers
 # ---------------------------------------------------------------------------
 
-def _load_uploads(db: Session, chapter_ids: list[str] | None) -> dict[uuid.UUID, TextbookUpload]:
+def _load_uploads(db: Session, chapter_ids: list[str] | None) -> dict[int, TextbookUpload]:
     if not chapter_ids:
         return {}
-    uuids: list[uuid.UUID] = []
+    ids: list[int] = []
     for raw in chapter_ids:
         try:
-            uuids.append(uuid.UUID(str(raw)))
+            ids.append(int(raw))
         except Exception:
             continue
-    if not uuids:
+    if not ids:
         return {}
-    rows = list(db.scalars(select(TextbookUpload).where(TextbookUpload.id.in_(uuids))))
+    rows = list(db.scalars(select(TextbookUpload).where(TextbookUpload.id.in_(ids))))
     return {r.id: r for r in rows}
 
 
-def _list_images(db: Session, upload_ids: list[uuid.UUID]) -> list[TextbookImage]:
+def _list_images(db: Session, upload_ids: list[int]) -> list[TextbookImage]:
     if not upload_ids:
         return []
     return list(
@@ -1132,7 +1135,7 @@ def _list_images(db: Session, upload_ids: list[uuid.UUID]) -> list[TextbookImage
 
 def _attach_upload_refs(
     images: list[TextbookImage],
-    uploads: dict[uuid.UUID, TextbookUpload],
+    uploads: dict[int, TextbookUpload],
 ) -> None:
     """Attach upload rows so PDF text backfill can resolve file paths."""
     for im in images:
@@ -1148,7 +1151,7 @@ def _attach_upload_refs(
 def _pedagogy_rank(
     intent: "ImageIntent",
     images: list[TextbookImage],
-    uploads: dict[uuid.UUID, TextbookUpload],
+    uploads: dict[int, TextbookUpload],
     chapter_hints: list[str],
     pages_by_upload: dict[str, list[int]],
     *,
@@ -1232,11 +1235,13 @@ def related_images_payload(
     answer_text: str = "",
     top_n: int = _DEFAULT_TOP,
     conversation_context: Any | None = None,
+    ensure_extract: bool = True,
 ) -> list[dict]:
     """
     Heuristic (non-CLIP) precision pedagogy ranker.
 
     answer_text is accepted for API backward-compat but never used for scoring.
+    Set ensure_extract=False to use already-extracted figures only (lesson planner).
     """
     from app.config import MIN_FINAL_SCORE
 
@@ -1259,14 +1264,15 @@ def related_images_payload(
         if not uploads:
             return []
 
-        for u in uploads.values():
-            try:
-                ensure_textbook_images_extracted(db, u)
-                from app.services.image_service.textbook_image_extraction import ensure_figure_context_bge_indexed
+        if ensure_extract:
+            for u in uploads.values():
+                try:
+                    ensure_textbook_images_extracted(db, u)
+                    from app.services.image_service.textbook_image_extraction import ensure_figure_context_bge_indexed
 
-                ensure_figure_context_bge_indexed(db, u)
-            except Exception as exc:
-                logger.debug("ensure_textbook_images_extracted: %s", exc)
+                    ensure_figure_context_bge_indexed(db, u)
+                except Exception as exc:
+                    logger.debug("ensure_textbook_images_extracted: %s", exc)
 
         images = _list_images(db, list(uploads.keys()))
         if not images:
@@ -1450,7 +1456,7 @@ def early_related_images_for_query(
                     _payload_row(im, 72.0, None, subtopic=subtopic_hint)
                     for im in defs[:top_n]
                     if image_has_visible_content(
-                        image_disk_path(im.textbook_upload_id, im.file_name)
+                        image_disk_path(im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None))
                     )
                 ]
         return _guaranteed_citation_figures(
@@ -1508,7 +1514,7 @@ def debug_rank_figures(
     visible = [
         im for im in images
         if image_has_visible_content(
-            image_disk_path(im.textbook_upload_id, im.file_name)
+            image_disk_path(im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None))
         )
     ]
     filtered = filter_chapter_candidates(intent, visible)

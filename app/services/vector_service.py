@@ -1,7 +1,9 @@
 import logging
 import os
 import shutil
+import sqlite3
 import sys
+from functools import lru_cache
 from typing import List
 
 from langchain_core.documents import Document
@@ -117,6 +119,16 @@ def _sanitize_chroma_env():
 
 
 def create_vector_store(docs):
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        # Legacy wipe-all path is unsafe against a shared Qdrant; use add_documents_to_store.
+        logger.warning("create_vector_store ignored under VECTOR_BACKEND=qdrant; use add_documents_to_store")
+        from app.services.vector_backend import qdrant_text
+
+        qdrant_text.add_documents(docs, collection_name="langchain")
+        return load_vector_store()
+
     _sanitize_chroma_env()
     from langchain_community.vectorstores import Chroma
 
@@ -138,6 +150,13 @@ def create_vector_store(docs):
         return InMemoryDocVectorStore(docs)
 
 def load_vector_store():
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        # Callers that need a LangChain-like object for legacy /ask use in-memory empty;
+        # production RAG uses retrieve_from_collection.
+        return InMemoryDocVectorStore([])
+
     _sanitize_chroma_env()
     from langchain_community.vectorstores import Chroma
 
@@ -156,7 +175,7 @@ def load_vector_store():
 
 
 def add_documents_to_store(docs, *, collection_name: str = "textbooks") -> int:
-    """Add documents to an existing ChromaDB collection (or create it).
+    """Add documents to an existing collection (or create it).
 
     Before inserting, any existing vectors that share the same
     ``textbook_upload_id`` metadata are deleted so that re-processing a
@@ -164,6 +183,13 @@ def add_documents_to_store(docs, *, collection_name: str = "textbooks") -> int:
 
     Returns the number of chunks added.
     """
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_text
+
+        return qdrant_text.add_documents(docs, collection_name=collection_name)
+
     _sanitize_chroma_env()
     from langchain_community.vectorstores import Chroma
 
@@ -204,7 +230,14 @@ def add_documents_to_store(docs, *, collection_name: str = "textbooks") -> int:
 
 
 def get_collection_stats() -> dict:
-    """Return per-collection document counts from the local ChromaDB store."""
+    """Return per-collection document counts from the active vector backend."""
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_text
+
+        return qdrant_text.collection_stats()
+
     _sanitize_chroma_env()
     try:
         import chromadb
@@ -219,20 +252,124 @@ def get_collection_stats() -> dict:
         return {}
 
 
+@lru_cache(maxsize=64)
+def _chroma_upload_id_by_content_label(collection_name: str) -> dict[str, str]:
+    """Map Chroma ``content_label`` metadata to ``textbook_upload_id`` for one collection."""
+    db_path = os.path.join(CHROMA_PATH, "chroma.sqlite3")
+    if not os.path.isfile(db_path):
+        return {}
+    try:
+        conn = sqlite3.connect(db_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT em1.string_value, em2.string_value
+                FROM embedding_metadata em1
+                JOIN embedding_metadata em2
+                  ON em1.id = em2.id AND em2.key = 'content_label'
+                JOIN embeddings e ON e.id = em1.id
+                JOIN segments s ON s.id = e.segment_id
+                JOIN collections c ON c.id = s.collection
+                WHERE c.name = ? AND em1.key = 'textbook_upload_id'
+                GROUP BY em1.string_value, em2.string_value
+                """,
+                (collection_name,),
+            ).fetchall()
+        finally:
+            conn.close()
+    except Exception as exc:
+        logger.debug("Chroma label lookup failed for %r: %s", collection_name, exc)
+        return {}
+    return {label: uid for uid, label in rows if uid and label}
+
+
+def resolve_chroma_upload_ids(
+    chapter_ids: list[str] | None,
+    chapter_names: list[str] | None,
+    *,
+    collection_name: str,
+) -> list[str] | None:
+    """
+    Map API textbook upload IDs to the IDs stored in vector metadata.
+
+    After UUID→bigint PK migration, the store may still hold legacy UUID
+    ``textbook_upload_id`` values while clients send sequential DB ids.
+    """
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_text
+
+        return qdrant_text.resolve_upload_ids(
+            chapter_ids, chapter_names, collection_name=collection_name
+        )
+
+    if not chapter_ids:
+        return chapter_ids
+
+    label_to_uid = _chroma_upload_id_by_content_label(collection_name)
+    if not label_to_uid:
+        return chapter_ids
+
+    known_uids = set(label_to_uid.values())
+    names = [str(n).strip() for n in (chapter_names or []) if n and str(n).strip()]
+    resolved: list[str] = []
+
+    for i, raw in enumerate(chapter_ids):
+        cid = str(raw).strip()
+        if not cid:
+            continue
+        if cid in known_uids:
+            resolved.append(cid)
+            continue
+        name = names[i] if i < len(names) else ""
+        chroma_uid = label_to_uid.get(name) if name else None
+        if chroma_uid:
+            logger.info(
+                "[RETRIEVE] mapped upload id %s -> %s via chapter name %r",
+                cid,
+                chroma_uid,
+                name,
+            )
+            resolved.append(chroma_uid)
+            continue
+        resolved.append(cid)
+
+    return resolved
+
+
 def retrieve_from_collection(
     query: str,
     *,
     collection_name: str,
     chapter_ids: list[str] | None = None,
+    chapter_names: list[str] | None = None,
     k: int = 5,
 ) -> list:
-    """Retrieve relevant chunks from a specific ChromaDB collection.
+    """Retrieve relevant chunks from a specific collection.
 
     When *chapter_ids* is given, only chunks whose ``textbook_upload_id``
     metadata matches one of the IDs are returned.
     """
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_text
+
+        return qdrant_text.similarity_search(
+            query,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+            chapter_names=chapter_names,
+            k=k,
+        )
+
     _sanitize_chroma_env()
     from langchain_community.vectorstores import Chroma
+
+    filter_ids = resolve_chroma_upload_ids(
+        chapter_ids, chapter_names, collection_name=collection_name
+    )
 
     embedding_model = _get_embedding_model()
     if embedding_model is None:
@@ -248,11 +385,11 @@ def retrieve_from_collection(
         )
 
         where_filter = None
-        if chapter_ids:
-            if len(chapter_ids) == 1:
-                where_filter = {"textbook_upload_id": chapter_ids[0]}
+        if filter_ids:
+            if len(filter_ids) == 1:
+                where_filter = {"textbook_upload_id": filter_ids[0]}
             else:
-                where_filter = {"textbook_upload_id": {"$in": chapter_ids}}
+                where_filter = {"textbook_upload_id": {"$in": filter_ids}}
 
         print(f"[RETRIEVE] where_filter={where_filter}")
 
@@ -279,10 +416,29 @@ def fetch_chapter_chunks(
     collection_name: str,
     chapter_ids: list[str],
     *,
+    chapter_names: list[str] | None = None,
     limit: int = 500,
 ) -> list:
     """Load all embedded chunks for the given textbook upload IDs (for heading-aware RAG)."""
     if not chapter_ids:
+        return []
+
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_text
+
+        return qdrant_text.fetch_chapter_chunks(
+            collection_name,
+            chapter_ids,
+            chapter_names=chapter_names,
+            limit=limit,
+        )
+
+    filter_ids = resolve_chroma_upload_ids(
+        chapter_ids, chapter_names, collection_name=collection_name
+    )
+    if not filter_ids:
         return []
 
     _sanitize_chroma_env()
@@ -292,10 +448,10 @@ def fetch_chapter_chunks(
 
         client = chromadb.PersistentClient(path=CHROMA_PATH)
         coll = client.get_collection(collection_name)
-        if len(chapter_ids) == 1:
-            where_filter = {"textbook_upload_id": chapter_ids[0]}
+        if len(filter_ids) == 1:
+            where_filter = {"textbook_upload_id": filter_ids[0]}
         else:
-            where_filter = {"textbook_upload_id": {"$in": chapter_ids}}
+            where_filter = {"textbook_upload_id": {"$in": filter_ids}}
 
         result = coll.get(
             where=where_filter,
@@ -328,6 +484,14 @@ def fetch_chapter_chunks(
 
 def delete_collection_docs(collection_name: str, *, where_filter: dict | None = None) -> None:
     """Delete documents from a collection, optionally matching a metadata filter."""
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_text
+
+        qdrant_text.delete_docs(collection_name, where_filter=where_filter)
+        return
+
     _sanitize_chroma_env()
     try:
         import chromadb

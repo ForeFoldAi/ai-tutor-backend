@@ -29,6 +29,7 @@ wheels/
 # Environment and secrets
 .env
 .env.local
+.env.production
 *.pem
 
 # Chroma DB
@@ -73,3 +74,18 @@ htmlcov/
 .mypy_cache/
 
 debug_figure_detection/
+
+# Eval run outputs / local temp (keep evaluation source + goldens)
+evaluation/artifacts/
+evaluation/reports/*
+!evaluation/reports/.gitkeep
+evaluation/baselines/*.json
+!evaluation/baselines/.gitkeep
+
+# Local exports / scratch / celery beat db
+exports/
+tmp/
+celerybeat-schedule
+celerybeat-schedule-*
+over-all-test/*.pdf
+

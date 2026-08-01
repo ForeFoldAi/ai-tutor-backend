@@ -28,7 +28,10 @@ def get_current_user(
     if payload.get("type") != "access":
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     user_id = payload.get("sub")
-    user = db.get(User, user_id)
+    try:
+        user = db.get(User, int(user_id))
+    except (TypeError, ValueError) as exc:
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED) from exc
     if not user:
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     return user
@@ -54,7 +57,10 @@ def get_current_user_bearer_or_query(
     if payload.get("type") != "access":
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     user_id = payload.get("sub")
-    user = db.get(User, user_id)
+    try:
+        user = db.get(User, int(user_id))
+    except (TypeError, ValueError) as exc:
+        raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED) from exc
     if not user:
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     return user

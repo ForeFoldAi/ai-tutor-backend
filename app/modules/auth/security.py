@@ -1,4 +1,3 @@
-import uuid
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
@@ -12,7 +11,7 @@ settings = get_settings()
 
 def create_refresh_session(
     db: Session,
-    user_id: uuid.UUID,
+    user_id: int,
     user_agent: str | None,
     ip_address: str | None,
 ) -> tuple[str, SessionToken]:

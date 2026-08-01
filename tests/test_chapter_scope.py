@@ -131,6 +131,42 @@ def test_not_covered_when_no_term_in_selected_chapter(mock_other, mock_labels):
     assert assessment.level == ChapterCoverageLevel.NONE
 
 
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_full_coverage_when_term_in_chapter_title(mock_other):
+    ch2_id = "22222222-2222-2222-2222-222222222222"
+    mock_other.return_value = ("", 0, 0)
+
+    assessment = assess_chapter_coverage(
+        "what is weather?",
+        docs=[_doc("Humidity measures moisture in the air.", ch2_id)],
+        collection_name="CBSE_CLASS_9_Social",
+        chapter_ids=[ch2_id],
+        chapter_names=["Chapter 2 - Understanding the Weather"],
+        board="CBSE",
+        class_level="CLASS_9",
+        subject_name="Social",
+    )
+    assert assessment.level == ChapterCoverageLevel.FULL
+
+
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_full_coverage_for_tell_about_this_chapter(mock_other):
+    ch2_id = "22222222-2222-2222-2222-222222222222"
+    mock_other.return_value = ("", 0, 0)
+
+    assessment = assess_chapter_coverage(
+        "tell about this chapter",
+        docs=[_doc("Humidity measures moisture in the air.", ch2_id)],
+        collection_name="CBSE_CLASS_9_Social",
+        chapter_ids=[ch2_id],
+        chapter_names=["Chapter 2 - Understanding the Weather"],
+        board="CBSE",
+        class_level="CLASS_9",
+        subject_name="Social",
+    )
+    assert assessment.level == ChapterCoverageLevel.FULL
+
+
 def test_scope_choice_general():
     history = [
         {"role": "user", "content": "what is democracy?"},
@@ -143,3 +179,37 @@ def test_scope_choice_general():
     assert detect_chapter_scope_choice("general explanation", history) == ChapterScopeChoice.GENERAL
     assert detect_chapter_scope_choice("I'll go with option B", history) == ChapterScopeChoice.SWITCH
     assert detect_chapter_scope_choice("I choose option c please", history) == ChapterScopeChoice.GENERAL
+
+
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_pedagogical_quiz_skips_scope(mock_other):
+    from app.services.chapter_scope import assess_chapter_coverage
+
+    ch2_id = "22222222-2222-2222-2222-222222222222"
+    mock_other.return_value = ("", 0, 0)
+    assessment = assess_chapter_coverage(
+        "Conduct quiz",
+        docs=[_doc("Humidity measures moisture in the air.", ch2_id)],
+        collection_name="CBSE_CLASS_9_Social",
+        chapter_ids=[ch2_id],
+        chapter_names=["Chapter 2 - Understanding the Weather"],
+        board="CBSE",
+        class_level="CLASS_9",
+        subject_name="Social",
+    )
+    assert assessment.level == ChapterCoverageLevel.FULL
+
+
+def test_related_follow_up_ozone_protection():
+    from app.services.chapter_scope import is_related_chapter_follow_up
+
+    history = [
+        {
+            "role": "assistant",
+            "content": (
+                "The ozone layer is a special part of the Earth’s atmosphere that protects "
+                "life by absorbing most of the sun’s harmful ultraviolet rays."
+            ),
+        }
+    ]
+    assert is_related_chapter_follow_up("How is ozone layer protected?", history)

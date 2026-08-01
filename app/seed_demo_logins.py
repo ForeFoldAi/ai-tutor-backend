@@ -1,5 +1,5 @@
 """
-Ensure demo logins exist for every role (STUDENT, TUTOR, SCHOOL_ADMIN, ORG_ADMIN, MASTER_ADMIN).
+Ensure demo logins exist for every role (STUDENT, TUTOR, SCHOOL_ADMIN, MASTER_ADMIN).
 
 Run from the backend root after schema migrations:
 

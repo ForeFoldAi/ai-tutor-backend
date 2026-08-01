@@ -1,9 +1,10 @@
 """
 Extract embedded images from uploaded textbook PDFs and DOCX files.
 
-Stores files under ``uploads/_textbook_images/<upload_id>/{figures,tables,formulas}/`` and persists
-``TextbookImage`` rows. Idempotent per upload when rows already exist unless
-forced purge is called first (re-processing).
+Stores files under
+``uploads/_textbook_images/<board>/<grade>/<subject>/<chapter>/{figures,tables,formulas}/``
+(and the same key under S3 prefix ``textbook_images/``). Idempotent per upload when
+rows already exist unless forced purge is called first (re-processing).
 """
 
 from __future__ import annotations
@@ -13,7 +14,6 @@ import logging
 import os
 import re
 import shutil
-import uuid
 from io import BytesIO
 from typing import Any
 
@@ -26,6 +26,20 @@ from app.modules.catalog.models import TextbookImage, TextbookUpload
 logger = logging.getLogger(__name__)
 
 IMAGE_ROOT = os.path.join(UPLOADS_DIR, "_textbook_images")
+
+
+def _resolved_upload_path(upload: TextbookUpload) -> str:
+    """Local path for the source PDF/DOCX (materializes from S3 when needed)."""
+    path = upload.file_path or ""
+    if not path:
+        return ""
+    try:
+        from app.services.image_service.storage_backend import materialize_textbook_file
+
+        return materialize_textbook_file(path)
+    except Exception:
+        return path
+
 FIGURES_SUBDIR = "figures"
 TABLES_SUBDIR = "tables"
 FORMULAS_SUBDIR = "formulas"
@@ -232,39 +246,143 @@ def _image_dimensions(image_bytes: bytes) -> tuple[int, int]:
         return 0, 0
 
 
-def _upload_image_dir(upload_id: uuid.UUID) -> str:
-    return os.path.join(IMAGE_ROOT, str(upload_id))
+def _path_segment(text: str | None, *, fallback: str = "unknown") -> str:
+    """Safe S3/path segment: spaces→_, drop separators; keep readable chapter titles."""
+    raw = (text or "").strip() or fallback
+    raw = raw.replace("/", "-").replace("\\", "-")
+    raw = re.sub(r"\s+", "_", raw)
+    raw = re.sub(r"[^\w.\-]+", "", raw, flags=re.UNICODE)
+    return (raw[:100] or fallback)
+
+
+def upload_asset_prefix(upload: TextbookUpload) -> str:
+    """
+    Storage prefix: ``{curriculum}/{grade}/{subject}/{chapter}``.
+
+    Matches catalog PDF layout (e.g. ``CBSE/CLASS_9/Social/...``) so S3 keys are
+    browsable by curriculum instead of opaque upload ids.
+    """
+    board = getattr(upload.board, "value", None) or str(upload.board or "unknown")
+    grade = getattr(upload.class_level, "value", None) or str(upload.class_level or "unknown")
+    subject = _path_segment(upload.subject_name, fallback="unknown")
+    chapter = _path_segment(
+        upload.chapter or upload.content_label,
+        fallback=f"upload-{int(upload.id)}",
+    )
+    return f"{board}/{grade}/{subject}/{chapter}"
+
+
+def _upload_image_dir(upload: TextbookUpload | int) -> str:
+    if isinstance(upload, TextbookUpload):
+        return os.path.join(IMAGE_ROOT, upload_asset_prefix(upload))
+    return os.path.join(IMAGE_ROOT, str(int(upload)))
 
 
 def _asset_subdir(content_kind: str) -> str:
     return _CONTENT_KIND_SUBDIR.get(content_kind, FIGURES_SUBDIR)
 
 
-def _upload_asset_dir(upload_id: uuid.UUID, content_kind: str) -> str:
-    return os.path.join(_upload_image_dir(upload_id), _asset_subdir(content_kind))
+def _upload_asset_dir(upload: TextbookUpload | int, content_kind: str) -> str:
+    return os.path.join(_upload_image_dir(upload), _asset_subdir(content_kind))
 
 
-def image_disk_path(upload_id: uuid.UUID, file_name: str) -> str:
+def image_storage_key(
+    upload: TextbookUpload | int,
+    file_name: str,
+    *,
+    legacy: bool = False,
+) -> str:
     """
-    Resolve on-disk path for a stored asset.
+    Relative storage key under ``textbook_images/``.
 
-    Supports new layout ``<upload_id>/<kind>/file.jpg`` and legacy flat files.
+    Default: ``{board}/{grade}/{subject}/{chapter}/{figures|tables|formulas}/file.jpg``
+    Legacy (``legacy=True`` or int upload id): ``{upload_id}/...`` for old objects.
     """
-    root = _upload_image_dir(upload_id)
     normalized = file_name.replace("\\", "/").lstrip("/")
-    direct = os.path.join(root, normalized)
-    if os.path.isfile(direct):
-        return direct
+    if legacy:
+        uid = int(upload) if isinstance(upload, int) else int(upload.id)
+        return f"{uid}/{normalized}"
+    if isinstance(upload, int):
+        return f"{int(upload)}/{normalized}"
+    return f"{upload_asset_prefix(upload)}/{normalized}"
+
+
+def _materialize_storage_bytes(dest: str, data: bytes) -> str:
+    os.makedirs(os.path.dirname(dest), exist_ok=True)
+    with open(dest, "wb") as f:
+        f.write(data)
+    return dest
+
+
+def image_disk_path(
+    upload_id: int,
+    file_name: str,
+    *,
+    upload: TextbookUpload | None = None,
+) -> str:
+    """
+    Resolve a local filesystem path for a stored asset.
+
+    Prefers curriculum-scoped dirs; also checks legacy ``<upload_id>/...``.
+    When STORAGE_BACKEND=s3, materializes bytes into IMAGE_ROOT on first access.
+    """
+    normalized = file_name.replace("\\", "/").lstrip("/")
     base = os.path.basename(normalized)
-    for sub in (FIGURES_SUBDIR, TABLES_SUBDIR, FORMULAS_SUBDIR):
-        candidate = os.path.join(root, sub, base)
-        if os.path.isfile(candidate):
-            return candidate
-    return direct
+    roots: list[str] = []
+    if upload is not None:
+        roots.append(_upload_image_dir(upload))
+    roots.append(_upload_image_dir(upload_id))
+
+    for root in roots:
+        direct = os.path.join(root, normalized)
+        if os.path.isfile(direct):
+            return direct
+        for sub in (FIGURES_SUBDIR, TABLES_SUBDIR, FORMULAS_SUBDIR):
+            candidate = os.path.join(root, sub, base)
+            if os.path.isfile(candidate):
+                return candidate
+
+    # Materialize from storage backend (semantic key first, then legacy upload_id).
+    try:
+        from app.services.image_service.storage_backend import get_storage_backend
+
+        backend = get_storage_backend()
+        keys: list[str] = []
+        if upload is not None:
+            keys.append(image_storage_key(upload, normalized))
+            if "/" not in normalized:
+                for sub in (FIGURES_SUBDIR, TABLES_SUBDIR, FORMULAS_SUBDIR):
+                    keys.append(image_storage_key(upload, f"{sub}/{base}"))
+        keys.append(image_storage_key(upload_id, normalized, legacy=True))
+        if "/" not in normalized:
+            for sub in (FIGURES_SUBDIR, TABLES_SUBDIR, FORMULAS_SUBDIR):
+                keys.append(image_storage_key(upload_id, f"{sub}/{base}", legacy=True))
+        preferred_root = roots[0]
+        for key in keys:
+            data = backend.get_bytes(key)
+            if data:
+                # Keep curriculum-scoped layout under IMAGE_ROOT when possible.
+                if upload is not None and key.startswith(upload_asset_prefix(upload) + "/"):
+                    rel = key[len(upload_asset_prefix(upload)) + 1 :]
+                elif "/" in key:
+                    # strip leading segment(s) until figures|tables|formulas
+                    parts = key.split("/")
+                    for i, p in enumerate(parts):
+                        if p in (FIGURES_SUBDIR, TABLES_SUBDIR, FORMULAS_SUBDIR):
+                            rel = "/".join(parts[i:])
+                            break
+                    else:
+                        rel = parts[-1]
+                else:
+                    rel = base
+                return _materialize_storage_bytes(os.path.join(preferred_root, rel), data)
+    except Exception as exc:
+        logger.debug("image_disk_path materialize failed: %s", exc)
+    return os.path.join(roots[0], normalized)
 
 
-def purge_textbook_images_disk_and_rows(db: Session, upload_id: uuid.UUID) -> None:
-    """Remove DB rows and on-disk assets for one upload."""
+def purge_textbook_images_disk_and_rows(db: Session, upload_id: int) -> None:
+    """Remove DB rows and stored assets for one upload."""
     upload = db.get(TextbookUpload, upload_id)
     if upload is not None:
         try:
@@ -274,12 +392,25 @@ def purge_textbook_images_disk_and_rows(db: Session, upload_id: uuid.UUID) -> No
         except Exception as exc:
             logger.debug("purge_multimodal_index_for_upload: %s", exc)
     db.execute(delete(TextbookImage).where(TextbookImage.textbook_upload_id == upload_id))
-    d = _upload_image_dir(upload_id)
-    if os.path.isdir(d):
-        try:
-            shutil.rmtree(d, ignore_errors=True)
-        except Exception as exc:
-            logger.warning("Could not remove image dir %s: %s", d, exc)
+    try:
+        from app.services.image_service.storage_backend import get_storage_backend
+
+        backend = get_storage_backend()
+        # New curriculum-scoped prefix + legacy numeric prefix.
+        if upload is not None:
+            backend.delete_prefix(upload_asset_prefix(upload))
+        backend.delete_prefix(str(int(upload_id)))
+    except Exception as exc:
+        logger.warning("storage delete_prefix for upload %s failed: %s", upload_id, exc)
+    for d in (
+        _upload_image_dir(upload) if upload is not None else None,
+        _upload_image_dir(upload_id),
+    ):
+        if d and os.path.isdir(d):
+            try:
+                shutil.rmtree(d, ignore_errors=True)
+            except Exception as exc:
+                logger.warning("Could not remove image dir %s: %s", d, exc)
 
 
 def _normalize_page_text(text: str) -> str:
@@ -600,7 +731,10 @@ def _enrich_image_row(
         extract_semantic_keywords,
         generate_educational_tags,
     )
-    from app.services.image_service.figure_context_gates import is_minimal_figure_caption
+    from app.services.image_service.figure_context_gates import (
+        is_corrupt_ml_caption,
+        is_minimal_figure_caption,
+    )
 
     # Content hash (deduplication)
     row.content_hash = compute_content_hash(image_bytes)
@@ -608,6 +742,10 @@ def _enrich_image_row(
     # Denormalise upload-level fields so retrieval doesn't need a join
     row.grade_level = str(getattr(upload, "class_level", "") or "")
     row.subject = str(getattr(upload, "subject_name", "") or "")
+
+    # Drop letter-spaced / OCR-fragment captions so they never drive retrieval or UI.
+    if is_corrupt_ml_caption(row.caption):
+        row.caption = None
 
     # Generated caption for uncaptioned or bare-label figures
     has_real_caption = bool(row.caption) and not is_minimal_figure_caption(row.caption)
@@ -648,6 +786,10 @@ def _enrich_image_row(
             nearby_before=nearby_before,
             nearby_after=nearby_after,
         )
+
+    # Prefer generated/vision caption when OCR was cleared as corrupt.
+    if not (row.caption or "").strip() and (row.generated_caption or "").strip():
+        row.caption = row.generated_caption
 
     # Semantic keywords from all available text
     effective_caption = row.caption or row.generated_caption or ""
@@ -696,7 +838,7 @@ def _enrich_image_row(
 def generate_extraction_audit_report(
     rows: list[dict[str, Any]],
     *,
-    upload_id: uuid.UUID | None = None,
+    upload_id: int | None = None,
 ) -> str:
     """
     Human-readable audit table after extraction (requirement 7).
@@ -858,7 +1000,7 @@ def _page_snippet(page_text: str, figure_captions: list[str]) -> str | None:
 
 
 def _save_blob(
-    upload_id: uuid.UUID,
+    upload: TextbookUpload,
     page_index: int,
     seq: int,
     blob: bytes,
@@ -883,12 +1025,23 @@ def _save_blob(
     else:
         name = f"p{page_index}_{seq}.jpg"
     subdir = _asset_subdir(content_kind)
-    out_dir = _upload_asset_dir(upload_id, content_kind)
-    os.makedirs(out_dir, exist_ok=True)
-    path = os.path.join(out_dir, name)
-    with open(path, "wb") as f:
-        f.write(jpeg)
-    return f"{subdir}/{name}"
+    rel_name = f"{subdir}/{name}"
+    try:
+        from app.services.image_service.storage_backend import get_storage_backend
+
+        get_storage_backend().save(image_storage_key(upload, rel_name), jpeg)
+    except Exception as exc:
+        logger.warning(
+            "storage save failed for upload %s (%s); falling back to disk: %s",
+            upload.id,
+            rel_name,
+            exc,
+        )
+        out_dir = _upload_asset_dir(upload, content_kind)
+        os.makedirs(out_dir, exist_ok=True)
+        with open(os.path.join(out_dir, name), "wb") as f:
+            f.write(jpeg)
+    return rel_name
 
 
 def _ml_asset_filename(asset: Any, page_index: int, seq: int) -> str:
@@ -930,7 +1083,7 @@ def _persist_ml_asset_row(
                 return False
 
     fname = _save_blob(
-        upload.id,
+        upload,
         asset.page_index,
         asset.sequence,
         asset.image_bytes,
@@ -982,7 +1135,6 @@ def _persist_ml_asset_row(
         )
 
     row = TextbookImage(
-        id=uuid.uuid4(),
         textbook_upload_id=upload.id,
         page_index=asset.page_index,
         sequence=asset.sequence,
@@ -1025,7 +1177,7 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
         extract_document_layout,
         validation_report_dict,
     )
-    path = upload.file_path or ""
+    path = _resolved_upload_path(upload)
     if not path or not os.path.isfile(path):
         return 0
 
@@ -1095,7 +1247,7 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
                 continue
 
         fname = _save_blob(
-            upload.id,
+            upload,
             pf.page_index,
             pf.sequence,
             pf.image_bytes,
@@ -1125,7 +1277,6 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
         )
 
         row = TextbookImage(
-            id=uuid.uuid4(),
             textbook_upload_id=upload.id,
             page_index=pf.page_index,
             sequence=pf.sequence,
@@ -1200,7 +1351,7 @@ def extract_docx_images(db: Session, upload: TextbookUpload) -> int:
     from docx import Document
     from docx.oxml.ns import qn
 
-    path = upload.file_path or ""
+    path = _resolved_upload_path(upload)
     if not path or not os.path.isfile(path):
         return 0
 
@@ -1243,7 +1394,7 @@ def extract_docx_images(db: Session, upload: TextbookUpload) -> int:
     created = 0
     for seq in range(take):
         blob, _ = ranked_blobs[seq]
-        fname = _save_blob(upload.id, 0, seq, blob, content_kind="figure")
+        fname = _save_blob(upload, 0, seq, blob, content_kind="figure")
         if not fname:
             continue
         slot = figure_slots[seq]
@@ -1262,7 +1413,6 @@ def extract_docx_images(db: Session, upload: TextbookUpload) -> int:
         img_type = classify_image_type(cap, fig_ctx or snippet or "")
         has_cap = len((cap or "").strip()) >= 8
         row = TextbookImage(
-            id=uuid.uuid4(),
             textbook_upload_id=upload.id,
             page_index=0,
             sequence=seq,
@@ -1296,7 +1446,7 @@ def extract_docx_images(db: Session, upload: TextbookUpload) -> int:
     return created
 
 
-def image_count_for_upload(db: Session, upload_id: uuid.UUID) -> int:
+def image_count_for_upload(db: Session, upload_id: int) -> int:
     return int(
         db.scalar(
             select(func.count()).select_from(TextbookImage).where(TextbookImage.textbook_upload_id == upload_id)
@@ -1305,7 +1455,7 @@ def image_count_for_upload(db: Session, upload_id: uuid.UUID) -> int:
     )
 
 
-def upload_disk_assets_missing(db: Session, upload_id: uuid.UUID, *, sample_limit: int = 12) -> bool:
+def upload_disk_assets_missing(db: Session, upload_id: int, *, sample_limit: int = 12) -> bool:
     """
     True when the upload has image rows in Postgres but none of the sampled
     assets are readable on disk (e.g. DB restored without ``_textbook_images``).
@@ -1323,7 +1473,9 @@ def upload_disk_assets_missing(db: Session, upload_id: uuid.UUID, *, sample_limi
     from app.services.image_service.textbook_image_display import image_has_visible_content
 
     for im in rows:
-        if image_has_visible_content(image_disk_path(im.textbook_upload_id, im.file_name)):
+        if image_has_visible_content(
+            image_disk_path(im.textbook_upload_id, im.file_name, upload=upload)
+        ):
             return False
     return True
 
@@ -1344,10 +1496,11 @@ def ensure_textbook_images_extracted(db: Session, upload: TextbookUpload) -> int
             )
             return reextract_textbook_images(db, upload)
         return 0
-    if not upload.file_path or not os.path.isfile(upload.file_path):
+    local_path = _resolved_upload_path(upload)
+    if not local_path or not os.path.isfile(local_path):
         return 0
 
-    ext = os.path.splitext(upload.file_path)[1].lower()
+    ext = os.path.splitext(local_path)[1].lower()
     try:
         if ext == ".pdf":
             n = extract_pdf_images(db, upload)
@@ -1419,7 +1572,8 @@ def reextract_textbook_images(db: Session, upload: TextbookUpload) -> int:
     purge_textbook_images_disk_and_rows(db, upload.id)
     db.commit()
 
-    ext = os.path.splitext(upload.file_path or "")[1].lower()
+    local_path = _resolved_upload_path(upload)
+    ext = os.path.splitext(local_path or upload.file_path or "")[1].lower()
     try:
         if ext == ".pdf":
             n = extract_pdf_images(db, upload)

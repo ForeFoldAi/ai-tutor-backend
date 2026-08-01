@@ -17,9 +17,10 @@ if TYPE_CHECKING:
 
 def is_corrupt_ml_caption(caption: str | None) -> bool:
     """
-    Detect OCR/layout fragment captions that should not drive retrieval.
+    Detect OCR/layout fragment captions that should not drive retrieval or UI.
 
-    Examples: 'perating\\nweather\\nrection', 'and and the People', 'Reprint 2026-27'.
+    Examples: 'perating\\nweather\\nrection', 'and and the People',
+    'Fig. 2.2—be co h l l h l l h Fig.', 'Reprint 2026-27'.
     """
     cap = (caption or "").strip()
     if not cap or len(cap) < 6:
@@ -30,6 +31,19 @@ def is_corrupt_ml_caption(caption: str | None) -> bool:
         return True
     if re.search(r"(?i)^\d{1,3}$", cap.replace("\n", " ").strip()):
         return True
+
+    # Strip figure-label prefix so we judge the descriptive body only.
+    body = re.sub(
+        r"(?i)^(?:fig\.?|figure|diagram|illustration|plate)\s*\d+(?:\.\d+)*\s*[.:;\-–—]?\s*",
+        "",
+        cap,
+    ).strip(" .:;-–—")
+    # Trailing repeated Fig. / page crumbs
+    body = re.sub(r"(?i)\b(?:fig\.?|figure)\s*\d*(?:\.\d+)*\s*$", "", body).strip(" .:;-–—")
+
+    if _looks_like_letter_spaced_ocr(body) or _looks_like_letter_spaced_ocr(cap):
+        return True
+
     lines = [ln.strip() for ln in cap.splitlines() if ln.strip()]
     if len(lines) >= 3:
         avg_len = sum(len(ln) for ln in lines) / len(lines)
@@ -41,6 +55,28 @@ def is_corrupt_ml_caption(caption: str | None) -> bool:
         broken = sum(1 for ln in lines if ln and ln[-1].isalpha() and len(ln) < 12)
         if broken >= 2:
             return True
+    # Almost no real words after stripping the Fig. label
+    real_words = [w for w in re.findall(r"\b[a-z]{3,}\b", body.lower())]
+    tokens = re.findall(r"[A-Za-z0-9]+", body)
+    if tokens and len(real_words) == 0 and len(tokens) >= 3:
+        return True
+    return False
+
+
+def _looks_like_letter_spaced_ocr(text: str) -> bool:
+    """True for OCR crumbs like 'be co h l l h l l h'."""
+    tokens = re.findall(r"[A-Za-z0-9]+", text or "")
+    if len(tokens) < 3:
+        return False
+    short = sum(1 for t in tokens if len(t) <= 2)
+    single = sum(1 for t in tokens if len(t) == 1)
+    if single >= 3 and short / len(tokens) >= 0.55:
+        return True
+    if len(tokens) >= 4 and short / len(tokens) >= 0.7:
+        return True
+    # Alternating single letters with spaces is a strong OCR-fail signal
+    if re.search(r"(?:^|[^a-z])([a-z]\s+){3,}[a-z](?:$|[^a-z])", (text or "").lower()):
+        return True
     return False
 
 
@@ -48,6 +84,8 @@ def is_minimal_figure_caption(caption: str | None) -> bool:
     """True when the caption is a bare figure label with no descriptive title."""
     cap = (caption or "").strip()
     if not cap:
+        return True
+    if is_corrupt_ml_caption(cap):
         return True
     from app.services.image_service.textbook_image_extraction import _FIG_ONLY_CAPTION_RE
 

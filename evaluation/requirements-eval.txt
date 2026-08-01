@@ -1,0 +1,11 @@
+# Extra deps for the evaluation framework (on top of backend requirements.txt)
+pytest>=8.0
+pytest-html>=4.0
+pytest-xdist>=3.5
+coverage>=7.0
+PyYAML>=6.0
+Pillow>=10.0
+numpy>=1.26
+
+# Eval defaults to local Chroma (see runner._configure_eval_runtime).
+# Set EVAL_USE_QDRANT=1 to use production Qdrant from .env instead.

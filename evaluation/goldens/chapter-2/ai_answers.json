@@ -1,0 +1,18 @@
+{
+  "cases": [
+    {
+      "question": "What is weather?",
+      "expected_keywords": ["weather", "atmosphere"],
+      "must_include": ["weather"],
+      "forbidden": ["photosynthesis"],
+      "answer_contains_any": ["weather", "day", "temperature", "atmosphere"]
+    },
+    {
+      "question": "Explain the difference between weather and climate.",
+      "expected_keywords": ["weather", "climate"],
+      "must_include": ["weather", "climate"],
+      "forbidden": [],
+      "answer_contains_any": ["weather", "climate"]
+    }
+  ]
+}

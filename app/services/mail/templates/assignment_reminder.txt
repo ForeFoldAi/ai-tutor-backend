@@ -1,0 +1,11 @@
+Hi {{ student_name }},
+
+Reminder: your assignment "{{ title }}" is due soon.
+
+Deadline: {{ deadline }}
+{% if subject %}Subject: {{ subject }}
+{% endif %}{% if teacher_name %}Teacher: {{ teacher_name }}
+{% endif %}
+Open {{ app_name }} to review and submit.
+
+— {{ app_name }}

@@ -1,0 +1,20 @@
+{
+  "cases": [
+    {
+      "question": "What is the Peninsular Plateau?",
+      "expected_pages": [15, 16, 17, 18, 19, 20, 21, 22, 23, 24],
+      "expected_chunks": [],
+      "must_appear_in_context": ["Plateau"]
+    },
+    {
+      "question": "Where is the Thar Desert?",
+      "expected_pages": [10, 11, 12, 13, 14, 15, 16, 17, 18],
+      "must_appear_in_context": ["Desert"]
+    },
+    {
+      "question": "What are the Western Ghats?",
+      "expected_pages": [15, 16, 17, 18, 19, 20, 21],
+      "must_appear_in_context": ["Ghat"]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+Hi {{ student_name }},
+
+You have a live session today:
+
+{{ title }}
+Subject: {{ subject }}
+Starts: {{ starts_at }}
+Duration: {{ duration_minutes }} minutes
+{% if meeting_link %}Join: {{ meeting_link }}
+{% endif %}
+— {{ app_name }}

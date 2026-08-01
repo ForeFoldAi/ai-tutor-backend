@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
@@ -12,7 +11,7 @@ class BoardCreateRequest(BaseModel):
 
 
 class BoardResponse(BaseModel):
-    id: uuid.UUID
+    id: int
     board: BoardEnum
     country: str
     created_at: datetime
@@ -37,7 +36,7 @@ class SyllabusBulkCreateRequest(BaseModel):
 
 
 class SyllabusSubjectResponse(BaseModel):
-    id: uuid.UUID
+    id: int
     board: BoardEnum
     class_level: ClassEnum
     subject_name: str
@@ -71,7 +70,7 @@ class TextbookUploadPatchStatusRequest(BaseModel):
 
 
 class TextbookUploadResponse(BaseModel):
-    id: uuid.UUID
+    id: int
     file_name: str
     board: BoardEnum
     class_level: ClassEnum
@@ -81,7 +80,7 @@ class TextbookUploadResponse(BaseModel):
     content_label: str | None = None
     file_path: str | None = None
     chunk_count: int = 0
-    uploaded_by: uuid.UUID | None
+    uploaded_by: int | None
     upload_date: datetime
     ocr_status: ProcessingStatusEnum
     chunk_status: ProcessingStatusEnum
@@ -100,7 +99,7 @@ class EmbeddingStatsResponse(BaseModel):
 
 
 class ProcessResponse(BaseModel):
-    id: uuid.UUID
+    id: int
     chunk_count: int
     chunk_status: ProcessingStatusEnum
     embedding_status: ProcessingStatusEnum
@@ -113,7 +112,7 @@ class CatalogEnumsResponse(BaseModel):
 
 
 class StudentChapterResponse(BaseModel):
-    id: uuid.UUID
+    id: int
     chapter: str | None
     file_name: str
 
@@ -121,7 +120,7 @@ class StudentChapterResponse(BaseModel):
 
 
 class StudentSubjectResponse(BaseModel):
-    id: uuid.UUID
+    id: int
     board: BoardEnum
     class_level: ClassEnum
     subject_name: str

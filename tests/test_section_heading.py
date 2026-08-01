@@ -5,6 +5,7 @@ from langchain_core.documents import Document
 from app.services.section_heading import (
     enrich_chunks_with_section_metadata,
     extract_subtopics_from_scope,
+    parse_heading_line,
     parse_section_hint,
     resolve_heading_scope,
     subtopics_for_main_section,
@@ -16,6 +17,13 @@ from app.services.section_heading import (
 
 def test_parse_numbered_heading():
     assert parse_section_hint("2.3 Weather Instruments") == ("2.3", "Weather Instruments", 1)
+
+
+def test_pedagogy_signal_boxes_are_not_headings():
+    assert parse_heading_line("No Warning") is None
+    assert parse_heading_line("Warning (Take Action)") is None
+    assert parse_heading_line("Watch (Be Updated)") is None
+    assert parse_heading_line("2.4 Cyclones") == ("2.4", "Cyclones", 1)
 
 
 def test_query_matches_main_section_with_children():

@@ -1,0 +1,14 @@
+# Lesson planner — install in a SEPARATE pip step AFTER requirements.txt:
+#   pip install -r requirements.txt
+#   pip install -r requirements-lesson-planner.txt
+# Do NOT pass both -r files in one pip command (causes resolution-too-deep).
+
+celery[redis]==5.5.3
+rank-bm25==0.2.2
+python-pptx==1.0.2
+reportlab==4.4.2
+structlog==25.4.0
+prometheus-client==0.22.1
+cachetools==6.1.0
+rapidfuzz==3.13.0
+factory-boy==3.3.3

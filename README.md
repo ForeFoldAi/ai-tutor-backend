@@ -6,7 +6,7 @@ FastAPI backend for chapter-aware tutoring, textbook catalog/uploads, RAG chat, 
 
 - **Python 3.11+** (3.14 works with the existing `.venv` in this repo)
 - **PostgreSQL** (default DB: `ai_tutor`)
-- **Redis** (optional but recommended for caching)
+- **Redis** (required for Celery / Lesson Planner / mail Beat; not for tutor answers or chat history — see `deploy/REDIS_CELERY.md`)
 - **Mistral API key** for LLM answers (`MISTRAL_API_KEY` in `.env`)
 
 ## Setup
@@ -89,9 +89,76 @@ Interactive docs: `http://127.0.0.1:8000/docs`
 .venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
+## Celery (Lesson Planner worker)
+
+Lesson plan generation, export, autosave, and regenerate run in a **Celery worker** (not in the API process). You need **Redis** as the broker and the lesson-planner extra deps.
+
+Coolify / production matrix (when Redis is required vs optional, mail/`lia` workers): **[`deploy/REDIS_CELERY.md`](deploy/REDIS_CELERY.md)**.
+
+### 1. Dependencies
+
+Install Celery in a **separate** pip step (do not combine with `requirements.txt` in one command):
+
+```bash
+cd ai-tutor-backend
+source .venv/bin/activate
+
+.venv/bin/pip install -r requirements.txt
+.venv/bin/pip install -r requirements-lesson-planner.txt
+```
+
+### 2. Redis
+
+Ensure Redis is running and `REDIS_URL` in `.env` points at it (default: `redis://localhost:6379/0`).
+
+```bash
+# Example: Redis via Docker
+docker compose up redis -d
+```
+
+### 3. Start the worker (local)
+
+In a **second terminal** (API in the first):
+
+```bash
+cd ai-tutor-backend
+source .venv/bin/activate
+
+celery -A app.core.celery_app.celery_app worker \
+  -Q lesson-generate,lesson-export,lesson-autosave,lesson-regenerate,mail \
+  -l info
+```
+
+On **macOS**, the worker defaults to the `solo` pool (avoids fork crashes with native libs). Override if needed:
+
+```bash
+CELERY_WORKER_POOL=prefork celery -A app.core.celery_app.celery_app worker \
+  -Q lesson-generate,lesson-export,lesson-autosave,lesson-regenerate,mail \
+  -l info
+```
+
+Queues: `lesson-generate`, `lesson-export`, `lesson-autosave`, `lesson-regenerate`, `mail`.
+
+Daily reminder emails (IST): **sessions 08:00**, **assignments 09:00** (`MAIL_SESSION_REMINDER_HOUR` / `MAIL_ASSIGNMENT_REMINDER_HOUR` / `MAIL_REMINDER_TZ`). Sends are paced (`MAIL_REMINDER_SEND_GAP_SECONDS`, default 1s). Start Beat in another terminal:
+
+
+```bash
+celery -A app.core.celery_app.celery_app beat -l info
+```
+
+### 4. Docker Compose
+
+`docker compose up` starts the `lesson_worker` service automatically. Logs:
+
+```bash
+docker compose logs -f lesson_worker
+```
+
+More detail: `app/services/lesson_planner/ARCHITECTURE.md`.
+
 ## Docker
 
-Run the **full backend** (tutor chat, voice, Redis cache, multimodal CLIP image search, ML PDF extraction, PaddleOCR, Tesseract OCR) with Docker Compose.
+Run the **full backend** (tutor chat, voice, multimodal CLIP image search, ML PDF extraction, PaddleOCR, Tesseract OCR) with Docker Compose.
 
 ### 1. Configure environment
 
@@ -142,10 +209,13 @@ docker compose down
 | Feature | Docker default |
 |---------|----------------|
 | FastAPI tutor + auth + catalog | Yes |
-| Chapter-aware RAG (ChromaDB) | Yes |
+| Chapter-aware RAG (ChromaDB default; Qdrant opt-in) | Yes |
 | Voice WebSocket + Edge TTS | Yes |
-| Redis answer cache | Yes |
+| Redis (Celery / lesson planner) | Yes (Compose); optional for student-only tutor |
+| Tutor answer cache in Redis | No (removed) |
 | Multimodal CLIP image retrieval | Yes (`HF_TOKEN` needed) |
+| MinIO object store (opt-in via `STORAGE_BACKEND=s3`) | Yes (Compose service; unused until env flip) |
+| Qdrant vector DB (opt-in via `VECTOR_BACKEND=qdrant`) | Yes (Compose service; unused until env flip) |
 | ML PDF extraction (DocLayout-YOLO, formulas) | Yes (layout + OCR; formula LaTeX on ARM Docker skips UniMERNet) |
 | PaddleOCR + Tesseract OCR | Yes |
 | Table VLM (`struct-eqtable`) | No — requires NVIDIA GPU |
@@ -155,10 +225,46 @@ docker compose down
 | Volume | Purpose |
 |--------|---------|
 | `pg_data` | PostgreSQL |
-| `uploads_data` | Textbook PDFs and extracted figures |
-| `chroma_data` | Vector embeddings |
+| `uploads_data` | Textbook PDFs and extracted figures (local storage default) |
+| `chroma_data` | Chroma embeddings (when `VECTOR_BACKEND=chroma`) |
+| `minio_data` | MinIO object storage (when `STORAGE_BACKEND=s3`) |
+| `qdrant_data` | Qdrant embeddings (when `VECTOR_BACKEND=qdrant`) |
 | `models_data` | Downloaded layout / formula weights |
 | `hf_cache` | Hugging Face model cache (CLIP, etc.) |
+
+### Cutover: MinIO/S3 + Qdrant (opt-in)
+
+Defaults stay **local disk + Chroma**. Flip only after smoke-testing.
+
+**Object storage**
+
+1. Ensure MinIO is up (`docker compose up -d minio minio-init`) or use real AWS S3 (`S3_ENDPOINT_URL=` empty).
+2. Set in `.env`:
+   ```bash
+   STORAGE_BACKEND=s3
+   S3_BUCKET=ai-tutor
+   S3_ENDPOINT_URL=http://minio:9000   # omit for AWS
+   AWS_ACCESS_KEY_ID=minioadmin
+   AWS_SECRET_ACCESS_KEY=minioadmin
+   # CDN_BASE_URL=https://cdn.example.com   # optional; preferred over presigned URLs
+   ```
+3. Restart API/worker. New PDF/image writes go to the bucket; legacy absolute `file_path` rows still resolve.
+4. Verify: upload PDF → extract figures → open `/auth/catalog/textbook-images/...`.
+
+**Vector DB**
+
+1. `docker compose up -d qdrant`
+2. Migrate or reindex (payloads use sequential BIGINT `textbook_upload_id`):
+   ```bash
+   PYTHONPATH=. python scripts/migrate_chroma_to_qdrant.py
+   # or full re-embed:
+   VECTOR_BACKEND=qdrant PYTHONPATH=. python scripts/reindex_all_to_vector_backend.py
+   ```
+3. Self-check: `PYTHONPATH=. python tests/test_qdrant_roundtrip.py`
+4. Set `VECTOR_BACKEND=qdrant` and `QDRANT_URL=http://qdrant:6333`, restart API/worker.
+5. After cutover, API replicas no longer need a shared `chroma_data` volume.
+
+**Multi-replica notes** (when both flags are on): share Postgres, Redis, MinIO/S3, and Qdrant; keep `CELERY_AUTOSTART=false`; do not mount exclusive local `uploads`/`chroma` for correctness.
 
 Optional: copy a local YOLO weight into the models volume:
 
@@ -346,6 +452,14 @@ All commands assume you are in `ai-tutor-backend` and use the project `.venv`.
 ```bash
 # Activate venv (once per terminal session)
 source .venv/bin/activate
+
+# Run the API
+.venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+
+# Run Celery (Lesson Planner) — second terminal; Redis must be up
+celery -A app.core.celery_app.celery_app worker \
+  -Q lesson-generate,lesson-export,lesson-autosave,lesson-regenerate,mail \
+  -l info
 
 # Run tests (install pytest first if needed)
 .venv/bin/pip install pytest

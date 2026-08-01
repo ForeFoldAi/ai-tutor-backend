@@ -58,7 +58,7 @@ def backfill_upload(upload_id: str, *, reindex: bool = False, force: bool = Fals
             effective = (row.caption or row.generated_caption or "").strip()
             if not force and not is_weak_text_caption(effective):
                 continue
-            path = image_disk_path(upload.id, row.file_name)
+            path = image_disk_path(upload.id, row.file_name, upload=upload)
             if not os.path.isfile(path):
                 print(f"  skip missing file: {row.file_name}")
                 continue

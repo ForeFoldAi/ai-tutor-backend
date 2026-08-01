@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import uuid
 from datetime import UTC, datetime
 from enum import StrEnum
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Enum, Float, ForeignKey, Integer, LargeBinary, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, Float, ForeignKey, Identity, Integer, LargeBinary, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -42,7 +40,7 @@ class ProcessingStatusEnum(StrEnum):
 class BoardDefinition(Base):
     __tablename__ = "board_definitions"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     board: Mapped[BoardEnum] = mapped_column(Enum(BoardEnum, name="board_enum"), nullable=False, unique=True, index=True)
     country: Mapped[str] = mapped_column(String(100), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
@@ -53,7 +51,7 @@ class SyllabusSubject(Base):
     __tablename__ = "syllabus_subjects"
     __table_args__ = (UniqueConstraint("board", "class_level", "subject_name", name="uq_syllabus_subject"),)
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     board: Mapped[BoardEnum] = mapped_column(Enum(BoardEnum, name="board_enum"), nullable=False, index=True)
     class_level: Mapped[ClassEnum] = mapped_column(Enum(ClassEnum, name="class_enum"), nullable=False, index=True)
     subject_name: Mapped[str] = mapped_column(String(120), nullable=False)
@@ -72,7 +70,7 @@ class ContentTypeEnum(StrEnum):
 class TextbookUpload(Base):
     __tablename__ = "textbook_uploads"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     file_name: Mapped[str] = mapped_column(String(255), nullable=False)
     board: Mapped[BoardEnum] = mapped_column(Enum(BoardEnum, name="board_enum"), nullable=False, index=True)
     class_level: Mapped[ClassEnum] = mapped_column(Enum(ClassEnum, name="class_enum"), nullable=False, index=True)
@@ -82,7 +80,7 @@ class TextbookUpload(Base):
     content_label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     file_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     chunk_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    uploaded_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    uploaded_by: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     upload_date: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     ocr_status: Mapped[ProcessingStatusEnum] = mapped_column(
         Enum(ProcessingStatusEnum, name="processing_status_enum"),
@@ -115,9 +113,9 @@ class TextbookImage(Base):
 
     __tablename__ = "textbook_images"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    textbook_upload_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    textbook_upload_id: Mapped[int] = mapped_column(
+        BigInteger,
         ForeignKey("textbook_uploads.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

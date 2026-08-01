@@ -154,7 +154,7 @@ _QUESTION_TAIL_RE = re.compile(
     re.I,
 )
 
-# Known synonyms / abbreviations table
+# Known synonyms / abbreviations table (bidirectional via _synonym_rows_for_concept).
 _CONCEPT_SYNONYMS: dict[str, list[str]] = {
     "automated weather station": ["aws", "met station", "meteorological station", "weather station"],
     "weather station": ["aws", "met station", "meteorological instrument"],
@@ -168,10 +168,134 @@ _CONCEPT_SYNONYMS: dict[str, list[str]] = {
     "information technology": ["it"],
     "artificial intelligence": ["ai"],
     "solar system": ["planet", "orbit"],
-    "water cycle": ["hydrological cycle", "hydrologic cycle", "evaporation", "precipitation"],
+    "water cycle": ["hydrological cycle", "hydrologic cycle", "evaporation", "precipitation", "rainfall"],
     "food chain": ["predator", "prey", "producer", "consumer"],
     "food web": ["predator", "prey", "trophic"],
+    # Measurement concepts ↔ teaching visuals (NCERT / CBSE instruments)
+    "precipitation": ["rain gauge", "rainfall", "rain"],
+    "rainfall": ["rain gauge", "precipitation", "rain"],
+    "humidity": ["hygrometer", "moist air", "moisture"],
+    "wind": ["anemometer", "wind vane"],
+    "pressure": ["barometer"],
+    "atmospheric pressure": ["barometer", "air pressure"],
+    "air pressure": ["barometer", "atmospheric pressure"],
+    "temperature": ["thermometer"],
 }
+
+# Concept definitions taught primarily via measuring instruments / diagrams.
+_MEASUREMENT_CONCEPTS: frozenset[str] = frozenset({
+    "precipitation",
+    "rainfall",
+    "humidity",
+    "wind",
+    "pressure",
+    "atmospheric pressure",
+    "air pressure",
+})
+
+_BROAD_DEFINITION_CORES: frozenset[str] = frozenset({
+    "weather",
+    "climate",
+    "monsoon",
+    "temperature",
+})
+
+# Short tokens allowed as required terms (instrument/tech abbreviations only).
+_DISTINCTIVE_ABBREVS: frozenset[str] = frozenset({
+    "aws", "atm", "led", "cpu", "ghg", "co2", "dna", "gdp", "ai",
+})
+
+
+def _is_distinctive_required_term(term: str) -> bool:
+    """Multi-word phrases, long singles (≥8), or known abbrevs — not bare 'rain'."""
+    t = (term or "").strip().lower()
+    if not t:
+        return False
+    if len(t.split()) > 1:
+        return True
+    if len(t) >= 8:
+        return True
+    return t in _DISTINCTIVE_ABBREVS
+
+
+def _forward_key_match(cc: str, key: str) -> bool:
+    """True when the student concept maps to this synonym-table key (not reverse)."""
+    if not cc or not key:
+        return False
+    if cc == key:
+        return True
+    # Full key phrase appears inside the concept ("automated weather station…").
+    if len(key) >= 4 and key in cc:
+        return True
+    # Multi-word concept contained in a longer key — never single-word "weather"
+    # matching "weather station" (that undoes broad-definition instrument gates).
+    if len(cc.split()) >= 2 and len(cc) >= 4 and cc in key:
+        return True
+    return False
+
+
+def _synonym_rows_for_concept(cc: str) -> list[tuple[str, list[str]]]:
+    """All synonym table rows that match core concept (forward or reverse)."""
+    cc = (cc or "").strip().lower()
+    if not cc:
+        return []
+    hits: list[tuple[str, list[str]]] = []
+    for key, synonyms in _CONCEPT_SYNONYMS.items():
+        if _forward_key_match(cc, key):
+            hits.append((key, synonyms))
+            continue
+        # Reverse: concept equals a synonym, or a long synonym phrase appears in concept.
+        # Never let single-word "weather" match synonym "weather station".
+        for syn in synonyms:
+            syn_l = syn.lower()
+            if cc == syn_l:
+                hits.append((key, synonyms))
+                break
+            if len(syn_l) >= 5 and syn_l in cc:
+                hits.append((key, synonyms))
+                break
+            if len(cc.split()) >= 2 and len(cc) >= 5 and cc in syn_l:
+                hits.append((key, synonyms))
+                break
+    return hits
+
+
+# Process umbrellas: forward expand only (asking "precipitation" must not
+# import sibling terms like "evaporation" from the water-cycle row).
+_FORWARD_ONLY_SYNONYM_KEYS: frozenset[str] = frozenset({
+    "water cycle",
+    "food chain",
+    "food web",
+    "solar system",
+    "greenhouse gas",
+})
+
+
+def _expand_concept_aliases(core_concept: str) -> tuple[list[str], list[str]]:
+    """
+    Expand core concept into (distinctive required aliases, soft supporting aliases).
+
+    Reverse lookup: \"precipitation\" matches the precipitation row and also picks up
+    rain-gauge teaching phrases even when the figure caption never says precipitation.
+    """
+    required: list[str] = []
+    supporting: list[str] = []
+    cc = (core_concept or "").strip().lower()
+    for key, synonyms in _synonym_rows_for_concept(cc):
+        forward = _forward_key_match(cc, key)
+        if not forward and key in _FORWARD_ONLY_SYNONYM_KEYS:
+            continue
+        for syn in [key, *synonyms]:
+            syn_l = syn.lower().strip()
+            if not syn_l or syn_l == cc:
+                continue
+            if _is_distinctive_required_term(syn_l):
+                if syn_l not in required:
+                    required.append(syn_l)
+            else:
+                if syn_l not in supporting:
+                    supporting.append(syn_l)
+    return required, supporting
 
 
 # ---------------------------------------------------------------------------
@@ -252,13 +376,11 @@ def _extract_required_terms(core_concept: str, question: str) -> list[str]:
     if cc and cc not in terms:
         terms.append(cc)
 
-    # 2. Check synonym table
-    for key, synonyms in _CONCEPT_SYNONYMS.items():
-        if key in cc or cc in key:
-            for syn in synonyms:
-                if syn not in terms:
-                    terms.append(syn)
-            break
+    # 2. Synonym / teaching-visual aliases (all matching rows; reverse lookup)
+    alias_required, _alias_support = _expand_concept_aliases(cc)
+    for syn in alias_required:
+        if syn not in terms:
+            terms.append(syn)
 
     # 3. Bigrams from core concept
     words = [w for w in re.findall(r"\b[a-z][a-z]+\b", cc) if w not in _STOPWORDS]
@@ -293,6 +415,11 @@ def _extract_supporting_terms(
     Terms that frequently co-occur with the core concept in RAG chunks.
     These boost the score but are not required.
     """
+    required_set = {t.lower() for t in required_terms}
+    _, alias_support = _expand_concept_aliases(core_concept)
+    terms: list[str] = [t for t in alias_support if t not in required_set]
+    seen = set(terms)
+
     core_words = _tokenize(core_concept)
     req_set = set(required_terms)
     freq: dict[str, int] = defaultdict(int)
@@ -301,7 +428,6 @@ def _extract_supporting_terms(
         text = (getattr(chunk, "page_content", None) or "").lower()
         if not text:
             continue
-        chunk_words = text.split()
         # Only mine from chunks that mention core concept
         if not any(cw in text for cw in core_words):
             continue
@@ -309,8 +435,12 @@ def _extract_supporting_terms(
             if w not in _STOPWORDS and len(w) >= 4 and w not in core_words and w not in req_set:
                 freq[w] += 1
 
-    # Top-8 co-occurring terms (min frequency 1)
-    return [t for t, _ in sorted(freq.items(), key=lambda x: -x[1])[:8]]
+    # Top-8 co-occurring terms (min frequency 1), after alias supporting terms
+    for t, _ in sorted(freq.items(), key=lambda x: -x[1])[:8]:
+        if t not in seen and t not in required_set:
+            terms.append(t)
+            seen.add(t)
+    return terms
 
 
 def _extract_negative_terms(
@@ -455,17 +585,11 @@ def extract_image_intent(
     # Exception: measurement-centric concepts like "precipitation" and "rainfall"
     # ARE taught via their measuring instruments (rain gauge, barometer), so
     # "instrument" must NOT be excluded for those concepts.
-    _broad_definition_cores = frozenset({
-        "weather", "climate", "monsoon", "temperature",
-    })
-    _measurement_concepts = frozenset({
-        "precipitation", "rainfall", "humidity", "wind", "pressure",
-        "atmospheric pressure", "air pressure",
-    })
+    cc_lower = core_concept.lower()
     if (
         query_type == "concept_definition"
-        and core_concept.lower() in _broad_definition_cores
-        and core_concept.lower() not in _measurement_concepts
+        and cc_lower in _BROAD_DEFINITION_CORES
+        and cc_lower not in _MEASUREMENT_CONCEPTS
     ):
         if not re.search(
             r"\b(station|aws|instrument|sensor|gauge|anemometer|meteorological)\b",
@@ -475,6 +599,14 @@ def extract_image_intent(
             for t in ("weather_station", "instrument"):
                 if t not in excluded_types:
                     excluded_types.append(t)
+
+    # Measurement definitions prefer instrument / diagram teaching figures.
+    if cc_lower in _MEASUREMENT_CONCEPTS or any(
+        m in cc_lower for m in _MEASUREMENT_CONCEPTS if " " in m
+    ):
+        for t in ("instrument", "diagram"):
+            if t not in preferred_types:
+                preferred_types.append(t)
 
     # Section tokens from RAG metadata
     section_parts: list[str] = []
@@ -493,6 +625,10 @@ def extract_image_intent(
             if ent and ent not in entities:
                 entities.append(ent)
 
+    # Include distinctive alias tokens so Level-3 / tag overlap can fire on
+    # "rain gauge" captions when the student asked about precipitation.
+    concept_tokens = _tokenize(core_concept) | _tokenize(" ".join(required_terms))
+
     return ImageIntent(
         query=effective_question,
         core_concept=core_concept,
@@ -505,7 +641,7 @@ def extract_image_intent(
         preferred_content_kinds=preferred_content_kinds,
         referenced_asset_number=referenced_asset_number,
         referenced_asset_kind=referenced_asset_kind,
-        concept_tokens=_tokenize(core_concept),
+        concept_tokens=concept_tokens,
         entities=entities,
         rag_section_tokens=rag_section_tokens,
         requested_visuals=(

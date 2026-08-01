@@ -15,7 +15,7 @@ import edge_tts
 from fastapi import WebSocket
 from fastapi.websockets import WebSocketState
 
-from app.config import VOICE_TTS_PITCH, VOICE_TTS_RATE
+from app.services.voice_prosody import prepare_voice_tts
 
 logger = logging.getLogger(__name__)
 
@@ -90,14 +90,12 @@ async def resolve_voice() -> str:
         return _resolved_voice
 
 
-def _communicate(text: str, *, voice: str) -> edge_tts.Communicate:
-    """Build Communicate with teaching-friendly prosody."""
-    return edge_tts.Communicate(
-        text,
-        voice=voice,
-        rate=VOICE_TTS_RATE,
-        pitch=VOICE_TTS_PITCH,
-    )
+def _communicate(text: str, *, voice: str, chunk_index: int = 0) -> edge_tts.Communicate:
+    """Build Communicate with teaching-friendly prosody (plain text + rate/pitch)."""
+    spoken, rate, pitch = prepare_voice_tts(text, chunk_index=chunk_index)
+    if not spoken:
+        spoken = " "
+    return edge_tts.Communicate(spoken, voice=voice, rate=rate, pitch=pitch)
 
 
 async def stream_edge_tts(
@@ -107,6 +105,7 @@ async def stream_edge_tts(
     *,
     voice: str | None = None,
     timing: Any | None = None,
+    chunk_index: int = 0,
 ) -> bool:
     """
     Stream MP3 chunks from edge-tts as WebSocket binary frames.
@@ -124,7 +123,7 @@ async def stream_edge_tts(
         timing.mark_tts_started(sentence)
 
     try:
-        communicate = _communicate(sentence, voice=voice_name)
+        communicate = _communicate(sentence, voice=voice_name, chunk_index=chunk_index)
         async for chunk in _iter_communicate_stream(communicate):
             if stop_event.is_set():
                 return False

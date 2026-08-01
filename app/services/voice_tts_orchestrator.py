@@ -166,7 +166,7 @@ async def run_tts_orchestrator(
 
         if not data:
             await stream_edge_tts(
-                text, websocket, stop_event, voice=voice, timing=timing
+                text, websocket, stop_event, voice=voice, timing=timing, chunk_index=unit_index
             )
         else:
             await send_mp3_bytes(data, websocket, stop_event, timing=timing)

@@ -75,6 +75,7 @@ def retrieve_for_tutor_query(
     *,
     collection_name: str,
     chapter_ids: list[str] | None,
+    chapter_names: list[str] | None = None,
     k: int | None = None,
 ) -> tuple[list[Any], HeadingScope, str]:
     """
@@ -89,6 +90,7 @@ def retrieve_for_tutor_query(
         query,
         collection_name=collection_name,
         chapter_ids=chapter_ids,
+        chapter_names=chapter_names,
         k=wide_k,
     )
 
@@ -98,7 +100,9 @@ def retrieve_for_tutor_query(
         docs = select_chunks_for_scope([], scope, semantic_ranked=semantic, max_chunks=max_c)
         return docs, scope, scope_instruction_for_prompt(scope, chunks=docs)
 
-    chapter_chunks = fetch_chapter_chunks(collection_name, chapter_ids)
+    chapter_chunks = fetch_chapter_chunks(
+        collection_name, chapter_ids, chapter_names=chapter_names
+    )
     if chapter_chunks:
         enrich_chunks_with_section_metadata(chapter_chunks)
     catalog = _catalog_for_heading_scope(chapter_ids, chapter_chunks, semantic)

@@ -113,21 +113,26 @@ def load_pdf_text_chunks_for_uploads(upload_ids: list[str]) -> list[Document]:
 
     docs: list[Document] = []
     try:
-        import uuid
-
-        uuids = []
+        ids = []
         for raw in upload_ids:
             try:
-                uuids.append(uuid.UUID(str(raw)))
+                ids.append(int(raw))
             except Exception:
                 continue
-        if not uuids:
+        if not ids:
             return []
 
         with SessionLocal() as db:
-            rows = db.query(TextbookUpload).filter(TextbookUpload.id.in_(uuids)).all()
+            rows = db.query(TextbookUpload).filter(TextbookUpload.id.in_(ids)).all()
             for row in rows:
                 path = (row.file_path or "").strip()
+                if path:
+                    try:
+                        from app.services.image_service.storage_backend import materialize_textbook_file
+
+                        path = materialize_textbook_file(path)
+                    except Exception:
+                        pass
                 if not path or not os.path.isfile(path):
                     continue
                 for doc in load_pdf_page_documents(path):

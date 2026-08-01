@@ -1,8 +1,7 @@
-import uuid
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String
-from sqlalchemy.dialects.postgresql import JSON, UUID
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, Identity, String
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -12,28 +11,33 @@ from app.modules.auth.constants import Role
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     full_name: Mapped[str] = mapped_column(String(255), nullable=False)
-    email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True, index=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role, name="user_role"), nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    organization_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
-        ForeignKey("organizations.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-    school_id: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
+    school_id: Mapped[int | None] = mapped_column(
+        BigInteger,
         ForeignKey("schools.id", ondelete="SET NULL"),
         nullable=True,
     )
+    phone: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     teaching_board: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    teaching_subjects: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     # JSON: [{ "grade": "5", "sections": ["A", "B"] }, ...]; legacy: ["5","6"] still readable in API
     teaching_classes: Mapped[list[dict] | None] = mapped_column("teaching_grades", JSON, nullable=True)
-    created_by: Mapped[uuid.UUID | None] = mapped_column(
-        UUID(as_uuid=True),
+    # Tutor: student ids excluded from auto class matching
+    excluded_student_ids: Mapped[list[int] | None] = mapped_column(JSON, nullable=True)
+    # Parked subjects/classes when teacher is deactivated (restored on activate)
+    assignment_snapshot: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Login credentials lifecycle (school-admin Credentials tab)
+    credentials_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    credentials_shared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    credential_delivery_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    created_by: Mapped[int | None] = mapped_column(
+        BigInteger,
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
@@ -48,8 +52,8 @@ class User(Base):
 class UserSettings(Base):
     __tablename__ = "user_settings"
 
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
     )

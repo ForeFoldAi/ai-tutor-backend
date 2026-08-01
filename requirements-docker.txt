@@ -8,6 +8,7 @@ attrs==25.4.0
 backoff==2.2.1
 # passlib 1.7.4 is incompatible with bcrypt 4.1+ (see passlib #148).
 bcrypt==4.0.1
+boto3==1.37.34
 build==1.4.0
 certifi==2026.1.4
 charset-normalizer==3.4.4
@@ -78,6 +79,7 @@ pyproject_hooks==1.2.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 python-multipart==0.0.22
+qdrant-client==1.13.3
 PyYAML==6.0.3
 referencing==0.37.0
 regex==2026.1.15
@@ -119,6 +121,7 @@ zstandard==0.25.0
 
 duckduckgo-search==8.1.1
 edge-tts==7.2.7
+faster-whisper==1.1.1
 loguru==0.7.3
 soundfile==0.13.1
 SQLAlchemy==2.0.44
@@ -128,6 +131,7 @@ python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 redis==7.0.1
 email-validator==2.3.0
+aiosmtplib==4.0.2
 python-docx==1.1.2
 Pillow==12.3.0
 imagehash==4.3.1

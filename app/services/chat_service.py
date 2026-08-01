@@ -10,14 +10,13 @@ Key improvements over the original:
 - Question-type detection: factual, conceptual, analytical, opinion, problem-solving pedagogy
 - Subject guidelines: Science, Math, History, Geography, Economics, Language/Literature
 - Mathematics: mandatory section tutor format + SymPy math engine for verified steps
-- Redis cache (opt-in via TUTOR_ANSWER_CACHE_ENABLED): off by default; every question hits the LLM
+- No Redis tutor-answer cache (every question hits the LLM; chat history is Postgres)
 - Fallback: keyword-chunk answer when Mistral key is missing
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import re
@@ -26,19 +25,15 @@ from typing import Any, AsyncIterator
 
 from app.core.student_messages import ANSWER_NOT_IN_CHAPTER
 
-import httpx
 from langchain_core.prompts import PromptTemplate
 
 from app.config import (
     CONTEXT_CHAR_BUDGET,
     IMAGE_RETRIEVAL_TIMEOUT_SEC,
-    MISTRAL_API_KEY,
-    MISTRAL_MAX_TOKENS,
-    MISTRAL_MODEL,
-    MISTRAL_TEMPERATURE,
     RETRIEVAL_K,
     TOP_RELATED_IMAGES,
 )
+from app.services import llm_client
 from app.services.vector_service import InMemoryDocVectorStore
 
 logger = logging.getLogger(__name__)
@@ -993,28 +988,19 @@ SOURCE GROUNDING RULES (CRITICAL):
 CHAPTER AWARENESS MODE:
 The selected chapter ({chapter}) defines the primary learning scope.
 
-Before answering, determine whether the student's question is:
-1. Fully covered by the selected chapter
-2. Partially covered by the selected chapter
-3. Not covered by the selected chapter
-
-If fully covered:
-- Answer normally using the chapter.
-
-If partially covered:
-- Answer only the portion supported by the chapter.
-- Clearly explain that additional details are covered elsewhere.
-- Offer the student a choice to continue.
-
-If not covered:
-- Inform the student that the topic belongs to another chapter.
-- Briefly mention the current chapter's focus.
-- Offer:
-  a) Stay within the current chapter
-  b) Switch to the relevant chapter
-  c) Receive a general explanation
+Prefer answering helpfully:
+1. Fully covered by the chapter → answer normally from the chapter.
+2. Related extension / follow-up of a chapter topic (e.g. protection of something just taught) →
+   answer the chapter part first, then briefly add "Beyond this chapter..." for the missing piece.
+   Do NOT force an a/b/c menu for related follow-ups.
+3. Teaching moves (quiz, practice problem, example, simplify) → do them using chapter material.
+4. Clearly unrelated topic with no chapter connection → then offer:
+   a) Stay within the current chapter
+   b) Switch to the relevant chapter
+   c) Receive a general explanation
 
 Never pretend the selected chapter contains information that it does not contain.
+Never invent page numbers or figure names.
 The goal is to guide learning progression while remaining helpful.
 
 {chapter_coverage_guidance}
@@ -1513,6 +1499,32 @@ _AFFIRMATION_RE = re.compile(
     re.I,
 )
 
+# Student wants the tutor to keep teaching (not a bare "got it")
+_EXPAND_REQUEST_RE = re.compile(
+    r"\b(?:"
+    r"explain(?:\s+more|\s+please)?|please\s+explain|explore|elaborate|"
+    r"tell\s+me(?:\s+more)?|go\s+(?:on|ahead)|continue|carry\s+on|"
+    r"next(?:\s+part)?|deeper|more\s+(?:about|detail|on)|"
+    r"how\s+(?:it|they|one)\s+affects?"
+    r")\b",
+    re.I,
+)
+
+# Tutor offered a single next teaching step (not a multi-choice menu)
+_TUTOR_CONTINUE_OFFER_RE = re.compile(
+    r"would you like to\s+(?:explore|learn|look|see|try|continue|explain|"
+    r"dive|understand|know|hear|discuss|go)|"
+    r"want (?:me )?to\s+(?:explain|explore|show|teach|continue)|"
+    r"shall (?:we|i)\s+(?:explore|look|continue|explain)",
+    re.I,
+)
+
+_MULTI_CHOICE_MENU_RE = re.compile(
+    r"(?:real[- ]?life\s+example|quick\s+quiz|explore\s+other\s+topics|"
+    r"example,\s*(?:a\s+)?(?:quick\s+)?quiz|,\s*or\s+(?:to\s+learn|explore))",
+    re.I,
+)
+
 _LEGACY_PROMPT_TEMPLATE = """\
 You are a friendly AI Tutor helping school students learn clearly and confidently.
 
@@ -1607,6 +1619,34 @@ def _is_personal_dialogue_response(
     return False
 
 
+def _last_assistant_offered_to_continue(
+    conversation_history: list[dict] | None,
+) -> bool:
+    """True when the tutor asked a single yes/no-style 'shall we explore…?' offer."""
+    last = _last_assistant_text(conversation_history)
+    if not last or "?" not in last:
+        return False
+    if _MULTI_CHOICE_MENU_RE.search(last):
+        return False
+    return bool(_TUTOR_CONTINUE_OFFER_RE.search(last))
+
+
+def _is_accepting_tutor_continue_offer(
+    query: str, conversation_history: list[dict] | None
+) -> bool:
+    """Student accepted the tutor's offer to keep explaining (e.g. 'Yes please explain')."""
+    q = (query or "").strip()
+    if not q or not conversation_history:
+        return False
+    if _EXPAND_REQUEST_RE.search(q):
+        return bool(_last_assistant_text(conversation_history))
+    if not _last_assistant_offered_to_continue(conversation_history):
+        return False
+    if not _AFFIRMATION_RE.match(q):
+        return False
+    return len(q.split()) <= 7
+
+
 def _is_affirmation_followup(query: str, conversation_history: list[dict] | None) -> bool:
     """True when the student gives a short bare acknowledgment (not a story or answer)."""
     if not conversation_history:
@@ -1615,6 +1655,11 @@ def _is_affirmation_followup(query: str, conversation_history: list[dict] | None
     if not q or not _AFFIRMATION_RE.match(q):
         return False
     if not _last_assistant_text(conversation_history):
+        return False
+    # "Yes please explain" / accepting an explore offer → keep teaching
+    if _EXPAND_REQUEST_RE.search(q):
+        return False
+    if _is_accepting_tutor_continue_offer(q, conversation_history):
         return False
     words = q.split()
     if len(words) > 7:
@@ -1656,6 +1701,56 @@ def _prepare_math_engine_block(
     return result.to_prompt_block()
 
 
+_AGENT_MODE_PROMPTS = {
+    "ask": (
+        "AGENT MODE — ASK ANYTHING:\n"
+        "Answer the student's question using ONLY the retrieved textbook chapter material. "
+        "Be clear and direct (short Q&A). Do not invent facts outside the chapter. "
+        "Do not turn this into a quiz or a long lecture unless the student asks. "
+        "If the question is outside the textbook, say so and tell them to use Ask AI Tutor."
+    ),
+    "practice": (
+        "AGENT MODE — PRACTICE PROBLEMS (STRICT):\n"
+        "You are a practice coach. Stay in practice mode for the whole conversation.\n"
+        "- Generate practice problems from the retrieved textbook chapter only.\n"
+        "- When the student answers, check correctness and give brief feedback, then the next problem.\n"
+        "- Do NOT deliver a full lesson dump or open-ended lecture.\n"
+        "- Prefer short problems; one at a time unless they ask for a set.\n"
+        "- If they ask something unrelated to practicing this chapter, or outside the textbook, "
+        "redirect them to Ask AI Tutor for general help, or give a textbook practice problem."
+    ),
+    "explain": (
+        "AGENT MODE — EXPLAIN TOPIC:\n"
+        "Teach a clear, structured explanation of the topic from the retrieved textbook chapter only.\n"
+        "- Use short sections / steps when helpful.\n"
+        "- Do NOT start a quiz unless the student explicitly asks.\n"
+        "- Offer to simplify, give an example, or go to the next section at the end.\n"
+        "- If the topic is outside the textbook, say so and tell them to use Ask AI Tutor."
+    ),
+}
+
+
+def _normalize_agent_mode(agent_mode: str | None) -> str | None:
+    if not agent_mode:
+        return None
+    mode = str(agent_mode).strip().lower()
+    return mode if mode in _AGENT_MODE_PROMPTS else None
+
+
+def _apply_agent_mode(conv: Any, agent_mode: str | None) -> str:
+    """Force response_mode for Quick Start agents; return system addendum (may be empty)."""
+    from app.services.conversation_context import ResponseMode
+
+    mode = _normalize_agent_mode(agent_mode)
+    if not mode:
+        return ""
+    if mode == "practice":
+        conv.response_mode = ResponseMode.QUIZ
+    else:
+        conv.response_mode = ResponseMode.EXPLANATION
+    return _AGENT_MODE_PROMPTS[mode]
+
+
 def _resolve_answer_type(
     query: str,
     *,
@@ -1688,6 +1783,8 @@ def _resolve_answer_type(
         return detect_answer_type(q)
     if _is_personal_dialogue_response(q, conversation_history):
         return "personal-response"
+    if _is_accepting_tutor_continue_offer(q, conversation_history):
+        return "paragraph"
     if _is_affirmation_followup(q, conversation_history):
         return "affirmation"
     if mapped := answer_type_for_followup(FollowupType(conv.followup_type)):
@@ -1720,6 +1817,9 @@ def _build_chat_messages(
     learner_snapshot: dict | None = None,
     understanding_scores: dict | None = None,
     resolved_topic: str = "",
+    agent_mode: str | None = None,
+    student_key: str = "",
+    chapter_ids: list[str] | None = None,
 ) -> list[dict[str, str]]:
     from app.services.section_heading import HeadingScope
 
@@ -1729,6 +1829,7 @@ def _build_chat_messages(
     conv = resolve_conversation_context(
         q, conversation_history=conversation_history, chapter=chapter
     )
+    agent_addendum = _apply_agent_mode(conv, agent_mode)
     topic = (resolved_topic or conv.resolved_topic or q).strip()
     answer_type = _resolve_answer_type(
         q,
@@ -1737,6 +1838,12 @@ def _build_chat_messages(
         chapter=chapter,
         conv=conv,
     )
+    # Forced practice agent always uses quiz-style answers
+    if _normalize_agent_mode(agent_mode) == "practice":
+        answer_type = "quiz"
+    elif _normalize_agent_mode(agent_mode) in ("ask", "explain"):
+        if answer_type in ("quiz", "mcq"):
+            answer_type = "explanation"
     min_words = _ANSWER_MIN_WORDS.get(answer_type, 120)
     grade_label = _GRADE_LABELS.get(class_level, class_level or "School student")
     complexity = _GRADE_COMPLEXITY.get(class_level, "Use clear, age-appropriate language.")
@@ -2011,6 +2118,32 @@ def _build_chat_messages(
         understanding_scores=understanding_scores,
         learner_snapshot=learner_snapshot,
     )
+    lia_addendum = ""
+    if student_key and student_key.isdigit():
+        from app.services.learning_intelligence.clients.lia_client import get_guidance_for_turn_sync
+
+        lia = get_guidance_for_turn_sync(
+            student_user_id=int(student_key),
+            query=q,
+            topic=topic,
+            subject_name=subject_name,
+            chapter=chapter,
+            chapter_ids=chapter_ids,
+            class_level=class_level,
+            board=board,
+            agent_mode=agent_mode,
+            understanding_scores=understanding_scores,
+        )
+        if lia:
+            if lia.get("learner_guidance"):
+                learner_guidance = lia["learner_guidance"]
+            if lia.get("adaptive_guidance"):
+                adaptive_guidance = (
+                    f"{adaptive_guidance}\n{lia['adaptive_guidance']}".strip()
+                    if adaptive_guidance
+                    else lia["adaptive_guidance"]
+                )
+            lia_addendum = lia.get("prompt_instructions") or ""
 
     system = _SYSTEM_PROMPT_TEMPLATE.format(
         student_name=display_name,
@@ -2030,6 +2163,10 @@ def _build_chat_messages(
         learner_guidance=learner_guidance,
         adaptive_guidance=adaptive_guidance,
     )
+    if agent_addendum:
+        system = system + "\n\n" + agent_addendum
+    if lia_addendum:
+        system = system + "\n\n" + lia_addendum
     section_block = ""
     if section_instruction.strip():
         section_block = f"\n\nTEXTBOOK SCOPE:\n{section_instruction.strip()}\n"
@@ -2273,89 +2410,33 @@ async def _expand_short_answer(
 
 
 def _ensure_mistral_config() -> None:
-    if not MISTRAL_API_KEY:
-        raise FileNotFoundError(
-            "Missing MISTRAL_API_KEY env var. Set it to enable AI answers."
-        )
+    llm_client.ensure_llm_config()
 
 
 async def _call_mistral_async(
     messages: list[dict[str, str]],
     *,
     max_tokens: int | None = None,
+    feature: str = "chat",
 ) -> str:
-    """Non-blocking Mistral chat completion via httpx.AsyncClient."""
-    _ensure_mistral_config()
-    token_limit = max_tokens if max_tokens is not None else MISTRAL_MAX_TOKENS
-    logger.debug("Mistral request model=%s max_tokens=%d", MISTRAL_MODEL, token_limit)
-
-    async with httpx.AsyncClient(timeout=90.0) as client:
-        resp = await client.post(
-            "https://api.mistral.ai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {MISTRAL_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": MISTRAL_MODEL,
-                "messages": messages,
-                "max_tokens": token_limit,
-                "temperature": MISTRAL_TEMPERATURE,
-            },
-        )
-        resp.raise_for_status()
-
-    payload: dict[str, Any] = resp.json()
-    text = (
-        payload.get("choices", [{}])[0]
-        .get("message", {})
-        .get("content", "")
-        .strip()
+    """Non-blocking OpenAI-compatible chat completion (legacy name kept)."""
+    return await llm_client.complete(
+        messages,
+        feature=feature,
+        max_tokens=max_tokens,
+        empty_fallback=ANSWER_NOT_IN_CHAPTER,
     )
-    logger.debug("Mistral response length=%d chars", len(text))
-    return text or ANSWER_NOT_IN_CHAPTER
 
 
 async def _stream_mistral_async(
     messages: list[dict[str, str]],
     *,
     max_tokens: int | None = None,
+    feature: str = "chat",
 ) -> AsyncIterator[str]:
-    """Yield tokens from Mistral SSE stream for use with StreamingResponse."""
-    _ensure_mistral_config()
-    token_limit = max_tokens if max_tokens is not None else MISTRAL_MAX_TOKENS
-    logger.debug("Mistral streaming request model=%s max_tokens=%d", MISTRAL_MODEL, token_limit)
-
-    async with httpx.AsyncClient(timeout=120.0) as client:
-        async with client.stream(
-            "POST",
-            "https://api.mistral.ai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {MISTRAL_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": MISTRAL_MODEL,
-                "messages": messages,
-                "max_tokens": token_limit,
-                "temperature": MISTRAL_TEMPERATURE,
-                "stream": True,
-            },
-        ) as response:
-            response.raise_for_status()
-            async for line in response.aiter_lines():
-                if not line.startswith("data: "):
-                    continue
-                data = line[6:].strip()
-                if data == "[DONE]":
-                    break
-                try:
-                    chunk = json.loads(data)
-                    delta = chunk["choices"][0]["delta"].get("content", "")
-                    if delta:
-                        yield delta
-                except Exception:
-                    continue
+    """Yield tokens from OpenAI-compatible SSE stream (legacy name kept)."""
+    async for token in llm_client.stream(messages, feature=feature, max_tokens=max_tokens):
+        yield token
 
 
 # ── Fallback (no API key) ────────────────────────────────────────────────────
@@ -2397,19 +2478,15 @@ async def chapter_aware_qa(
     student_name: str = "",
     student_key: str = "",
     images_only: bool = False,
+    agent_mode: str | None = None,
 ) -> tuple[str, list[dict], dict | None, dict | None]:
     """
     Retrieve relevant chunks from ChromaDB and answer via Mistral (async).
 
-    Returns ``(answer_text, related_images, math_lesson, science_experiment)``. Checks Redis cache first.
+    Returns ``(answer_text, related_images, math_lesson, science_experiment)``.
     """
     from app.services.math_lesson.service import finalize_math_answer
     from app.services.science_experiment.service import finalize_science_answer
-    from app.core.cache import (
-        deserialize_tutor_cache,
-        get_cached_answer,
-        set_cached_answer,
-    )
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
     from app.services.section_retrieval import retrieve_for_tutor_query
     from app.services.chapter_scope import resolve_chapter_awareness_turn
@@ -2417,13 +2494,41 @@ async def chapter_aware_qa(
     conv = resolve_conversation_context(
         query, conversation_history=conversation_history, chapter=chapter
     )
+    _apply_agent_mode(conv, agent_mode)
     retrieval_query = conv.retrieval_query or query
 
     docs, scope, section_instruction = retrieve_for_tutor_query(
         retrieval_query,
         collection_name=collection_name,
         chapter_ids=chapter_ids,
+        chapter_names=chapter_names,
     )
+
+    # Topics-left questions: answer from coverage store (no LLM needed).
+    if student_key and student_key.isdigit() and chapter_ids:
+        try:
+            from app.core.database import SessionLocal
+            from app.modules.student_learning.topic_progress import try_topics_left_reply
+
+            db = SessionLocal()
+            try:
+                left_reply = try_topics_left_reply(
+                    db,
+                    user_id=int(student_key),
+                    query=query,
+                    chapter_ids=chapter_ids,
+                    subject_name=subject_name,
+                    chapter=chapter,
+                    board=board,
+                    class_level=class_level,
+                )
+            finally:
+                db.close()
+            if left_reply:
+                return left_reply, [], None, None
+        except Exception:
+            logger.exception("topics-left reply failed")
+
     early, effective_query, _assessment, coverage_guidance = resolve_chapter_awareness_turn(
         query,
         docs=docs,
@@ -2437,62 +2542,6 @@ async def chapter_aware_qa(
     )
     if early:
         return early, [], None, None
-
-    cached = await get_cached_answer(
-        collection_name, chapter_ids, effective_query, class_level
-    )
-    if cached:
-        answer, cached_lesson, cached_experiment = deserialize_tutor_cache(cached)
-        answer, math_lesson = finalize_math_answer(
-            answer,
-            effective_query,
-            class_level=class_level,
-            subject_name=subject_name,
-            existing_lesson=cached_lesson,
-            conversation_history=conversation_history,
-        )
-        answer, science_experiment = finalize_science_answer(
-            answer,
-            effective_query,
-            class_level=class_level,
-            subject_name=subject_name,
-            existing_experiment=cached_experiment,
-        )
-        # Images are never stored in cache — re-rank fresh per query.
-        imgs: list[dict] = []
-        docs_for_imgs, scope, _ = retrieve_for_tutor_query(
-            retrieval_query,
-            collection_name=collection_name,
-            chapter_ids=chapter_ids,
-        )
-        img_allowed = should_retrieve_images(
-            conv,
-            chapter_ids=chapter_ids,
-            heading_scope_kind=scope.kind,
-            subject_name=subject_name,
-        )
-        if chapter_ids and img_allowed:
-            img_top_n = _image_top_n_for_scope(scope, docs=docs_for_imgs)
-            if docs_for_imgs:
-                try:
-                    imgs = await asyncio.wait_for(
-                        asyncio.to_thread(
-                            _fetch_related_images,
-                            scope,
-                            collection_name=collection_name,
-                            chapter_ids=chapter_ids,
-                            chapter_names=chapter_names or [],
-                            chapter=chapter,
-                            query=effective_query,
-                            docs=docs_for_imgs,
-                            conversation_history=conversation_history,
-                            top_n=img_top_n,
-                        ),
-                        timeout=IMAGE_RETRIEVAL_TIMEOUT_SEC,
-                    )
-                except Exception as exc:
-                    logger.warning("Image retrieval on cache hit failed: %s", exc)
-        return answer, imgs, math_lesson, science_experiment
 
     img_allowed = should_retrieve_images(
         conv,
@@ -2533,6 +2582,46 @@ async def chapter_aware_qa(
         conv.resolved_topic or effective_query,
     )
 
+    if student_key and student_key.isdigit():
+        from app.services.learning_intelligence.clients.lia_client import emit_chat_user_question
+
+        last_assistant = ""
+        for turn in reversed(conversation_history or []):
+            if (turn.get("role") or "").lower() == "assistant":
+                last_assistant = (turn.get("content") or "").strip()
+                break
+        emit_chat_user_question(
+            student_user_id=int(student_key),
+            school_id=None,
+            query=effective_query,
+            subject_name=subject_name,
+            chapter=chapter,
+            chapter_ids=chapter_ids,
+            class_level=class_level,
+            board=board,
+            understanding_scores=understanding_scores,
+            agent_mode=agent_mode,
+            last_assistant=last_assistant,
+        )
+        try:
+            from app.modules.student_learning.topic_progress import record_turn_topic_progress
+
+            scope_title = None
+            if getattr(scope, "matched", None) is not None:
+                scope_title = getattr(scope.matched, "title", None)
+            record_turn_topic_progress(
+                student_user_id=int(student_key),
+                query=effective_query,
+                chapter_ids=chapter_ids,
+                subject_name=subject_name,
+                chapter=chapter,
+                board=board,
+                class_level=class_level,
+                scope_title=scope_title,
+            )
+        except Exception:
+            logger.exception("topic progress record failed")
+
     context = _join_context_within_budget(docs)
     messages = _build_chat_messages(
         effective_query,
@@ -2549,6 +2638,9 @@ async def chapter_aware_qa(
         learner_snapshot=learner_snapshot,
         understanding_scores=understanding_scores,
         resolved_topic=conv.resolved_topic or effective_query,
+        agent_mode=agent_mode,
+        student_key=student_key,
+        chapter_ids=chapter_ids,
     )
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
     answer_type = _resolve_answer_type(
@@ -2558,6 +2650,10 @@ async def chapter_aware_qa(
         chapter=chapter,
         conv=conv,
     )
+    if _normalize_agent_mode(agent_mode) == "practice":
+        answer_type = "quiz"
+    elif _normalize_agent_mode(agent_mode) in ("ask", "explain") and answer_type in ("quiz", "mcq"):
+        answer_type = "explanation"
     token_limit = _mistral_token_limit_for_answer_type(answer_type)
 
     try:
@@ -2617,21 +2713,21 @@ async def chapter_aware_qa(
         subject_name=subject_name,
     )
 
-    await set_cached_answer(
-        collection_name,
-        chapter_ids,
-        effective_query,
-        answer,
-        related_images=related,
-        math_lesson=math_lesson,
-        science_experiment=science_experiment,
-        class_level=class_level,
-    )
     await _mentor_profile_after_turn(
         student_key,
         conv.resolved_topic or effective_query,
         understanding_scores,
     )
+    if student_key and student_key.isdigit():
+        from app.services.learning_intelligence.clients.lia_client import emit_chat_assistant_response
+
+        emit_chat_assistant_response(
+            student_user_id=int(student_key),
+            subject_name=subject_name,
+            chapter=chapter,
+            topic=conv.resolved_topic or effective_query,
+            agent_mode=agent_mode,
+        )
     return answer, related, math_lesson, science_experiment
 
 
@@ -2695,6 +2791,7 @@ async def chapter_aware_qa_stream(
     understanding_scores: dict | None = None,
     learner_snapshot: dict | None = None,
     pipeline_timing: Any | None = None,
+    agent_mode: str | None = None,
 ) -> AsyncIterator[str]:
     """
     Streaming version of chapter_aware_qa.
@@ -2703,11 +2800,6 @@ async def chapter_aware_qa_stream(
     (usually during the first tokens, without blocking retrieval).
     """
     from app.config import CONTEXT_CHAR_BUDGET, EARLY_IMAGE_MIN_CHARS, RETRIEVAL_K, VOICE_EARLY_IMAGE_MIN_CHARS, VOICE_MAX_TOKENS, VOICE_CONTEXT_CHAR_BUDGET, VOICE_RETRIEVAL_K
-    from app.core.cache import (
-        deserialize_tutor_cache,
-        get_cached_answer,
-        set_cached_answer,
-    )
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
     from app.services.image_service.textbook_image_retrieval import early_related_images_for_query
     from app.services.math_lesson.service import finalize_math_answer
@@ -2722,6 +2814,7 @@ async def chapter_aware_qa_stream(
     conv = resolve_conversation_context(
         query, conversation_history=conversation_history, chapter=chapter
     )
+    _apply_agent_mode(conv, agent_mode)
     retrieval_query = conv.retrieval_query or query
 
     if voice_mode:
@@ -2730,6 +2823,7 @@ async def chapter_aware_qa_stream(
             retrieval_query,
             collection_name=collection_name,
             chapter_ids=chapter_ids,
+            chapter_names=chapter_names,
             k=retrieval_k,
         )
         if pipeline_timing is not None:
@@ -2739,8 +2833,37 @@ async def chapter_aware_qa_stream(
             retrieval_query,
             collection_name=collection_name,
             chapter_ids=chapter_ids,
+            chapter_names=chapter_names,
             k=retrieval_k,
         )
+
+    if student_key and student_key.isdigit() and chapter_ids:
+        try:
+            from app.core.database import SessionLocal
+            from app.modules.student_learning.topic_progress import try_topics_left_reply
+
+            db = SessionLocal()
+            try:
+                left_reply = try_topics_left_reply(
+                    db,
+                    user_id=int(student_key),
+                    query=query,
+                    chapter_ids=chapter_ids,
+                    subject_name=subject_name,
+                    chapter=chapter,
+                    board=board,
+                    class_level=class_level,
+                )
+            finally:
+                db.close()
+            if left_reply:
+                if emit_related_images:
+                    await emit_related_images([])
+                yield left_reply
+                return
+        except Exception:
+            logger.exception("topics-left reply failed (stream)")
+
     early, effective_query, _assessment, coverage_guidance = resolve_chapter_awareness_turn(
         query,
         docs=docs,
@@ -2767,71 +2890,6 @@ async def chapter_aware_qa_stream(
     )
     voice_live_teaching = voice_mode and not use_text_format
 
-    cached = await get_cached_answer(
-        collection_name, chapter_ids, effective_query, class_level
-    )
-    if cached and not voice_live_teaching:
-        answer, cached_lesson, cached_experiment = deserialize_tutor_cache(cached)
-        answer, math_lesson = finalize_math_answer(
-            answer,
-            effective_query,
-            class_level=class_level,
-            subject_name=subject_name,
-            existing_lesson=cached_lesson,
-            conversation_history=conversation_history,
-        )
-        answer, science_experiment = finalize_science_answer(
-            answer,
-            effective_query,
-            class_level=class_level,
-            subject_name=subject_name,
-            existing_experiment=cached_experiment,
-        )
-        imgs: list[dict] = []
-        docs_for_imgs, scope, _ = retrieve_for_tutor_query(
-            retrieval_query,
-            collection_name=collection_name,
-            chapter_ids=chapter_ids,
-            k=retrieval_k,
-        )
-        img_allowed = should_retrieve_images(
-            conv,
-            chapter_ids=chapter_ids,
-            heading_scope_kind=scope.kind,
-            subject_name=subject_name,
-            voice_mode=voice_mode,
-        )
-        if chapter_ids and img_allowed:
-            img_top_n = _image_top_n_for_scope(scope, docs=docs_for_imgs)
-            if docs_for_imgs:
-                try:
-                    imgs = await asyncio.wait_for(
-                        asyncio.to_thread(
-                            _fetch_related_images,
-                            scope,
-                            collection_name=collection_name,
-                            chapter_ids=chapter_ids,
-                            chapter_names=chapter_names or [],
-                            chapter=chapter,
-                            query=effective_query,
-                            docs=docs_for_imgs,
-                            conversation_history=conversation_history,
-                            top_n=img_top_n,
-                        ),
-                        timeout=IMAGE_RETRIEVAL_TIMEOUT_SEC,
-                    )
-                except Exception as exc:
-                    logger.warning("Image retrieval on cache hit failed: %s", exc)
-        _log_image_stage("cache_hit_emit", imgs)
-        if emit_related_images:
-            await emit_related_images(imgs)
-        if emit_math_lesson and math_lesson:
-            await emit_math_lesson(math_lesson, answer)
-        if emit_science_experiment and science_experiment:
-            await emit_science_experiment(science_experiment, answer)
-        yield answer
-        return
-
     img_allowed = should_retrieve_images(
         conv,
         chapter_ids=chapter_ids,
@@ -2848,6 +2906,46 @@ async def chapter_aware_qa_stream(
 
     if emit_related_images and not img_allowed:
         await emit_related_images([])
+
+    if student_key and student_key.isdigit():
+        from app.services.learning_intelligence.clients.lia_client import emit_chat_user_question
+
+        last_assistant = ""
+        for turn in reversed(conversation_history or []):
+            if (turn.get("role") or "").lower() == "assistant":
+                last_assistant = (turn.get("content") or "").strip()
+                break
+        emit_chat_user_question(
+            student_user_id=int(student_key),
+            school_id=None,
+            query=effective_query,
+            subject_name=subject_name,
+            chapter=chapter,
+            chapter_ids=chapter_ids,
+            class_level=class_level,
+            board=board,
+            understanding_scores=understanding_scores,
+            agent_mode=agent_mode,
+            last_assistant=last_assistant,
+        )
+        try:
+            from app.modules.student_learning.topic_progress import record_turn_topic_progress
+
+            scope_title = None
+            if getattr(scope, "matched", None) is not None:
+                scope_title = getattr(scope.matched, "title", None)
+            record_turn_topic_progress(
+                student_user_id=int(student_key),
+                query=effective_query,
+                chapter_ids=chapter_ids,
+                subject_name=subject_name,
+                chapter=chapter,
+                board=board,
+                class_level=class_level,
+                scope_title=scope_title,
+            )
+        except Exception:
+            logger.exception("topic progress record failed (stream)")
 
     context = _join_context_within_budget(docs, char_budget=context_budget)
 
@@ -2899,6 +2997,23 @@ async def chapter_aware_qa_stream(
             learner=learner,
             expand_deep=understanding.wants_expansion or understanding.confusion >= 0.55,
         )
+        if student_key and student_key.isdigit():
+            from app.services.learning_intelligence.clients.lia_client import get_guidance_for_turn_sync
+
+            lia = get_guidance_for_turn_sync(
+                student_user_id=int(student_key),
+                query=effective_query,
+                topic=conv.resolved_topic or effective_query,
+                subject_name=subject_name,
+                chapter=chapter,
+                chapter_ids=chapter_ids,
+                class_level=class_level,
+                board=board,
+                agent_mode=agent_mode,
+                understanding_scores=understanding_scores,
+            )
+            if lia and lia.get("prompt_instructions"):
+                messages[0]["content"] = messages[0]["content"] + "\n\n" + lia["prompt_instructions"]
     else:
         messages = _build_chat_messages(
             effective_query,
@@ -2915,6 +3030,9 @@ async def chapter_aware_qa_stream(
             learner_snapshot=learner_snapshot,
             understanding_scores=understanding_scores,
             resolved_topic=conv.resolved_topic or effective_query,
+            agent_mode=agent_mode,
+            student_key=student_key,
+            chapter_ids=chapter_ids,
         )
 
     last_imgs: list[dict] = []
@@ -2927,6 +3045,10 @@ async def chapter_aware_qa_stream(
         chapter=chapter,
         conv=conv,
     )
+    if _normalize_agent_mode(agent_mode) == "practice":
+        answer_type = "quiz"
+    elif _normalize_agent_mode(agent_mode) in ("ask", "explain") and answer_type in ("quiz", "mcq"):
+        answer_type = "explanation"
     voice_token_limit = VOICE_MAX_TOKENS if voice_live_teaching else None
     if voice_token_limit is None:
         voice_token_limit = _mistral_token_limit_for_answer_type(answer_type)
@@ -3042,7 +3164,11 @@ async def chapter_aware_qa_stream(
 
     try:
         full_answer: list[str] = []
-        async for token in _stream_mistral_async(messages, max_tokens=voice_token_limit):
+        async for token in _stream_mistral_async(
+            messages,
+            max_tokens=voice_token_limit,
+            feature="voice" if voice_mode else "chat",
+        ):
             full_answer.append(token)
             await _maybe_emit_bootstrap_images("".join(full_answer))
             yield token
@@ -3122,22 +3248,24 @@ async def chapter_aware_qa_stream(
         if emit_related_images:
             await emit_related_images(final_imgs)
         if answer_text and not voice_live_teaching:
-            await set_cached_answer(
-                collection_name,
-                chapter_ids,
-                query,
-                answer_text,
-                related_images=last_imgs,
-                math_lesson=math_lesson,
-                science_experiment=science_experiment,
-                class_level=class_level,
-            )
             if student_key and understanding_scores:
                 await _mentor_profile_after_turn(
                     student_key,
                     conv.resolved_topic or effective_query,
                     understanding_scores,
                 )
+                if student_key.isdigit():
+                    from app.services.learning_intelligence.clients.lia_client import (
+                        emit_chat_assistant_response,
+                    )
+
+                    emit_chat_assistant_response(
+                        student_user_id=int(student_key),
+                        subject_name=subject_name,
+                        chapter=chapter,
+                        topic=conv.resolved_topic or effective_query,
+                        agent_mode=agent_mode,
+                    )
     except FileNotFoundError:
         fb = _best_chunk_fallback(query, docs)
         last_imgs = await _retrieve_images_for_answer(fb)

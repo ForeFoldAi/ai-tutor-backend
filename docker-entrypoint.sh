@@ -34,8 +34,14 @@ PY
 
 mkdir -p /app/models/Layout/YOLO /app/models/MFD/YOLO
 
-echo "Running database migrations..."
-alembic upgrade head
+# ponytail: skip by default — Railway/prod DB is already migrated; set RUN_MIGRATIONS=1 to enable
+if [ "${RUN_MIGRATIONS:-0}" = "1" ]; then
+  echo "Running database migrations..."
+  alembic upgrade head
+else
+  echo "Skipping database migrations (RUN_MIGRATIONS!=1)"
+fi
 
 echo "Starting API..."
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 "$@"
+# Railway (and most PaaS) inject PORT; local/Docker Compose default to 8000.
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" "$@"

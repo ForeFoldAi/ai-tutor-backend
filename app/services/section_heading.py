@@ -69,6 +69,9 @@ def parse_heading_line(line: str) -> tuple[str, str, int] | None:
     line = (line or "").strip()
     if not line or len(line) > 160 or line.endswith("."):
         return None
+    # Pedagogy / signal boxes (e.g. "No Warning", "Watch (Be Updated)") are not section topics.
+    if _PEDAGOGY_BOX_TITLE_RE.match(_normalize_apostrophes(line)):
+        return None
     m = _NUMBERED_HEADING_RE.match(line)
     if m:
         number = m.group(1)

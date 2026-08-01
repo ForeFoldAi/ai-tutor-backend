@@ -165,7 +165,6 @@ async def _stream_answer_frames(
 
 
 async def _chapter_voice_stream_generate(req: ChapterVoiceRequest) -> AsyncIterator[bytes]:
-    from app.core.cache import deserialize_tutor_cache, get_cached_answer
     from app.services.chapter_scope import resolve_chapter_scope_with_retrieval
     from app.services.chat_service import _voice_should_use_text_format, chapter_aware_qa_stream
     from app.services.voice_tutor import (
@@ -227,19 +226,10 @@ async def _chapter_voice_stream_generate(req: ChapterVoiceRequest) -> AsyncItera
             board=req.board,
             class_level=req.class_level,
             subject_name=req.subject_name,
+            conversation_history=history,
         )
         if scope_msg:
             async for framed in _stream_answer_frames(scope_msg, [], voice=tts_voice):
-                yield framed
-            return
-
-    if req.board and req.subject_name and use_text_format:
-        cached = await get_cached_answer(
-            collection, req.chapter_ids, message, req.class_level
-        )
-        if cached:
-            answer, _math_lesson, _science_experiment = deserialize_tutor_cache(cached)
-            async for framed in _stream_answer_frames(answer, [], voice=tts_voice):
                 yield framed
             return
 
@@ -400,6 +390,9 @@ def protection_info() -> dict:
         VAD_ENABLED,
         VAD_THRESHOLD,
         VOICE_PROTECTION_ENABLED,
+        VOICE_SESSION_PROFILE,
+        VOICE_SESSION_PROFILE_MIN_MS,
+        VOICE_SESSION_REDIS,
         VOICE_TTS_PREFETCH_DEPTH,
         WAKE_WORD_ENABLED,
         WAKE_WORDS,
@@ -429,6 +422,9 @@ def protection_info() -> dict:
         "VOICE_TTS_PREFETCH_DEPTH": VOICE_TTS_PREFETCH_DEPTH,
         "WAKE_WORD_ENABLED": WAKE_WORD_ENABLED,
         "WAKE_WORDS": WAKE_WORDS,
+        "VOICE_SESSION_PROFILE": VOICE_SESSION_PROFILE,
+        "VOICE_SESSION_PROFILE_MIN_MS": VOICE_SESSION_PROFILE_MIN_MS,
+        "VOICE_SESSION_REDIS": VOICE_SESSION_REDIS,
         "vad": vad_status(),
         "speaker": speaker_status(),
         "noise": noise_status(),
@@ -449,6 +445,7 @@ async def voice_barge_check(
     transcript: str = Form(default=""),
     recent_ai_speech: str = Form(default=""),
     student_key: str = Form(default=""),
+    voice_session_id: str = Form(default=""),
 ):
     """
     Gate a barge-in candidate: VAD → echo → speaker → intent.
@@ -464,6 +461,7 @@ async def voice_barge_check(
         transcript=transcript,
         recent_ai_speech=recent_ai_speech,
         student_key=student_key,
+        voice_session_id=voice_session_id.strip(),
     )
     # Don't ship processed PCM back over JSON
     result.pop("processed_audio", None)
@@ -507,7 +505,9 @@ async def _handle_voice_transcribe(
     subject_name: str = "",
     language: str = "en",
     reject_if_similar_to: str = "",
+    voice_session_id: str = "",
 ) -> dict[str, str | float | bool]:
+    from app.services.voice_session_profile import bootstrap_session_voice
     from app.services.voice_whisper_stt import transcribe_audio_bytes, whisper_available
 
     if not whisper_available():
@@ -518,6 +518,8 @@ async def _handle_voice_transcribe(
     data = await audio.read()
     if len(data) < 256:
         raise HTTPException(status_code=400, detail="Audio too short to transcribe.")
+
+    sid = (voice_session_id or "").strip()
     try:
         result = await transcribe_audio_bytes(
             data,
@@ -540,7 +542,16 @@ async def _handle_voice_transcribe(
             "rejected": True,
         }
     if not transcript:
-        raise HTTPException(status_code=422, detail="Could not understand the audio.")
+        return {
+            "transcript": "",
+            "provider": "faster-whisper",
+            "confidence": result.get("confidence", 0.0),
+            "rejected": False,
+        }
+
+    if sid:
+        bootstrap_session_voice(sid, data)
+
     return {
         "transcript": transcript,
         "provider": "faster-whisper",
@@ -555,6 +566,7 @@ async def auth_voice_transcribe(
     subject_name: str = Form(default=""),
     language: str = Form(default="en"),
     reject_if_similar_to: str = Form(default=""),
+    voice_session_id: str = Form(default=""),
 ):
     """Transcribe a short microphone clip (WebM/Opus) with Whisper — better math accuracy."""
     return await _handle_voice_transcribe(
@@ -562,6 +574,7 @@ async def auth_voice_transcribe(
         subject_name=subject_name,
         language=language,
         reject_if_similar_to=reject_if_similar_to,
+        voice_session_id=voice_session_id,
     )
 
 
@@ -571,6 +584,7 @@ async def general_voice_transcribe(
     subject_name: str = Form(default=""),
     language: str = Form(default="en"),
     reject_if_similar_to: str = Form(default=""),
+    voice_session_id: str = Form(default=""),
 ):
     """Unauthenticated Whisper transcribe (same as /auth/voice-transcribe)."""
     return await _handle_voice_transcribe(
@@ -578,4 +592,26 @@ async def general_voice_transcribe(
         subject_name=subject_name,
         language=language,
         reject_if_similar_to=reject_if_similar_to,
+        voice_session_id=voice_session_id,
     )
+
+
+@router.post("/auth/voice-session-end")
+async def auth_voice_session_end(voice_session_id: str = Form(default="")):
+    """Delete ephemeral session voice profile when the student leaves AI Voice."""
+    from app.services.voice_session_profile import clear_session_voice
+
+    sid = (voice_session_id or "").strip()
+    if sid:
+        clear_session_voice(sid)
+    return {"ok": True}
+
+
+@router.post("/voice-session-end")
+async def voice_session_end(voice_session_id: str = Form(default="")):
+    from app.services.voice_session_profile import clear_session_voice
+
+    sid = (voice_session_id or "").strip()
+    if sid:
+        clear_session_voice(sid)
+    return {"ok": True}

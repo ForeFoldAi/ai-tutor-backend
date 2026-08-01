@@ -23,13 +23,38 @@ _TOPIC_STOPWORDS = frozenset({
     "its", "as", "be", "been", "being", "have", "has", "had", "not", "no",
     "explain", "describe", "what", "how", "why", "when", "where", "about",
     "tell", "give", "can", "you", "me", "please", "define", "meaning",
+    "chapter",  # meta — "tell about this chapter" is about the session, not a topic term
 })
+
+_CHAPTER_META_QUERY_RE = re.compile(
+    r"(?:"
+    r"(?:tell(?:\s+me)?|explain|describe|summarize|summary|overview|introduce|introduction)\s+"
+    r"(?:(?:me|us)\s+)?(?:about\s+)?(?:(?:this|the|current)\s+)?chapter\b"
+    r"|(?:(?:this|the|current)\s+chapter)\s+(?:is\s+)?about\b"
+    r"|what(?:'s|\s+(?:is|does|will|are))\s+(?:in|this|the)\s+chapter\b"
+    r"|topics?\s+(?:in|of|from|covered\s+in)\s+(?:(?:this|the|current)\s+)?chapter\b"
+    r")",
+    re.I,
+)
 
 _SKIP_TOPIC_SCOPE_RE = re.compile(
     r"^(hi|hello|hey|hii|thanks|thank you|yes|yeah|yep|no|ok|okay|sure|"
     r"continue|go on|tell me more|explain more|simplify|summarize|"
     r"i\s+(?:did\s+not|don'?t)\s+understand|i\s+am\s+confused|"
     r"what\s+do\s+you\s+mean|explain\s+again)\b",
+    re.I,
+)
+
+# Teaching moves — not out-of-chapter topics (e.g. "conduct quiz", "give me a problem")
+_PEDAGOGICAL_INTENT_RE = re.compile(
+    r"(?:"
+    r"\b(?:conduct|start|give|do|run|make)\s+(?:a\s+|me\s+a\s+|an?\s+)?(?:quiz|test|exam)\b"
+    r"|\b(?:quiz|test)\s+me\b"
+    r"|\bask\s+me\s+(?:a\s+)?(?:question|questions|quiz)\b"
+    r"|\bgive\s+me\s+(?:a\s+|an?\s+)?(?:practice\s+)?(?:problem|question|exercise|quiz)\b"
+    r"|\bpractice\s+(?:problem|problems|questions?)\b"
+    r"|\b(?:real[- ]?life\s+example|quick\s+quiz|measure\s+weather)\b"
+    r")",
     re.I,
 )
 
@@ -198,20 +223,22 @@ def build_partial_coverage_guidance(assessment: ChapterCoverageAssessment) -> st
     return (
         "CHAPTER COVERAGE ASSESSMENT: PARTIAL\n"
         f"The question is only partially covered by **{assessment.current_chapter_label}**.\n"
-        "- Answer ONLY the portion supported by the chapter context below.\n"
-        f"- Clearly note that the full explanation may appear elsewhere.{extra}\n"
-        "- Do NOT give a complete off-chapter answer from general knowledge.\n"
-        "- End by asking whether they want to continue here, switch chapter, or receive a full explanation."
+        "- First answer the portion supported by the chapter context below.\n"
+        f"- Then briefly cover any missing related piece with "
+        f"\"Beyond this chapter...\" (keep it short and age-appropriate).{extra}\n"
+        "- Do NOT invent textbook-only facts (page numbers, figure names).\n"
+        "- Do NOT force an a/b/c menu. Optionally offer a deeper chapter switch at the end."
     )
 
 
 def build_general_explanation_guidance(topic_label: str) -> str:
     return (
-        "CHAPTER COVERAGE: GENERAL EXPLANATION (student chose option c)\n"
-        f"The student asked for a general explanation of **{topic_label}** beyond the current chapter.\n"
+        "CHAPTER COVERAGE: GENERAL EXPLANATION (beyond current chapter)\n"
+        f"Give a clear general explanation of **{topic_label}** beyond the current chapter.\n"
         "- Begin with **Beyond this chapter...** or **Additional context...**\n"
         "- You may use accurate general educational knowledge.\n"
-        "- Briefly remind them which chapter they are studying, then answer clearly."
+        "- Briefly remind them which chapter they are studying, then answer clearly.\n"
+        "- Do NOT show an a/b/c choice menu."
     )
 
 
@@ -336,9 +363,56 @@ def _should_skip_topic_scope_check(query: str) -> bool:
     q = (query or "").strip()
     if not q:
         return True
+    if _CHAPTER_META_QUERY_RE.search(q):
+        return True
+    if _PEDAGOGICAL_INTENT_RE.search(q):
+        return True
     if len(q.split()) <= 2 and _SKIP_TOPIC_SCOPE_RE.match(q):
         return True
     return bool(_SKIP_TOPIC_SCOPE_RE.match(q))
+
+
+def _recent_assistant_terms(conversation_history: list[dict] | None) -> set[str]:
+    if not conversation_history:
+        return set()
+    for turn in reversed(conversation_history):
+        if (turn.get("role") or "").lower() != "assistant":
+            continue
+        content = (turn.get("content") or "").strip()
+        if not content or is_chapter_awareness_prompt(content):
+            continue
+        return substantive_query_terms(content)
+    return set()
+
+
+def is_related_chapter_follow_up(
+    query: str,
+    conversation_history: list[dict] | None,
+    *,
+    min_overlap: int = 1,
+) -> bool:
+    """True when the new question continues a topic the tutor just taught."""
+    q_terms = substantive_query_terms(query)
+    if not q_terms:
+        return False
+    prev = _recent_assistant_terms(conversation_history)
+    if not prev:
+        return False
+    return len(q_terms & prev) >= min_overlap
+
+
+def _terms_match_chapter_titles(terms: set[str], chapter_names: list[str] | None) -> bool:
+    """True when every query term appears in the selected chapter title(s)."""
+    if not terms or not chapter_names:
+        return False
+    title_parts: list[str] = []
+    for name in chapter_names:
+        label = (name or "").strip()
+        if label:
+            title_parts.append(label.lower())
+            title_parts.append(_chapter_focus_hint(label).lower())
+    title_text = " ".join(title_parts)
+    return bool(title_text) and all(term in title_text for term in terms)
 
 
 def _term_hits_in_text(terms: set[str], text: str) -> int:
@@ -477,6 +551,12 @@ def assess_chapter_coverage(
             current_chapter_label=current_label,
         )
     if not terms:
+        return ChapterCoverageAssessment(
+            level=ChapterCoverageLevel.FULL,
+            topic_label=topic_label,
+            current_chapter_label=current_label,
+        )
+    if _terms_match_chapter_titles(terms, chapter_names):
         return ChapterCoverageAssessment(
             level=ChapterCoverageLevel.FULL,
             topic_label=topic_label,
@@ -651,6 +731,12 @@ def resolve_chapter_awareness_turn(
             coverage_guidance = build_general_explanation_guidance(topic)
             return None, effective_query, None, coverage_guidance
 
+    # Related follow-up on a topic just taught → answer beyond chapter, no a/b/c wall
+    if is_related_chapter_follow_up(effective_query, conversation_history):
+        terms = substantive_query_terms(effective_query)
+        topic = " ".join(sorted(terms)) if terms else effective_query
+        return None, effective_query, None, build_general_explanation_guidance(topic)
+
     assessment = assess_chapter_coverage(
         effective_query,
         docs=docs,
@@ -663,6 +749,14 @@ def resolve_chapter_awareness_turn(
     )
 
     if assessment.level == ChapterCoverageLevel.NONE:
+        # Soft miss with some chapter signal, or adjacent topic → explain beyond chapter
+        if assessment.selected_hits > 0:
+            return (
+                None,
+                effective_query,
+                assessment,
+                build_general_explanation_guidance(assessment.topic_label),
+            )
         return build_chapter_awareness_message(assessment), effective_query, assessment, ""
 
     if assessment.level == ChapterCoverageLevel.PARTIAL:
@@ -681,12 +775,22 @@ def resolve_chapter_scope_with_retrieval(
     class_level: str,
     subject_name: str,
     retrieval_query: str | None = None,
+    conversation_history: list[dict] | None = None,
 ) -> str | None:
-    """Explicit + topic scope checks using a fresh retrieval pass."""
+    """Explicit + topic scope checks using a fresh retrieval pass.
+
+    Returns an early awareness message only for hard out-of-scope topics.
+    Pedagogical intents, related follow-ups, and soft misses return None so the
+    tutor can answer (with Beyond this chapter… when needed).
+    """
     explicit = chapter_scope_mismatch_message(query, chapter_names)
     if explicit:
         return explicit
     if not chapter_ids:
+        return None
+    if _should_skip_topic_scope_check(query):
+        return None
+    if is_related_chapter_follow_up(query, conversation_history):
         return None
 
     from app.services.section_retrieval import retrieve_for_tutor_query
@@ -695,8 +799,9 @@ def resolve_chapter_scope_with_retrieval(
         retrieval_query or query,
         collection_name=collection_name,
         chapter_ids=chapter_ids,
+        chapter_names=chapter_names,
     )
-    return topic_chapter_mismatch_message(
+    assessment = assess_chapter_coverage(
         query,
         docs=docs,
         collection_name=collection_name,
@@ -706,3 +811,7 @@ def resolve_chapter_scope_with_retrieval(
         class_level=class_level,
         subject_name=subject_name,
     )
+    # Voice/HTTP early gate: only hard NONE with zero chapter signal
+    if assessment.level == ChapterCoverageLevel.NONE and assessment.selected_hits == 0:
+        return build_chapter_awareness_message(assessment)
+    return None

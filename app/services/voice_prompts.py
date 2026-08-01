@@ -87,6 +87,7 @@ Never invent page numbers or figure names. Teach the idea in your own spoken wor
 
 VOICE_TTS_SPEAKABILITY = """\
 TTS OUTPUT (your text goes straight to speech synthesis):
+- Reply in English only — plain spoken sentences, no Hindi or mixed scripts.
 - Plain spoken sentences only — no markdown, bullets, headers, or emoji.
 - Write how you'd talk: contractions, short clauses, natural commas for breath.
 - After every 1–2 sentences, use a full stop so the voice can pause.

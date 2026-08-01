@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-import uuid
 from typing import Any
 
 import numpy as np
@@ -42,6 +41,14 @@ def _get_or_create_collection(client, name: str):
 
 
 def delete_image_vectors_for_upload(collection_name: str, upload_id: str) -> None:
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_image
+
+        qdrant_image.delete_for_upload(collection_name, str(upload_id))
+        return
+
     _sanitize_chroma_env()
     try:
         client = _get_client()
@@ -61,10 +68,21 @@ def upsert_image_vectors(
     """
     Insert or replace vectors for one upload.
 
-    Each item: ``image_id`` (uuid str), ``embedding`` (np.ndarray), metadata keys.
+    Each item: ``image_id`` (str), ``embedding`` (np.ndarray), metadata keys.
+    image_id must be the sequential TextbookImage PK string.
     """
     if not items:
         return 0
+
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_image
+
+        return qdrant_image.upsert(
+            collection_name, upload_id=str(upload_id), items=items
+        )
+
     _sanitize_chroma_env()
     delete_image_vectors_for_upload(collection_name, upload_id)
 
@@ -84,7 +102,7 @@ def upsert_image_vectors(
         embeddings.append(np.asarray(emb, dtype=np.float32).tolist())
         metadatas.append(
             {
-                "textbook_upload_id": upload_id,
+                "textbook_upload_id": str(upload_id),
                 "image_id": image_id,
                 "page_index": int(it.get("page_index", 0)),
                 "file_name": str(it.get("file_name", ""))[:200],
@@ -111,6 +129,18 @@ def query_image_vectors(
     """
     if not chapter_ids or query_embedding is None:
         return []
+
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_image
+
+        return qdrant_image.query(
+            collection_name,
+            query_embedding,
+            chapter_ids=[str(x) for x in chapter_ids],
+            k=k,
+        )
 
     _sanitize_chroma_env()
     try:
@@ -166,6 +196,13 @@ def get_embeddings_for_images(
     """
     if not image_ids:
         return {}
+
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_image
+
+        return qdrant_image.get_embeddings(collection_name, [str(i) for i in image_ids])
 
     _sanitize_chroma_env()
     try:

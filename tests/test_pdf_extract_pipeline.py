@@ -6,7 +6,11 @@ from app.services.pdf_extract_pipeline.figure_pairing import (
     FIGURE_LABEL_RE,
     _assign_labels_to_figures,
     _box_area,
+    _caption_fig_number_mismatch,
     _figure_match_score,
+    _is_shallow_figure_crop,
+    _is_prose_orphan_caption,
+    _sanitize_box,
 )
 from app.services.pdf_extract_pipeline.merge import latex_rm_whitespace, page_to_markdown
 from app.services.pdf_extract_pipeline.types import (
@@ -39,6 +43,60 @@ def test_assign_labels_to_figures_greedy():
 
 def test_box_area():
     assert _box_area((0, 0, 100, 50)) == 5000
+    assert _box_area((100, 50, 0, 0)) == 5000
+
+
+def test_sanitize_box_inverted():
+    assert _sanitize_box((100, 80, 20, 10)) == (20, 10, 100, 80)
+    assert _sanitize_box((0, 0, 0, 0)) is None
+
+
+def test_caption_fig_number_mismatch():
+    assert _caption_fig_number_mismatch("Fig. 2.3.2. A frog croaking", "2.3.1")
+    assert not _caption_fig_number_mismatch("Fig. 2.3.1. Pine cones", "2.3.1")
+
+
+def test_shallow_figure_crop_rejects_ant_strip():
+    assert _is_shallow_figure_crop((284, 175, 610, 299), (1200, 1600))
+    assert not _is_shallow_figure_crop((591, 888, 976, 1341), (1200, 1600))
+
+
+def test_resolve_figure_box_keeps_tall_layout_when_refine_collapses():
+    from app.services.pdf_extract_pipeline.figure_pairing import _resolve_figure_box
+
+    label = {"fig_number": "2.6", "label_box": (600, 1030, 780, 1055)}
+    layout_box = (591, 888, 976, 1341)
+    shallow_refined = (585, 894, 984, 1033)
+
+    class _Page:
+        rect = type("R", (), {"width": 612, "height": 792})()
+
+        def get_text(self, *a, **k):
+            return ""
+
+        def search_for(self, *a, **k):
+            return []
+
+    import app.services.pdf_extract_pipeline.figure_pairing as fp
+
+    orig_refine = fp.refine_figure_box
+    fp.refine_figure_box = lambda *a, **k: shallow_refined
+    try:
+        resolved = _resolve_figure_box(
+            _Page(),
+            label=label,
+            layout_box=layout_box,
+            image_size=(1200, 1600),
+            dpi=150,
+        )
+    finally:
+        fp.refine_figure_box = orig_refine
+    assert resolved == layout_box
+
+
+def test_prose_orphan_caption():
+    assert _is_prose_orphan_caption("e Weather")
+    assert not _is_prose_orphan_caption("Fig. 2.3.3. Pine cones open and close")
 
 
 def test_latex_rm_whitespace():

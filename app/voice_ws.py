@@ -8,6 +8,7 @@ Concurrent pipeline:
 from __future__ import annotations
 
 import asyncio
+import base64
 import json
 import logging
 import uuid
@@ -129,6 +130,7 @@ class _Session:
         "learner_profile",
         "_learner_load_task",
         "tts_voice",
+        "voice_session_id",
     )
 
     def __init__(self) -> None:
@@ -146,6 +148,7 @@ class _Session:
         self.learner_profile = None
         self._learner_load_task: asyncio.Task | None = None
         self.tts_voice: str | None = None
+        self.voice_session_id: str = ""
 
     def configure(self, msg: dict) -> None:
         self.board = msg.get("board", self.board)
@@ -162,6 +165,9 @@ class _Session:
         picked = voice_for_gender(msg.get("voice_gender"), msg.get("tts_voice"))
         if picked is not None:
             self.tts_voice = picked
+        sid = str(msg.get("voice_session_id") or "").strip()
+        if sid:
+            self.voice_session_id = sid
 
     def remember(self, role: str, content: str) -> None:
         self.history.append({"role": role, "content": content})
@@ -207,7 +213,7 @@ async def _general_answer_stream(
         student_name=session.student_name,
         conversation_history=session.history,
     )
-    async for token in _stream_mistral_async(messages):
+    async for token in _stream_mistral_async(messages, feature="voice"):
         yield token
 
 
@@ -415,6 +421,7 @@ async def _stream_answer(
                 emit_science_experiment=_emit_experiment,
                 conversation_history=session.history,
                 student_name=session.student_name,
+                student_key=session.student_key,
                 voice_mode=True,
                 tutor_state=session.tutor_state,
                 understanding_scores=understanding_payload,
@@ -461,6 +468,25 @@ async def _stream_answer(
     full_answer = clean_answer_holder[0] if clean_answer_holder else "".join(full_tokens)
     session.remember("user", question)
     session.remember("assistant", full_answer)
+    if session.student_key and session.student_key.isdigit():
+        from app.services.learning_intelligence.clients.lia_client import emit_voice_turn
+
+        emit_voice_turn(
+            student_user_id=int(session.student_key),
+            is_user=True,
+            text=question,
+            subject_name=session.subject_name,
+            chapter=session.chapter,
+            understanding_scores=understanding_payload,
+        )
+        emit_voice_turn(
+            student_user_id=int(session.student_key),
+            is_user=False,
+            text=full_answer[:300],
+            subject_name=session.subject_name,
+            chapter=session.chapter,
+            understanding_scores=understanding_payload,
+        )
     session.tutor_state = next_tutor_state(
         current=current_state,
         scores=scores,
@@ -544,6 +570,15 @@ async def voice_ws(
                 )
                 if not text or len(text) < 2:
                     continue
+                audio_b64 = str(msg.get("utterance_audio_b64") or "").strip()
+                if audio_b64 and session.voice_session_id:
+                    try:
+                        from app.services.voice_session_profile import bootstrap_session_voice
+
+                        audio_bytes = base64.b64decode(audio_b64)
+                        bootstrap_session_voice(session.voice_session_id, audio_bytes)
+                    except Exception as exc:
+                        logger.debug("Session voice bootstrap skipped: %s", exc)
                 await _cancel_gen()
                 stop.clear()
                 gen_task = asyncio.create_task(
@@ -568,6 +603,15 @@ async def voice_ws(
                 await _cancel_gen()
                 break
 
+            elif mtype == "session_end":
+                if session.voice_session_id:
+                    from app.services.voice_session_profile import clear_session_voice
+
+                    clear_session_voice(session.voice_session_id)
+                    session.voice_session_id = ""
+                await _cancel_gen()
+                break
+
             elif mtype == "ping":
                 await _send(websocket, {"type": "pong"})
 
@@ -581,4 +625,8 @@ async def voice_ws(
             pass
     finally:
         await _cancel_gen()
+        if session.voice_session_id:
+            from app.services.voice_session_profile import clear_session_voice
+
+            clear_session_voice(session.voice_session_id)
         logger.info("Voice WS session ended")

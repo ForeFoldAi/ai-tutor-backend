@@ -121,7 +121,17 @@ def _decode_audio_bytes(audio_bytes: bytes) -> np.ndarray:
         return np.asarray(data, dtype=np.float32)
     except Exception as exc:
         logger.debug("Audio decode failed: %s", exc)
-        return np.zeros(0, dtype=np.float32)
+
+    try:
+        from app.services.voice_whisper_stt import _decode_webm_to_pcm
+
+        pcm = _decode_webm_to_pcm(audio_bytes)
+        if pcm is not None and pcm.size:
+            return pcm.astype(np.float32)
+    except Exception as exc:
+        logger.debug("ffmpeg WebM decode failed: %s", exc)
+
+    return np.zeros(0, dtype=np.float32)
 
 
 def _energy_vad(pcm: np.ndarray) -> dict[str, Any]:
@@ -136,8 +146,9 @@ def _energy_vad(pcm: np.ndarray) -> dict[str, Any]:
     # Rough band energy via absolute + high-pass (cheap)
     x = pcm - float(np.mean(pcm))
     rms = float(np.sqrt(np.mean(x * x)) + 1e-9)
-    # Map RMS to a pseudo-probability
+    # Map RMS to a pseudo-probability (energy backend uses a lower bar than Silero)
     prob = float(min(1.0, max(0.0, (rms - 0.008) / 0.06)))
+    energy_threshold = min(float(VAD_THRESHOLD), 0.4)
     # Consecutive frame estimate at 30ms
     frame = int(_SAMPLE_RATE * 0.03)
     spoken = 0
@@ -146,12 +157,13 @@ def _energy_vad(pcm: np.ndarray) -> dict[str, Any]:
         if float(np.sqrt(np.mean(chunk * chunk))) > 0.012:
             spoken += frame
     duration_ms = (spoken / _SAMPLE_RATE) * 1000.0
-    is_speech = prob >= VAD_THRESHOLD and duration_ms >= MIN_SPEECH_MS
+    is_speech = prob >= energy_threshold and duration_ms >= MIN_SPEECH_MS
     return {
         "is_speech": is_speech,
         "speech_probability": prob,
         "speech_duration_ms": duration_ms,
         "backend": "energy",
+        "threshold": energy_threshold,
     }
 
 

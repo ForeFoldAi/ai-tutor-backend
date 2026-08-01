@@ -77,6 +77,7 @@ def evaluate_barge_in(
     transcript: str = "",
     recent_ai_speech: str = "",
     student_key: str = "",
+    voice_session_id: str = "",
     explicit_intent_only: bool = False,
 ) -> dict[str, Any]:
     """
@@ -109,13 +110,14 @@ def evaluate_barge_in(
         )
         return out
 
+    # ponytail: VAD on raw mic — spectral gate/RNNoise crush levels and false-reject barge-in
+    vad = evaluate_vad(audio_bytes)
+    out["speech_probability"] = vad["speech_probability"]
+    out["speech_duration_ms"] = vad["speech_duration_ms"]
+
     processed, noise_db = suppress_noise(audio_bytes)
     out["processed_audio"] = processed
     out["noise_reduction_db"] = noise_db
-
-    vad = evaluate_vad(processed)
-    out["speech_probability"] = vad["speech_probability"]
-    out["speech_duration_ms"] = vad["speech_duration_ms"]
 
     # Hard reject: clearly non-speech (horn/fan bursts fail duration/prob)
     if not vad["is_speech"]:
@@ -170,11 +172,21 @@ def evaluate_barge_in(
             return out
 
     speaker = verify_speaker(student_key, processed)
+    if voice_session_id:
+        from app.services.voice_session_profile import verify_session_speaker
+
+        session_sp = verify_session_speaker(voice_session_id, processed)
+        if not session_sp.get("skipped"):
+            speaker = session_sp
     out["speaker_similarity"] = float(speaker.get("similarity") or 0.0)
     speaker_skipped = bool(speaker.get("skipped"))
 
-    # Hard reject only when enrolled and clearly different speaker
-    if not speaker.get("match", True) and not speaker_skipped:
+    # Hard reject only when enrolled and clearly a different speaker (not same student, noisy clip)
+    if (
+        not speaker.get("match", True)
+        and not speaker_skipped
+        and out["speaker_similarity"] < 0.45
+    ):
         metrics.incr("interrupt_rejected_count")
         metrics.log_event(
             "INTERRUPT_REJECTED",
