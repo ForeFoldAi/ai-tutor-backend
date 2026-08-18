@@ -71,6 +71,25 @@ def test_is_mathematics_subject():
     assert _is_mathematics_subject("Science") is False
 
 
+def test_math_short_answer_not_capped_at_direct_tokens():
+    from app.services.chat_service import (
+        _DIRECT_ANSWER_TOKEN_LIMIT,
+        _mistral_token_limit_for_answer_type,
+        detect_question_type,
+    )
+
+    assert detect_question_type("what is cure root of 512") == "problem-solving"
+    assert detect_question_type("is 49 a perfect square?") == "problem-solving"
+    assert (
+        _mistral_token_limit_for_answer_type("short-answer", subject_name="Mathematics")
+        is None
+    )
+    assert (
+        _mistral_token_limit_for_answer_type("short-answer", subject_name="Science")
+        == _DIRECT_ANSWER_TOKEN_LIMIT
+    )
+
+
 def test_mathematics_prompt_eight_section_format():
     instruction, length, interaction, structure, closing = _apply_mathematics_prompt_overrides(
         subject_name="Mathematics",

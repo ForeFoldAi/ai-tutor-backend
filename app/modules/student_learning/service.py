@@ -54,8 +54,10 @@ from app.modules.student_learning.tutor_chat_storage import (
 )
 from app.modules.users.models import User
 
-# Cap per-heartbeat to avoid tab-sleep inflation
+# Cap per-heartbeat to avoid tab-sleep inflation (legacy endpoint only).
 _HEARTBEAT_MAX_DELTA = 60
+# ponytail: start/end sessions — max wall-clock per visit (tab left open overnight).
+_SESSION_MAX_DURATION = 4 * 3600
 
 # ponytail: IST calendar day for streak — use settings.timezone if multi-region.
 _STREAK_TZ = ZoneInfo("Asia/Kolkata")
@@ -225,7 +227,7 @@ def start_session(db: Session, user: User, payload: SessionStartRequest) -> Sess
 
 
 def heartbeat_session(db: Session, user: User, session_id: int) -> SessionHeartbeatResponse:
-    scope_key = ensure_scope_or_reset(db, user)
+    """Legacy tick — prefer start + end. Kept for API compat; no periodic client calls."""
     session = db.get(StudentStudySession, session_id)
     if session is None or session.user_id != user.id:
         raise AuthException("Session not found.", status.HTTP_404_NOT_FOUND)
@@ -237,28 +239,36 @@ def heartbeat_session(db: Session, user: User, session_id: int) -> SessionHeartb
     delta = max(0, min(delta, _HEARTBEAT_MAX_DELTA))
     session.duration_seconds += delta
     session.last_heartbeat_at = now
-    if session.chapter_id is not None:
-        _upsert_progress(
-            db,
-            user_id=user.id,
-            chapter_id=session.chapter_id,
-            subject_name=session.subject_name,
-            chapter_name=session.chapter_name,
-            scope_key=scope_key,
-        )
-    _bump_streak(db, user.id, scope_key)
     db.flush()
     return SessionHeartbeatResponse(session_id=session.id, duration_seconds=session.duration_seconds)
 
 
+def _apply_session_duration(session: StudentStudySession, now: datetime) -> int:
+    elapsed = int((now - session.started_at).total_seconds())
+    session.duration_seconds = max(0, min(elapsed, _SESSION_MAX_DURATION))
+    session.last_heartbeat_at = now
+    return session.duration_seconds
+
+
 def end_session(db: Session, user: User, session_id: int) -> SessionEndResponse:
-    heartbeat_session(db, user, session_id)
+    scope_key = ensure_scope_or_reset(db, user)
     session = db.get(StudentStudySession, session_id)
     if session is None or session.user_id != user.id:
         raise AuthException("Session not found.", status.HTTP_404_NOT_FOUND)
     now = datetime.now(UTC)
     if session.ended_at is None:
+        _apply_session_duration(session, now)
         session.ended_at = now
+        if session.chapter_id is not None:
+            _upsert_progress(
+                db,
+                user_id=user.id,
+                chapter_id=session.chapter_id,
+                subject_name=session.subject_name,
+                chapter_name=session.chapter_name,
+                scope_key=scope_key,
+            )
+        _bump_streak(db, user.id, scope_key)
         db.flush()
     from app.services.learning_intelligence.clients.lia_client import emit_study_session_end
 

@@ -57,7 +57,7 @@ def test_clarification_requires_assistant_history():
 
 def test_answer_type_mapping():
     assert answer_type_for_followup(FollowupType.CLARIFICATION) == "clarification"
-    assert answer_type_for_followup(FollowupType.SIMPLIFY) == "simplified"
+    assert answer_type_for_followup(FollowupType.SIMPLIFY) == "clarification"
     assert answer_type_for_followup(FollowupType.GREETING) == "greeting"
     assert answer_type_for_followup(FollowupType.NEW_TOPIC) is None
 

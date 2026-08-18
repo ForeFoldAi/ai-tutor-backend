@@ -218,6 +218,13 @@ async def _chapter_voice_stream_generate(req: ChapterVoiceRequest) -> AsyncItera
     collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
 
     if req.board and req.subject_name and req.chapter_ids:
+        from app.services.conversation_context import resolve_conversation_context
+
+        conv = resolve_conversation_context(
+            message,
+            conversation_history=history,
+            chapter=req.chapter,
+        )
         scope_msg = resolve_chapter_scope_with_retrieval(
             message,
             collection_name=collection,
@@ -226,6 +233,7 @@ async def _chapter_voice_stream_generate(req: ChapterVoiceRequest) -> AsyncItera
             board=req.board,
             class_level=req.class_level,
             subject_name=req.subject_name,
+            retrieval_query=conv.retrieval_query,
             conversation_history=history,
         )
         if scope_msg:
@@ -353,7 +361,7 @@ async def general_voice_stream(req: ChapterVoiceRequest):
 
 @router.get("/voice/tts-info")
 def tts_info() -> dict[str, str]:
-    from app.config import VOICE_TTS_PITCH, VOICE_TTS_RATE
+    from app.config import VOICE_TTS_PITCH, VOICE_TTS_RATE, VOICE_TTS_VOLUME
 
     return {
         "provider": "edge-tts",
@@ -362,6 +370,7 @@ def tts_info() -> dict[str, str]:
         "audio_format": "audio/mpeg",
         "rate": VOICE_TTS_RATE,
         "pitch": VOICE_TTS_PITCH,
+        "volume": VOICE_TTS_VOLUME,
     }
 
 

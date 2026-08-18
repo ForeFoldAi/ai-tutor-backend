@@ -80,7 +80,15 @@ _CONTINUE_RE = re.compile(
 )
 _DEEPER_RE = re.compile(
     r"\b(go\s+deeper|more\s+detail|in\s+more\s+detail|elaborate|expand\s+on\s+that|"
-    r"dive\s+deeper|explain\s+further)\b",
+    r"dive\s+deeper|explain\s+further|deeply|in\s+deep|more\s+deep|explain\s+in\s+deep)\b",
+    re.I,
+)
+_EXPLAIN_THIS_RE = re.compile(
+    r"\bexplain\s+(?:this|that|it|what\s+you(?:'re|\s+are)?\s+(?:telling|saying))\b",
+    re.I,
+)
+_HOW_GOT_ANSWER_RE = re.compile(
+    r"\bhow\s+did\s+you\s+get\b",
     re.I,
 )
 _EXAMPLE_RE = re.compile(
@@ -93,8 +101,10 @@ _DIAGRAM_RE = re.compile(
     re.I,
 )
 _VISUAL_RE = re.compile(
-    r"\b(show\s+(me\s+)?(the\s+)?(image|picture|diagram|figure|map)|"
-    r"with\s+(a\s+)?(diagram|image|picture)|visual|see\s+the\s+figure)\b",
+    r"\b(show\s+(me\s+)?(?:an?\s+|the\s+)?(?:images?|pictures?|figures?|maps?|illustrations?)|"
+    r"with\s+(?:an?\s+)?(?:diagrams?|images?|pictures?|figures?|maps?|illustrations?)|"
+    r"(?:see|want|need)\s+(?:an?\s+)?(?:images?|diagrams?|pictures?|figures?)|"
+    r"visual|see\s+the\s+figure)\b",
     re.I,
 )
 _COMPARISON_RE = re.compile(r"\b(compare|difference\s+between|vs\.?|versus|contrast)\b", re.I)
@@ -260,9 +270,14 @@ def classify_followup_regex(query: str) -> FollowupType:
         return FollowupType.ASK_COMPARISON
     if _CONTINUE_RE.match(q) or _DEEPER_RE.search(q):
         return FollowupType.CONTINUE_EXPLANATION
+    if _EXPLAIN_THIS_RE.search(q) or _HOW_GOT_ANSWER_RE.search(q):
+        return FollowupType.CONTINUE_EXPLANATION
     if len(q.split()) <= 3 and not _CONCEPTUAL_RE.search(q) and not _CHALLENGE_RE.search(q):
         return FollowupType.CONTINUE_EXPLANATION
     if _CONCEPTUAL_RE.search(q) or _CHALLENGE_RE.search(q):
+        # "explain this deeply" — deepen follow-up, not a new curriculum topic
+        if _DEEPER_RE.search(q) or _EXPLAIN_THIS_RE.search(q):
+            return FollowupType.CONTINUE_EXPLANATION
         return FollowupType.NEW_TOPIC
     return FollowupType.NEW_TOPIC
 
@@ -366,6 +381,8 @@ def classify_followup_intent(
     if regex_intent == FollowupType.NEW_TOPIC and (
         _CONCEPTUAL_RE.search(q) or _CHALLENGE_RE.search(q)
     ):
+        if _DEEPER_RE.search(q) or _EXPLAIN_THIS_RE.search(q):
+            return IntentClassification(FollowupType.CONTINUE_EXPLANATION, 0.95, "regex")
         return IntentClassification(FollowupType.NEW_TOPIC, 0.95, "regex")
 
     should_try_bge = (
@@ -378,6 +395,11 @@ def classify_followup_intent(
             if regex_intent == FollowupType.NEW_TOPIC:
                 if bge.followup_type == FollowupType.NEW_TOPIC:
                     return bge
+                # ponytail: allow BGE to override NEW_TOPIC only for short phrases
+                # with history (e.g. "that bit", "that part") — long conceptual
+                # openers are already guarded above by _CONCEPTUAL_RE.
+                if len(q.split()) <= 6 and history:
+                    return IntentClassification(bge.followup_type, bge.confidence, "hybrid")
                 return IntentClassification(FollowupType.NEW_TOPIC, 0.6, "regex")
             if bge.followup_type != FollowupType.NEW_TOPIC:
                 return IntentClassification(
@@ -410,12 +432,14 @@ def answer_type_for_followup(followup: FollowupType) -> str | None:
     mapping: dict[FollowupType, str] = {
         FollowupType.CLARIFICATION: "clarification",
         FollowupType.GREETING: "greeting",
-        FollowupType.SIMPLIFY: "simplified",
+        # ponytail: keep "simplify" as a plain re-explanation (no structured headings)
+        FollowupType.SIMPLIFY: "clarification",
         FollowupType.ASK_SUMMARY: "summary",
         FollowupType.GENERATE_QUESTIONS: "quiz",
         FollowupType.GENERATE_MCQ: "mcq",
         FollowupType.ASK_EXAMPLE: "short-answer",
-        FollowupType.ASK_COMPARISON: "paragraph",
-        FollowupType.CONTINUE_EXPLANATION: "paragraph",
+        # ponytail: follow-ups should not trigger the full structured lesson format
+        FollowupType.ASK_COMPARISON: "short-answer",
+        FollowupType.CONTINUE_EXPLANATION: "short-answer",
     }
     return mapping.get(followup)

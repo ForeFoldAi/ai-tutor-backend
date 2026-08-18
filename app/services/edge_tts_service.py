@@ -91,11 +91,13 @@ async def resolve_voice() -> str:
 
 
 def _communicate(text: str, *, voice: str, chunk_index: int = 0) -> edge_tts.Communicate:
-    """Build Communicate with teaching-friendly prosody (plain text + rate/pitch)."""
-    spoken, rate, pitch = prepare_voice_tts(text, chunk_index=chunk_index)
+    """Build Communicate with teaching-friendly prosody (plain text + rate/pitch/volume)."""
+    spoken, rate, pitch, volume = prepare_voice_tts(text, chunk_index=chunk_index)
     if not spoken:
         spoken = " "
-    return edge_tts.Communicate(spoken, voice=voice, rate=rate, pitch=pitch)
+    return edge_tts.Communicate(
+        spoken, voice=voice, rate=rate, pitch=pitch, volume=volume
+    )
 
 
 async def stream_edge_tts(
@@ -155,6 +157,7 @@ async def iter_edge_tts_mp3(
     stop_event: asyncio.Event | None = None,
     *,
     voice: str | None = None,
+    chunk_index: int = 0,
 ) -> AsyncIterator[bytes]:
     """Yield MP3 byte chunks for REST framed streams and read-aloud."""
     from app.services.tts_sanitize import sanitize_chunk_for_tts
@@ -164,7 +167,7 @@ async def iter_edge_tts_mp3(
         return
 
     voice_name = voice or await resolve_voice()
-    communicate = _communicate(sentence, voice=voice_name)
+    communicate = _communicate(sentence, voice=voice_name, chunk_index=chunk_index)
     async for chunk in _iter_communicate_stream(communicate):
         if stop_event and stop_event.is_set():
             return
@@ -175,10 +178,18 @@ async def iter_edge_tts_mp3(
             yield data
 
 
-async def synthesize_mp3(text: str, *, voice: str | None = None, stop_event: asyncio.Event | None = None) -> bytes:
+async def synthesize_mp3(
+    text: str,
+    *,
+    voice: str | None = None,
+    stop_event: asyncio.Event | None = None,
+    chunk_index: int = 0,
+) -> bytes:
     """Collect a full MP3 payload for a single speech unit (prefetch path)."""
     parts: list[bytes] = []
-    async for chunk in iter_edge_tts_mp3(text, stop_event=stop_event, voice=voice):
+    async for chunk in iter_edge_tts_mp3(
+        text, stop_event=stop_event, voice=voice, chunk_index=chunk_index
+    ):
         parts.append(chunk)
     return b"".join(parts)
 

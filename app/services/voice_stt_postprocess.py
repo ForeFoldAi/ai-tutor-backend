@@ -47,6 +47,10 @@ _FILLER = re.compile(
 
 def _normalize_echo_text(text: str) -> str:
     t = (text or "").lower()
+    # ponytail: normalize a few common contractions so overlap scoring
+    # doesn't miss "you're" vs "you are" speaker-echo cases.
+    t = re.sub(r"\byou'?re\b", "you are", t)
+    t = re.sub(r"\bi'm\b", "i am", t)
     t = re.sub(r"[^\w\s]", " ", t)
     t = _FILLER.sub(" ", t)
     return _WHITESPACE.sub(" ", t).strip()
@@ -61,10 +65,13 @@ def echo_similarity(user_text: str, assistant_text: str) -> float:
     assistant = _normalize_echo_text(assistant_text)
     if len(user) < 3 or not assistant:
         return 0.0
-    if assistant.find(user) >= 0:
+    u_words = [w for w in user.split() if len(w) > 2]
+    # ponytail: follow-up questions often appear inside the tutor's last answer;
+    # lowered from 6/48 → 4/28 so partial TTS echoes are caught.
+    if assistant.find(user) >= 0 and (len(u_words) >= 4 or len(user) >= 28):
         return 1.0
     # Sliding window containment of user inside assistant (AI bleed)
-    if len(user) >= 12:
+    if len(user) >= 28:
         step = max(4, len(user) // 6)
         for i in range(0, max(1, len(assistant) - len(user) + 1), step):
             window = assistant[i : i + len(user) + 8]
@@ -72,18 +79,20 @@ def echo_similarity(user_text: str, assistant_text: str) -> float:
                 return 0.98
 
     probe = assistant[: min(120, len(assistant))]
-    if len(probe) >= 12 and user.find(probe) >= 0:
+    if len(probe) >= 24 and user.find(probe) >= 0:
         return 1.0
 
-    u_words = [w for w in user.split() if len(w) > 2]
     if not u_words:
         return 0.0
     # ponytail: brief questions share topic words with the tutor; substring match only
-    if len(u_words) <= 4:
+    # lowered from 4 → 3 so 4-5 word echoes are also caught by overlap scoring.
+    if len(u_words) <= 3:
         return 0.0
     a_list = [w for w in assistant.split() if len(w) > 2]
+    # Use prefix matching (len≥5 stem) to catch "dynasty"↔"dynasties", "shape"↔"shaping"
     a_set = set(a_list)
-    overlap = sum(1 for w in u_words if w in a_set)
+    a_stems = {w[:6] for w in a_list if len(w) >= 6}
+    overlap = sum(1 for w in u_words if w in a_set or (len(w) >= 6 and w[:6] in a_stems))
     recall = overlap / len(u_words)
     # Soft Jaccard against recent assistant word set
     union = len(set(u_words) | a_set) or 1

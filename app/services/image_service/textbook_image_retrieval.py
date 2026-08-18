@@ -87,8 +87,10 @@ _ROLE_MULTIPLIER: dict[str, float] = {
 _GENERIC_ASSET_NAME = re.compile(r"^(im\d+|p\d+_\d+|image\d+)\.", re.I)
 _IMAGE_REQUEST_PATTERNS = re.compile(
     r"\b("
-    r"with\s+images?|show\s+(?:me\s+)?(?:a\s+|the\s+)?(?:diagram|figure|picture|map|illustration|photo)s?|"
+    r"with\s+(?:an?\s+)?(?:images?|diagrams?|pictures?|figures?|maps?|illustrations?)|"
+    r"show\s+(?:me\s+)?(?:an?\s+|the\s+)?(?:diagrams?|figures?|pictures?|maps?|illustrations?)|"
     r"include\s+(?:an?\s+)?images?|using\s+(?:diagrams?|pictures?|illustrations?)|"
+    r"(?:see|want|need)\s+(?:an?\s+)?(?:images?|diagrams?|pictures?|figures?)|"
     r"textbook\s+(?:diagram|figure|image)s?"
     r")\b",
     re.I,

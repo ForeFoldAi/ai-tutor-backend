@@ -37,7 +37,9 @@ class _HttpTtsPrefetcher:
             self._voice = await resolve_voice()
         return self._voice
 
-    async def synthesize(self, text: str, *, voice: str | None = None) -> bytes:
+    async def synthesize(
+        self, text: str, *, voice: str | None = None, chunk_index: int = 0
+    ) -> bytes:
         cleaned = (text or "").strip()
         if not cleaned:
             return b""
@@ -59,7 +61,7 @@ class _HttpTtsPrefetcher:
             self._next_task.cancel()
         self._next_task = None
         self._next_text = None
-        return await synthesize_mp3(cleaned, voice=voice_name)
+        return await synthesize_mp3(cleaned, voice=voice_name, chunk_index=chunk_index)
 
     async def stream_units(
         self, units: list[str], *, voice: str | None = None
@@ -74,10 +76,10 @@ class _HttpTtsPrefetcher:
                 if nxt:
                     self._next_text = nxt
                     self._next_task = asyncio.create_task(
-                        synthesize_mp3(nxt, voice=voice_name),
+                        synthesize_mp3(nxt, voice=voice_name, chunk_index=idx + 1),
                         name="voice-http-tts-prefetch",
                     )
-            data = await self.synthesize(cleaned, voice=voice_name)
+            data = await self.synthesize(cleaned, voice=voice_name, chunk_index=idx)
             async for framed in _mp3_to_frames(data):
                 yield framed
 

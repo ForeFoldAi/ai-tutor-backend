@@ -3,9 +3,10 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.modules.catalog.models import BoardEnum, ClassEnum
+from app.core.text_clean import clean_display_label
 
 
 class LearningChapterOut(BaseModel):
@@ -17,6 +18,11 @@ class LearningChapterOut(BaseModel):
     topics_total: int = 0
     topics_covered: int = 0
     topics_remaining: list[str] = []
+
+    @field_validator("chapter", mode="before")
+    @classmethod
+    def _clean_chapter(cls, v: object) -> str | None:
+        return clean_display_label(v if isinstance(v, str) or v is None else str(v))
 
 
 class LearningSubjectOut(BaseModel):
@@ -50,6 +56,11 @@ class ContinueLearningOut(BaseModel):
     progress: int = 0
     last_accessed_at: datetime | None = None
 
+    @field_validator("chapter_name", mode="before")
+    @classmethod
+    def _clean_chapter_name(cls, v: object) -> str | None:
+        return clean_display_label(v if isinstance(v, str) or v is None else str(v))
+
 
 class RecentLessonOut(BaseModel):
     subject_id: int
@@ -61,6 +72,11 @@ class RecentLessonOut(BaseModel):
     file_name: str
     status: Literal["not_started", "in_progress", "completed"]
     last_accessed_at: datetime | None = None
+
+    @field_validator("chapter_name", mode="before")
+    @classmethod
+    def _clean_chapter_name(cls, v: object) -> str | None:
+        return clean_display_label(v if isinstance(v, str) or v is None else str(v))
 
 
 class RecommendedTopicOut(BaseModel):
@@ -74,6 +90,11 @@ class RecommendedTopicOut(BaseModel):
     class_level: ClassEnum
     chapter_id: int
     chapter_name: str | None = None
+
+    @field_validator("title", "chapter_name", mode="before")
+    @classmethod
+    def _clean_labels(cls, v: object) -> str | None:
+        return clean_display_label(v if isinstance(v, str) or v is None else str(v))
 
 
 class LearningOverviewResponse(BaseModel):

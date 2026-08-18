@@ -64,6 +64,22 @@ def test_echo_allows_student_question():
     assert not transcript_likely_echo("stop", tutor)  # short; overlap low
 
 
+def test_echo_rejects_short_tts_paraphrase_with_truncation():
+    """
+    Regression: STT may truncate an AI sentence mid-word (e.g. dynasty/dynasties),
+    but we still must reject it as speaker bleed.
+    """
+    from app.services.voice_stt_postprocess import echo_similarity, transcript_likely_echo
+
+    tutor = (
+        "Ah, Suneel, you're mixing two things. "
+        "In Chapter 2, we don't count maps."
+    )
+    echo_frag = "Sunil you are mixing two things in"
+    assert echo_similarity(echo_frag, tutor) > 0.7
+    assert transcript_likely_echo(echo_frag, tutor)
+
+
 def test_vad_rejects_silence_and_noise(monkeypatch):
     from app.services import voice_vad
 

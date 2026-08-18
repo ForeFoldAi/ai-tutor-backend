@@ -47,6 +47,18 @@ _EMPH_RUN_RE = re.compile(r"\*{1,3}|_{1,3}")
 # Table pipes (simple rows)
 _TABLE_ROW_RE = re.compile(r"^\s*\|?.+\|.+\|?\s*$", re.MULTILINE)
 
+# Textbook figure / page metadata — spoken only if the student asked (stripped here).
+_FIG_LINE_RE = re.compile(
+    r"^\s*(?:Fig\.?|Figure)\s*\d+(?:\.\d+)*\s*(?:[.:—–-]\s*)?.+$",
+    re.I | re.MULTILINE,
+)
+_PAGE_LINE_RE = re.compile(r"^\s*Page\s+\d+\s*$", re.I | re.MULTILINE)
+_FIG_INLINE_RE = re.compile(
+    r"\b(?:Fig\.?|Figure)\s*\d+(?:\.\d+)*\b",
+    re.I,
+)
+_PAGE_INLINE_RE = re.compile(r"\bpage\s+\d+\b", re.I)
+
 # Template / JSON-ish noise (only when whole token is brackets)
 _BRACKET_ONLY_RE = re.compile(r"^[\s\[\]{}]+$")
 
@@ -133,6 +145,16 @@ def _normalize_whitespace_and_punctuation(text: str) -> str:
     return text.strip()
 
 
+def _strip_figure_page_metadata(text: str) -> str:
+    t = _FIG_LINE_RE.sub(" ", text)
+    t = _PAGE_LINE_RE.sub(" ", t)
+    t = _FIG_INLINE_RE.sub(" ", t)
+    t = _PAGE_INLINE_RE.sub(" ", t)
+    t = re.sub(r"\s+,", ",", t)
+    t = re.sub(r",\s*,+", ",", t)
+    return t
+
+
 def sanitize_for_tts(text: str) -> str:
     """
     Strip markdown / markup and return natural spoken plain text.
@@ -146,6 +168,7 @@ def sanitize_for_tts(text: str) -> str:
     t = _replace_code_blocks(t)
     t = _replace_inline_code(t)
     t = _replace_links_and_urls(t)
+    t = _strip_figure_page_metadata(t)
     t = _strip_markdown_structure(t)
     t = _strip_emphasis(t)
     t = _strip_latex_for_speech(t)

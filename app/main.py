@@ -122,11 +122,12 @@ def _startup() -> None:
 
     def _warm_tts():
         try:
-            import asyncio
-            from app.services.edge_tts_service import resolve_voice
+            # ponytail: pin voice without network probe — asyncio.run(resolve_voice())
+            # leaves edge-tts aiohttp sessions → "Event loop is closed" / Unclosed client session.
+            from app.services import edge_tts_service as ets
 
-            asyncio.run(resolve_voice())
-            logger.info("Edge TTS voice pre-warmed and ready")
+            ets._resolved_voice = ets.PRIMARY_VOICE
+            logger.info("Edge TTS voice ready: %s", ets.PRIMARY_VOICE)
         except Exception as exc:
             logger.warning("TTS pre-warm failed (non-fatal): %s", exc)
 

@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable
 
-from sympy import Eq, Rational, simplify, solve, sympify, symbols
+from sympy import Eq, Rational, integer_nthroot, simplify, solve, sympify, symbols
 from sympy.parsing.sympy_parser import (
     parse_expr,
     standard_transformations,
@@ -495,6 +495,166 @@ def _try_statistics(query: str, class_band: str) -> MathEngineResult | None:
     )
 
 
+def _try_powers_and_roots(query: str, class_band: str) -> MathEngineResult | None:
+    """Square/cube, nth roots, and perfect-power checks (Class 8 Square and Cube)."""
+    ql = query.lower()
+
+    # Cube root — "cure root" is a common STT/typo for "cube root"
+    m = re.search(
+        rf"(?:cube|cubic|cure)\s+roots?\s+of\s+{_INDIAN_NUM}",
+        query,
+        re.I,
+    )
+    if not m:
+        m = re.search(rf"(?:cuberoot|∛)\s*(?:of\s+)?{_INDIAN_NUM}", query, re.I)
+    if m:
+        n = int(parse_number(m.group(1)))
+        root, exact = integer_nthroot(abs(n), 3)
+        if n < 0:
+            root = -root
+        kind = "cube_root"
+        to_find = f"Find the cube root of {format_indian(n)}."
+        formula_words = "Cube root = the number which multiplied by itself 3 times gives n"
+        formula_latex = r"$$\sqrt[3]{n} = a \quad\text{when}\quad a \times a \times a = n$$"
+        solution = [
+            f"$$\\sqrt[3]{{{latex_number(n)}}}$$",
+            f"$$= {latex_number(root)}$$",
+            f"$$\\text{{Check: }} {latex_number(root)} \\times {latex_number(root)} \\times {latex_number(root)} = {latex_number(root ** 3)}$$",
+        ]
+        if exact:
+            final = f"**{format_indian(root)}**"
+            quick = f"Check: {format_indian(root)}³ = {format_indian(n)}."
+        else:
+            final = f"**{format_indian(n)} is not a perfect cube.** Nearest integer cube root is {format_indian(root)}."
+            quick = f"{format_indian(root)}³ = {format_indian(root ** 3)}, which is not {format_indian(n)}."
+        return MathEngineResult(
+            solved=True,
+            kind=kind,
+            class_band=class_band,
+            to_find=to_find,
+            given=[f"Number = {format_indian(n)}"],
+            concept="The cube root of n is a number a such that a × a × a = n.",
+            formula_words=formula_words,
+            formula_latex=formula_latex,
+            steps=[],
+            solution_latex=solution,
+            final_answer=final,
+            quick_check=quick,
+        )
+
+    m = re.search(rf"(?:square\s+roots?|sqrt|√)\s*(?:of\s+)?{_INDIAN_NUM}", query, re.I)
+    if m:
+        n = int(parse_number(m.group(1)))
+        if n < 0:
+            return None
+        root, exact = integer_nthroot(n, 2)
+        solution = [
+            f"$$\\sqrt{{{latex_number(n)}}}$$",
+            f"$$= {latex_number(root)}$$",
+            f"$$\\text{{Check: }} {latex_number(root)} \\times {latex_number(root)} = {latex_number(root ** 2)}$$",
+        ]
+        if exact:
+            final = f"**{format_indian(root)}**"
+            quick = f"Check: {format_indian(root)}² = {format_indian(n)}."
+        else:
+            final = f"**{format_indian(n)} is not a perfect square.** Nearest integer square root is {format_indian(root)}."
+            quick = f"{format_indian(root)}² = {format_indian(root ** 2)}, which is not {format_indian(n)}."
+        return MathEngineResult(
+            solved=True,
+            kind="square_root",
+            class_band=class_band,
+            to_find=f"Find the square root of {format_indian(n)}.",
+            given=[f"Number = {format_indian(n)}"],
+            concept="The square root of n is a number a such that a × a = n.",
+            formula_words="Square root = the number which multiplied by itself gives n",
+            formula_latex=r"$$\sqrt{n} = a \quad\text{when}\quad a \times a = n$$",
+            steps=[],
+            solution_latex=solution,
+            final_answer=final,
+            quick_check=quick,
+        )
+
+    m = re.search(rf"(?:is\s+)?{_INDIAN_NUM}\s+(?:a\s+)?perfect\s+(square|cube)", query, re.I)
+    if m:
+        n = int(parse_number(m.group(1)))
+        kind_word = m.group(2).lower()
+        power = 3 if kind_word == "cube" else 2
+        root, exact = integer_nthroot(abs(n), power)
+        if n < 0 and power == 2:
+            exact = False
+        if n < 0 and power == 3:
+            root = -root
+        check_val = root ** power
+        if exact:
+            final = f"**Yes**, {format_indian(n)} is a perfect {kind_word} because {format_indian(root)}^{power} = {format_indian(n)}."
+        else:
+            final = f"**No**, {format_indian(n)} is not a perfect {kind_word}."
+        return MathEngineResult(
+            solved=True,
+            kind=f"perfect_{kind_word}",
+            class_band=class_band,
+            to_find=f"Check whether {format_indian(n)} is a perfect {kind_word}.",
+            given=[f"Number = {format_indian(n)}"],
+            concept=f"A perfect {kind_word} equals some integer raised to the power {power}.",
+            formula_words=f"n is a perfect {kind_word} if n = a^{power} for an integer a",
+            formula_latex=f"$$n = a^{power}$$",
+            steps=[],
+            solution_latex=[
+                f"$$\\sqrt[{power}]{{{latex_number(n)}}} = {latex_number(root)}$$"
+                if power == 3
+                else f"$$\\sqrt{{{latex_number(n)}}} = {latex_number(root)}$$",
+                f"$${latex_number(root)}^{power} = {latex_number(check_val)}$$",
+            ],
+            final_answer=final,
+            quick_check=f"{format_indian(root)}^{power} = {format_indian(check_val)}.",
+        )
+
+    m = re.search(rf"(?:what\s+is\s+|find\s+|calculate\s+)?{_INDIAN_NUM}\s*(?:cubed|\^3|³)", query, re.I)
+    if m and re.search(r"cubed|\^3|³", ql):
+        a = int(parse_number(m.group(1)))
+        val = a ** 3
+        return MathEngineResult(
+            solved=True,
+            kind="cube_power",
+            class_band=class_band,
+            to_find=f"Find {format_indian(a)} cubed.",
+            given=[f"Number = {format_indian(a)}"],
+            concept="A cube of a number is the number multiplied by itself 3 times.",
+            formula_words="n³ = n × n × n",
+            formula_latex=r"$$n^3 = n \times n \times n$$",
+            steps=[],
+            solution_latex=[
+                f"$${latex_number(a)}^3 = {latex_number(a)} \\times {latex_number(a)} \\times {latex_number(a)}$$",
+                f"$$= {latex_number(val)}$$",
+            ],
+            final_answer=f"**{format_indian(val)}**",
+            quick_check=f"Cube root of {format_indian(val)} should be {format_indian(a)}.",
+        )
+
+    m = re.search(rf"(?:what\s+is\s+|find\s+|calculate\s+)?{_INDIAN_NUM}\s*(?:squared|\^2|²)", query, re.I)
+    if m and re.search(r"squared|\^2|²", ql):
+        a = int(parse_number(m.group(1)))
+        val = a ** 2
+        return MathEngineResult(
+            solved=True,
+            kind="square_power",
+            class_band=class_band,
+            to_find=f"Find {format_indian(a)} squared.",
+            given=[f"Number = {format_indian(a)}"],
+            concept="A square of a number is the number multiplied by itself.",
+            formula_words="n² = n × n",
+            formula_latex=r"$$n^2 = n \times n$$",
+            steps=[],
+            solution_latex=[
+                f"$${latex_number(a)}^2 = {latex_number(a)} \\times {latex_number(a)}$$",
+                f"$$= {latex_number(val)}$$",
+            ],
+            final_answer=f"**{format_indian(val)}**",
+            quick_check=f"Square root of {format_indian(val)} should be {format_indian(a)}.",
+        )
+    return None
+
+
 def _try_mensuration(query: str, class_band: str) -> MathEngineResult | None:
     ql = query.lower()
     nums = _extract_number_list(query)
@@ -518,7 +678,7 @@ def _try_mensuration(query: str, class_band: str) -> MathEngineResult | None:
             final_answer=f"**V = {vol:.2f} cm³**",
             quick_check="Volume should increase if you increase radius or height.",
         )
-    if re.search(r"\bcube\b", ql) and nums:
+    if re.search(r"\bcube\b", ql) and nums and not re.search(r"\broot\b", ql):
         s = nums[0]
         sa = 6 * s * s
         vol = s ** 3
@@ -705,6 +865,7 @@ _SOLVERS: list[Callable[..., MathEngineResult | None]] = [
     _try_word_problem_linear,
     _try_linear_equation,
     _try_statistics,
+    _try_powers_and_roots,
     _try_mensuration,
     _try_triangle_angle,
     _try_probability_simple,

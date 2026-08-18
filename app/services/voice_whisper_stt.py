@@ -133,6 +133,14 @@ def _decode_webm_to_pcm(audio_bytes: bytes):
     return np.frombuffer(proc.stdout, dtype=np.int16).astype(np.float32) / 32768.0
 
 
+def _audio_suffix(audio_bytes: bytes) -> str:
+    if len(audio_bytes) >= 12 and audio_bytes[4:8] == b"ftyp":
+        return ".mp4"
+    if audio_bytes.startswith(b"OggS"):
+        return ".ogg"
+    return ".webm"
+
+
 def _run_whisper(model: Any, audio: Any, *, language: str, subject_name: str):
     return model.transcribe(
         audio,
@@ -165,7 +173,7 @@ def _transcribe_sync(
     model = _get_model()
     transcribe_kwargs = {"language": language or "en", "subject_name": subject_name}
     segments = None
-    with tempfile.NamedTemporaryFile(suffix=".webm", delete=True) as tmp:
+    with tempfile.NamedTemporaryFile(suffix=_audio_suffix(audio_bytes), delete=True) as tmp:
         tmp.write(audio_bytes)
         tmp.flush()
         try:

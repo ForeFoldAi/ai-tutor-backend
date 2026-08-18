@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal, get_db
 from app.core.student_messages import IMAGE_INVALID_PATH, IMAGE_NOT_AVAILABLE, PDF_ONLY
+from app.core.text_clean import clean_display_label
 from app.modules.auth.constants import Role
 from app.modules.auth.dependencies import get_current_user, get_current_user_bearer_or_query, require_roles
 from app.modules.auth.schemas import MessageResponse
@@ -152,9 +153,9 @@ def create_textbook_upload(
         board=payload.board,
         class_level=payload.class_name,
         subject_name=payload.subject,
-        chapter=payload.chapter,
+        chapter=clean_display_label(payload.chapter),
         content_type=payload.content_type,
-        content_label=payload.content_label,
+        content_label=clean_display_label(payload.content_label),
         uploaded_by=current_user.id,
     )
     db.add(row)
@@ -291,7 +292,9 @@ async def upload_textbook_files(
             )
 
         file_path = await _save_upload_file(file, board, class_name, subject)
-        label = labels[idx] if idx < len(labels) and labels[idx] else (file.filename or f"File {idx + 1}")
+        label = clean_display_label(
+            labels[idx] if idx < len(labels) and labels[idx] else (file.filename or f"File {idx + 1}")
+        )
 
         row = TextbookUpload(
             file_name=file.filename or "document",

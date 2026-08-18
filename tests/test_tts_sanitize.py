@@ -15,6 +15,27 @@ def test_heading():
     assert sanitize_for_tts("## Cell Structure") == "Cell Structure"
 
 
+def test_key_points_markdown_not_spoken_as_symbols():
+    out = sanitize_for_tts(
+        "## Key Points\n\n- Kingdoms had rulers.\n- They controlled territories.\n"
+        "- Some kingdoms became powerful."
+    )
+    assert "#" not in out
+    assert "*" not in out
+    assert "-" not in out
+    assert "Key Points" in out
+    assert "Kingdoms had rulers" in out
+    assert "controlled territories" in out
+
+
+def test_figure_and_page_metadata_stripped():
+    out = sanitize_for_tts("The rain gauge is shown in Fig 2.16, page 19 of the book.")
+    assert "Fig" not in out
+    assert "2.16" not in out
+    assert "page 19" not in out.lower()
+    assert "rain gauge" in out.lower()
+
+
 def test_list_to_sentences():
     out = sanitize_for_tts("- Plants need sunlight\n- Water is important")
     assert "Plants need sunlight" in out

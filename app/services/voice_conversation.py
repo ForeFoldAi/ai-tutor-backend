@@ -22,7 +22,7 @@ async def emit_interrupt_listening(
 ) -> None:
     """
   Immediate client feedback on barge-in:
-  1. interrupt_ack — stop UI "speaking", clear stale assistant stream
+  1. interrupt_ack — stop UI "speaking"; client commits partial assistant text then clears the live stream
   2. listening — mic may open; client restarts capture
   3. tutor_state — server session returns to LISTENING
 

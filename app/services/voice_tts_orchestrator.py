@@ -48,9 +48,12 @@ class _PrefetchSlot:
         *,
         voice: str,
         stop_event: asyncio.Event,
+        chunk_index: int = 0,
     ) -> _PrefetchSlot:
         async def _run() -> bytes:
-            return await synthesize_mp3(text, voice=voice, stop_event=stop_event)
+            return await synthesize_mp3(
+                text, voice=voice, stop_event=stop_event, chunk_index=chunk_index
+            )
 
         return cls(
             text=text,
@@ -100,6 +103,9 @@ def _try_peek(queue: asyncio.Queue[str | None]) -> str | None:
 
 async def _emit_speech_unit(ws: WebSocket, text: str, index: int) -> None:
     """Tell client which chunk is currently spoken (text/speech sync)."""
+    from app.services.voice_prosody import prepare_speech_delivery
+
+    delivery = prepare_speech_delivery(text, chunk_index=index)
     try:
         await ws.send_json(
             {
@@ -107,6 +113,9 @@ async def _emit_speech_unit(ws: WebSocket, text: str, index: int) -> None:
                 "text": text,
                 "index": index,
                 "chars": len(text),
+                "speech_intent": delivery.speech_intent.value,
+                "rate": delivery.rate,
+                "pitch": delivery.pitch,
             }
         )
     except Exception:
@@ -141,7 +150,11 @@ async def run_tts_orchestrator(
             nxt = _try_peek(speech_queue)
             if not nxt:
                 break
-            slot = _PrefetchSlot.start(nxt, voice=voice, stop_event=stop_event)
+            # Next play index = current unit + already-armed prefetch depth.
+            idx = unit_index + len(pending)
+            slot = _PrefetchSlot.start(
+                nxt, voice=voice, stop_event=stop_event, chunk_index=idx
+            )
             slot.needs_task_done = True
             pending.append(slot)
 
@@ -219,7 +232,9 @@ async def run_tts_orchestrator(
 
             _arm_prefetch_slots()
             t_gen = time.perf_counter()
-            data = await synthesize_mp3(text, voice=voice, stop_event=stop_event)
+            data = await synthesize_mp3(
+                text, voice=voice, stop_event=stop_event, chunk_index=unit_index
+            )
             metrics.set_gauge(
                 "chunk_generation_latency_ms",
                 (time.perf_counter() - t_gen) * 1000.0,

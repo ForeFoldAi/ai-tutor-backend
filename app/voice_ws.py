@@ -123,6 +123,7 @@ class _Session:
         "chapter",
         "chapter_names",
         "history",
+        "memory",
         "student_name",
         "student_key",
         "tutor_state",
@@ -134,6 +135,8 @@ class _Session:
     )
 
     def __init__(self) -> None:
+        from app.services.conversation_memory import ConversationMemory
+
         self.board = ""
         self.class_level = ""
         self.subject_name = ""
@@ -141,6 +144,7 @@ class _Session:
         self.chapter = ""
         self.chapter_names: list[str] = []
         self.history: list[dict] = []
+        self.memory = ConversationMemory()
         self.student_name = ""
         self.student_key = ""
         self.tutor_state = "LISTENING"
@@ -420,6 +424,7 @@ async def _stream_answer(
                 emit_math_lesson=_emit_lesson,
                 emit_science_experiment=_emit_experiment,
                 conversation_history=session.history,
+                conversation_memory=session.memory.to_dict(),
                 student_name=session.student_name,
                 student_key=session.student_key,
                 voice_mode=True,
@@ -466,8 +471,24 @@ async def _stream_answer(
     logger.info("[voice %s] Timing %s", turn_id, timing.summary())
 
     full_answer = clean_answer_holder[0] if clean_answer_holder else "".join(full_tokens)
-    session.remember("user", question)
-    session.remember("assistant", full_answer)
+    from app.services.conversation_context import resolve_conversation_context
+    from app.services.conversation_memory import remember_turn
+
+    turn_conv = resolve_conversation_context(
+        question,
+        conversation_history=session.history,
+        chapter=session.chapter,
+        memory=session.memory,
+    )
+    session.history, session.memory = remember_turn(
+        session.history,
+        session.memory,
+        user_query=question,
+        assistant_response=full_answer,
+        resolved_topic=turn_conv.resolved_topic,
+        followup_type=turn_conv.followup_type,
+        chapter=session.chapter,
+    )
     if session.student_key and session.student_key.isdigit():
         from app.services.learning_intelligence.clients.lia_client import emit_voice_turn
 

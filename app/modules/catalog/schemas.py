@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field, field_validator
 
 from app.modules.catalog.models import BoardEnum, ClassEnum, ProcessingStatusEnum
+from app.core.text_clean import clean_display_label
 
 
 class BoardCreateRequest(BaseModel):
@@ -88,6 +89,11 @@ class TextbookUploadResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+    @field_validator("chapter", "content_label", mode="before")
+    @classmethod
+    def _clean_labels(cls, v: object) -> str | None:
+        return clean_display_label(v if isinstance(v, str) or v is None else str(v))
+
 
 class EmbeddingStatsResponse(BaseModel):
     total_documents: int
@@ -117,6 +123,11 @@ class StudentChapterResponse(BaseModel):
     file_name: str
 
     model_config = {"from_attributes": True}
+
+    @field_validator("chapter", mode="before")
+    @classmethod
+    def _clean_chapter(cls, v: object) -> str | None:
+        return clean_display_label(v if isinstance(v, str) or v is None else str(v))
 
 
 class StudentSubjectResponse(BaseModel):

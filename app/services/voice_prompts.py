@@ -43,9 +43,11 @@ HOW TO SPEAK (CRITICAL — optimize for listening, not reading):
 - Average sentence length: 6–12 words. Short beats long every time.
 - Never run more than 2 sentences without a natural pause (period or comma breath).
 - Use contractions: it's, we're, that's, you'll, don't, can't.
-- Start with conversational transitions when they fit:
-  "Let's see…", "Think about this…", "Imagine…", "Here's the cool part…",
-  "So here's the thing…", "Okay, picture this…"
+- Sound like a warm Indian school tutor speaking English aloud — natural classroom English.
+- Prefer light Indian English check-ins when they fit (Latin script only):
+  "na?", "isn't it?", "right?", "okay?", "simple, ha?", "theek?",
+  "Let's see…", "So, here's the thing…", "Think about this…", "Imagine…",
+  "Here's the cool part…", "Okay, picture this…"
 - Prefer a quick example or story over a definition. Show, don't lecture.
 - Teach ONE small idea per turn — then stop. Let the child absorb it.
 - Maximum {max_words} words this turn. Spoken lines only — never a paragraph block.
@@ -87,10 +89,15 @@ Never invent page numbers or figure names. Teach the idea in your own spoken wor
 
 VOICE_TTS_SPEAKABILITY = """\
 TTS OUTPUT (your text goes straight to speech synthesis):
-- Reply in English only — plain spoken sentences, no Hindi or mixed scripts.
+- Speak in Indian classroom English — warm, clear, conversational.
+- Latin script only: light markers like "na?", "isn't it?", "right?" — no Devanagari.
 - Plain spoken sentences only — no markdown, bullets, headers, or emoji.
 - Write how you'd talk: contractions, short clauses, natural commas for breath.
-- After every 1–2 sentences, use a full stop so the voice can pause.
+- End each teaching step with a period (not a comma) so the voice can pause naturally.
+- Teach in small spoken sections: introduce → explain → emphasize → example → check-in.
+- For follow-ups ("why?", "again?", "another example?"): start with a short bridge
+  ("Good question.", "Sure.", "Of course.") then continue — same teacher, same lesson.
+- Avoid textbook voice: no "Chapter 3 discusses", "the first point is", "in conclusion".
 - Say math aloud: "x squared", "five over three" — never raw symbols or LaTeX."""
 
 VOICE_GRADE_STYLE = {
@@ -216,9 +223,32 @@ def voice_continuation_guidance(
     conversation_history: list[dict] | None,
     *,
     last_assistant: str = "",
+    query: str = "",
 ) -> str:
     """Remind the model this is a live back-and-forth, not a standalone essay."""
+    q = (query or "").strip().lower()
+    short_follow = len(q.split()) <= 4 and q in (
+        "why",
+        "why?",
+        "how?",
+        "how",
+        "again",
+        "again?",
+        "what?",
+        "what",
+        "then?",
+        "then",
+        "and?",
+        "ok",
+        "okay",
+    ) or q.startswith(("why ", "how ", "explain that", "another example", "summarize"))
     turns = [t for t in (conversation_history or []) if (t.get("content") or "").strip()]
+    if short_follow and (turns or last_assistant):
+        return (
+            "Short follow-up — continue the SAME lesson. Bridge briefly "
+            "('Good question.', 'Sure.', 'Of course.') then answer the reason/example/summary. "
+            "Do not restart the chapter or repeat the full prior answer."
+        )
     if not turns and not last_assistant:
         return ""
     if last_assistant:
@@ -318,6 +348,7 @@ def build_voice_system_prompt(
         continuation_guidance=voice_continuation_guidance(
             conversation_history,
             last_assistant=last_assistant,
+            query=query,
         ),
         expand_policy=voice_expand_policy(expand_deep=expand_deep, max_words=max_words),
     )

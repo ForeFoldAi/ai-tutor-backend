@@ -167,6 +167,92 @@ def test_full_coverage_for_tell_about_this_chapter(mock_other):
     assert assessment.level == ChapterCoverageLevel.FULL
 
 
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_british_summarise_this_chapter_is_in_scope(mock_other):
+    """'summarise' (UK) must not be treated as an out-of-chapter topic."""
+    ch1_id = "11111111-1111-1111-1111-111111111111"
+    mock_other.return_value = ("", 0, 0)
+
+    for query in ("Summarise this chapter", "Summarize this chapter", "summary of this chapter"):
+        assessment = assess_chapter_coverage(
+            query,
+            docs=[_doc("A square has four equal sides.", ch1_id)],
+            collection_name="CBSE_CLASS_8_Mathematics",
+            chapter_ids=[ch1_id],
+            chapter_names=["Chapter 1 - A Square and A Cube"],
+            board="CBSE",
+            class_level="CLASS_8",
+            subject_name="Mathematics",
+        )
+        assert assessment.level == ChapterCoverageLevel.FULL, query
+
+
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_what_is_a_square_matches_chapter_title(mock_other):
+    ch1_id = "11111111-1111-1111-1111-111111111111"
+    mock_other.return_value = ("", 0, 0)
+
+    assessment = assess_chapter_coverage(
+        "What is a square?",
+        docs=[],
+        collection_name="CBSE_CLASS_8_Mathematics",
+        chapter_ids=[ch1_id],
+        chapter_names=["Chapter 1 - A Square and A Cube"],
+        board="CBSE",
+        class_level="CLASS_8",
+        subject_name="Mathematics",
+    )
+    assert assessment.level == ChapterCoverageLevel.FULL
+    assert substantive_query_terms("What is a square?") == {"square"}
+
+
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_concept_related_math_problem_detects_square_practice(mock_other):
+    from app.services.chapter_scope import (
+        is_concept_related_math_problem,
+        resolve_chapter_awareness_turn,
+    )
+
+    mock_other.return_value = ("", 0, 0)
+    names = ["Chapter 1 - A Square and A Cube"]
+    assert is_concept_related_math_problem(
+        "A square field has side 25 m. Find its area.",
+        subject_name="Mathematics",
+        chapter_names=names,
+    )
+    assert is_concept_related_math_problem(
+        "Find the cube of 12",
+        subject_name="Mathematics",
+        chapter_names=names,
+    )
+    # Unrelated algebra in a squares chapter → not concept-related
+    assert not is_concept_related_math_problem(
+        "Solve 2x + 3 = 11",
+        subject_name="Mathematics",
+        chapter_names=names,
+    )
+    # Non-math subject → never
+    assert not is_concept_related_math_problem(
+        "Find the area of a square of side 5",
+        subject_name="Science",
+        chapter_names=names,
+    )
+
+    early, _q, _a, guidance = resolve_chapter_awareness_turn(
+        "A square park has side 40 m. Find its perimeter.",
+        docs=[],
+        conversation_history=None,
+        collection_name="CBSE_CLASS_8_Mathematics",
+        chapter_ids=["11111111-1111-1111-1111-111111111111"],
+        chapter_names=names,
+        board="CBSE",
+        class_level="CLASS_8",
+        subject_name="Mathematics",
+    )
+    assert early is None
+    assert "RELATED MATH PRACTICE" in guidance
+
+
 def test_scope_choice_general():
     history = [
         {"role": "user", "content": "what is democracy?"},
@@ -213,3 +299,40 @@ def test_related_follow_up_ozone_protection():
         }
     ]
     assert is_related_chapter_follow_up("How is ozone layer protected?", history)
+
+
+def test_with_an_image_is_visual_follow_up_not_topic():
+    from app.services.chapter_scope import (
+        is_image_follow_up_request,
+        resolve_chapter_awareness_turn,
+    )
+    from app.services.conversation_intent_classifier import (
+        FollowupType,
+        classify_followup_regex,
+    )
+
+    assert is_image_follow_up_request("with an image")
+    assert classify_followup_regex("with an image") == FollowupType.ASK_VISUAL
+
+    history = [
+        {"role": "user", "content": "can you explain me about weather"},
+        {
+            "role": "assistant",
+            "content": "Weather is how the air around us feels right now — hot, cold, windy, or rainy.",
+        },
+    ]
+    early, effective, _assessment, guidance = resolve_chapter_awareness_turn(
+        "with an image",
+        docs=[],
+        conversation_history=history,
+        collection_name="CBSE_CLASS_9_Social",
+        chapter_ids=["22222222-2222-2222-2222-222222222222"],
+        chapter_names=["Chapter 2 - Understanding the Weather"],
+        board="CBSE",
+        class_level="CLASS_9",
+        subject_name="Social",
+    )
+    assert early is None
+    assert "weather" in effective.lower()
+    assert "VISUAL REQUEST" in guidance
+    assert "a/b/c" in guidance.lower()

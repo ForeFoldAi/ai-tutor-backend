@@ -1,7 +1,7 @@
 """
 Speech-unit chunking for low-latency, continuous-sounding voice TTS.
 
-Splits on natural breath groups (clauses, discourse markers) — not every period.
+Prefer natural pauses at periods and commas; strong discourse markers next.
 First unit is aggressive for sub-600ms first-audio; later units grow for prosody.
 """
 
@@ -27,22 +27,40 @@ _MIN_WORDS = 15
 _MIN_CHARS = 60
 _SOFT_PUNCT_MIN_CHARS = 40
 
-# Clause / breath boundaries (prefer over hard sentence splits)
+# Clause / breath boundaries — only used when a unit already hit max_words.
 _CLAUSE_SEPS = (", ", " — ", " - ", "; ", ": ")
+# Forced overflow only — do not split mid-thought on because/so/but.
 _DISCOURSE_SEPS = (
     " because ",
+    " so ",
+    " but ",
     " when ",
     " while ",
     " which ",
-    " that ",
-    " so ",
-    " but ",
-    " and ",
-    " or ",
     " then ",
     " also ",
 )
+# Semantic teaching turns — new TTS unit starts at the marker (example / recap).
+_TEACHING_SEPS = (
+    ". First, ",
+    ". Next, ",
+    ". Finally, ",
+    ". For example, ",
+    ". The important ",
+    ". Remember, ",
+    ". Let's ",
+    ". So, ",
+    " — for example, ",
+)
 _SENTENCE_END = re.compile(r"(?<=[.?!])\s+")
+# Don't treat these periods as sentence ends (Dr. / e.g. / initials / 10 a.m.).
+_ABBREV_END = re.compile(
+    r"(?:"
+    r"\b(?:Dr|Mr|Mrs|Ms|Prof|Sr|Jr|vs|etc|Fig|Ch|No|Vol|Rs|St|approx|Govt)\."
+    r"|\b(?:e\.g|i\.e|a\.m|p\.m)\."
+    r"|\b[A-Z]\."
+    r")$",
+)
 
 
 def _word_count(text: str) -> int:
@@ -59,6 +77,7 @@ def _find_best_split(
 ) -> int | None:
     """Return split index (end of left chunk) or None.
 
+    Priority: sentence end (.?!) → teaching marker → (overflow only) comma/discourse → word.
     look-ahead: prefer not cutting when only a tiny remainder exists and more
     text is still streaming — reduces mid-thought TTS gaps.
     """
@@ -75,46 +94,64 @@ def _find_best_split(
         # Allow short remainder only when we must flush (hit max_words)
         return _word_count(buf) >= max_words
 
-    # 1) Discourse markers — natural teacher pauses
-    best = -1
-    for sep in _DISCOURSE_SEPS:
+    # 1) Sentence end — periods / ? / ! (skip Dr. / e.g. / initials)
+    acc = ""
+    last = 0
+    for m in _SENTENCE_END.finditer(buf):
+        left = buf[last : m.start()]
+        piece = (acc + left).strip() if acc else left.strip()
+        if not piece:
+            acc = buf[last : m.end()]
+            last = m.end()
+            continue
+        if _ABBREV_END.search(left.rstrip() or piece):
+            acc = (acc + buf[last : m.end()]) if acc else buf[last : m.end()]
+            last = m.end()
+            continue
+        wc = _word_count(piece)
+        end = m.end()
+        if (
+            wc >= max(1, min(target_words, 3))
+            and wc <= max_words
+            and len(piece) >= min(min_chars, 8)
+            and _ok_remainder(end)
+        ):
+            return end
+        acc = buf[:end]
+        last = m.end()
+
+    # 2) Teaching transitions (example / recap) — new semantic unit
+    best_teaching = -1
+    for sep in _TEACHING_SEPS:
         pos = buf.rfind(sep, min_chars)
         if pos >= min_chars:
-            end = pos + len(sep)
-            if _word_count(buf[:end]) <= max_words and _ok_remainder(end):
-                best = max(best, end)
-    if best > 0:
-        return best
-
-    # 2) Clause punctuation
-    for sep in _CLAUSE_SEPS:
-        pos = buf.rfind(sep, min_chars)
-        if pos >= min_chars:
-            end = pos + len(sep)
-            if _word_count(buf[:end]) <= max_words and _ok_remainder(end):
-                return end
-
-    # 3) Sentence end — only when unit is long enough to sound continuous
-    parts = _SENTENCE_END.split(buf)
-    if len(parts) > 1:
-        acc = ""
-        for part in parts[:-1]:
-            candidate = (acc + part).strip() if acc else part.strip()
-            if not candidate:
-                acc = part + " "
+            end = pos + 1  # split after the period, keep marker with the next unit
+            if end < min_chars:
                 continue
-            wc = _word_count(candidate)
-            end = len(acc) + len(part) if acc else len(part)
-            if (
-                wc >= target_words
-                and wc <= max_words
-                and len(candidate) >= min_chars
-                and _ok_remainder(end)
-            ):
-                return end
-            acc = (acc + part + " ") if acc else part + " "
+            if _word_count(buf[:end]) <= max_words and _ok_remainder(end):
+                best_teaching = max(best_teaching, end)
+    if best_teaching > 0:
+        return best_teaching
 
-    # 4) Word boundary fallback
+    # 3–4) Comma / discourse — only when we must flush (hit max_words)
+    if _word_count(buf) >= max_words:
+        for sep in _CLAUSE_SEPS:
+            pos = buf.rfind(sep, min_chars)
+            if pos >= min_chars:
+                end = pos + len(sep)
+                if _word_count(buf[:end]) <= max_words:
+                    return end
+        best = -1
+        for sep in _DISCOURSE_SEPS:
+            pos = buf.rfind(sep, min_chars)
+            if pos >= min_chars:
+                end = pos + len(sep)
+                if _word_count(buf[:end]) <= max_words:
+                    best = max(best, end)
+        if best > 0:
+            return best
+
+    # 5) Word boundary fallback
     if _word_count(buf) >= max_words:
         words = buf.split()
         left = " ".join(words[:max_words])
@@ -134,8 +171,8 @@ def _thresholds(chunks_emitted: int) -> tuple[int, int, int, int]:
         return (
             VOICE_SPEECH_FIRST_WORDS,
             VOICE_SPEECH_FIRST_CHARS,
-            VOICE_SPEECH_FIRST_WORDS + 2,
             VOICE_SPEECH_STEADY_WORDS,
+            VOICE_SPEECH_MAX_WORDS,
         )
     return (
         VOICE_SPEECH_STEADY_WORDS,
@@ -363,6 +400,7 @@ class VoicePipelineTiming:
             "tts_units_played": str(self.tts_units_played),
             "queue_high_water": str(self.tts_queue_high_water),
             "rag_complete": self._ms(self.rag_completed_at),
+            "last_playback_gap_ms": f"{self._last_playback_gap_ms:.0f}",
         }
 
     def _log(self, label: str, t: float, **extra: str) -> None:

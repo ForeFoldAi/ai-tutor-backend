@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 from app.services.conversation_intent_classifier import (
     FollowupType,
@@ -25,6 +26,7 @@ __all__ = [
     "ConversationContext",
     "ConversationContextResolver",
     "resolve_conversation_context",
+    "resolve_student_query_context",
     "should_retrieve_images",
     "is_clarification_followup",
     "answer_type_for_followup",
@@ -84,8 +86,10 @@ _CONCEPTUAL_RE = re.compile(
     re.I,
 )
 _VISUAL_RE = re.compile(
-    r"\b(show\s+(me\s+)?(the\s+)?(image|picture|diagram|figure|map)|"
-    r"with\s+(a\s+)?(diagram|image|picture)|visual|see\s+the\s+figure)\b",
+    r"\b(show\s+(me\s+)?(?:an?\s+|the\s+)?(?:images?|pictures?|figures?|maps?|illustrations?)|"
+    r"with\s+(?:an?\s+)?(?:diagrams?|images?|pictures?|figures?|maps?|illustrations?)|"
+    r"(?:see|want|need)\s+(?:an?\s+)?(?:images?|diagrams?|pictures?|figures?)|"
+    r"visual|see\s+the\s+figure)\b",
     re.I,
 )
 _DIAGRAM_RE = re.compile(
@@ -228,6 +232,7 @@ class ConversationContextResolver:
         *,
         conversation_history: list[dict] | None = None,
         chapter: str | None = None,
+        memory: Any | None = None,
     ) -> ConversationContext:
         history = conversation_history or []
         q = (query or "").strip()
@@ -237,7 +242,36 @@ class ConversationContextResolver:
         mode = _response_mode_for(followup, q)
         visual = _visual_intent_for(mode, followup, q)
 
+        from app.services.chapter_scope import (
+            current_lesson_retrieval_query,
+            is_current_lesson_query,
+        )
+
+        if is_current_lesson_query(q) and chapter:
+            rq = current_lesson_retrieval_query(chapter)
+            return ConversationContext(
+                resolved_topic=chapter,
+                current_intent=ResponseMode.EXPLANATION.value,
+                inherited_entities=_extract_entities_from_text(chapter),
+                inherited_chapter=chapter,
+                followup_type=FollowupType.CONTINUE_EXPLANATION.value,
+                requires_visuals=visual != VisualIntent.NO_VISUALS,
+                response_mode=ResponseMode.EXPLANATION,
+                visual_intent=visual,
+                retrieval_query=rq,
+                intent_method="current_lesson",
+                intent_confidence=1.0,
+            )
+
         prior_user = _last_user_message(history)
+        if not prior_user and memory is not None:
+            from app.services.conversation_memory import memory_from_dict
+
+            mem = memory_from_dict(memory)
+            if mem.last_student_question:
+                prior_user = mem.last_student_question
+            elif mem.student_questions:
+                prior_user = mem.student_questions[-1]
         inherited_entities: list[str] = []
         resolved_topic = q
 
@@ -246,6 +280,18 @@ class ConversationContextResolver:
             and prior_user
             and len(q.split()) <= 8
             and (_WHY_SHORT.match(q) or _PRONOUN_FOLLOWUP.search(q))
+        ):
+            followup = FollowupType.CONTINUE_EXPLANATION
+            mode = _response_mode_for(followup, q)
+
+        from app.services.conversation_intent_classifier import (
+            _DEEPER_RE as _INTENT_DEEPER_RE,
+            _EXPLAIN_THIS_RE,
+            _HOW_GOT_ANSWER_RE,
+        )
+
+        if followup in (FollowupType.NEW_TOPIC, FollowupType.CONTINUE_EXPLANATION) and (
+            _INTENT_DEEPER_RE.search(q) or _EXPLAIN_THIS_RE.search(q) or _HOW_GOT_ANSWER_RE.search(q)
         ):
             followup = FollowupType.CONTINUE_EXPLANATION
             mode = _response_mode_for(followup, q)
@@ -271,6 +317,12 @@ class ConversationContextResolver:
                 resolved_topic = f"{prior_user} (explain in simpler words)"
             elif followup in (FollowupType.ASK_EXAMPLE, FollowupType.ASK_COMPARISON):
                 resolved_topic = f"{prior_user} {q}"
+            elif (
+                _INTENT_DEEPER_RE.search(q)
+                or _EXPLAIN_THIS_RE.search(q)
+                or _HOW_GOT_ANSWER_RE.search(q)
+            ) and last_asst:
+                resolved_topic = last_asst[:200]
             else:
                 resolved_topic = prior_user
         elif followup == FollowupType.NEW_TOPIC or _CONCEPTUAL_RE.search(q):
@@ -290,6 +342,22 @@ class ConversationContextResolver:
             retrieval_query = f"{prior_user} real life example"
         elif followup == FollowupType.ASK_COMPARISON and prior_user:
             retrieval_query = f"{prior_user} {q}"
+        elif followup == FollowupType.ASK_SUMMARY and prior_user:
+            last_asst = _teaching_assistant_snippet(history, max_len=400)
+            parts = [p for p in (prior_user, last_asst[:280] if last_asst else "") if p]
+            retrieval_query = " ".join(parts) + " summary key points"
+        elif (
+            followup == FollowupType.CONTINUE_EXPLANATION
+            and prior_user
+            and (
+                _INTENT_DEEPER_RE.search(q)
+                or _EXPLAIN_THIS_RE.search(q)
+                or _HOW_GOT_ANSWER_RE.search(q)
+            )
+        ):
+            last_asst = _teaching_assistant_snippet(history, max_len=400)
+            parts = [p for p in (prior_user, last_asst[:280] if last_asst else "") if p]
+            retrieval_query = " ".join(parts) + " explain in more detail"
 
         requires_visuals = visual in (VisualIntent.REQUIRED_VISUALS, VisualIntent.OPTIONAL_VISUALS)
 
@@ -316,12 +384,53 @@ def resolve_conversation_context(
     *,
     conversation_history: list[dict] | None = None,
     chapter: str | None = None,
+    memory: Any | None = None,
 ) -> ConversationContext:
     return _default_resolver.resolve(
         query,
         conversation_history=conversation_history,
         chapter=chapter,
+        memory=memory,
     )
+
+
+def resolve_student_query_context(
+    user_query: str,
+    *,
+    conversation_history: list[dict] | None = None,
+    current_chapter: str | None = None,
+    current_subject: str | None = None,
+    current_grade: str | None = None,
+    memory: Any | None = None,
+) -> dict:
+    """
+    Application-level adapter: resolve follow-up intent before RAG/scope checks.
+    Reuses ConversationContextResolver — no duplicate intent pipeline.
+    """
+    ctx = resolve_conversation_context(
+        user_query,
+        conversation_history=conversation_history,
+        chapter=current_chapter,
+        memory=memory,
+    )
+    requires_rag = ctx.followup_type not in (
+        FollowupType.GREETING.value,
+        FollowupType.SMALL_TALK.value,
+        FollowupType.NONE.value,
+    )
+    return {
+        "intent": ctx.followup_type,
+        "resolved_query": ctx.retrieval_query or user_query,
+        "referenced_topic": ctx.resolved_topic,
+        "chapter_title": current_chapter,
+        "subject": current_subject,
+        "grade": current_grade,
+        "requires_rag": requires_rag,
+        "requires_clarification": ctx.followup_type == FollowupType.CLARIFICATION.value,
+        "confidence": ctx.intent_confidence,
+        "response_mode": ctx.response_mode.value,
+        "inherited_entities": ctx.inherited_entities,
+    }
 
 
 def should_retrieve_images(

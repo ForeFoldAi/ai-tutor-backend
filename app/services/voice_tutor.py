@@ -302,6 +302,16 @@ def _build_voice_messages(
         acknowledgment_guidance=build_acknowledgment_guidance(query, scores),
     )
     user = build_voice_user_message(query, context, expand_deep=expand_deep)
+    from app.services.chat_service import _prepare_math_engine_block
+
+    math_block = _prepare_math_engine_block(
+        query,
+        subject_name=subject_name,
+        class_level=class_level,
+        context=context,
+    )
+    if math_block:
+        user = math_block + "\n\n" + user
 
     messages: list[dict[str, str]] = [{"role": "system", "content": system}]
     for turn in history:

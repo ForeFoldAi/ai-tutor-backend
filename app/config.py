@@ -86,20 +86,23 @@ MISTRAL_MODEL = LLM_MODEL
 MISTRAL_TEMPERATURE = LLM_TEMPERATURE
 MISTRAL_MAX_TOKENS = LLM_MAX_TOKENS
 
-# Edge TTS prosody — near-natural rate (was -6%; slightly faster = less robotic)
-VOICE_TTS_RATE = os.environ.get("VOICE_TTS_RATE", "-2%")
-VOICE_TTS_PITCH = os.environ.get("VOICE_TTS_PITCH", "+0Hz")
+# Edge TTS prosody — slightly slow for classroom clarity; heuristics layer expression on top.
+VOICE_TTS_RATE = os.environ.get("VOICE_TTS_RATE", "-3%")
+VOICE_TTS_PITCH = os.environ.get("VOICE_TTS_PITCH", "+1Hz")
+VOICE_TTS_VOLUME = os.environ.get("VOICE_TTS_VOLUME", "+0%")
 
 # Voice pipeline tuning (config-driven; override via env)
 VOICE_TTS_PREFETCH = os.environ.get("VOICE_TTS_PREFETCH", "true").lower() in ("1", "true", "yes")
 VOICE_TTS_WORKERS = int(os.environ.get("VOICE_TTS_WORKERS", "1"))  # prefetch is separate
 VOICE_IDLE_FLUSH_SEC = float(os.environ.get("VOICE_IDLE_FLUSH_SEC", "0.12"))
 VOICE_IDLE_FLUSH_STEADY_SEC = float(os.environ.get("VOICE_IDLE_FLUSH_STEADY_SEC", "0.22"))
-VOICE_SPEECH_FIRST_WORDS = int(os.environ.get("VOICE_SPEECH_FIRST_WORDS", "3"))
-VOICE_SPEECH_FIRST_CHARS = int(os.environ.get("VOICE_SPEECH_FIRST_CHARS", "14"))
-VOICE_SPEECH_STEADY_WORDS = int(os.environ.get("VOICE_SPEECH_STEADY_WORDS", "10"))
-VOICE_SPEECH_STEADY_CHARS = int(os.environ.get("VOICE_SPEECH_STEADY_CHARS", "48"))
-VOICE_SPEECH_MAX_WORDS = int(os.environ.get("VOICE_SPEECH_MAX_WORDS", "16"))
+# First speech unit: a full short sentence (not 3-word fragments — those reset pitch).
+# Steady units: ~1–2 sentences so Edge-TTS can apply its own contour inside one Communicate().
+VOICE_SPEECH_FIRST_WORDS = int(os.environ.get("VOICE_SPEECH_FIRST_WORDS", "8"))
+VOICE_SPEECH_FIRST_CHARS = int(os.environ.get("VOICE_SPEECH_FIRST_CHARS", "42"))
+VOICE_SPEECH_STEADY_WORDS = int(os.environ.get("VOICE_SPEECH_STEADY_WORDS", "16"))
+VOICE_SPEECH_STEADY_CHARS = int(os.environ.get("VOICE_SPEECH_STEADY_CHARS", "72"))
+VOICE_SPEECH_MAX_WORDS = int(os.environ.get("VOICE_SPEECH_MAX_WORDS", "28"))
 VOICE_INTERRUPT_CANCEL_SEC = float(os.environ.get("VOICE_INTERRUPT_CANCEL_SEC", "0.45"))
 # Max speech units waiting for TTS; 0 = unbounded (not recommended for production)
 VOICE_SPEECH_QUEUE_MAXSIZE = int(os.environ.get("VOICE_SPEECH_QUEUE_MAXSIZE", "6"))
@@ -150,11 +153,13 @@ VOICE_SESSION_PROFILE = _env_bool("VOICE_SESSION_PROFILE", "true")
 VOICE_SESSION_PROFILE_MIN_MS = int(os.environ.get("VOICE_SESSION_PROFILE_MIN_MS", "1200"))
 VOICE_SESSION_TTL_SEC = int(os.environ.get("VOICE_SESSION_TTL_SEC", "14400"))
 VOICE_SESSION_REDIS = _env_bool("VOICE_SESSION_REDIS", "true")
+# Rate/pitch heuristics for Edge Communicate (not inline SSML — name is historical).
 VOICE_SSML_PROSODY = _env_bool("VOICE_SSML_PROSODY", "true")
 
 # TTS continuity
 VOICE_TTS_PREFETCH_DEPTH = int(os.environ.get("VOICE_TTS_PREFETCH_DEPTH", "2"))
 VOICE_TTS_LOOKAHEAD_CHARS = int(os.environ.get("VOICE_TTS_LOOKAHEAD_CHARS", "24"))
+VOICE_DEBUG_LOGGING = _env_bool("VOICE_DEBUG_LOGGING", "false")
 VOICE_PROTECTION_PRELOAD = _env_bool("VOICE_PROTECTION_PRELOAD", "true")
 
 CHROMA_PATH = "chroma_db"
@@ -371,3 +376,17 @@ PDF_EXTRACTION_ENABLE_TABLE_VLM = os.environ.get(
     "PDF_EXTRACTION_ENABLE_TABLE_VLM",
     os.environ.get("PDF_EXTRACT_ENABLE_TABLE_VLM", "false"),
 ).lower() in ("1", "true", "yes")
+
+# ---------------------------------------------------------------------------
+# Conversation memory (long follow-up sessions)
+# ---------------------------------------------------------------------------
+
+CONVERSATION_RECENT_TURN_WINDOW = int(
+    os.environ.get("CONVERSATION_RECENT_TURN_WINDOW", "16")
+)
+CONVERSATION_FOLD_BATCH_SIZE = int(
+    os.environ.get("CONVERSATION_FOLD_BATCH_SIZE", "4")
+)
+CONVERSATION_SUMMARY_MAX_CHARS = int(
+    os.environ.get("CONVERSATION_SUMMARY_MAX_CHARS", "3500")
+)

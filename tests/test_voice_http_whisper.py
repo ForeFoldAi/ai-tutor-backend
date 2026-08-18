@@ -47,6 +47,14 @@ def test_whisper_transcribe_sync(mock_get_model):
     assert "x squared" in str(out["transcript"])
 
 
+def test_audio_suffix_sniffs_container():
+    from app.services.voice_whisper_stt import _audio_suffix
+
+    assert _audio_suffix(b"\x1aE\xdf\xa3" + b"\x00" * 20) == ".webm"
+    assert _audio_suffix(b"\x00\x00\x00\x18ftypmp42" + b"\x00" * 8) == ".mp4"
+    assert _audio_suffix(b"OggS" + b"\x00" * 20) == ".ogg"
+
+
 def test_transcript_likely_echo():
     from app.services.voice_stt_postprocess import transcript_likely_echo
 

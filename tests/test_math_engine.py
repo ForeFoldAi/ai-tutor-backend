@@ -113,3 +113,30 @@ def test_probability_dice_even():
     assert result.solved
     assert result.kind == "probability_dice"
     assert "1/2" in result.final_answer
+
+
+def test_cube_root_of_512():
+    result = try_solve("what is cure root of 512", class_level="CLASS_8")
+    assert result is not None
+    assert result.solved
+    assert result.kind == "cube_root"
+    assert "8" in result.final_answer
+    result = try_solve("cube root of 512", class_level="CLASS_8")
+    assert result is not None and result.kind == "cube_root"
+    assert "8" in result.final_answer
+
+
+def test_perfect_square_49():
+    result = try_solve("is 49 perfect square?", class_level="CLASS_8")
+    assert result is not None
+    assert result.solved
+    assert result.kind == "perfect_square"
+    assert "Yes" in result.final_answer
+    assert "7" in result.final_answer
+
+
+def test_cube_root_not_mensuration():
+    result = try_solve("Find the cube root of 8", class_level="CLASS_8")
+    assert result is not None
+    assert result.kind == "cube_root"
+    assert "2" in result.final_answer
