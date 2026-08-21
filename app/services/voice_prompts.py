@@ -23,6 +23,8 @@ from app.services.chat_service import (
 if TYPE_CHECKING:
     from app.services.voice_tutor import LearnerProfileSnapshot, TutorState, UnderstandingScores
 
+_WORD_RE = re.compile(r"[a-z0-9']+")
+
 VOICE_SYSTEM_PROMPT = """\
 You are a friendly teacher talking OUT LOUD to a child in a live voice lesson.
 You are NOT writing an essay. You are NOT an encyclopedia. Sound warm, human, and easy to listen to.
@@ -81,9 +83,17 @@ SESSION: {tutor_state}
 {acknowledgment_guidance}
 {learner_guidance}
 
-TEXTBOOK CONTEXT:
-Use the chapter excerpt in the user message for accuracy. If missing, use solid general knowledge.
-Never invent page numbers or figure names. Teach the idea in your own spoken words — not textbook copy.
+ANSWERING PRIORITY (critical):
+Always answer the student's LATEST MESSAGE first and directly.
+If the student asks a general conversational question ("What's your name?", "How are you?",
+"Can you explain that again?"), answer that question — do not force it into the chapter topic.
+Only bring in chapter content when it is genuinely relevant to what the student asked.
+
+REFERENCE MATERIAL (secondary — use only when relevant):
+The chapter excerpt below is supplementary context for accuracy.
+It must NOT override, reinterpret, or replace the student's actual question.
+If missing, use solid general knowledge. Never invent page numbers or figure names.
+Teach in your own spoken words — not textbook copy.
 
 {expand_policy}"""
 
@@ -134,11 +144,11 @@ SCIENCE / SOCIAL VOICE:
 - One real-world hook (weather, body, neighbourhood) beats a list of dates or places."""
 
 VOICE_USER_TEMPLATE = """\
-CHAPTER EXCERPT:
-{context}
-
-STUDENT SAID:
+CURRENT STUDENT MESSAGE (authoritative — answer this):
 {question}
+
+LEARNING CONTEXT (reference material — use only if relevant to the question above):
+{context}
 
 Speak your reply now like a friendly teacher talking to a child ({max_words} words max).
 Short sentences (6–12 words). Contractions. Pause after every 1–2 sentences.
@@ -227,6 +237,8 @@ def voice_continuation_guidance(
 ) -> str:
     """Remind the model this is a live back-and-forth, not a standalone essay."""
     q = (query or "").strip().lower()
+    if detect_answer_type(query) == "greeting":
+        return ""
     short_follow = len(q.split()) <= 4 and q in (
         "why",
         "why?",
@@ -243,6 +255,29 @@ def voice_continuation_guidance(
         "okay",
     ) or q.startswith(("why ", "how ", "explain that", "another example", "summarize"))
     turns = [t for t in (conversation_history or []) if (t.get("content") or "").strip()]
+
+    # Student re-asking a question they already asked earlier this session (not
+    # just the last turn — they may have gone on a tangent in between) almost
+    # always means they didn't get it the first time. The generic "don't restart,
+    # keep moving forward" guidance below was causing the model to pivot to
+    # unrelated chapter content instead of answering — override that here.
+    q_words = set(_WORD_RE.findall(q))
+    if len(q_words) >= 2:
+        for t in turns:
+            if (t.get("role") or "").lower() != "user":
+                continue
+            prior_words = set(_WORD_RE.findall((t.get("content") or "").lower()))
+            if not prior_words:
+                continue
+            overlap = len(q_words & prior_words) / len(q_words | prior_words)
+            if overlap >= 0.7:
+                return (
+                    "The student is asking a question they already asked earlier — "
+                    "they likely didn't understand the answer. Answer it directly "
+                    "again (a simpler word or a different example is fine), do not "
+                    "skip the direct answer, and do not pivot to unrelated content."
+                )
+
     if short_follow and (turns or last_assistant):
         return (
             "Short follow-up — continue the SAME lesson. Bridge briefly "
@@ -316,6 +351,16 @@ def build_voice_system_prompt(
 
     answer_type = detect_answer_type(query)
     max_words = voice_word_limit(expand_deep=expand_deep, answer_type=answer_type)
+    if answer_type == "greeting":
+        state_guidance = (
+            "The student asked a greeting or personal question. "
+            "Answer that directly in one or two spoken sentences. Do not teach the chapter."
+        )
+        understanding_guidance = ""
+        acknowledgment_guidance = (
+            f'Student\'s exact words: "{(query or "")[:200]}". '
+            "Answer this question — do not teach the chapter this turn."
+        )
     grade_label = _GRADE_LABELS.get(class_level, class_level or "School student")
     complexity = _GRADE_COMPLEXITY.get(class_level, "Use clear, age-appropriate spoken language.")
     band = _class_band(class_level)

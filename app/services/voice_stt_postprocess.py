@@ -56,6 +56,19 @@ def _normalize_echo_text(text: str) -> str:
     return _WHITESPACE.sub(" ", t).strip()
 
 
+def is_sentence_prefix_echo(user_text: str, assistant_text: str) -> bool:
+    """True when the transcript is the start of an AI sentence (greeting bleed)."""
+    user = _normalize_echo_text(user_text)
+    words = user.split()
+    if not (2 <= len(words) <= 6):
+        return False
+    for raw in re.split(r"[.!?]+", assistant_text or ""):
+        sent = _normalize_echo_text(raw)
+        if sent == user or sent.startswith(user + " "):
+            return True
+    return False
+
+
 def echo_similarity(user_text: str, assistant_text: str) -> float:
     """
     Combined containment + word Jaccard/overlap for echo rejection.
@@ -65,6 +78,8 @@ def echo_similarity(user_text: str, assistant_text: str) -> float:
     assistant = _normalize_echo_text(assistant_text)
     if len(user) < 3 or not assistant:
         return 0.0
+    if is_sentence_prefix_echo(user_text, assistant_text):
+        return 1.0
     u_words = [w for w in user.split() if len(w) > 2]
     # ponytail: follow-up questions often appear inside the tutor's last answer;
     # lowered from 6/48 → 4/28 so partial TTS echoes are caught.
@@ -102,6 +117,34 @@ def echo_similarity(user_text: str, assistant_text: str) -> float:
     a_bi = {f"{a_list[i]} {a_list[i + 1]}" for i in range(len(a_list) - 1)}
     bi = (len(u_bi & a_bi) / len(u_bi)) if u_bi else 0.0
     return max(recall, 0.55 * recall + 0.25 * jaccard + 0.20 * bi)
+
+
+# Cut-off STT: "what would", "can you tell" — not a complete question.
+_INCOMPLETE_QUESTION = re.compile(
+    r"^(?:"
+    r"what\s+(?:would|is|are|was|were|will|do|does|did|can|could|should)|"
+    r"who\s+(?:is|are|was|were)|"
+    r"where\s+(?:is|are|was|did)|"
+    r"when\s+(?:is|did|was)|"
+    r"how\s+(?:did|does|do|is|are|was|can)|"
+    r"can you(?:\s+tell(?:\s+me(?:\s+about)?)?)?|"
+    r"could you|"
+    r"would you|"
+    r"tell me(?:\s+about)?|"
+    r"do you know"
+    r")\s*[.?!]*$",
+    re.I,
+)
+
+INCOMPLETE_UTTERANCE_REPLY = (
+    "Sorry, I only caught part of that. Can you say the full question?"
+)
+
+
+def is_incomplete_voice_utterance(text: str) -> bool:
+    """True when STT likely cut off a question before the topic."""
+    q = (text or "").strip()
+    return bool(q) and bool(_INCOMPLETE_QUESTION.match(q))
 
 
 def transcript_likely_echo(

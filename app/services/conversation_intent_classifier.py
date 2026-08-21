@@ -47,7 +47,8 @@ _GREETING_RE = re.compile(
     re.I,
 )
 _SMALL_TALK_RE = re.compile(
-    r"^(how are you|what'?s up|thanks|thank you|bye|goodbye|see you)\b",
+    r"^(how are you|what'?s up|thanks|thank you|bye|goodbye|see you|"
+    r"what(?:'s| is) your name|who are you|what are you(?: called)?)\b",
     re.I,
 )
 _THANKS_RE = re.compile(r"^(thanks|thank you|thx)\b", re.I)
@@ -204,6 +205,8 @@ _INTENT_PROTOTYPES: dict[FollowupType, list[str]] = {
         "thank you very much",
         "how are you doing",
         "goodbye see you later",
+        "what is your name",
+        "who are you",
     ],
     FollowupType.NEW_TOPIC: [
         "what is photosynthesis",
@@ -268,6 +271,10 @@ def classify_followup_regex(query: str) -> FollowupType:
         return FollowupType.ASK_EXAMPLE
     if _COMPARISON_RE.search(q):
         return FollowupType.ASK_COMPARISON
+    from app.services.voice_stt_postprocess import is_incomplete_voice_utterance
+
+    if is_incomplete_voice_utterance(q):
+        return FollowupType.SMALL_TALK
     if _CONTINUE_RE.match(q) or _DEEPER_RE.search(q):
         return FollowupType.CONTINUE_EXPLANATION
     if _EXPLAIN_THIS_RE.search(q) or _HOW_GOT_ANSWER_RE.search(q):
@@ -432,6 +439,7 @@ def answer_type_for_followup(followup: FollowupType) -> str | None:
     mapping: dict[FollowupType, str] = {
         FollowupType.CLARIFICATION: "clarification",
         FollowupType.GREETING: "greeting",
+        FollowupType.SMALL_TALK: "greeting",
         # ponytail: keep "simplify" as a plain re-explanation (no structured headings)
         FollowupType.SIMPLIFY: "clarification",
         FollowupType.ASK_SUMMARY: "summary",

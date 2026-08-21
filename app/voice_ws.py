@@ -594,10 +594,40 @@ async def voice_ws(
                 audio_b64 = str(msg.get("utterance_audio_b64") or "").strip()
                 if audio_b64 and session.voice_session_id:
                     try:
-                        from app.services.voice_session_profile import bootstrap_session_voice
+                        from app.services.voice_session_profile import (
+                            bootstrap_session_voice,
+                            evaluate_session_user_audio,
+                        )
 
                         audio_bytes = base64.b64decode(audio_b64)
-                        bootstrap_session_voice(session.voice_session_id, audio_bytes)
+                        # Verify against the session voiceprint (once it has enough
+                        # samples) before trusting this audio as real student speech —
+                        # catches tutor-echo that slipped past text-similarity matching.
+                        # No-ops (accept=True) until the profile has ~1.2s of speech.
+                        speaker_check = evaluate_session_user_audio(
+                            session.voice_session_id, audio_bytes
+                        )
+                        if not speaker_check.get("accept", True):
+                            from app.services import voice_protection_metrics as metrics
+
+                            metrics.incr("speaker_rejections")
+                            metrics.log_event(
+                                "SPEAKER_REJECTED",
+                                reason=speaker_check.get("reason"),
+                                similarity=speaker_check.get("speaker_similarity"),
+                                source="turn",
+                            )
+                            logger.debug(
+                                "Turn audio rejected by session speaker check: %s",
+                                speaker_check.get("reason"),
+                            )
+                            await _send(websocket, {"type": "listening"})
+                            continue
+                        # Barge/interrupt audio overlaps tutor TTS playback and
+                        # carries a much higher risk of being speaker leakage —
+                        # never let it train the voiceprint.
+                        if not bool(msg.get("is_barge")):
+                            bootstrap_session_voice(session.voice_session_id, audio_bytes)
                     except Exception as exc:
                         logger.debug("Session voice bootstrap skipped: %s", exc)
                 await _cancel_gen()

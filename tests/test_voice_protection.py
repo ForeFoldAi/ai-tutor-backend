@@ -64,6 +64,32 @@ def test_echo_allows_student_question():
     assert not transcript_likely_echo("stop", tutor)  # short; overlap low
 
 
+def test_echo_rejects_greeting_sentence_prefix():
+    from app.services.voice_stt_postprocess import transcript_likely_echo
+
+    greeting = (
+        "Hi Suneel, welcome back. "
+        "What would you like to learn today from Chapter 2?"
+    )
+    assert transcript_likely_echo("what would", greeting)
+    assert not transcript_likely_echo("what is photosynthesis", greeting)
+    assert not transcript_likely_echo(
+        "the mughals",
+        "Later the Mughals take over, and the map changes again.",
+    )
+
+
+def test_incomplete_voice_utterance():
+    from app.services.voice_stt_postprocess import is_incomplete_voice_utterance
+
+    assert is_incomplete_voice_utterance("what would")
+    assert is_incomplete_voice_utterance("can you tell")
+    assert is_incomplete_voice_utterance("what is")
+    assert not is_incomplete_voice_utterance("can you tell me about the political map")
+    assert not is_incomplete_voice_utterance("what is your name")
+    assert not is_incomplete_voice_utterance("why")
+
+
 def test_echo_rejects_short_tts_paraphrase_with_truncation():
     """
     Regression: STT may truncate an AI sentence mid-word (e.g. dynasty/dynasties),

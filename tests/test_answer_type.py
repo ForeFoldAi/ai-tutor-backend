@@ -44,6 +44,8 @@ def test_exam_uses_full_structure():
 def test_brief_and_greeting_compact():
     assert detect_answer_type("Keep it short — what is rain?") == "brief"
     assert detect_answer_type("Hi") == "greeting"
+    assert detect_answer_type("what is your name") == "greeting"
+    assert detect_answer_type("What is weather?") == "short-answer"
     assert _structure_tier("brief") == "compact"
 
 

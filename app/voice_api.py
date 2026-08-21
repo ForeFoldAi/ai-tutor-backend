@@ -515,6 +515,7 @@ async def _handle_voice_transcribe(
     language: str = "en",
     reject_if_similar_to: str = "",
     voice_session_id: str = "",
+    is_barge: bool = False,
 ) -> dict[str, str | float | bool]:
     from app.services.voice_session_profile import bootstrap_session_voice
     from app.services.voice_whisper_stt import transcribe_audio_bytes, whisper_available
@@ -558,7 +559,10 @@ async def _handle_voice_transcribe(
             "rejected": False,
         }
 
-    if sid:
+    # Barge/interrupt captures overlap tutor TTS playback and carry a much
+    # higher risk of being speaker leakage, not the student — never let them
+    # train the voiceprint, only genuine post-playback listen turns.
+    if sid and not is_barge:
         bootstrap_session_voice(sid, data)
 
     return {
@@ -576,6 +580,7 @@ async def auth_voice_transcribe(
     language: str = Form(default="en"),
     reject_if_similar_to: str = Form(default=""),
     voice_session_id: str = Form(default=""),
+    is_barge: bool = Form(default=False),
 ):
     """Transcribe a short microphone clip (WebM/Opus) with Whisper — better math accuracy."""
     return await _handle_voice_transcribe(
@@ -584,6 +589,7 @@ async def auth_voice_transcribe(
         language=language,
         reject_if_similar_to=reject_if_similar_to,
         voice_session_id=voice_session_id,
+        is_barge=is_barge,
     )
 
 
@@ -594,6 +600,7 @@ async def general_voice_transcribe(
     language: str = Form(default="en"),
     reject_if_similar_to: str = Form(default=""),
     voice_session_id: str = Form(default=""),
+    is_barge: bool = Form(default=False),
 ):
     """Unauthenticated Whisper transcribe (same as /auth/voice-transcribe)."""
     return await _handle_voice_transcribe(
@@ -602,6 +609,7 @@ async def general_voice_transcribe(
         language=language,
         reject_if_similar_to=reject_if_similar_to,
         voice_session_id=voice_session_id,
+        is_barge=is_barge,
     )
 
 

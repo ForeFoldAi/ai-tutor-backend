@@ -60,6 +60,10 @@ def test_voice_mode_blocks_greeting_images():
     ctx = resolve_conversation_context("hello")
     assert not should_retrieve_images(ctx, chapter_ids=["ch1"], voice_mode=True)
 
+    ctx = resolve_conversation_context("what is your name")
+    assert ctx.followup_type == FollowupType.SMALL_TALK.value
+    assert not should_retrieve_images(ctx, chapter_ids=["ch1"], voice_mode=True)
+
     ctx = resolve_conversation_context("Solve 3x - 5 = 16")
     assert ctx.visual_intent == VisualIntent.OPTIONAL_VISUALS
     assert should_retrieve_images(

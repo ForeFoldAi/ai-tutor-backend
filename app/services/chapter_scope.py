@@ -826,8 +826,10 @@ def assess_chapter_coverage(
     """
     current_label = _current_chapter_label(chapter_names)
     terms = content_substantive_terms(query)
-    label_terms = terms or substantive_query_terms(query)
-    topic_label = " ".join(sorted(label_terms)) if label_terms else (query or "").strip()[:80]
+    # Student-facing label: keep the original phrase order. `terms` (used below
+    # for scope matching) is an unordered set — joining it alphabetically turned
+    # this into word salad when read back to the student ("is not covered in...").
+    topic_label = (query or "").strip()[:80]
 
     if not chapter_ids:
         return ChapterCoverageAssessment(
@@ -1021,9 +1023,7 @@ def resolve_chapter_awareness_turn(
         original = original_question_before_awareness(conversation_history)
         if original:
             effective_query = original
-            terms = substantive_query_terms(original)
-            topic = " ".join(sorted(terms)) if terms else original
-            coverage_guidance = build_general_explanation_guidance(topic)
+            coverage_guidance = build_general_explanation_guidance(original)
             return None, effective_query, None, coverage_guidance
 
     # "with an image" / "show me a diagram" — reuse prior question, fetch figures
@@ -1046,16 +1046,13 @@ def resolve_chapter_awareness_turn(
     # Session continuation — answer in current lesson; never show a/b/c wall.
     if session_follow_up:
         prior = prior_user_question(conversation_history) or scope_q or effective_query
-        terms = substantive_query_terms(scope_q) or substantive_query_terms(prior)
-        topic = " ".join(sorted(terms)) if terms else prior
-        return None, prior or effective_query, None, build_general_explanation_guidance(topic)
+        return None, prior or effective_query, None, build_general_explanation_guidance(prior)
 
     # Related follow-up on a topic just taught → answer beyond chapter, no a/b/c wall
     if is_related_chapter_follow_up(scope_q, conversation_history) or is_related_chapter_follow_up(
         effective_query, conversation_history
     ):
-        terms = substantive_query_terms(scope_q) or substantive_query_terms(effective_query)
-        topic = " ".join(sorted(terms)) if terms else scope_q
+        topic = scope_q or effective_query
         return None, effective_query, None, build_general_explanation_guidance(topic)
 
     assessment = assess_chapter_coverage(

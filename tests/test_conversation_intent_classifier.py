@@ -39,6 +39,10 @@ from app.services.conversation_intent_classifier import (
             FollowupType.NEW_TOPIC,
         ),
         ("What are weather instruments", FollowupType.NEW_TOPIC),
+        ("what is your name", FollowupType.SMALL_TALK),
+        ("who are you", FollowupType.SMALL_TALK),
+        ("what would", FollowupType.SMALL_TALK),
+        ("can you tell", FollowupType.SMALL_TALK),
     ],
 )
 def test_classify_followup_regex(query: str, expected: FollowupType):
@@ -59,6 +63,7 @@ def test_answer_type_mapping():
     assert answer_type_for_followup(FollowupType.CLARIFICATION) == "clarification"
     assert answer_type_for_followup(FollowupType.SIMPLIFY) == "clarification"
     assert answer_type_for_followup(FollowupType.GREETING) == "greeting"
+    assert answer_type_for_followup(FollowupType.SMALL_TALK) == "greeting"
     assert answer_type_for_followup(FollowupType.NEW_TOPIC) is None
 
 

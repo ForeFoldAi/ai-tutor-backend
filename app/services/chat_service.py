@@ -59,7 +59,8 @@ _GREETING_PATTERNS = re.compile(
     r"how are you|how r u|what('s| is) up|sup|yo|namaste|hiya|howdy|"
     r"nice to meet|greet|thanks|thank you|bye|goodbye|see you|ok|okay|"
     r"cool|awesome|great|good|fine|i('m| am) (good|fine|ok|bored|tired|happy|sad)|"
-    r"can you help|are you (there|ready|a bot|ai|real))\b",
+    r"can you help|are you (there|ready|a bot|ai|real)|"
+    r"what('s| is) your name|who are you|what are you)\b",
     re.I,
 )
 _EXPLICIT_ONE_WORD = re.compile(
@@ -2916,6 +2917,18 @@ async def chapter_aware_qa_stream(
 
     retrieval_k = VOICE_RETRIEVAL_K if voice_mode else RETRIEVAL_K
     context_budget = VOICE_CONTEXT_CHAR_BUDGET if voice_mode else CONTEXT_CHAR_BUDGET
+
+    if voice_mode:
+        from app.services.voice_stt_postprocess import (
+            INCOMPLETE_UTTERANCE_REPLY,
+            is_incomplete_voice_utterance,
+        )
+
+        if is_incomplete_voice_utterance(query):
+            if emit_related_images:
+                await emit_related_images([])
+            yield INCOMPLETE_UTTERANCE_REPLY
+            return
 
     from app.services.chapter_scope import resolve_chapter_awareness_turn
 

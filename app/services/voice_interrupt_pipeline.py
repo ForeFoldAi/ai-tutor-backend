@@ -151,7 +151,12 @@ def evaluate_barge_in(
         sim = echo_similarity(transcript, recent_ai_speech)
         out["echo_similarity_score"] = sim
         metrics.set_gauge("echo_similarity_score", sim)
-        if not intent["is_interrupt_intent"] and transcript_likely_echo(
+        # Checked regardless of intent match: interrupt phrases like "hi",
+        # "hello", "wait" are common tutor openers, so a transcript that
+        # merely *starts* with one is not proof it's the student — if the
+        # text is a near-verbatim echo of the AI's own recent speech, it's
+        # audio bleed, not a real interrupt.
+        if transcript_likely_echo(
             transcript, recent_ai_speech, threshold=ECHO_SIMILARITY_THRESHOLD
         ):
             metrics.incr("echo_rejected_count")
