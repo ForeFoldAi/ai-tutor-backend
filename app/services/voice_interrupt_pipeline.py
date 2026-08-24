@@ -7,6 +7,7 @@ Volume spike (client) → denoise → VAD → echo → score(VAD, speaker, inten
 from __future__ import annotations
 
 import time
+import uuid
 from typing import Any
 
 from app.config import (
@@ -47,7 +48,11 @@ def compute_interrupt_score(
     vad_score = _clamp01(vad_prob) * (0.65 + 0.35 * duration_factor)
 
     if speaker_skipped:
-        speaker_score = 0.85  # not enrolled / disabled — neutral-positive
+        # Not enrolled yet / disabled: contribute a neutral score rather than
+        # a near-automatic pass. 0.5 is what the formula below yields for a
+        # borderline exact-at-threshold match — an unverified speaker should
+        # be judged the same as "right on the line", not "clearly matched".
+        speaker_score = 0.5
     else:
         # Map cosine around SPEAKER_SIMILARITY_THRESHOLD into 0..1
         thr = SPEAKER_SIMILARITY_THRESHOLD
@@ -86,6 +91,7 @@ def evaluate_barge_in(
     (intent phrases get a strong intent_score boost).
     """
     t0 = time.perf_counter()
+    event_id = uuid.uuid4().hex[:12]
     out: dict[str, Any] = {
         "allow_interrupt": False,
         "reason": "init",
@@ -99,6 +105,7 @@ def evaluate_barge_in(
         "score_parts": {},
         "intent": None,
         "processed_audio": audio_bytes,
+        "barge_event_id": event_id,
     }
 
     if not VOICE_PROTECTION_ENABLED:
@@ -125,6 +132,7 @@ def evaluate_barge_in(
         metrics.incr("false_interrupt_count")
         metrics.log_event(
             "INTERRUPT_REJECTED",
+            barge_event_id=event_id,
             reason="vad",
             interrupt_score=0.0,
             speech_probability=out["speech_probability"],
@@ -161,9 +169,10 @@ def evaluate_barge_in(
         ):
             metrics.incr("echo_rejected_count")
             metrics.incr("interrupt_rejected_count")
-            metrics.log_event("ECHO_REJECTED", similarity=sim, text=transcript[:80])
+            metrics.log_event("ECHO_REJECTED", barge_event_id=event_id, similarity=sim, text=transcript[:80])
             metrics.log_event(
                 "INTERRUPT_REJECTED",
+                barge_event_id=event_id,
                 reason="echo",
                 interrupt_score=0.0,
                 similarity=sim,
@@ -195,6 +204,7 @@ def evaluate_barge_in(
         metrics.incr("interrupt_rejected_count")
         metrics.log_event(
             "INTERRUPT_REJECTED",
+            barge_event_id=event_id,
             reason="speaker",
             interrupt_score=0.0,
             similarity=out["speaker_similarity"],
@@ -221,7 +231,9 @@ def evaluate_barge_in(
 
     if explicit_intent_only and not intent["is_interrupt_intent"]:
         metrics.incr("interrupt_rejected_count")
-        metrics.log_event("INTERRUPT_REJECTED", reason="no_intent", interrupt_score=score)
+        metrics.log_event(
+            "INTERRUPT_REJECTED", barge_event_id=event_id, reason="no_intent", interrupt_score=score
+        )
         out.update(
             allow_interrupt=False,
             reason="no_intent",
@@ -237,6 +249,7 @@ def evaluate_barge_in(
         reason = "intent" if intent["is_interrupt_intent"] else "score"
         metrics.log_event(
             "INTERRUPT_ACCEPTED",
+            barge_event_id=event_id,
             interrupt_score=score,
             interrupt_reason=reason,
             intent=intent.get("matched_phrase"),
@@ -257,6 +270,7 @@ def evaluate_barge_in(
     metrics.incr("false_interrupt_count")
     metrics.log_event(
         "INTERRUPT_REJECTED",
+        barge_event_id=event_id,
         interrupt_score=score,
         interrupt_reason="below_threshold",
         threshold=INTERRUPT_SCORE_THRESHOLD,

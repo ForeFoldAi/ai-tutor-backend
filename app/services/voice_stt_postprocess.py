@@ -171,7 +171,10 @@ def postprocess_voice_transcript(text: str, *, subject_name: str = "") -> str:
 
     subj = (subject_name or "").lower()
     if "math" in subj:
-        out = re.sub(r"\binto\b", "times", out, flags=re.I)
+        # Only "5 into 3" style division dictation (digit on both sides) —
+        # not "turn a fraction into a decimal" / "divide into groups", which
+        # blindly replacing every "into" used to mangle before it reached the LLM.
+        out = re.sub(r"(\d)\s+into\s+(\d)", r"\1 times \2", out, flags=re.I)
 
     words = out.split()
     fixed: list[str] = []

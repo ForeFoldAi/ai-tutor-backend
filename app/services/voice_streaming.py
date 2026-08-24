@@ -43,12 +43,23 @@ class SpeechTokenBuffer:
     last_token_at: float = field(default_factory=time.monotonic)
     chunks_emitted: int = 0
     tokens_streamed: int = 0
+    # Once a ``` fence opens, everything after it is the math-lesson /
+    # science-experiment JSON block the prompt mandates be appended AFTER the
+    # prose (see chat_service.py) — never meant to be spoken. Once set, further
+    # tokens are dropped from the speech buffer so raw JSON can't reach TTS.
+    _fence_open: bool = False
 
     async def append_token(self, token: str) -> None:
         async with self.lock:
-            self.buf += token
             self.last_token_at = time.monotonic()
             self.tokens_streamed += 1
+            if self._fence_open:
+                return
+            self.buf += token
+            idx = self.buf.find("```")
+            if idx != -1:
+                self.buf = self.buf[:idx]
+                self._fence_open = True
 
 
 async def enqueue_speech_unit(

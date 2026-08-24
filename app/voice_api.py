@@ -13,7 +13,7 @@ import re
 import struct
 from typing import AsyncIterator
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -130,6 +130,7 @@ class ChapterVoiceRequest(BaseModel):
     chapter: str = ""
     chapter_names: list[str] | None = None
     student_name: str = ""
+    student_key: str = ""
     tutor_state: str = "TEACHING"
     conversation_history: list[ConversationTurn] = Field(default_factory=list)
     voice_gender: str = ""
@@ -215,6 +216,16 @@ async def _chapter_voice_stream_generate(req: ChapterVoiceRequest) -> AsyncItera
         query=message,
     )
 
+    learner_snapshot: dict | None = None
+    if req.student_key and req.student_key.isdigit():
+        from app.services.learner_profile import load_learner_profile
+
+        try:
+            profile = await load_learner_profile(req.student_key)
+            learner_snapshot = profile.snapshot().__dict__
+        except Exception:
+            learner_snapshot = None
+
     collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
 
     if req.board and req.subject_name and req.chapter_ids:
@@ -246,6 +257,10 @@ async def _chapter_voice_stream_generate(req: ChapterVoiceRequest) -> AsyncItera
     speech_units_emitted = 0
     side_frames: list[bytes] = []
     tts_prefetcher = http_tts_prefetcher()
+    # Once a ``` fence opens, everything after it is the math-lesson /
+    # science-experiment JSON block appended after the prose — never meant
+    # to be spoken. Mirrors SpeechTokenBuffer._fence_open in the WS path.
+    fence_open = False
 
     async def _yield_speech_units(units: list[str]) -> AsyncIterator[bytes]:
         nonlocal speech_units_emitted
@@ -292,14 +307,21 @@ async def _chapter_voice_stream_generate(req: ChapterVoiceRequest) -> AsyncItera
         voice_mode=True,
         tutor_state=current_state.value,
         understanding_scores=understanding_payload,
+        learner_snapshot=learner_snapshot,
         conversation_history=history,
         student_name=req.student_name,
+        student_key=req.student_key,
     ):
         while side_frames:
             yield side_frames.pop(0)
         yield _frame(_FRAME_TEXT, token.encode("utf-8"))
         full_answer_parts.append(token)
-        sentence_buf += token
+        if not fence_open:
+            sentence_buf += token
+            idx = sentence_buf.find("```")
+            if idx != -1:
+                sentence_buf = sentence_buf[:idx]
+                fence_open = True
 
         chunks, sentence_buf = extract_voice_chunks(
             sentence_buf, chunks_emitted=speech_units_emitted
@@ -328,7 +350,7 @@ async def _chapter_voice_stream_generate(req: ChapterVoiceRequest) -> AsyncItera
 
 
 @router.post("/auth/voice-stream")
-async def chapter_voice_stream(req: ChapterVoiceRequest):
+async def chapter_voice_stream(req: ChapterVoiceRequest, authorization: str = Header(default="")):
     """
     Chapter-aware voice stream (POST fallback when WebSocket is unavailable).
 
@@ -342,6 +364,18 @@ async def chapter_voice_stream(req: ChapterVoiceRequest):
         FRAME_MATH_LESSON (7) – JSON {lesson, clean_answer}
         FRAME_SCIENCE_EXPERIMENT (8) – JSON {experiment, clean_answer}
     """
+    # Same student_key derivation as /ws/voice (voice_ws.py) — from the bearer
+    # token, not a client-supplied field — so this fallback path personalizes
+    # (learner profile / LIA guidance) exactly like the WebSocket path does.
+    token = authorization.removeprefix("Bearer ").strip() if authorization else ""
+    if token:
+        try:
+            from app.core.security import decode_token
+
+            payload = decode_token(token)
+            req.student_key = str(payload.get("sub") or "") or req.student_key
+        except Exception:
+            pass
     return StreamingResponse(
         _chapter_voice_stream_generate(req),
         media_type="application/octet-stream",

@@ -132,6 +132,7 @@ class _Session:
         "_learner_load_task",
         "tts_voice",
         "voice_session_id",
+        "stt_mode",
     )
 
     def __init__(self) -> None:
@@ -153,6 +154,7 @@ class _Session:
         self._learner_load_task: asyncio.Task | None = None
         self.tts_voice: str | None = None
         self.voice_session_id: str = ""
+        self.stt_mode: str = "hybrid"
 
     def configure(self, msg: dict) -> None:
         self.board = msg.get("board", self.board)
@@ -172,6 +174,9 @@ class _Session:
         sid = str(msg.get("voice_session_id") or "").strip()
         if sid:
             self.voice_session_id = sid
+        mode = str(msg.get("stt_mode") or "").strip()
+        if mode in ("hybrid", "volume_only"):
+            self.stt_mode = mode
 
     def remember(self, role: str, content: str) -> None:
         self.history.append({"role": role, "content": content})
@@ -202,12 +207,34 @@ async def _general_answer_stream(
     understanding_scores: dict | None = None,
     learner_snapshot: dict | None = None,
 ) -> AsyncIterator[str]:
-    """General (no-chapter) voice answers — same format as text chat."""
-    from app.services.chat_service import _build_chat_messages, _stream_mistral_async
+    """General (no-chapter) voice answers — voice-tuned prompt (same builder
+    chapter_aware_qa_stream uses for its own voice_live_teaching branch), not
+    the text-chat prompt — this path is still real-time TTS, not a read-aloud
+    document."""
+    from app.services.chat_service import _stream_mistral_async
+    from app.services.voice_tutor import (
+        LearnerProfileSnapshot,
+        TutorState,
+        UnderstandingScores,
+        build_voice_mistral_messages,
+    )
 
-    del understanding_scores, learner_snapshot
+    try:
+        tutor_st = TutorState(session.tutor_state)
+    except ValueError:
+        tutor_st = TutorState.TEACHING
+    scores = understanding_scores or {}
+    understanding = UnderstandingScores(
+        understanding=float(scores.get("understanding", 0.5)),
+        confidence=float(scores.get("confidence", 0.5)),
+        confusion=float(scores.get("confusion", 0.0)),
+        is_affirmation=bool(scores.get("is_affirmation")),
+        wants_expansion=bool(scores.get("wants_expansion")),
+        wants_quiz=bool(scores.get("wants_quiz")),
+    )
+    learner = LearnerProfileSnapshot(**learner_snapshot) if learner_snapshot else None
 
-    messages = _build_chat_messages(
+    messages = build_voice_mistral_messages(
         question,
         "(No chapter excerpt — use accurate general knowledge briefly.)",
         class_level=session.class_level,
@@ -216,6 +243,10 @@ async def _general_answer_stream(
         chapter=session.chapter,
         student_name=session.student_name,
         conversation_history=session.history,
+        tutor_state=tutor_st,
+        understanding=understanding,
+        learner=learner,
+        expand_deep=understanding.wants_expansion or understanding.confusion >= 0.55,
     )
     async for token in _stream_mistral_async(messages, feature="voice"):
         yield token
@@ -569,6 +600,9 @@ async def voice_ws(
 
             if mtype == "session_start":
                 session.configure(msg)
+                await _send(websocket, {"type": "session_ready", "stt_mode": session.stt_mode})
+                if session.stt_mode == "volume_only":
+                    logger.info("Voice WS session_start stt_mode=volume_only (no browser SpeechRecognition)")
                 from app.services.voice_performance import (
                     schedule_learner_profile_load,
                     schedule_session_prewarm,
