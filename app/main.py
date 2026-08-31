@@ -382,6 +382,7 @@ class ChapterChatRequest(BaseModel):
     conversation_history: list[ConversationTurn] | None = None
     images_only: bool = False
     agent_mode: str | None = None  # ask | practice | explain
+    voice_mode: bool = False
 
 
 def _fallback_answer_from_docs(query: str):
@@ -610,6 +611,7 @@ async def chapter_chat_stream(
             student_name=_current_user.full_name,
             student_key=str(_current_user.id),
             agent_mode=req.agent_mode,
+            voice_mode=req.voice_mode,
         ):
             while pending:
                 yield pending.pop(0)

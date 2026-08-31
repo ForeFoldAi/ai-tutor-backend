@@ -14,7 +14,13 @@ from typing import TYPE_CHECKING, Awaitable, Callable
 
 from app.config import VOICE_SPEECH_QUEUE_MAXSIZE
 from app.services.tts_sanitize import sanitize_chunk_for_tts
-from app.services.voice_chunking import extract_voice_chunks, has_unclosed_math_delimiters, idle_flush_sec
+from app.services.voice_chunking import (
+    IDLE_FLUSH_HARD_MULTIPLIER,
+    extract_voice_chunks,
+    has_unclosed_math_delimiters,
+    idle_flush_sec,
+    is_flushable_fragment,
+)
 
 if TYPE_CHECKING:
     from app.services.voice_chunking import VoicePipelineTiming
@@ -126,6 +132,14 @@ async def idle_flush_loop(
                 continue
             if has_unclosed_math_delimiters(chunk):
                 continue
+            # A short, clause-incomplete fragment ("...the thing about") is
+            # ordinary LLM token-batch jitter, not a deliberate pause. Forcing
+            # it out now means it gets synthesized as its own separate TTS
+            # clip — audibly cut off from what follows. Give fragments like
+            # that more idle time before giving up and speaking them as-is.
+            if not is_flushable_fragment(chunk, chunks_emitted=buffer.chunks_emitted):
+                if idle < flush_after * IDLE_FLUSH_HARD_MULTIPLIER:
+                    continue
             buffer.buf = ""
 
         await enqueue_speech_unit(queue, timing, chunk, buffer, emit_metrics=emit_metrics)

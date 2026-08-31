@@ -91,6 +91,17 @@ VOICE_TTS_RATE = os.environ.get("VOICE_TTS_RATE", "-3%")
 VOICE_TTS_PITCH = os.environ.get("VOICE_TTS_PITCH", "+1Hz")
 VOICE_TTS_VOLUME = os.environ.get("VOICE_TTS_VOLUME", "+0%")
 
+# Premium TTS provider — ElevenLabs when a key is configured, edge-tts (free,
+# no SLA) otherwise. Set VOICE_TTS_PROVIDER=edge to force the free voice even
+# with a key present.
+ELEVENLABS_API_KEY = os.environ.get("ELEVENLABS_API_KEY", "").strip()
+ELEVENLABS_MODEL_ID = os.environ.get("ELEVENLABS_MODEL_ID", "eleven_turbo_v2_5")
+ELEVENLABS_VOICE_ID_FEMALE = os.environ.get("ELEVENLABS_VOICE_ID_FEMALE", "21m00Tcm4TlvDq8ikWAM")
+ELEVENLABS_VOICE_ID_MALE = os.environ.get("ELEVENLABS_VOICE_ID_MALE", "pNInz6obpgDQGcFmaJgB")
+VOICE_TTS_PROVIDER = os.environ.get(
+    "VOICE_TTS_PROVIDER", "elevenlabs" if ELEVENLABS_API_KEY else "edge"
+).strip().lower()
+
 # Voice pipeline tuning (config-driven; override via env)
 VOICE_TTS_PREFETCH = os.environ.get("VOICE_TTS_PREFETCH", "true").lower() in ("1", "true", "yes")
 VOICE_TTS_WORKERS = int(os.environ.get("VOICE_TTS_WORKERS", "1"))  # prefetch is separate
@@ -106,6 +117,15 @@ VOICE_SPEECH_MAX_WORDS = int(os.environ.get("VOICE_SPEECH_MAX_WORDS", "28"))
 VOICE_INTERRUPT_CANCEL_SEC = float(os.environ.get("VOICE_INTERRUPT_CANCEL_SEC", "0.45"))
 # Max speech units waiting for TTS; 0 = unbounded (not recommended for production)
 VOICE_SPEECH_QUEUE_MAXSIZE = int(os.environ.get("VOICE_SPEECH_QUEUE_MAXSIZE", "6"))
+
+# Hard cap on any single uploaded/decoded voice audio clip (utterance, enrollment,
+# barge-check) — a few minutes of real speech at typical webm/opus bitrates fits
+# well under this; anything larger is abuse, not a legitimate student clip.
+VOICE_MAX_AUDIO_BYTES = int(os.environ.get("VOICE_MAX_AUDIO_BYTES", str(5 * 1024 * 1024)))
+# Cap on concurrent unauthenticated /ws/voice sessions server-wide (per worker) —
+# guest voice access is intentionally allowed (mirrors the unauthenticated REST
+# fallback), but each turn calls paid LLM/TTS APIs, so it must not be unbounded.
+VOICE_ANON_MAX_CONCURRENT = int(os.environ.get("VOICE_ANON_MAX_CONCURRENT", "20"))
 
 # Server-side Whisper STT (optional — requires faster-whisper)
 VOICE_WHISPER_ENABLED = os.environ.get("VOICE_WHISPER_ENABLED", "true").lower() in (

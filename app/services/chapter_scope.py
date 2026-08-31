@@ -7,6 +7,7 @@ using retrieval evidence (not prompt-only instructions).
 
 from __future__ import annotations
 
+import difflib
 import logging
 import re
 from dataclasses import dataclass
@@ -24,6 +25,7 @@ _TOPIC_STOPWORDS = frozenset({
     "explain", "describe", "what", "how", "why", "when", "where", "about",
     "tell", "give", "can", "you", "me", "please", "define", "meaning",
     "summarize", "summarise", "summary", "overview",
+    "some", "any", "another", "other",  # quantifiers — "give me some/another X" carries no topic on its own
     "chapter",  # meta — "tell about this chapter" is about the session, not a topic term
     "lesson", "topic",  # meta — "the lesson" refers to current session, not a search term
 })
@@ -36,6 +38,13 @@ _META_TUTORING_WORDS = frozenset({
     "telling", "detail", "details", "detailed", "want", "more",
     "easier", "again", "confused", "clear",
     "say", "saying", "told", "asking", "asked",
+    # "give me additional examples" carries no topic identity of its own — it's
+    # a request to keep expanding on whatever the student is already on, same
+    # as "detail"/"more" above. Without these, "examples" alone was scored as
+    # a substantive search term, sending retrieval hunting across the whole
+    # subject index and occasionally landing a spurious top-hit in an
+    # unrelated chapter — which then triggered a false "switch chapter?" ask.
+    "example", "examples", "additional", "instance", "instances",
 })
 
 _CHAPTER_META_QUERY_RE = re.compile(
@@ -66,6 +75,12 @@ _SKIP_TOPIC_SCOPE_RE = re.compile(
     r"^(hi|hello|hey|hii|thanks|thank you|yes|yeah|yep|no|ok|okay|sure|"
     r"continue|go on|tell me more|explain more|simplify|summarize|summarise|"
     r"i\s+(?:did\s+not|don'?t)\s+understand|i\s+am\s+confused|"
+    # Uncertainty responses ("I don't know") carry no topic content, same
+    # class as "confused"/"what do you mean" above — without this they were
+    # scored on the leftover words ("know"/"sure") and could spuriously
+    # match content in an unrelated chapter, triggering a false switch-ask.
+    r"i'?m\s+not\s+sure|i\s+am\s+not\s+sure|not\s+sure|no\s+clue|idk|"
+    r"i\s+(?:do\s+not|don'?t|dont)\s+know|"
     r"what\s+do\s+you\s+mean|explain\s+again|"
     r"how\s+many\s+(?:maps?|figures?|figs?)\b|"
     r"(?:can\s+you\s+)?explain(?:\s+\w+){0,6}\s+(?:in\s+)?(?:deep(?:ly)?|detail)|"
@@ -100,6 +115,12 @@ _SESSION_CONTINUATION_RE = re.compile(
     r"that|this|it|those|these|he|she|they|him|her|them|"
     r"previous|earlier|second point|first point|again"
     r")\b",
+    re.I,
+)
+# Affirm/continue tokens only — not every ≤4-word STT fragment.
+_SHORT_SESSION_CONTINUE_RE = re.compile(
+    r"^(why|how|ok|okay|yes|yeah|yep|yup|sure|and|then|next|more|"
+    r"go\s+on|continue|right|correct|exactly)\s*[.!?]*$",
     re.I,
 )
 
@@ -440,6 +461,61 @@ def chapter_concept_terms(chapter_names: list[str] | None) -> set[str]:
     return terms
 
 
+_MISHEARD_TERM_MIN_LEN = 4
+_MISHEARD_MATCH_CUTOFF = 0.6
+_MISHEARD_MARKER = "did you mean"
+_MISHEARD_CONFIRM_RE = re.compile(r"did you mean\s+\*\*(.+?)\*\*\?", re.I)
+_MISHEARD_YES_RE = re.compile(
+    r"^(?:yes|yeah|yep|yup|correct|right|that'?s\s+(?:right|it|correct)|exactly)\b", re.I
+)
+_MISHEARD_NO_RE = re.compile(r"^(?:no|nope|nah|not\s+(?:really|quite))\b", re.I)
+
+
+def _chapter_vocabulary(docs: list, chapter_names: list[str] | None) -> set[str]:
+    """Real terms this chapter actually uses — retrieval is chapter-scoped, so even
+    a weak/no-match query still returns passages from within the right chapter."""
+    vocab: set[str] = set()
+    for doc in (docs or [])[:10]:
+        text = getattr(doc, "page_content", "") or ""
+        vocab |= substantive_query_terms(text)
+    vocab |= chapter_concept_terms(chapter_names)
+    return {t for t in vocab if len(t) >= _MISHEARD_TERM_MIN_LEN}
+
+
+def misheard_term_guess(
+    query: str, *, docs: list, chapter_names: list[str] | None
+) -> str | None:
+    """Best-effort ASR mishearing check: does an unrecognized word in the query
+    sound close to a real term from this chapter ('muggles' -> 'mughals')?
+    ponytail: edit-distance via difflib, not true phonetics — good enough for
+    ASR-style near-misses; swap for a soundex/metaphone lib if false negatives
+    on longer terms show up in practice."""
+    q_terms = [t for t in substantive_query_terms(query) if len(t) >= _MISHEARD_TERM_MIN_LEN]
+    if not q_terms:
+        return None
+    vocab = _chapter_vocabulary(docs, chapter_names) - set(q_terms)
+    if not vocab:
+        return None
+    for term in q_terms:
+        match = difflib.get_close_matches(term, vocab, n=1, cutoff=_MISHEARD_MATCH_CUTOFF)
+        if match:
+            return match[0]
+    return None
+
+
+def build_misheard_confirmation_message(candidate_term: str) -> str:
+    return f"I think I may have misheard — did you mean **{candidate_term.title()}**?"
+
+
+def is_misheard_confirmation_prompt(text: str) -> bool:
+    return _MISHEARD_MARKER in (text or "").lower()
+
+
+def misheard_candidate_from_prompt(text: str) -> str | None:
+    m = _MISHEARD_CONFIRM_RE.search(text or "")
+    return m.group(1).strip() if m else None
+
+
 def looks_like_math_problem(query: str) -> bool:
     return bool(_MATH_PROBLEM_RE.search(query or ""))
 
@@ -650,8 +726,8 @@ def is_session_continuation_follow_up(
         return True
     if is_related_chapter_follow_up(q, conversation_history):
         return True
-    # Short utterances with prior teaching ("why", "ok", "yes") — not new searches.
-    if len(q.split()) <= 4 and _recent_assistant_terms(conversation_history):
+    # Known short continues only — never "any ≤4 words" (STT noise ≠ prior topic).
+    if _SHORT_SESSION_CONTINUE_RE.match(q) and _recent_assistant_terms(conversation_history):
         return True
     return False
 
@@ -684,8 +760,11 @@ def is_related_chapter_follow_up(
         return False
     q_terms = substantive_query_terms(q)
     if not q_terms:
-        # "why?", "how?", "again" — stopwords leave no terms; still a follow-up.
-        return len(q.split()) <= 6
+        # Stopword-only shorts: treat as follow-up only for known continue tokens
+        # ("why?", "how?", "yes") — not STT noise ("is", "same").
+        return bool(
+            _SHORT_SESSION_CONTINUE_RE.match(q) or _SESSION_CONTINUATION_RE.search(q)
+        )
     return len(q_terms & prev) >= min_overlap
 
 
@@ -963,7 +1042,83 @@ def resolve_chapter_scope_message(
     )
 
 
-def resolve_chapter_awareness_turn(
+# This call sits on the critical path before the AI starts answering at all
+# (see resolve_chapter_awareness_turn) — a slow LLM response here means the
+# student sits in silence, not just a slower "second opinion." Kept short:
+# it's a 6-token completion that should return well under a second normally;
+# on any real slowness, fail fast and fall back to the existing (instant,
+# heuristic) behavior rather than make the student wait for it.
+_TOPIC_MISMATCH_LLM_TIMEOUT_SEC = 1.5
+_TOPIC_MISMATCH_LLM_SYSTEM_PROMPT = (
+    "A student is in a live tutoring session on the chapter '{chapter}'. "
+    "A keyword search found nothing in that chapter matching their latest "
+    "message, which usually means they've asked about a different topic — "
+    "but sometimes it's a generic follow-up (\"give me more examples\", "
+    "\"I don't get it\", \"go on\", \"what about the other one\") that a "
+    "keyword search can't match to anything. Read the recent conversation "
+    "and their latest message, then decide which case this is.\n"
+    "Reply with ONLY one word: NEWTOPIC if they're clearly asking about "
+    "something unrelated to the conversation so far, or FOLLOWUP if it "
+    "reads like a continuation of what's already being discussed."
+)
+
+
+def _format_recent_turns(conversation_history: list[dict] | None, limit: int = 4) -> str:
+    turns = [
+        f"{(t.get('role') or '?').strip()}: {(t.get('content') or '').strip()[:220]}"
+        for t in (conversation_history or [])[-limit:]
+        if (t.get('content') or '').strip()
+    ]
+    return "\n".join(turns) if turns else "(no prior turns)"
+
+
+async def _llm_confirms_topic_mismatch(
+    query: str,
+    conversation_history: list[dict] | None,
+    chapter_label: str,
+) -> bool:
+    """Second opinion before showing the disruptive stay/switch wall.
+
+    Only called on the rare branch where every regex/keyword heuristic above
+    already failed to recognize a follow-up. Fails safe: True (keep today's
+    behavior — show the wall) on any error, timeout, or ambiguous reply, so
+    this can only ever suppress a false-positive wall, never invent one.
+    """
+    import asyncio
+
+    from app.services import llm_client
+
+    try:
+        messages = [
+            {
+                "role": "system",
+                "content": _TOPIC_MISMATCH_LLM_SYSTEM_PROMPT.format(
+                    chapter=chapter_label or "the current chapter"
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Recent conversation:\n{_format_recent_turns(conversation_history)}\n\n"
+                    f"Student's latest message: {query}"
+                ),
+            },
+        ]
+        raw = await asyncio.wait_for(
+            llm_client.complete(messages, feature="chat", max_tokens=6),
+            timeout=_TOPIC_MISMATCH_LLM_TIMEOUT_SEC,
+        )
+    except Exception as exc:
+        logger.debug("Topic-mismatch second opinion failed, keeping wall: %s", exc)
+        return True
+
+    verdict = (raw or "").strip().upper()
+    if "FOLLOWUP" in verdict:
+        return False
+    return True
+
+
+async def resolve_chapter_awareness_turn(
     query: str,
     *,
     docs: list,
@@ -985,6 +1140,24 @@ def resolve_chapter_awareness_turn(
         assessment — coverage assessment when applicable
         coverage_guidance — extra system-prompt block for the LLM
     """
+    last_asst = ""
+    if conversation_history:
+        for turn in reversed(conversation_history):
+            if (turn.get("role") or "").lower() == "assistant":
+                last_asst = (turn.get("content") or "").strip()
+                break
+    if is_misheard_confirmation_prompt(last_asst):
+        candidate = misheard_candidate_from_prompt(last_asst)
+        if candidate and _MISHEARD_YES_RE.match((query or "").strip()):
+            return None, candidate, None, build_general_explanation_guidance(candidate)
+        if candidate and _MISHEARD_NO_RE.match((query or "").strip()):
+            # Rule 2: declined the guess — proceed with the literal term they
+            # actually said, not the throwaway "no" itself.
+            original = prior_user_question(conversation_history)
+            if original:
+                query = original
+                scope_query = original
+
     explicit = chapter_scope_mismatch_message(query, chapter_names)
     if explicit:
         return explicit, query, None, ""
@@ -1044,9 +1217,10 @@ def resolve_chapter_awareness_turn(
         )
 
     # Session continuation — answer in current lesson; never show a/b/c wall.
+    # Keep the student's actual words as effective_query; prior is guidance only.
     if session_follow_up:
         prior = prior_user_question(conversation_history) or scope_q or effective_query
-        return None, prior or effective_query, None, build_general_explanation_guidance(prior)
+        return None, effective_query, None, build_general_explanation_guidance(prior)
 
     # Related follow-up on a topic just taught → answer beyond chapter, no a/b/c wall
     if is_related_chapter_follow_up(scope_q, conversation_history) or is_related_chapter_follow_up(
@@ -1067,6 +1241,12 @@ def resolve_chapter_awareness_turn(
     )
 
     if assessment.level == ChapterCoverageLevel.NONE:
+        # Rule 2: before treating this as off-topic, check for an ASR-style
+        # mishearing of a real chapter term ("muggles" -> "Mughals") — ask for
+        # confirmation instead of guessing or bluntly redirecting.
+        guess = misheard_term_guess(scope_q, docs=docs, chapter_names=chapter_names)
+        if guess:
+            return build_misheard_confirmation_message(guess), effective_query, assessment, ""
         # Math practice using this chapter's concepts → solve even if not a textbook copy
         if is_concept_related_math_problem(
             scope_q,
@@ -1088,7 +1268,20 @@ def resolve_chapter_awareness_turn(
                 assessment,
                 build_general_explanation_guidance(assessment.topic_label),
             )
-        return build_chapter_awareness_message(assessment), effective_query, assessment, ""
+        # About to interrupt the conversation with the disruptive "a) stay /
+        # b) switch chapter" wall — every regex/keyword guard above (session
+        # continuation, current-lesson, related-follow-up, meta-only terms)
+        # already had a chance to catch this and didn't. Before committing to
+        # that wall, spend one small LLM call asking the one question none of
+        # those heuristics can actually answer: does this *read* like a
+        # follow-up in context, even though the keyword search found nothing?
+        # Only ever runs on this rare, high-disruption branch — normal
+        # in-scope turns never pay this cost. Fails safe: any error/timeout/
+        # ambiguous reply keeps today's behavior (show the wall).
+        if await _llm_confirms_topic_mismatch(scope_q, conversation_history, current_label):
+            return build_chapter_awareness_message(assessment), effective_query, assessment, ""
+        prior = prior_user_question(conversation_history) or scope_q or effective_query
+        return None, prior or effective_query, assessment, build_general_explanation_guidance(prior)
 
     if assessment.level == ChapterCoverageLevel.PARTIAL:
         # Still solve related math practice; don't under-answer as "only partial theory"

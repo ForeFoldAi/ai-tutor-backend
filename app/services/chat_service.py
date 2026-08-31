@@ -2631,7 +2631,7 @@ async def chapter_aware_qa(
         except Exception:
             logger.exception("topics-left reply failed")
 
-    early, effective_query, _assessment, coverage_guidance = resolve_chapter_awareness_turn(
+    early, effective_query, _assessment, coverage_guidance = await resolve_chapter_awareness_turn(
         query,
         docs=docs,
         conversation_history=recent_hist,
@@ -2900,6 +2900,10 @@ async def chapter_aware_qa_stream(
     learner_snapshot: dict | None = None,
     pipeline_timing: Any | None = None,
     agent_mode: str | None = None,
+    quiz_pending: bool = False,
+    quiz_question: str = "",
+    quiz_attempts: int = 0,
+    explained_points: list[str] | None = None,
 ) -> AsyncIterator[str]:
     """
     Streaming version of chapter_aware_qa.
@@ -2994,7 +2998,7 @@ async def chapter_aware_qa_stream(
         except Exception:
             logger.exception("topics-left reply failed (stream)")
 
-    early, effective_query, _assessment, coverage_guidance = resolve_chapter_awareness_turn(
+    early, effective_query, _assessment, coverage_guidance = await resolve_chapter_awareness_turn(
         query,
         docs=docs,
         conversation_history=recent_hist,
@@ -3094,6 +3098,7 @@ async def chapter_aware_qa_stream(
             TutorState,
             UnderstandingScores,
             build_voice_mistral_messages,
+            classify_reply_intent,
         )
 
         try:
@@ -3115,7 +3120,9 @@ async def chapter_aware_qa_stream(
             else None
         )
         messages = build_voice_mistral_messages(
-            effective_query,
+            # Always the student's raw utterance — retrieval may use a different
+            # string via retrieval_query / scope, but never silently swap this.
+            query,
             context,
             class_level=class_level,
             board=board,
@@ -3127,7 +3134,18 @@ async def chapter_aware_qa_stream(
             understanding=understanding,
             learner=learner,
             expand_deep=understanding.wants_expansion or understanding.confusion >= 0.55,
+            quiz_pending=quiz_pending,
+            quiz_question=quiz_question,
+            quiz_attempts=quiz_attempts,
+            explained_points=explained_points,
+            # Classified from the student's actual raw message, not
+            # effective_query — chapter-scope resolution above may have
+            # rewritten effective_query (e.g. after a misheard-term
+            # confirmation) to something the student never literally said.
+            reply_intent=classify_reply_intent(query, quiz_pending=quiz_pending),
         )
+        if coverage_guidance:
+            messages[0]["content"] = messages[0]["content"] + "\n\n" + coverage_guidance
         if session_mem.turn_count or session_mem.conversation_summary:
             mem_block = format_memory_for_prompt(session_mem)
             if mem_block:

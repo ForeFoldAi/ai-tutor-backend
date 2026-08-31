@@ -27,6 +27,12 @@ _SEND_CHUNK_BYTES = 4096
 _resolved_voice: str | None = None
 _voice_lock = asyncio.Lock()
 
+# edge-tts is an unofficial wrapper around Microsoft Edge's read-aloud
+# websocket — it has no SLA and can stall mid-stream (no error, no more
+# chunks) instead of raising. Without a bound here that hang blocks the
+# whole per-turn TTS pipeline until the 120s watchdog in voice_ws.py fires.
+_CHUNK_TIMEOUT_SEC = 8.0
+
 
 def voice_for_gender(
     gender: str | None = None,
@@ -55,10 +61,18 @@ async def _aclose_async_gen(gen: AsyncIterator) -> None:
 
 
 async def _iter_communicate_stream(communicate: edge_tts.Communicate) -> AsyncIterator[dict]:
-    """Wrap communicate.stream() and always aclose on early exit or cancel."""
+    """Wrap communicate.stream() and always aclose on early exit or cancel.
+
+    Bounds the wait for each chunk so a stalled edge-tts connection raises
+    asyncio.TimeoutError instead of hanging forever (see _CHUNK_TIMEOUT_SEC).
+    """
     stream = communicate.stream()
     try:
-        async for chunk in stream:
+        while True:
+            try:
+                chunk = await asyncio.wait_for(stream.__anext__(), timeout=_CHUNK_TIMEOUT_SEC)
+            except StopAsyncIteration:
+                break
             yield chunk
     finally:
         await _aclose_async_gen(stream)

@@ -43,10 +43,38 @@ from app.services.conversation_intent_classifier import (
         ("who are you", FollowupType.SMALL_TALK),
         ("what would", FollowupType.SMALL_TALK),
         ("can you tell", FollowupType.SMALL_TALK),
+        # Regression: gratitude preceded by an acknowledgment word was
+        # falling through to the short-phrase CONTINUE_EXPLANATION fallback
+        # and made the tutor re-explain what it had just finished explaining.
+        ("thanks for explaining", FollowupType.SMALL_TALK),
+        ("right thanks for explaining", FollowupType.SMALL_TALK),
+        ("ok thanks", FollowupType.SMALL_TALK),
+        ("got it thanks", FollowupType.SMALL_TALK),
+        # Regression: a negative reply to a tutor check-in ("...right?") is
+        # the same kind of direct answer as "yes" — "no I am not" (4 words)
+        # missed the 3-word short-phrase catch-all by one word (unlike the
+        # contracted "no I'm not") and fell through to NEW_TOPIC, sending
+        # retrieval on the literal reply text and pulling back an unrelated
+        # textbook chunk instead of continuing the actual conversation.
+        ("no I am not", FollowupType.CONTINUE_EXPLANATION),
+        ("no I'm not", FollowupType.CONTINUE_EXPLANATION),
+        ("no", FollowupType.CONTINUE_EXPLANATION),
+        ("not really", FollowupType.CONTINUE_EXPLANATION),
+        ("nope", FollowupType.CONTINUE_EXPLANATION),
+        # STT fragments must NOT be keep-teaching merely because they are short.
+        ("is", FollowupType.NEW_TOPIC),
+        ("same", FollowupType.NEW_TOPIC),
     ],
 )
 def test_classify_followup_regex(query: str, expected: FollowupType):
     assert classify_followup_regex(query) == expected
+
+
+def test_thanks_in_long_question_does_not_misfire_as_small_talk():
+    """The word-count guard keeps 'thanks to' inside a genuine longer
+    question from being misread as a closing remark."""
+    q = "why does soil erode, thanks to rainfall patterns over long periods"
+    assert classify_followup_regex(q) != FollowupType.SMALL_TALK
 
 
 def test_clarification_requires_assistant_history():

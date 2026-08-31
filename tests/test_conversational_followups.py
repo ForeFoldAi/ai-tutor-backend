@@ -1,5 +1,6 @@
 """Multi-subject conversational follow-ups must not trigger false Stay/Switch walls."""
 
+import asyncio
 from unittest.mock import MagicMock, patch
 
 from app.services.chapter_scope import (
@@ -109,7 +110,7 @@ def test_deep_telling_understand_no_wall_without_history(mock_other, mock_labels
         subject_name="Social",
     )
     assert assessment.level == ChapterCoverageLevel.FULL
-    early, _, _, _ = resolve_chapter_awareness_turn(
+    early, _, _, _ = asyncio.run(resolve_chapter_awareness_turn(
         q,
         docs=[_doc("Mughal expansion changed India's political map.", CH2_ID)],
         conversation_history=None,
@@ -119,7 +120,7 @@ def test_deep_telling_understand_no_wall_without_history(mock_other, mock_labels
         board="CBSE",
         class_level="CLASS_8",
         subject_name="Social",
-    )
+    ))
     assert early is None
     assert "How would you like to continue" not in (early or "")
 
@@ -133,7 +134,7 @@ def test_explain_this_deeply_social_no_wall(mock_other, mock_labels):
     ctx = resolve_conversation_context(q, conversation_history=SOCIAL_HISTORY, chapter=CH2)
     assert ctx.followup_type == FollowupType.CONTINUE_EXPLANATION.value
     assert "akbar" in ctx.retrieval_query.lower() or "mughal" in ctx.retrieval_query.lower()
-    early, _, _, guidance = resolve_chapter_awareness_turn(
+    early, _, _, guidance = asyncio.run(resolve_chapter_awareness_turn(
         q,
         docs=[_doc("Akbar expanded the Mughal empire.", CH2_ID)],
         conversation_history=SOCIAL_HISTORY,
@@ -144,7 +145,7 @@ def test_explain_this_deeply_social_no_wall(mock_other, mock_labels):
         class_level="CLASS_8",
         subject_name="Social",
         scope_query=ctx.retrieval_query,
-    )
+    ))
     assert early is None
     assert "not covered" not in (guidance or "").lower()
 
@@ -246,7 +247,7 @@ def test_how_many_maps_is_current_lesson_no_wall():
         _doc("Fig 2.3 shows a political map snapshot for a period.", CH2_ID),
         _doc("Fig 2.12 and Fig 2.16 are other political map snapshots.", CH2_ID),
     ]
-    early, _, _, guidance = resolve_chapter_awareness_turn(
+    early, _, _, guidance = asyncio.run(resolve_chapter_awareness_turn(
         q,
         docs=docs,
         conversation_history=None,
@@ -257,6 +258,6 @@ def test_how_many_maps_is_current_lesson_no_wall():
         class_level="CLASS_8",
         subject_name="Social",
         scope_query=q,
-    )
+    ))
     assert early is None
     assert guidance is None or "How would you like to continue?" not in guidance

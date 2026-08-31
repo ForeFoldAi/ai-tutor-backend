@@ -211,8 +211,8 @@ def suppress_noise(audio_bytes: bytes) -> tuple[bytes, float]:
 
     _active_backend = used
     latency_ms = (time.perf_counter() - t0) * 1000.0
-    metrics.set_gauge("noise_reduction_db", db)
-    metrics.set_gauge("noise_processing_latency_ms", latency_ms)
+    metrics.record_avg("noise_reduction_db", db)
+    metrics.record_avg("noise_processing_latency_ms", latency_ms)
     try:
         return _pcm_to_wav_bytes(cleaned, _SAMPLE_RATE), db
     except Exception as exc:

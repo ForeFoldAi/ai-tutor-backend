@@ -1,5 +1,6 @@
 """Follow-up conversation understanding — scope, context, and chapter continuity."""
 
+import asyncio
 from unittest.mock import MagicMock, patch
 
 from app.services.chapter_scope import (
@@ -61,7 +62,7 @@ def test_tell_me_about_lesson_no_not_covered_wall(mock_other, mock_labels):
     mock_other.return_value = ("", 0, 0)
     mock_labels.return_value = {CH2_ID: CH2}
     q = "Can you tell me about the lesson?"
-    early, effective, assessment, guidance = resolve_chapter_awareness_turn(
+    early, effective, assessment, guidance = asyncio.run(resolve_chapter_awareness_turn(
         q,
         docs=[_doc("India's political map changed after independence.", CH2_ID)],
         conversation_history=None,
@@ -72,7 +73,7 @@ def test_tell_me_about_lesson_no_not_covered_wall(mock_other, mock_labels):
         class_level="CLASS_7",
         subject_name="Social",
         scope_query=resolve_conversation_context(q, chapter=CH2).retrieval_query,
-    )
+    ))
     assert early is None
     assert "not covered" not in (early or "").lower()
     assert "not covered" not in (guidance or "").lower()
@@ -92,7 +93,7 @@ def test_teach_this_lesson_no_not_covered_wall_without_history(mock_other, mock_
     mock_labels.return_value = {CH2_ID: CH2}
     q = "Can you teach me this lesson?"
     conv = resolve_conversation_context(q, chapter=CH2)
-    early, effective, _, guidance = resolve_chapter_awareness_turn(
+    early, effective, _, guidance = asyncio.run(resolve_chapter_awareness_turn(
         q,
         docs=[_doc("Political boundaries of India changed over time.", CH2_ID)],
         conversation_history=None,
@@ -103,7 +104,7 @@ def test_teach_this_lesson_no_not_covered_wall_without_history(mock_other, mock_
         class_level="CLASS_7",
         subject_name="Social",
         scope_query=conv.retrieval_query,
-    )
+    ))
     assert early is None
     assert "not covered" not in (guidance or "").lower()
     assert conv.intent_method == "current_lesson"
@@ -174,7 +175,7 @@ def test_summarize_key_points_is_follow_up_not_new_topic():
 @patch("app.services.chapter_scope._subject_upload_labels")
 def test_summarize_key_points_no_not_covered_wall(mock_labels):
     mock_labels.return_value = {CH3_ID: CH3}
-    early, effective, _assessment, guidance = resolve_chapter_awareness_turn(
+    early, effective, _assessment, guidance = asyncio.run(resolve_chapter_awareness_turn(
         "Can you summarize the key points?",
         docs=[_doc("Shivaji established the Maratha kingdom.", CH3_ID)],
         conversation_history=MARATHAS_HISTORY,
@@ -185,7 +186,7 @@ def test_summarize_key_points_no_not_covered_wall(mock_labels):
         class_level="CLASS_8",
         subject_name="Social",
         scope_query="Explain Shivaji's successors summary key points",
-    )
+    ))
     assert early is None
     assert "not covered" not in (guidance or "").lower()
     assert effective  # answers in session, not blocked
@@ -256,7 +257,7 @@ def test_long_follow_up_still_continues_session(mock_other, mock_labels):
         "Can you explain that step by step with a simple example?"
     )
     assert is_session_continuation_follow_up(long_q, MARATHAS_HISTORY)
-    early, _, assessment, guidance = resolve_chapter_awareness_turn(
+    early, _, assessment, guidance = asyncio.run(resolve_chapter_awareness_turn(
         long_q,
         docs=[_doc("Sambhaji was captured by the Mughals.", CH3_ID)],
         conversation_history=MARATHAS_HISTORY,
@@ -267,7 +268,52 @@ def test_long_follow_up_still_continues_session(mock_other, mock_labels):
         class_level="CLASS_8",
         subject_name="Social",
         scope_query=MARATHAS_HISTORY[0]["content"],
-    )
+    ))
     assert early is None
     assert guidance is not None
     assert assessment is None or assessment.level != ChapterCoverageLevel.NONE or guidance
+
+
+def test_stt_noise_is_not_session_continuation():
+    assert not is_session_continuation_follow_up("is", MARATHAS_HISTORY)
+    assert not is_session_continuation_follow_up("same", MARATHAS_HISTORY)
+    assert is_session_continuation_follow_up("yes", MARATHAS_HISTORY)
+    assert is_session_continuation_follow_up("Why?", MARATHAS_HISTORY)
+
+
+def test_session_follow_up_keeps_student_words_as_effective_query():
+    """Invariant: short continues must not replace effective_query with prior_user."""
+    early, effective, _a, guidance = asyncio.run(
+        resolve_chapter_awareness_turn(
+            "Why?",
+            docs=[_doc("Shivaji founded the Maratha kingdom.", CH3_ID)],
+            conversation_history=MARATHAS_HISTORY,
+            collection_name="CBSE_CLASS_8_Social",
+            chapter_ids=[CH3_ID],
+            chapter_names=[CH3],
+            board="CBSE",
+            class_level="CLASS_8",
+            subject_name="Social",
+        )
+    )
+    assert early is None
+    assert effective == "Why?"
+    assert guidance  # prior topic still informs teaching guidance
+
+
+def test_new_topic_not_replaced_by_prior_in_context():
+    ctx = resolve_conversation_context(
+        "What is photosynthesis?",
+        conversation_history=MARATHAS_HISTORY,
+    )
+    assert ctx.followup_type == FollowupType.NEW_TOPIC.value
+    assert "photosynthesis" in ctx.resolved_topic.lower()
+    assert "photosynthesis" in ctx.retrieval_query.lower()
+    # Prior Maratha turn must not overwrite the new question.
+    assert "shivaji" not in ctx.resolved_topic.lower()
+
+
+def test_stt_fragment_does_not_inherit_prior_as_resolved_topic():
+    ctx = resolve_conversation_context("is", conversation_history=MARATHAS_HISTORY)
+    assert ctx.resolved_topic.strip().lower() == "is"
+    assert ctx.retrieval_query.strip().lower() == "is"

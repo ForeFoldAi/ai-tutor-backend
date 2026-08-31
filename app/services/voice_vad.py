@@ -242,8 +242,8 @@ def evaluate_vad(audio_bytes: bytes) -> dict[str, Any]:
             logger.warning("Silero eval failed: %s", exc)
             result = _energy_vad(pcm)
 
-    metrics.set_gauge("speech_probability", float(result["speech_probability"]))
-    metrics.set_gauge("speech_duration_ms", float(result["speech_duration_ms"]))
+    metrics.record_avg("speech_probability", float(result["speech_probability"]))
+    metrics.record_avg("speech_duration_ms", float(result["speech_duration_ms"]))
     if result["is_speech"]:
         metrics.incr("vad_accepted_count")
         metrics.log_event(

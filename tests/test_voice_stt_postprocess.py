@@ -12,7 +12,22 @@ def test_multiplication_fix():
 
 
 def test_math_into_times():
-    assert postprocess_voice_transcript("5 into 3", subject_name="Mathematics") == "5 times 3"
+    assert postprocess_voice_transcript("5 into 3", subject_name="Mathematics") == "5 * 3"
+
+
+def test_math_spoken_operators():
+    out = postprocess_voice_transcript(
+        "solve 2x plus 5 equals 15",
+        subject_name="Mathematics",
+    )
+    assert out == "solve 2x + 5 = 15"
+    assert (
+        postprocess_voice_transcript(
+            "what is 20 percent of 500",
+            subject_name="Mathematics",
+        )
+        == "what is 20 % of 500"
+    )
 
 
 def test_word_typo_fix():

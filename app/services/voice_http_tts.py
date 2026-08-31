@@ -7,7 +7,7 @@ import struct
 from collections.abc import AsyncIterator
 
 from app.config import VOICE_HTTP_TTS_PREFETCH
-from app.services.edge_tts_service import resolve_voice, synthesize_mp3
+from app.services.tts_provider import resolve_voice, synthesize_mp3
 
 _FRAME_AUDIO = 2
 

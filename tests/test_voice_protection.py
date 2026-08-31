@@ -228,6 +228,79 @@ def test_interrupt_score_weights(monkeypatch):
     assert "vad_score" in parts
 
 
+def test_unverified_speaker_cannot_cross_threshold_on_vad_alone():
+    """Regression: with the old neutral 0.5 speaker score, clear/loud speech
+    (high VAD) plus an unenrolled speaker could already cross
+    INTERRUPT_SCORE_THRESHOLD with no real intent signal — exactly what the
+    tutor's own voice bleeding into the mic looks like (clear, well-formed
+    speech, just not the student's). Must not accept on VAD alone."""
+    from app.services.voice_interrupt_pipeline import compute_interrupt_score
+
+    score, _parts = compute_interrupt_score(
+        vad_prob=1.0,
+        speech_duration_ms=500,
+        speaker_similarity=0.0,
+        speaker_skipped=True,
+        intent_confidence=0.0,
+        is_intent=False,
+    )
+    assert score < 0.75
+
+
+def test_unverified_speaker_with_genuine_intent_can_still_cross_threshold():
+    """The fix must not block legitimate early-session interrupts outright —
+    a real interrupt phrase ("stop") plus strong VAD should still work even
+    before the per-session voiceprint is established."""
+    from app.services.voice_interrupt_pipeline import compute_interrupt_score
+
+    score, _parts = compute_interrupt_score(
+        vad_prob=1.0,
+        speech_duration_ms=500,
+        speaker_similarity=0.0,
+        speaker_skipped=True,
+        intent_confidence=1.0,
+        is_intent=True,
+    )
+    assert score >= 0.75
+
+
+def test_pipeline_rejects_unverified_speaker_with_no_transcript(monkeypatch):
+    """The core regression test: a volume-spike barge-in that reaches
+    evaluate_barge_in before any interim STT text exists, with no
+    established voiceprint yet, must be rejected outright — this is the
+    exact gap that let the AI accept its own voice as a barge-in and send
+    a "question" from it back to the LLM."""
+    from app.services import voice_interrupt_pipeline as pipe
+
+    monkeypatch.setattr(pipe, "VOICE_PROTECTION_ENABLED", True)
+    monkeypatch.setattr(
+        pipe,
+        "evaluate_vad",
+        lambda _b: {
+            "is_speech": True,
+            "speech_probability": 0.95,
+            "speech_duration_ms": 500,
+            "backend": "stub",
+        },
+    )
+    monkeypatch.setattr(pipe, "suppress_noise", lambda b: (b, 0.0))
+    monkeypatch.setattr(
+        pipe,
+        "verify_speaker",
+        lambda *_a, **_k: {"match": True, "similarity": 0.0, "skipped": True},
+    )
+
+    audio = _pcm_wav(0.5, freq=200.0, amp=0.2)
+    out = pipe.evaluate_barge_in(
+        audio,
+        transcript="",
+        recent_ai_speech="Let me explain photosynthesis in detail for you",
+        student_key="test",
+    )
+    assert out["allow_interrupt"] is False
+    assert out["reason"] == "unverified_no_transcript"
+
+
 def test_stress_simultaneous_noise_and_echo(monkeypatch):
     """Car horn + AI echo must not interrupt."""
     from app.services import voice_interrupt_pipeline as pipe

@@ -21,7 +21,12 @@ from app.services.chat_service import (
 )
 
 if TYPE_CHECKING:
-    from app.services.voice_tutor import LearnerProfileSnapshot, TutorState, UnderstandingScores
+    from app.services.voice_tutor import (
+        LearnerProfileSnapshot,
+        ReplyIntent,
+        TutorState,
+        UnderstandingScores,
+    )
 
 _WORD_RE = re.compile(r"[a-z0-9']+")
 
@@ -60,14 +65,19 @@ SOUND LIKE A REAL TEACHER:
 - Encourage warmly but don't repeat praise every turn.
 - Don't echo the student's question word-for-word — nod to it, then teach.
 - A check-in question is optional (roughly every 2–3 turns, not every sentence).
-- Say "{student_name}" only sometimes — a greeting, real encouragement, or to
-  gently refocus attention — never as a reflex opener on every turn. Most
-  turns should not use the name at all.
+
+NAME RULE (strict — follow every turn):
+- Default: do NOT say "{student_name}" at all. Teach without using their name.
+- Say the name ONLY when truly needed: a greeting/welcome, calming them when
+  confused, or celebrating a correct quiz answer.
+- Never open a normal teaching answer with their name (no "Okay {student_name}, …").
 
 {tts_speakability}
 
 NEVER SAY (textbook / encyclopedia voice):
-- "exactly what we're studying", "the process whereby", "it is defined as",
+- "In everyday terms", "In your chapter", "According to the chapter",
+  "According to the textbook", "the chapter says", "as per the textbook",
+  "exactly what we're studying", "the process whereby", "it is defined as",
   "Concept Overview", "Key Points", "in conclusion", "fundamentally",
   "the aforementioned", "it can be observed that"
 - Dollar signs, LaTeX, backslashes, symbols (say "x squared", "a divided by b").
@@ -84,19 +94,25 @@ SESSION: {tutor_state}
 {state_guidance}
 {understanding_guidance}
 {acknowledgment_guidance}
+{reply_intent_guidance}
 {learner_guidance}
 
 ANSWERING PRIORITY (critical):
-Always answer the student's LATEST MESSAGE first and directly.
+Always answer the student's LATEST MESSAGE first and directly — like ChatGPT, Claude, or Grok
+in a voice call: natural, clear, helpful. No scripted openers. No label templates.
 If the student asks a general conversational question ("What's your name?", "How are you?",
 "Can you explain that again?"), answer that question — do not force it into the chapter topic.
-Only bring in chapter content when it is genuinely relevant to what the student asked.
+
+"WHAT IS" / DEFINITION QUESTIONS (e.g. "what is a map?"):
+Give a normal spoken answer in your own words: plain meaning first, then fold in any useful
+chapter detail smoothly in the same reply. Never use fixed phrases like "In everyday terms"
+or "In your chapter" — those sound robotic. Just talk.
 
 REFERENCE MATERIAL (secondary — use only when relevant):
-The chapter excerpt below is supplementary context for accuracy.
+The chapter excerpt is for accuracy — weave it in naturally when it helps.
 It must NOT override, reinterpret, or replace the student's actual question.
-If missing, use solid general knowledge. Never invent page numbers or figure names.
-Teach in your own spoken words — not textbook copy.
+If the excerpt is thin or missing, still give a solid common-knowledge answer.
+Never invent page numbers or figure names. Teach in your own spoken words.
 
 {expand_policy}"""
 
@@ -110,7 +126,8 @@ TTS OUTPUT (your text goes straight to speech synthesis):
 - Teach in small spoken sections: introduce → explain → emphasize → example → check-in.
 - For follow-ups ("why?", "again?", "another example?"): start with a short bridge
   ("Good question.", "Sure.", "Of course.") then continue — same teacher, same lesson.
-- Avoid textbook voice: no "Chapter 3 discusses", "the first point is", "in conclusion".
+- Avoid textbook voice: no "Chapter 3 discusses", "According to the chapter",
+  "the first point is", "in conclusion".
 - Say math aloud: "x squared", "five over three" — never raw symbols or LaTeX."""
 
 VOICE_GRADE_STYLE = {
@@ -150,12 +167,14 @@ VOICE_USER_TEMPLATE = """\
 CURRENT STUDENT MESSAGE (authoritative — answer this):
 {question}
 
-LEARNING CONTEXT (reference material — use only if relevant to the question above):
+LEARNING CONTEXT (optional accuracy aid — weave in only if useful):
 {context}
 
-Speak your reply now like a friendly teacher talking to a child ({max_words} words max).
-Short sentences (6–12 words). Contractions. Pause after every 1–2 sentences.
-Use an example or "Imagine…" — easy to listen to, not to read."""
+Speak your reply now like a friendly AI tutor in a voice call ({max_words} words max).
+Natural spoken English — short sentences, contractions, easy to listen to.
+Answer directly. Blend common meaning with chapter detail when useful.
+Never say "In everyday terms", "In your chapter", or "According to the chapter".
+Do not use the student's name unless this is a greeting or they need reassurance."""
 
 # Turn-type caps — shorter than default when the student wants brevity
 _VOICE_TURN_WORD_CAPS: dict[str, int] = {
@@ -201,22 +220,28 @@ def voice_turn_type_guidance(query: str) -> str:
     mapping = {
         "greeting": (
             "The student is greeting or making small talk. "
-            "Welcome them by first name, one warm sentence — do NOT start teaching yet."
+            "This is one of the rare turns where you MAY use their first name once. "
+            "Welcome them warmly in one sentence — do NOT start teaching yet."
         ),
         "one-word": (
-            "The student gave a very short reply. Match their energy: one or two spoken sentences."
+            "The student gave a very short reply. Match their energy: one or two spoken "
+            "sentences. Do not use their name."
         ),
         "brief": (
-            "They want something short. One idea, two short sentences max — example over definition."
+            "They want something short. One clear spoken answer, two sentences max. "
+            "Do not use their name."
         ),
         "stepwise": (
-            "They want steps — give ONE step in 6–12 word sentences, then pause."
+            "They want steps — give ONE step in 6–12 word sentences, then pause. "
+            "Do not use their name."
         ),
         "simplified": (
-            "They need simpler talk. Shorter words, one 'Imagine…' example, slower pace."
+            "They need simpler talk. Shorter words, one 'Imagine…' example, slower pace. "
+            "Do not use their name unless they sound confused."
         ),
         "exam-format": (
-            "Exam-style request — stay spoken, but be precise. No written section headers."
+            "Exam-style request — stay spoken, but be precise. No written section headers. "
+            "Do not use their name."
         ),
     }
     if atype in mapping:
@@ -224,11 +249,12 @@ def voice_turn_type_guidance(query: str) -> str:
     if atype in ("paragraph", "bullet-points"):
         return (
             "They asked for more — still use short spoken sentences (6–12 words), "
-            "pause every 1–2 lines, example before definition. No lists."
+            "pause every 1–2 lines. Natural answer, no lists, no name."
         )
+    # short-answer / definition / "what is X"
     return (
-        "Teach one small idea with a quick example. "
-        "6–12 word sentences, contractions, conversational opener."
+        "Answer naturally like a helpful voice AI: plain meaning first, "
+        "then any chapter detail woven in — no labels, no name."
     )
 
 
@@ -237,6 +263,7 @@ def voice_continuation_guidance(
     *,
     last_assistant: str = "",
     query: str = "",
+    explained_points: list[str] | None = None,
 ) -> str:
     """Remind the model this is a live back-and-forth, not a standalone essay."""
     q = (query or "").strip().lower()
@@ -281,6 +308,28 @@ def voice_continuation_guidance(
                     "skip the direct answer, and do not pivot to unrelated content."
                 )
 
+    # Rule 5: about to re-teach a topic already covered this session (even if
+    # phrased differently from the exact re-ask check above) — don't repeat
+    # the same explanation verbatim. Compared as substantive terms on both
+    # sides (explained_points is already stopword-filtered) so question
+    # scaffolding ("can you tell me about") doesn't dilute the overlap score.
+    if explained_points:
+        from app.services.chapter_scope import substantive_query_terms
+
+        q_terms = substantive_query_terms(q)
+        for point in explained_points:
+            point_words = set(point.split())
+            if not point_words or len(q_terms) < 1:
+                continue
+            overlap = len(q_terms & point_words) / len(q_terms | point_words)
+            if overlap >= 0.5:
+                return (
+                    "You already explained this topic earlier this session — do not repeat "
+                    "the same explanation. Give a one-sentence recap, explain it a different "
+                    "way (a new example or angle), or ask directly whether they'd like it "
+                    "explained differently or something specific is unclear."
+                )
+
     if short_follow and (turns or last_assistant):
         return (
             "Short follow-up — continue the SAME lesson. Bridge briefly "
@@ -298,6 +347,66 @@ def voice_continuation_guidance(
         "This continues a live chat. Brief nod to what you already said, "
         "then add the next small piece in spoken lines."
     )
+
+
+def reply_intent_guidance(
+    intent: "ReplyIntent",
+    *,
+    quiz_pending: bool,
+    quiz_question: str,
+    quiz_attempts: int,
+) -> str:
+    """Rules 3, 4 & 6: how to respond given the classified reply intent and
+    the state of any pending quiz question."""
+    from app.services.voice_tutor import ReplyIntent
+
+    if intent == ReplyIntent.CLOSING:
+        if quiz_pending:
+            return (
+                "The student wants to wrap up, but your last question was never resolved. "
+                "In ONE short sentence, reveal the correct answer yourself, THEN warmly "
+                "close out or offer what's next. Do not repeat your earlier explanation."
+            )
+        return (
+            "The student is wrapping up. Do not repeat earlier explanation — acknowledge "
+            "warmly, then offer to move to the next topic or ask what they'd like next."
+        )
+    if intent == ReplyIntent.DONT_KNOW:
+        hint = (
+            'The student doesn\'t know / is unsure — this is NOT a wrong guess, so never say '
+            '"Not quite" or similar. Give a hint, a simpler rephrasing, or a quick example '
+            "instead of just handing over the answer."
+        )
+        if quiz_pending and quiz_attempts >= 1:
+            hint += (
+                " They've already had one chance on this question — reveal the correct "
+                "answer now in one warm sentence, then move on."
+            )
+        return hint
+    if intent == ReplyIntent.WRONG_ANSWER and quiz_pending:
+        if quiz_attempts >= 1:
+            return (
+                "Wrong answer, and this is their 2nd+ try. Briefly say it's not quite right, "
+                "explain why in one short line, THEN reveal the correct answer clearly, then "
+                "move on — do not ask the same question again."
+            )
+        return (
+            "Wrong answer — briefly and warmly say it's not quite right, explain why in one "
+            "short line. This is only their first try, so do NOT reveal the answer yet — "
+            "invite another attempt or give a small hint."
+        )
+    if intent == ReplyIntent.NEW_QUESTION and quiz_pending:
+        return (
+            f'You still have an open question pending ("{quiz_question[:120]}"). Briefly '
+            "acknowledge or resolve it in one short line before answering their new question."
+        )
+    if intent == ReplyIntent.UNCLEAR:
+        return (
+            "Their message is unclear or may be a mis-hearing. If a word could be a "
+            'mis-transcribed chapter term, ask a short confirming question ("did you mean '
+            '___?") instead of guessing or saying it\'s off-topic.'
+        )
+    return ""
 
 
 def voice_expand_policy(*, expand_deep: bool, max_words: int) -> str:
@@ -349,8 +458,13 @@ def build_voice_system_prompt(
     state_guidance: str,
     understanding_guidance: str,
     acknowledgment_guidance: str,
+    reply_intent: "ReplyIntent | None" = None,
+    quiz_pending: bool = False,
+    quiz_question: str = "",
+    quiz_attempts: int = 0,
+    explained_points: list[str] | None = None,
 ) -> str:
-    from app.services.voice_tutor import TutorState
+    from app.services.voice_tutor import ReplyIntent, TutorState
 
     answer_type = detect_answer_type(query)
     max_words = voice_word_limit(expand_deep=expand_deep, answer_type=answer_type)
@@ -390,6 +504,12 @@ def build_voice_system_prompt(
         state_guidance=state_guidance,
         understanding_guidance=understanding_guidance,
         acknowledgment_guidance=acknowledgment_guidance,
+        reply_intent_guidance=reply_intent_guidance(
+            reply_intent or ReplyIntent.NEW_QUESTION,
+            quiz_pending=quiz_pending,
+            quiz_question=quiz_question,
+            quiz_attempts=quiz_attempts,
+        ),
         learner_guidance=learner_hint,
         subject_guidance=subject_guidance_for(subject_name),
         turn_type_guidance=voice_turn_type_guidance(query),
@@ -397,6 +517,7 @@ def build_voice_system_prompt(
             conversation_history,
             last_assistant=last_assistant,
             query=query,
+            explained_points=explained_points,
         ),
         expand_policy=voice_expand_policy(expand_deep=expand_deep, max_words=max_words),
     )

@@ -114,6 +114,7 @@ _PRONOUN_FOLLOWUP = re.compile(
     re.I,
 )
 _WHY_SHORT = re.compile(r"^why\b", re.I)
+_HOW_SHORT = re.compile(r"^how\b", re.I)
 _SHORT_FILLER_RE = re.compile(
     r"^(yes|no|ok|okay|sure|thanks|thank you|hi|hello|hey)\s*[.!?]*$",
     re.I,
@@ -279,7 +280,7 @@ class ConversationContextResolver:
             followup == FollowupType.NEW_TOPIC
             and prior_user
             and len(q.split()) <= 8
-            and (_WHY_SHORT.match(q) or _PRONOUN_FOLLOWUP.search(q))
+            and (_WHY_SHORT.match(q) or _HOW_SHORT.match(q) or _PRONOUN_FOLLOWUP.search(q))
         ):
             followup = FollowupType.CONTINUE_EXPLANATION
             mode = _response_mode_for(followup, q)
@@ -328,9 +329,10 @@ class ConversationContextResolver:
         elif followup == FollowupType.NEW_TOPIC or _CONCEPTUAL_RE.search(q):
             resolved_topic = q
             inherited_entities = _extract_entities_from_text(q)
-        elif prior_user and len(q.split()) <= 4:
-            resolved_topic = prior_user
-            inherited_entities = _extract_entities_from_text(prior_user)
+        # ponytail: do NOT set resolved_topic = prior_user merely because
+        # len(q) <= 4 — that silently replaced STT fragments ("is", "same")
+        # with the previous question. Retrieval inheritance stays on explicit
+        # follow-up types above; bare shorts keep their own text.
 
         retrieval_query = resolved_topic if resolved_topic else q
         if followup == FollowupType.CLARIFICATION and history:

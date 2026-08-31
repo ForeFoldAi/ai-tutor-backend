@@ -211,7 +211,7 @@ def verify_speaker(student_key: str, audio_bytes: bytes) -> dict[str, Any]:
         metrics.log_event("SPEAKER_REJECTED", reason="no_embedding", similarity=0.0)
         return {"match": False, "similarity": 0.0, "skipped": False, "reason": "no_embedding"}
     sim = cosine_similarity(enrolled, emb)
-    metrics.set_gauge("speaker_similarity", sim)
+    metrics.record_avg("speaker_similarity", sim)
     match = sim >= SPEAKER_SIMILARITY_THRESHOLD
     if not match:
         metrics.incr("speaker_rejections")

@@ -52,6 +52,11 @@ _SMALL_TALK_RE = re.compile(
     re.I,
 )
 _THANKS_RE = re.compile(r"^(thanks|thank you|thx)\b", re.I)
+# "ok thanks" / "got it, thanks" / "right, thank you" — gratitude preceded by
+# an acknowledgment word. _THANKS_RE above only catches "thanks" as the very
+# first word, so these fell through to the generic short-phrase fallback
+# below and were misread as "keep teaching" instead of "I'm done, thanks."
+_THANKS_ANYWHERE_RE = re.compile(r"\b(thanks|thank\s+you|thx)\b", re.I)
 _QUIZ_RE = re.compile(
     r"\b("
     r"give\s+(me\s+)?\d+\s+questions?|"
@@ -76,7 +81,16 @@ _SIMPLIFY_RE = re.compile(
 )
 _CONTINUE_RE = re.compile(
     r"^(yes|yeah|yep|yup|ok|okay|sure|continue|go\s+on|explain\s+more|tell\s+me\s+more|"
-    r"more|next|carry\s+on|go\s+deeper|more\s+detail|elaborate)\s*[.!?]*$",
+    r"more|next|carry\s+on|go\s+deeper|more\s+detail|elaborate|"
+    # Negative replies to a tutor check-in ("...right?") are the same kind of
+    # direct answer as "yes"/"ok" above — a session-continuation signal, not
+    # a new topic. Without these, "no I am not" (4 words — one word too many
+    # for the generic short-phrase catch-all below, unlike "no I'm not" at
+    # 3) fell all the way through to NEW_TOPIC, sending retrieval hunting on
+    # the literal, content-free reply text instead of the tutor's actual
+    # question — that's what pulled back an unrelated textbook chunk.
+    r"no|nope|nah|not\s+really|not\s+exactly|not\s+quite|"
+    r"no,?\s+i\s*(?:am|'m)\s*not|no,?\s+i\s+don'?t|no,?\s+i\s+didn'?t)\s*[.!?]*$",
     re.I,
 )
 _DEEPER_RE = re.compile(
@@ -207,6 +221,15 @@ _INTENT_PROTOTYPES: dict[FollowupType, list[str]] = {
         "goodbye see you later",
         "what is your name",
         "who are you",
+        # Closing remarks with no literal "thanks" for the regex fast-path to
+        # anchor on — this is what the BGE fallback above exists to catch.
+        "ok thanks that helps",
+        "cool thanks a lot",
+        "alright thank you",
+        "nice that helps a lot",
+        "perfect that is all I needed",
+        "great I am good now",
+        "awesome appreciate it",
     ],
     FollowupType.NEW_TOPIC: [
         "what is photosynthesis",
@@ -255,6 +278,8 @@ def classify_followup_regex(query: str) -> FollowupType:
         return FollowupType.GREETING
     if _SMALL_TALK_RE.match(q) or _THANKS_RE.match(q):
         return FollowupType.SMALL_TALK
+    if len(q.split()) <= 6 and _THANKS_ANYWHERE_RE.search(q):
+        return FollowupType.SMALL_TALK
     if _MCQ_RE.search(q):
         return FollowupType.GENERATE_MCQ
     if _QUIZ_RE.search(q):
@@ -279,8 +304,9 @@ def classify_followup_regex(query: str) -> FollowupType:
         return FollowupType.CONTINUE_EXPLANATION
     if _EXPLAIN_THIS_RE.search(q) or _HOW_GOT_ANSWER_RE.search(q):
         return FollowupType.CONTINUE_EXPLANATION
-    if len(q.split()) <= 3 and not _CONCEPTUAL_RE.search(q) and not _CHALLENGE_RE.search(q):
-        return FollowupType.CONTINUE_EXPLANATION
+    # ponytail: removed ≤3-word → CONTINUE catch-all; it treated STT noise
+    # ("is", "same") as keep-teaching. Known continues stay on _CONTINUE_RE;
+    # ambiguous shorts go NEW_TOPIC and may get a BGE second look.
     if _CONCEPTUAL_RE.search(q) or _CHALLENGE_RE.search(q):
         # "explain this deeply" — deepen follow-up, not a new curriculum topic
         if _DEEPER_RE.search(q) or _EXPLAIN_THIS_RE.search(q):
@@ -381,7 +407,30 @@ def classify_followup_intent(
     regex_intent = classify_followup_regex(q)
     history = conversation_history or []
 
-    if regex_intent in _HIGH_CONFIDENCE_INTENTS and regex_intent != FollowupType.NEW_TOPIC:
+    # CONTINUE_EXPLANATION has two very different sources: a confident pattern
+    # match (_CONTINUE_RE/_DEEPER_RE/_EXPLAIN_THIS_RE/_HOW_GOT_ANSWER_RE) vs.
+    # the generic "≤3 words, no other pattern matched" catch-all in
+    # classify_followup_regex — a guess, not a real signal. That catch-all is
+    # exactly where "ok thanks", "cool appreciate it", "nice that helps" kept
+    # landing and getting misread as "keep teaching": short closing remarks
+    # nobody wrote a regex for. This must be computed before the high-
+    # confidence short-circuit below, which otherwise trusted the catch-all
+    # guess just as blindly as a real pattern match.
+    is_confident_continue = bool(
+        _CONTINUE_RE.match(q)
+        or _DEEPER_RE.search(q)
+        or _EXPLAIN_THIS_RE.search(q)
+        or _HOW_GOT_ANSWER_RE.search(q)
+    )
+    is_low_confidence_continue_guess = (
+        regex_intent == FollowupType.CONTINUE_EXPLANATION and not is_confident_continue
+    )
+
+    if (
+        regex_intent in _HIGH_CONFIDENCE_INTENTS
+        and regex_intent != FollowupType.NEW_TOPIC
+        and not is_low_confidence_continue_guess
+    ):
         return IntentClassification(regex_intent, 1.0, "regex")
 
     # Conceptual openers ("what is weather?") are new topics — never let BGE relabel them
@@ -392,9 +441,11 @@ def classify_followup_intent(
             return IntentClassification(FollowupType.CONTINUE_EXPLANATION, 0.95, "regex")
         return IntentClassification(FollowupType.NEW_TOPIC, 0.95, "regex")
 
+    # Route the low-confidence catch-all through BGE regardless of length
+    # instead of only trusting it past 3 words.
     should_try_bge = (
         regex_intent in (FollowupType.NEW_TOPIC, FollowupType.NONE)
-        or (regex_intent == FollowupType.CONTINUE_EXPLANATION and len(q.split()) > 3)
+        or is_low_confidence_continue_guess
     )
     if should_try_bge and (history or len(q.split()) <= 10):
         bge = _classify_by_bge(q, history)

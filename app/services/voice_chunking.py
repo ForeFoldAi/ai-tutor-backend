@@ -303,6 +303,43 @@ def idle_flush_sec(*, chunks_emitted: int) -> float:
     return VOICE_IDLE_FLUSH_STEADY_SEC
 
 
+# A stalled fragment this short/incomplete gets this many multiples of the
+# normal idle threshold before being force-flushed as a last resort — long
+# enough that an ordinary LLM token-batch pause doesn't butcher a sentence,
+# short enough that a genuinely stuck stream still gets spoken eventually.
+IDLE_FLUSH_HARD_MULTIPLIER = 4
+
+
+def is_flushable_fragment(chunk: str, *, chunks_emitted: int) -> bool:
+    """True when a buffered fragment is complete enough to speak as its own
+    TTS clip without an audible seam. False means the fragment is likely
+    mid-clause where the LLM happened to pause between token batches (normal
+    streaming jitter, not a deliberate break) — see idle_flush_sec's caller
+    for how this is used.
+
+    A length threshold alone isn't enough here: "Okay, so here's the thing —
+    when we say "the map"" is 11 words / 49 chars — well past the first-unit
+    minimum — but it's a subordinate clause ("when we say X") with no main
+    clause yet, so cutting there still sounds broken off. Ending punctuation
+    is a much stronger signal of a safe pause than raw length; bare length
+    is used only as a last resort once the fragment has grown as long as
+    extract_voice_chunks itself would require before forcing a word-boundary
+    split (max_words) — waiting longer than that risks a worse stall than
+    just speaking what we have.
+    """
+    text = chunk.strip()
+    if not text:
+        return False
+    if text[-1] in ".?!":
+        return True
+    # A natural clause pause at the very end — comma, semicolon, colon, dash —
+    # is where a human speaker would pause too, so it's safe to stop there.
+    if text[-1] in ",;:" or text.endswith("—") or text.endswith("-"):
+        return True
+    _min_words, _min_chars, _target_words, max_words = _thresholds(chunks_emitted)
+    return _word_count(text) >= max_words
+
+
 @dataclass
 class VoicePipelineTiming:
     """Per-turn latency markers (monotonic clock)."""

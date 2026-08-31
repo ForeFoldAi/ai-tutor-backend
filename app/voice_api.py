@@ -7,22 +7,27 @@ Fallback interface: POST /voice-stream, /auth/voice-stream  (binary framed strea
 
 from __future__ import annotations
 
+import io
 import json
 import logging
 import re
 import struct
-from typing import AsyncIterator
+from typing import Annotated, AsyncIterator
 
-from fastapi import APIRouter, File, Form, Header, HTTPException, UploadFile
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, UploadFile
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.config import VOICE_MAX_AUDIO_BYTES
 from app.core.student_messages import EMPTY_VOICE_MESSAGE
+from app.modules.auth.dependencies import get_current_user
+from app.modules.users.models import User
 
-from app.services.edge_tts_service import (
+from app.services.tts_provider import (
     FALLBACK_VOICE,
     PRIMARY_VOICE,
-    iter_edge_tts_mp3,
+    iter_tts_mp3,
+    synthesize_mp3,
     voice_for_gender,
 )
 from app.services.tts_sanitize import sanitize_chunk_for_tts
@@ -33,6 +38,15 @@ from app.services.voice_stt_postprocess import postprocess_voice_transcript
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="")
+
+
+async def _read_capped_audio(file: UploadFile, max_bytes: int = VOICE_MAX_AUDIO_BYTES) -> bytes:
+    """Read an uploaded clip without buffering past max_bytes (DoS guard)."""
+    data = await file.read(max_bytes + 1)
+    if len(data) > max_bytes:
+        raise HTTPException(status_code=413, detail="Audio clip too large.")
+    return data
+
 
 _FRAME_TEXT = 1
 _FRAME_AUDIO = 2  # MP3 chunk (audio/mpeg)
@@ -56,7 +70,7 @@ def _split_sentences(buf: str) -> tuple[list[str], str]:
 
 
 async def _stream_mp3_frames(text: str, *, voice: str | None = None) -> AsyncIterator[bytes]:
-    async for chunk in iter_edge_tts_mp3(text, voice=voice):
+    async for chunk in iter_tts_mp3(text, voice=voice):
         yield _frame(_FRAME_AUDIO, chunk)
 
 
@@ -81,7 +95,7 @@ async def _chat_voice_mp3_stream(text: str) -> AsyncIterator[bytes]:
 
     t0 = time.monotonic()
     first = True
-    async for chunk in iter_edge_tts_mp3(spoken):
+    async for chunk in iter_tts_mp3(spoken):
         if first:
             logger.info(
                 "[chat-voice] first MP3 chunk @ %.0fms (chars=%d)",
@@ -408,6 +422,62 @@ def tts_info() -> dict[str, str]:
     }
 
 
+class TtsPcmRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=4000)
+    voice: str | None = None
+    gender: str | None = None
+
+
+def _mp3_to_pcm16(mp3: bytes, rate: int = 16000) -> bytes:
+    """Decode Edge's MP3 to mono signed-16 PCM at `rate`, via PyAV (already a dep)."""
+    import av
+
+    out = bytearray()
+    with av.open(io.BytesIO(mp3), format="mp3") as container:
+        resampler = av.AudioResampler(format="s16", layout="mono", rate=rate)
+        stream = container.streams.audio[0]
+        for frame in container.decode(stream):
+            for chunk in resampler.resample(frame):
+                out += bytes(chunk.planes[0])[: chunk.samples * 2]
+        for chunk in resampler.resample(None):  # flush the resampler tail
+            out += bytes(chunk.planes[0])[: chunk.samples * 2]
+    return bytes(out)
+
+
+@router.post("/auth/voice-tts-pcm")
+async def voice_tts_pcm(
+    req: TtsPcmRequest,
+    _current_user: Annotated[User, Depends(get_current_user)],
+):
+    """
+    Text -> raw mono PCM16 @16kHz, for the Nest RTC voice server.
+
+    Exists because Kokoro (the RTC stack's local TTS) has no Indian English
+    voice, and Edge's read-aloud endpoint refuses every raw-PCM output format —
+    it only emits MP3/Opus. Decoding here reuses the maintained edge-tts client
+    and PyAV instead of hand-rolling the Edge protocol and an MP3 decoder in
+    Node. 16kHz mono matches the RTC pipeline's wire format exactly.
+    """
+    voice = voice_for_gender(req.gender, req.voice)
+    try:
+        mp3 = await synthesize_mp3(req.text, voice=voice)
+    except Exception:
+        logger.exception("edge tts synthesis failed")
+        raise HTTPException(status_code=502, detail="tts_failed")
+    if not mp3:
+        raise HTTPException(status_code=502, detail="tts_empty")
+    try:
+        pcm = _mp3_to_pcm16(mp3)
+    except Exception:
+        logger.exception("mp3 decode failed")
+        raise HTTPException(status_code=502, detail="tts_decode_failed")
+    return Response(
+        content=pcm,
+        media_type="application/octet-stream",
+        headers={"X-Sample-Rate": "16000", "X-Voice": voice or PRIMARY_VOICE},
+    )
+
+
 @router.get("/voice/stt-info")
 def stt_info() -> dict[str, str | bool]:
     from app.services.voice_whisper_stt import whisper_status
@@ -496,7 +566,7 @@ async def voice_barge_check(
     """
     from app.services.voice_interrupt_pipeline import evaluate_barge_in
 
-    data = await audio.read()
+    data = await _read_capped_audio(audio)
     if len(data) < 64:
         return {"allow_interrupt": False, "reason": "audio_too_short"}
     result = evaluate_barge_in(
@@ -519,7 +589,7 @@ async def auth_voice_enroll(
     """Enroll speaker embedding: \"Hello, I am ready to learn.\""""
     from app.services.voice_speaker import ENROLLMENT_PROMPT, enroll_speaker
 
-    data = await audio.read()
+    data = await _read_capped_audio(audio)
     if len(data) < 256:
         raise HTTPException(status_code=400, detail="Audio too short for enrollment.")
     key = (student_key or "").strip() or "anonymous"
@@ -537,7 +607,7 @@ async def auth_voice_verify(
 ):
     from app.services.voice_speaker import verify_speaker
 
-    data = await audio.read()
+    data = await _read_capped_audio(audio)
     key = (student_key or "").strip() or "anonymous"
     return verify_speaker(key, data)
 
@@ -559,7 +629,7 @@ async def _handle_voice_transcribe(
             status_code=503,
             detail="Server Whisper STT is not available. Install faster-whisper or use browser speech.",
         )
-    data = await audio.read()
+    data = await _read_capped_audio(audio)
     if len(data) < 256:
         raise HTTPException(status_code=400, detail="Audio too short to transcribe.")
 

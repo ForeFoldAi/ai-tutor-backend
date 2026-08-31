@@ -33,8 +33,23 @@ def test_linear_equation():
     assert "5" in result.final_answer
 
 
+def test_linear_equation_spoken():
+    """STT / typed English operators must hit the same solver as symbols."""
+    result = try_solve("solve 2x plus 5 equals 15", class_level="CLASS_8")
+    assert result is not None
+    assert result.solved
+    assert "5" in result.final_answer
+
+
 def test_percentage():
     result = try_solve("What is 20% of 500?", class_level="CLASS_7")
+    assert result is not None
+    assert result.solved
+    assert "100" in result.final_answer
+
+
+def test_percentage_spoken():
+    result = try_solve("what is 20 percent of 500", class_level="CLASS_7")
     assert result is not None
     assert result.solved
     assert "100" in result.final_answer
@@ -45,6 +60,16 @@ def test_arithmetic():
     assert result is not None
     assert result.solved
     assert "62" in result.final_answer
+
+
+def test_arithmetic_spoken():
+    result = try_solve("calculate 25 plus 37", class_level="CLASS_4")
+    assert result is not None
+    assert result.solved
+    assert "62" in result.final_answer
+    result = try_solve("what is 2 times 5", class_level="CLASS_4")
+    assert result is not None
+    assert "10" in result.final_answer
 
 
 def test_fraction_simplify():

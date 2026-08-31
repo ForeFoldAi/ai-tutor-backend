@@ -17,10 +17,14 @@ from typing import AsyncIterator, Awaitable, Callable
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from fastapi.websockets import WebSocketState
 
-from app.config import VOICE_INTERRUPT_CANCEL_SEC
+from app.config import (
+    VOICE_ANON_MAX_CONCURRENT,
+    VOICE_INTERRUPT_CANCEL_SEC,
+    VOICE_MAX_AUDIO_BYTES,
+)
 from app.core.student_messages import VOICE_ANSWER_FAILED, VOICE_SERVER_ERROR
 
-from app.services.edge_tts_service import stream_edge_tts, voice_for_gender
+from app.services.tts_provider import stream_tts, voice_for_gender
 from app.services.voice_stt_postprocess import postprocess_voice_transcript
 from app.services.voice_chunking import VoicePipelineTiming, extract_voice_chunks
 from app.services.voice_streaming import (
@@ -38,6 +42,13 @@ ws_router = APIRouter()
 
 # Queue sentinel: end TTS worker for this turn (shared with voice_tts_orchestrator)
 _TTS_STOP = None
+
+# Base64 expands ~4/3 over raw bytes; cap the encoded string length accordingly.
+_MAX_AUDIO_B64_LEN = (VOICE_MAX_AUDIO_BYTES * 4 // 3) + 64
+
+# Guest voice sessions are allowed by design (mirrors the unauthenticated REST
+# fallback), but each turn calls paid LLM/TTS APIs — bound the worst case.
+_anon_sessions = 0
 
 
 async def _emit_stream_metrics(
@@ -128,6 +139,10 @@ class _Session:
         "student_key",
         "tutor_state",
         "last_topic",
+        "quiz_pending",
+        "quiz_question",
+        "quiz_attempts",
+        "explained_points",
         "learner_profile",
         "_learner_load_task",
         "tts_voice",
@@ -150,6 +165,10 @@ class _Session:
         self.student_key = ""
         self.tutor_state = "LISTENING"
         self.last_topic = ""
+        self.quiz_pending = False
+        self.quiz_question = ""
+        self.quiz_attempts = 0
+        self.explained_points: list[str] = []
         self.learner_profile = None
         self._learner_load_task: asyncio.Task | None = None
         self.tts_voice: str | None = None
@@ -217,6 +236,7 @@ async def _general_answer_stream(
         TutorState,
         UnderstandingScores,
         build_voice_mistral_messages,
+        classify_reply_intent,
     )
 
     try:
@@ -247,6 +267,11 @@ async def _general_answer_stream(
         understanding=understanding,
         learner=learner,
         expand_deep=understanding.wants_expansion or understanding.confusion >= 0.55,
+        quiz_pending=session.quiz_pending,
+        quiz_question=session.quiz_question,
+        quiz_attempts=session.quiz_attempts,
+        explained_points=session.explained_points,
+        reply_intent=classify_reply_intent(question, quiz_pending=session.quiz_pending),
     )
     async for token in _stream_mistral_async(messages, feature="voice"):
         yield token
@@ -267,7 +292,7 @@ async def _play_session_greeting(ws: WebSocket, session: _Session) -> None:
     await _send(ws, {"type": "greeting_start", "text": text})
     try:
         await _send(ws, {"type": "speaking"})
-        await stream_edge_tts(text, ws, stop, voice=session.tts_voice, timing=timing)
+        await stream_tts(text, ws, stop, voice=session.tts_voice, timing=timing)
     finally:
         if not stop.is_set():
             await _send(ws, {"type": "done"})
@@ -326,9 +351,14 @@ async def _stream_answer(
     from app.services.chat_service import chapter_aware_qa_stream
     from app.services.learner_profile import save_learner_profile
     from app.services.voice_tutor import (
+        ReplyIntent,
         TutorState,
+        classify_reply_intent,
+        classify_understanding_llm,
         evaluate_student_response,
         next_tutor_state,
+        topic_key,
+        update_quiz_state,
     )
 
     turn_id = uuid.uuid4().hex[:8]
@@ -350,6 +380,18 @@ async def _stream_answer(
         question,
         last_assistant=last_assistant,
         tutor_state=current_state,
+    )
+    reply_intent = classify_reply_intent(question, quiz_pending=session.quiz_pending)
+
+    # Kick off the accurate-but-slower LLM classification in the background —
+    # nothing below ever awaits it, so it adds zero time-to-first-token. By
+    # the time the full answer is generated and spoken, it's almost always
+    # done, so next_tutor_state() near the end of this turn can use it in
+    # place of the heuristic `scores` above (see below). If it's still
+    # running, the heuristic result already computed is used, unchanged.
+    llm_scores_task = asyncio.create_task(
+        classify_understanding_llm(question, last_assistant=last_assistant),
+        name="voice-understanding-llm",
     )
 
     if session.student_key:
@@ -463,6 +505,10 @@ async def _stream_answer(
                 understanding_scores=understanding_payload,
                 learner_snapshot=learner_snapshot,
                 pipeline_timing=timing,
+                quiz_pending=session.quiz_pending,
+                quiz_question=session.quiz_question,
+                quiz_attempts=session.quiz_attempts,
+                explained_points=session.explained_points,
             )
         else:
             token_iter = _general_answer_stream(
@@ -539,12 +585,45 @@ async def _stream_answer(
             chapter=session.chapter,
             understanding_scores=understanding_payload,
         )
+    # By now the answer has been fully generated and spoken, so the
+    # background LLM classification (started at the top of this turn) has
+    # almost always finished — prefer it over the heuristic when it has.
+    # Never awaited: if it's still running, fall back to the heuristic
+    # `scores` already computed, so this line never adds latency.
+    final_scores = scores
+    if llm_scores_task.done():
+        try:
+            final_scores = llm_scores_task.result() or scores
+        except Exception as exc:
+            logger.debug("Understanding LLM task failed: %s", exc)
+
     session.tutor_state = next_tutor_state(
         current=current_state,
-        scores=scores,
+        scores=final_scores,
         assistant_reply=full_answer,
     ).value
     await _send(ws, {"type": "tutor_state", "state": session.tutor_state})
+
+    # Rules 4 & 6: track whether this turn's quiz question got resolved
+    # (correct answer or forced reveal) so it's never silently dropped.
+    was_pending = session.quiz_pending
+    session.quiz_pending, session.quiz_attempts = update_quiz_state(
+        quiz_pending=was_pending,
+        quiz_attempts=session.quiz_attempts,
+        reply_intent=reply_intent,
+        assistant_reply=full_answer,
+    )
+    if session.quiz_pending and not was_pending:
+        session.quiz_question = full_answer.strip()
+    elif not session.quiz_pending:
+        session.quiz_question = ""
+
+    # Rule 5: remember what's been taught this session so we don't repeat
+    # the same explanation verbatim later.
+    if reply_intent == ReplyIntent.NEW_QUESTION:
+        key = topic_key(question)
+        if key and key not in session.explained_points:
+            session.explained_points = (session.explained_points + [key])[-20:]
 
 
 @ws_router.websocket("/ws/voice")
@@ -552,9 +631,7 @@ async def voice_ws(
     websocket: WebSocket,
     token: str = Query(default=""),
 ):
-    await websocket.accept()
-
-    logger.info("Voice WS connected")
+    global _anon_sessions
 
     session = _Session()
     stop = asyncio.Event()
@@ -565,8 +642,24 @@ async def voice_ws(
             from app.core.security import decode_token
             payload = decode_token(token)
             session.student_key = str(payload.get("sub") or "")
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("Voice WS token rejected, falling back to guest: %s", exc)
+
+    is_anonymous = not session.student_key
+    anon_slot_taken = False
+    if is_anonymous:
+        if _anon_sessions >= VOICE_ANON_MAX_CONCURRENT:
+            logger.warning(
+                "Voice WS guest session cap reached (%d) — rejecting connection",
+                VOICE_ANON_MAX_CONCURRENT,
+            )
+            await websocket.close(code=1013)  # 1013 = try again later
+            return
+        _anon_sessions += 1
+        anon_slot_taken = True
+
+    await websocket.accept()
+    logger.info("Voice WS connected (guest=%s)", is_anonymous)
 
     async def _cancel_gen() -> None:
         nonlocal gen_task
@@ -626,6 +719,12 @@ async def voice_ws(
                 if not text or len(text) < 2:
                     continue
                 audio_b64 = str(msg.get("utterance_audio_b64") or "").strip()
+                if len(audio_b64) > _MAX_AUDIO_B64_LEN:
+                    logger.warning(
+                        "Voice WS utterance audio exceeds cap (%d chars) — dropping",
+                        len(audio_b64),
+                    )
+                    audio_b64 = ""
                 if audio_b64 and session.voice_session_id:
                     try:
                         from app.services.voice_session_profile import (
@@ -714,4 +813,6 @@ async def voice_ws(
             from app.services.voice_session_profile import clear_session_voice
 
             clear_session_voice(session.voice_session_id)
+        if anon_slot_taken:
+            _anon_sessions -= 1
         logger.info("Voice WS session ended")

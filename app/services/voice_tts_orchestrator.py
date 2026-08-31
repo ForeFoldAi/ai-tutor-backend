@@ -17,10 +17,10 @@ from fastapi import WebSocket
 
 from app.config import VOICE_TTS_PREFETCH, VOICE_TTS_PREFETCH_DEPTH
 from app.services import voice_protection_metrics as metrics
-from app.services.edge_tts_service import (
+from app.services.tts_provider import (
     resolve_voice,
     send_mp3_bytes,
-    stream_edge_tts,
+    stream_tts,
     synthesize_mp3,
 )
 from app.services.voice_chunking import VoicePipelineTiming
@@ -168,7 +168,7 @@ async def run_tts_orchestrator(
             metrics.record_playback_gap(gap_ms)
             timing.mark_playback_gap(gap_ms)
 
-        metrics.set_gauge("tts_queue_depth", float(speech_queue.qsize() + len(pending)))
+        metrics.record_avg("tts_queue_depth", float(speech_queue.qsize() + len(pending)))
         await _emit_speech_unit(websocket, text, unit_index)
         await on_speaking()
         timing.mark_tts_unit_played()
@@ -178,7 +178,7 @@ async def run_tts_orchestrator(
             timing.mark_prefetch_miss()
 
         if not data:
-            await stream_edge_tts(
+            await stream_tts(
                 text, websocket, stop_event, voice=voice, timing=timing, chunk_index=unit_index
             )
         else:
@@ -188,12 +188,12 @@ async def run_tts_orchestrator(
         last_play_end = time.perf_counter()
         if timing.first_chunk_sent_at and unit_index == 1:
             first_audio_ms = (timing.first_chunk_sent_at - timing._t0) * 1000.0
-            metrics.set_gauge("first_audio_latency_ms", first_audio_ms)
-            metrics.set_gauge("first_tts_latency_ms", first_audio_ms)
+            metrics.record_avg("first_audio_latency_ms", first_audio_ms)
+            metrics.record_avg("first_tts_latency_ms", first_audio_ms)
 
     async def _play_slot(slot: _PrefetchSlot) -> None:
         wait_ms = (time.perf_counter() - slot.armed_at) * 1000.0
-        metrics.set_gauge("tts_wait_time_ms", wait_ms)
+        metrics.record_avg("tts_wait_time_ms", wait_ms)
         data = await slot.result()
         if slot.needs_task_done:
             speech_queue.task_done()
@@ -204,7 +204,7 @@ async def run_tts_orchestrator(
     try:
         while not stop_event.is_set():
             _arm_prefetch_slots()
-            metrics.set_gauge("tts_queue_depth", float(speech_queue.qsize() + len(pending)))
+            metrics.record_avg("tts_queue_depth", float(speech_queue.qsize() + len(pending)))
 
             # Prefer completed prefetch head (gapless)
             if pending and pending[0].done():
@@ -232,14 +232,21 @@ async def run_tts_orchestrator(
 
             _arm_prefetch_slots()
             t_gen = time.perf_counter()
-            data = await synthesize_mp3(
-                text, voice=voice, stop_event=stop_event, chunk_index=unit_index
-            )
-            metrics.set_gauge(
+            try:
+                data = await synthesize_mp3(
+                    text, voice=voice, stop_event=stop_event, chunk_index=unit_index
+                )
+            except Exception as exc:
+                # A stalled/failed edge-tts call must not kill the whole turn —
+                # fall through with empty data so _play_bytes retries via the
+                # guarded stream_tts path instead of crashing the session.
+                logger.debug("synthesize_mp3 failed for %r: %s", text[:32], exc)
+                data = b""
+            metrics.record_avg(
                 "chunk_generation_latency_ms",
                 (time.perf_counter() - t_gen) * 1000.0,
             )
-            metrics.set_gauge("chunk_size", float(len(text)))
+            metrics.record_avg("chunk_size", float(len(text)))
             speech_queue.task_done()
             await _play_bytes(text, data, from_prefetch=False)
 

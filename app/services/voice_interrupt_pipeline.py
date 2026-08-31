@@ -48,11 +48,16 @@ def compute_interrupt_score(
     vad_score = _clamp01(vad_prob) * (0.65 + 0.35 * duration_factor)
 
     if speaker_skipped:
-        # Not enrolled yet / disabled: contribute a neutral score rather than
-        # a near-automatic pass. 0.5 is what the formula below yields for a
-        # borderline exact-at-threshold match — an unverified speaker should
-        # be judged the same as "right on the line", not "clearly matched".
-        speaker_score = 0.5
+        # Not enrolled yet / disabled: contribute a below-neutral score, not
+        # a near-automatic pass. At 0.5, high VAD alone (clear, well-formed
+        # speech — which the tutor's own voice bleeding into the mic
+        # produces just as reliably as a real interrupt) could already cross
+        # INTERRUPT_SCORE_THRESHOLD without any real confirmation of who was
+        # speaking. At 0.4, a genuine interrupt-phrase match (intent_score=1.0)
+        # combined with strong VAD can still cross — but VAD alone cannot —
+        # so an unverified speaker needs real evidence from what was said,
+        # not just how loud/clear it was.
+        speaker_score = 0.4
     else:
         # Map cosine around SPEAKER_SIMILARITY_THRESHOLD into 0..1
         thr = SPEAKER_SIMILARITY_THRESHOLD
@@ -158,7 +163,7 @@ def evaluate_barge_in(
     if recent_ai_speech and transcript.strip():
         sim = echo_similarity(transcript, recent_ai_speech)
         out["echo_similarity_score"] = sim
-        metrics.set_gauge("echo_similarity_score", sim)
+        metrics.record_avg("echo_similarity_score", sim)
         # Checked regardless of intent match: interrupt phrases like "hi",
         # "hello", "wait" are common tutor openers, so a transcript that
         # merely *starts* with one is not proof it's the student — if the
@@ -217,6 +222,31 @@ def evaluate_barge_in(
         )
         return out
 
+    # The echo-similarity hard-reject above only runs when there's transcript
+    # text to compare — a volume-spike-triggered barge-in often reaches here
+    # before any interim STT text exists yet, so that check gets silently
+    # skipped. Without it, and without an established voiceprint, there is
+    # *no* signal left about who was actually speaking — only that something
+    # loud and speech-shaped happened, which is exactly what the tutor's own
+    # voice bleeding into the mic looks like. This is the concrete gap that
+    # let the AI accept its own voice as a barge-in and re-ask itself a
+    # "question". Refuse here rather than let VAD alone carry the score.
+    if speaker_skipped and not transcript.strip():
+        metrics.incr("interrupt_rejected_count")
+        metrics.log_event(
+            "INTERRUPT_REJECTED",
+            barge_event_id=event_id,
+            reason="unverified_no_transcript",
+            interrupt_score=0.0,
+        )
+        out.update(
+            allow_interrupt=False,
+            reason="unverified_no_transcript",
+            interrupt_reason="unverified_no_transcript",
+            interrupt_score=0.0,
+        )
+        return out
+
     score, parts = compute_interrupt_score(
         vad_prob=float(vad["speech_probability"]),
         speech_duration_ms=float(vad["speech_duration_ms"]),
@@ -227,7 +257,7 @@ def evaluate_barge_in(
     )
     out["interrupt_score"] = score
     out["score_parts"] = parts
-    metrics.set_gauge("interrupt_score", score)
+    metrics.record_avg("interrupt_score", score)
 
     if explicit_intent_only and not intent["is_interrupt_intent"]:
         metrics.incr("interrupt_rejected_count")
@@ -242,7 +272,7 @@ def evaluate_barge_in(
         return out
 
     latency_ms = (time.perf_counter() - t0) * 1000.0
-    metrics.set_gauge("interrupt_latency_ms", latency_ms)
+    metrics.record_avg("interrupt_latency_ms", latency_ms)
 
     if score >= INTERRUPT_SCORE_THRESHOLD:
         metrics.incr("interrupt_accepted_count")

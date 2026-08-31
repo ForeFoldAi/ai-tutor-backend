@@ -171,10 +171,19 @@ def postprocess_voice_transcript(text: str, *, subject_name: str = "") -> str:
 
     subj = (subject_name or "").lower()
     if "math" in subj:
-        # Only "5 into 3" style division dictation (digit on both sides) —
-        # not "turn a fraction into a decimal" / "divide into groups", which
-        # blindly replacing every "into" used to mangle before it reached the LLM.
-        out = re.sub(r"(\d)\s+into\s+(\d)", r"\1 times \2", out, flags=re.I)
+        # Only "5 into 3" style multiplication dictation (digit on both sides) —
+        # not "turn a fraction into a decimal" / "divide into groups".
+        out = re.sub(r"(\d)\s+into\s+(\d)", r"\1 * \2", out, flags=re.I)
+        # Spoken ops → symbols so math engine + LLM see the same form.
+        out = re.sub(r"\bmultiplied\s+by\b", "*", out, flags=re.I)
+        out = re.sub(r"\bdivided\s+by\b", "/", out, flags=re.I)
+        out = re.sub(r"\bis\s+equal\s+to\b", "=", out, flags=re.I)
+        out = re.sub(r"\bper\s+cent\b", "%", out, flags=re.I)
+        out = re.sub(r"\bpercent(?:age)?\b", "%", out, flags=re.I)
+        out = re.sub(r"\bequals?\b", "=", out, flags=re.I)
+        out = re.sub(r"\bplus\b", "+", out, flags=re.I)
+        out = re.sub(r"\bminus\b", "-", out, flags=re.I)
+        out = re.sub(r"\btimes\b", "*", out, flags=re.I)
 
     words = out.split()
     fixed: list[str] = []

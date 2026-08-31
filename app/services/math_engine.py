@@ -98,6 +98,23 @@ def _class_band(class_level: str) -> str:
     return "11-12"
 
 
+def _normalize_spoken_math(query: str) -> str:
+    """Map spoken operators (STT / typed English) to symbols solvers expect."""
+    q = query
+    # Multi-word first so "divided by" isn't left as "divided /".
+    q = re.sub(r"\bmultiplied\s+by\b", "*", q, flags=re.I)
+    q = re.sub(r"\bdivided\s+by\b", "/", q, flags=re.I)
+    q = re.sub(r"\bis\s+equal\s+to\b", "=", q, flags=re.I)
+    q = re.sub(r"\bper\s+cent\b", "%", q, flags=re.I)
+    q = re.sub(r"\bpercent(?:age)?\b", "%", q, flags=re.I)
+    q = re.sub(r"\bequals?\b", "=", q, flags=re.I)
+    q = re.sub(r"\bplus\b", "+", q, flags=re.I)
+    q = re.sub(r"\bminus\b", "-", q, flags=re.I)
+    q = re.sub(r"\btimes\b", "*", q, flags=re.I)
+    q = re.sub(r"\bto\s+the\s+power\s+of\b", "^", q, flags=re.I)
+    return re.sub(r"\s+", " ", q).strip()
+
+
 def parse_number(text: str) -> float:
     return float((text or "").replace(",", "").strip())
 
@@ -886,7 +903,7 @@ def try_solve(
     Attempt to solve a school math question with SymPy.
     Returns None when the question is not recognised or not computable.
     """
-    q = (query or "").strip()
+    q = _normalize_spoken_math((query or "").strip())
     if not q:
         return None
     band = _class_band(class_level)

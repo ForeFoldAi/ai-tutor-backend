@@ -74,6 +74,21 @@ def incr(name: str, amount: int = 1) -> None:
         _counters[name] = int(cur) + amount
 
 
+def record_avg(name: str, value: float) -> None:
+    """Track a per-turn sample as a running average, not just last-value-wins —
+    with multiple concurrent voice sessions in one process, a plain gauge only
+    ever reflects whichever turn happened to write last. Exposes `<name>` (most
+    recent sample, for quick eyeballing) plus `avg_<name>` / `<name>_samples`
+    (the trustworthy aggregate across concurrent sessions)."""
+    with _lock:
+        n = int(_counters.get(f"{name}_samples", 0) or 0) + 1
+        prev = float(_counters.get(f"avg_{name}", 0) or 0)
+        avg = prev + (value - prev) / n
+        _counters[f"{name}_samples"] = n
+        _counters[f"avg_{name}"] = avg
+        _counters[name] = float(value)
+
+
 def record_playback_gap(ms: float) -> None:
     with _lock:
         n = int(_counters.get("playback_gap_samples", 0) or 0) + 1
