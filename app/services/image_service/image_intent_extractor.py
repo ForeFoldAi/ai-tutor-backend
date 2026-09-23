@@ -130,6 +130,7 @@ _CONTENT_KIND_RULES: list[tuple[str, list[str]]] = [
 
 _TABLE_REF_QUERY_RE = re.compile(r"(?i)\b(?:table|tbl\.?)\s*(\d+(?:\.\d+)*)")
 _FORMULA_REF_QUERY_RE = re.compile(r"(?i)\b(?:formula|equation|eq\.?)\s*(\d+(?:\.\d+)*)")
+_FIG_REF_QUERY_RE = re.compile(r"(?i)\b(?:fig(?:ure)?\.?)\s*(\d+(?:\.\d+)*)")
 
 # Patterns to extract divergent examples from RAG text
 _EXAMPLE_PATTERNS = re.compile(
@@ -342,9 +343,23 @@ class ImageIntent:
 # ---------------------------------------------------------------------------
 
 _IMAGE_REQUEST_RE = re.compile(
-    r"\b(with\s+images?|show\s+(?:me\s+)?(?:a\s+|the\s+)?(?:diagram|figure|picture|map|illustration|photo)s?|"
+    r"\b(with\s+images?|"
+    r"(?:show|bring|get|fetch|display|open)\s+(?:me\s+)?(?:a\s+|the\s+|any\s+|some\s+)?(?:\w+\s+){0,3}"
+    r"(?:diagram|figure|picture|map|illustration|photo|image)s?|"
     r"include\s+(?:an?\s+)?images?|using\s+(?:diagrams?|pictures?|illustrations?)|"
+    r"(?:list|name)\s+(?:the\s+|all\s+)?(?:figures?|figs?|diagrams?|images?|maps?)|"
+    r"(?:images?|figures?|diagrams?)\s+from\s+(?:the\s+)?(?:textbook|chapter|book)|"
     r"textbook\s+(?:diagram|figure|image)s?|draw\s+(?:a\s+)?(?:labelled?\s*)?diagram)\b",
+    re.I,
+)
+
+_CHAPTER_FIGURE_LIST_ASK_RE = re.compile(
+    r"\b("
+    r"(?:list|name)\b.{0,48}\b(?:all\s+)?(?:the\s+)?(?:figures?|figs?|diagrams?|images?|maps?|illustrations?)\b"
+    r"|\b(?:show|give|get|fetch|bring)\b.{0,48}\b(?:all\s+)(?:the\s+)?(?:figures?|figs?|diagrams?|images?|maps?)\b"
+    r"|\bhow\s+many\s+(?:figures?|figs?|diagrams?|images?|maps?)\b"
+    r"|\b(?:images?|figures?|diagrams?)\s+from\s+(?:the\s+|this\s+)?(?:textbook|chapter|book|unit)\b"
+    r")",
     re.I,
 )
 
@@ -529,7 +544,24 @@ def _extract_referenced_asset(question: str) -> tuple[str | None, str | None]:
     m = _FORMULA_REF_QUERY_RE.search(question)
     if m:
         return m.group(1), "formula"
+    m = _FIG_REF_QUERY_RE.search(question)
+    if m:
+        return m.group(1), "figure"
     return None, None
+
+
+def figure_numbers_cited_in_text(text: str) -> list[str]:
+    """Ordered unique Fig./Figure N citations from question or answer prose."""
+    return list(dict.fromkeys(_FIG_REF_QUERY_RE.findall(text or "")))
+
+
+def is_chapter_figure_list_ask(question: str) -> bool:
+    """Student wants an inventory of textbook figures for the current chapter."""
+    q = question or ""
+    # Exact Fig./Figure N asks are not inventory requests.
+    if figure_numbers_cited_in_text(q):
+        return False
+    return bool(_CHAPTER_FIGURE_LIST_ASK_RE.search(q))
 
 
 # ---------------------------------------------------------------------------
@@ -646,6 +678,8 @@ def extract_image_intent(
         rag_section_tokens=rag_section_tokens,
         requested_visuals=(
             bool(_IMAGE_REQUEST_RE.search(effective_question))
+            or bool(referenced_asset_number)
+            or is_chapter_figure_list_ask(effective_question)
             or _context_requires_visuals(conversation_context)
         ),
     )

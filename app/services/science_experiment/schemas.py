@@ -1,8 +1,8 @@
-"""Pydantic schemas for interactive science experiments (three-view synchronized model)."""
+"""Pydantic schemas for interactive science experiments (three-view + lab model)."""
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -45,16 +45,14 @@ class StudentInteractionSpec(BaseModel):
 
 
 class ColorSpec(BaseModel):
-    primary: str = "#0EA5E9"
-    secondary: str = "#10B981"
-    accent: str = "#F59E0B"
-    background: str = "#F0F9FF"
-    text: str = "#0F172A"
+    primary: str = "#2d70b3"
+    secondary: str = "#388c46"
+    accent: str = "#e08a2b"
+    background: str = "#fafafa"
+    text: str = "#1a1a1f"
 
 
 class ExperimentViewSpec(BaseModel):
-    """One synchronized view: real-world, microscopic, or scientific."""
-
     title: str = ""
     description: str = ""
     narration: str = ""
@@ -68,11 +66,23 @@ class ThreeViewSpec(BaseModel):
     scientific: ExperimentViewSpec = Field(default_factory=ExperimentViewSpec)
 
 
+class ExperimentStep(BaseModel):
+    id: str
+    instruction: str
+    safetyNote: str | None = None
+    durationSeconds: float | None = None
+
+
 class ExperimentSpec(BaseModel):
     experimentType: str
     title: str
     description: str = ""
     gradeTier: str = "middle"
+    subject: Literal["physics", "chemistry", "biology", "evs"] | str = "evs"
+    kind: Literal["concept", "experiment"] | str = "concept"
+    aim: str = ""
+    apparatus: list[str] = Field(default_factory=list)
+    safetyLevel: Literal["none", "caution", "adult-supervision"] | str = "none"
     threeViews: ThreeViewSpec = Field(default_factory=ThreeViewSpec)
     sliders: list[SliderSpec] = Field(default_factory=list)
     buttons: list[ButtonSpec] = Field(default_factory=list)
@@ -83,6 +93,10 @@ class ExperimentSpec(BaseModel):
     safetyNotes: list[str] = Field(default_factory=list)
     hypothesisPrompt: str = ""
     procedure: list[str] = Field(default_factory=list)
+    procedureSteps: list[ExperimentStep] = Field(default_factory=list)
+    expectedObservation: str = ""
+    explanation: str = ""
+    relatedVisualizationType: str | None = None
 
 
 class PracticeModeSpec(BaseModel):
@@ -100,6 +114,8 @@ class AssessmentQuestion(BaseModel):
 class ScienceExperiment(BaseModel):
     conceptName: str
     classLevel: str = ""
+    subject: Literal["physics", "chemistry", "biology", "evs"] | str = "evs"
+    kind: Literal["concept", "experiment"] | str = "concept"
     learningObjective: str = ""
     conceptExplanation: str = ""
     experiment: ExperimentSpec

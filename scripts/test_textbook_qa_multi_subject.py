@@ -195,7 +195,7 @@ async def run_textbook(
         qa_img_count = 0
         if not images_only and run_llm:
             try:
-                answer, qa_imgs, _lesson = await chapter_aware_qa(
+                answer, qa_imgs, _lesson, _experiment = await chapter_aware_qa(
                     q,
                     collection_name=cfg.collection,
                     chapter_ids=[cfg.upload_id],

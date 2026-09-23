@@ -1,0 +1,62 @@
+[
+  {
+    "slug": "english_unit1",
+    "subject": "English",
+    "chapter_id": "26",
+    "chapter": "Unit 1 - Wit and Wisdom"
+  },
+  {
+    "slug": "english_unit2",
+    "subject": "English",
+    "chapter_id": "27",
+    "chapter": "Unit 2 - Values and Dispositions"
+  },
+  {
+    "slug": "english_unit3",
+    "subject": "English",
+    "chapter_id": "28",
+    "chapter": "Unit 3 - Mystery and Magic"
+  },
+  {
+    "slug": "math_ch1_square_cube",
+    "subject": "Mathematics",
+    "chapter_id": "38",
+    "chapter": "Chapter-1 : A SQUARE AND A CUBE"
+  },
+  {
+    "slug": "math_ch2_power_play",
+    "subject": "Mathematics",
+    "chapter_id": "39",
+    "chapter": "Chapter-2 : POWER PLAY"
+  },
+  {
+    "slug": "science_ch1_investigative",
+    "subject": "Science",
+    "chapter_id": "35",
+    "chapter": "Chapter 1 - Exploring the Investigative World of Science"
+  },
+  {
+    "slug": "science_ch3_health",
+    "subject": "Science",
+    "chapter_id": "37",
+    "chapter": "Chapter 3 - Health: The Ultimate Treasure"
+  },
+  {
+    "slug": "social_ch1_natural_resources",
+    "subject": "Social",
+    "chapter_id": "32",
+    "chapter": "Chapter 1 - Natural Resources and Their Use"
+  },
+  {
+    "slug": "social_ch2_political_map",
+    "subject": "Social",
+    "chapter_id": "33",
+    "chapter": "Chapter 2 - Reshaping India\u2019s Political Map"
+  },
+  {
+    "slug": "social_ch3_marathas",
+    "subject": "Social",
+    "chapter_id": "34",
+    "chapter": "Chapter 3 - The Rise of the Marathas"
+  }
+]

@@ -1,0 +1,2552 @@
+{
+  "generated_at": "2026-09-11 18:54:56 +0530",
+  "meta": {
+    "slug": "math_ch1_square_cube",
+    "subject": "Mathematics",
+    "chapter_id": "38",
+    "chapter": "Chapter-1 : A SQUARE AND A CUBE",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "M1-01",
+        "query": "wait so what is a perfect square? like in simple words",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-02",
+        "query": "what is a perfect cube then?",
+        "label": "normal",
+        "expect_keywords": [
+          "cube"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-03",
+        "query": "can you show how cube numbers work with an example?",
+        "label": "interactive",
+        "expect_keywords": [
+          "cube"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-04",
+        "query": "is 36 a perfect square? why?",
+        "label": "normal",
+        "expect_keywords": [
+          "36",
+          "square",
+          "6"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-05",
+        "query": "what about 27 \u2014 square or cube?",
+        "label": "normal",
+        "expect_keywords": [
+          "27",
+          "cube"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-06",
+        "query": "how do i find square root of a perfect square?",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "root"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-07",
+        "query": "show a figure or pattern of squares from the book",
+        "label": "diagram",
+        "expect_keywords": [
+          "square",
+          "figure",
+          "pattern"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-08",
+        "query": "why do we call it a square number?",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-09",
+        "query": "quiz me: give one easy square question",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "?"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-10",
+        "query": "what is 8 cubed?",
+        "label": "normal",
+        "expect_keywords": [
+          "512",
+          "cube",
+          "8"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-11",
+        "query": "difference between square and cube in one line",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "cube"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-12",
+        "query": "are negative numbers perfect squares in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "negative",
+          "not"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-13",
+        "query": "list three perfect squares between 1 and 100",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-14",
+        "query": "list three perfect cubes between 1 and 100",
+        "label": "normal",
+        "expect_keywords": [
+          "cube"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-15",
+        "query": "how is area related to square numbers?",
+        "label": "normal",
+        "expect_keywords": [
+          "area",
+          "square"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-16",
+        "query": "what is the squre of 12?",
+        "label": "typo",
+        "expect_keywords": [
+          "144",
+          "square",
+          "12"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-17",
+        "query": "is square root of 2 a perfect square in this chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "perfect",
+          "square",
+          "not"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-18",
+        "query": "did this chapter invent the steam engine?",
+        "label": "wrong",
+        "expect_keywords": [
+          "square",
+          "cube",
+          "math",
+          "not"
+        ],
+        "forbidden": [
+          "steam"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "M1-19",
+        "query": "explain with steps how to check if 81 is a perfect square",
+        "label": "interactive",
+        "expect_keywords": [
+          "81",
+          "square",
+          "9"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M1-20",
+        "query": "what is the cube of fivve?",
+        "label": "typo",
+        "expect_keywords": [
+          "125",
+          "cube",
+          "5"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": true,
+    "health": {
+      "status": "ok",
+      "voice": "ws-pcm",
+      "instanceId": "Maniths-MacBook-Air.local:50443",
+      "draining": false,
+      "liveSessions": 0,
+      "redis": "up"
+    },
+    "session_id": "79d2573d-2894-4fe8-8b22-18c3f75e1538",
+    "query_ok": true,
+    "note": "REST ok only; scored via voice_mode stream"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "M1-01",
+        "query": "wait so what is a perfect square? like in simple words",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "answer_clip": "**To Find** What is a perfect square in simple words?  **Given Information** - The textbook defines perfect squares as squares of natural numbers (e.g., 1, 4, 9, 16, ...). - Perfect squares are numbers that can be expressed as the product of an integer multiplied by itself.  **Concept Behind It** A perfect square is a special kind of number that comes from multiplying a whole number by itself. For example: - If you take the number **3** and mult\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "Perfect Squares and Triangular Numbers",
+            "file": "figures/p6_9.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 21406,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-02",
+        "query": "what is a perfect cube then?",
+        "label": "normal",
+        "expect_keywords": [
+          "cube"
+        ],
+        "answer_clip": "**To Find** What is a perfect cube? How can we identify and understand perfect cubes using multiplication and their properties?  ---  **Given Information** - A perfect cube is a number obtained by multiplying a number by itself three times. - Examples given in the textbook: 1, 8, 27, 64, 125, etc. - The general form of a perfect cube is written as \\( n^3 \\), where \\( n \\) is a natural number. - The textbook mentions that perfect cubes can be ide\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 20243,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-03",
+        "query": "can you show how cube numbers work with an example?",
+        "label": "interactive",
+        "expect_keywords": [
+          "cube"
+        ],
+        "answer_clip": "Let\u2019s imagine a cube number as a special kind of number that comes from multiplying a whole number by itself *three times*\u2014just like how a square number is made by multiplying a number by itself *twice*. For example, if we take the number **3**, its cube is **3 \u00d7 3 \u00d7 3 = 27**. So, 27 is a cube number because it\u2019s the result of cubing 3. The textbook shows us that cubes grow quickly: 1\u00b3 = 1, 2\u00b3 = 8, 3\u00b3 = 27, 4\u00b3 = 64, and so on. Notice how each cu\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 24186,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-04",
+        "query": "is 36 a perfect square? why?",
+        "label": "normal",
+        "expect_keywords": [
+          "36",
+          "square",
+          "6"
+        ],
+        "answer_clip": "**To Find** We need to determine whether 36 is a perfect square and explain why.  **Given Information** - Number = 36  **Concept Behind It** According to the chapter, a perfect square is a number that can be expressed as the square of an integer. For example, 16 is a perfect square because it equals 4 \u00d7 4 (or 4\u00b2). The chapter also explains that prime factorization can help determine if a number is a perfect square. If the prime factors can be gr\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 16730,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M1-05",
+        "query": "what about 27 \u2014 square or cube?",
+        "label": "normal",
+        "expect_keywords": [
+          "27",
+          "cube"
+        ],
+        "answer_clip": "**27 is neither just a square nor just a cube\u2014it\u2019s a special number that fits both definitions!** According to the chapter, a *square number* is created by multiplying a number by itself (like 3 \u00d7 3 = 9), while a *cube* is created by multiplying a number by itself *three times* (like 3 \u00d7 3 \u00d7 3 = 27). So, 27 is a **perfect cube** because it\u2019s 3\u00b3, but it\u2019s *not* a perfect square\u2014there\u2019s no whole number that, when multiplied by itself, gives 27. Fo\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 33263,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-06",
+        "query": "how do i find square root of a perfect square?",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "root"
+        ],
+        "answer_clip": "**To Find** How to determine the square root of a perfect square using methods explained in the textbook.  **Given Information** - A perfect square is a number obtained by multiplying an integer by itself (e.g., \\( 7 \\times 7 = 49 \\)). - The positive square root of a perfect square \\( y \\) is a number \\( x \\) such that \\( x^2 = y \\). - The textbook provides two main methods:   1. **Prime Factorization Method**: Group prime factors into pairs.   \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 36187,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-07",
+        "query": "show a figure or pattern of squares from the book",
+        "label": "diagram",
+        "expect_keywords": [
+          "square",
+          "figure",
+          "pattern"
+        ],
+        "answer_clip": "The textbook shows several interesting patterns and figures related to squares and cubes. One of the most common visual patterns you\u2019ll see is the **table of perfect squares** (like the one on page 4), where you fill in the squares of natural numbers from 1 to 30. For example, you\u2019d write 1\u00b2 = 1, 2\u00b2 = 4, 3\u00b2 = 9, and so on. The textbook also includes a **diagram of squares arranged in a grid** (likely Fig. 9 on page 11) that helps visualize how s\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 18428,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 2.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 7.8,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M1-08",
+        "query": "why do we call it a square number?",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "answer_clip": "Great question! The term **\"square number\"** comes from how we *visualize* numbers using squares made of smaller squares.  Imagine you have a grid of dots or tiles. If you arrange **1 dot** in a perfect square, you get **1** dot (1 \u00d7 1). If you arrange **4 dots** in a square, you form a 2\u00d72 grid (2 \u00d7 2 = 4). Similarly, **9 dots** make a 3\u00d73 square (3 \u00d7 3 = 9). The number of dots in each case is the *square number*\u2014it\u2019s the result of multiplying \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "a black and white dotted line with dots. Mathematics textbook figure, Chapter-1\u2026",
+            "file": "figures/p6_8.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 22496,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-09",
+        "query": "quiz me: give one easy square question",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "?"
+        ],
+        "answer_clip": "Let\u2019s start with a fun and easy square question to test your understanding!  Imagine you have a square garden with an area of **144 square meters**. What would be the length of one side of this garden? Think about how squares work\u2014if you know the area, you can find the side length by taking the square root. For example, if a square has an area of 16, its side length is 4 because 4 \u00d7 4 = 16. Now, can you apply the same logic to find the side leng\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 22942,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-10",
+        "query": "what is 8 cubed?",
+        "label": "normal",
+        "expect_keywords": [
+          "512",
+          "cube",
+          "8"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Cube**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1854,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 6.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 5.2,
+          "bugs": [
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-11",
+        "query": "difference between square and cube in one line",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "cube"
+        ],
+        "answer_clip": "Sure!  The difference between a **square** and a **cube** is that a **square** is a number multiplied by itself (e.g., 4 = 2 \u00d7 2), while a **cube** is a number multiplied by itself three times (e.g., 8 = 2 \u00d7 2 \u00d7 2).  Here\u2019s the key difference in one line: *A square has two identical factors, while a cube has three identical factors.*",
+        "images": [
+          {
+            "figure": null,
+            "page": 15,
+            "caption": "l the differences are the same",
+            "file": "figures/p14_22.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 14670,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-12",
+        "query": "are negative numbers perfect squares in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "negative",
+          "not"
+        ],
+        "answer_clip": "In this chapter, perfect squares are defined as the squares of **natural numbers** (like 1, 2, 3, ...). The textbook focuses on positive integers and their squares, such as 1\u00b2 = 1, 2\u00b2 = 4, 3\u00b2 = 9, and so on. Negative numbers are **not** considered perfect squares in this context because the chapter only deals with natural numbers and their squares. For example, if you try to square a negative number like (-3), you get 9, which is the same as 3\u00b2.\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 45522,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M1-13",
+        "query": "list three perfect squares between 1 and 100",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "answer_clip": "Perfect squares are numbers that can be written as the product of an integer multiplied by itself. For example, if you take the number 5 and multiply it by itself (5 \u00d7 5), you get 25, which is a perfect square. The textbook shows us that perfect squares follow a specific pattern, like 1, 4, 9, 16, 25, and so on. These numbers are special because they represent areas of squares with whole-number side lengths.  To list three perfect squares betwee\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "Perfect Squares and Triangular Numbers",
+            "file": "figures/p6_9.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 22197,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-14",
+        "query": "list three perfect cubes between 1 and 100",
+        "label": "normal",
+        "expect_keywords": [
+          "cube"
+        ],
+        "answer_clip": "Let\u2019s find three perfect cubes between 1 and 100. According to the chapter, a perfect cube is a number that can be written as *n \u00d7 n \u00d7 n* (or *n\u00b3*), where *n* is a whole number. For example, 1 is a perfect cube because it\u2019s *1 \u00d7 1 \u00d7 1*, and 8 is a perfect cube because it\u2019s *2 \u00d7 2 \u00d7 2*.  Now, let\u2019s list the cubes of whole numbers until we reach numbers greater than 100: - *1\u00b3 = 1 \u00d7 1 \u00d7 1 = 1* - *2\u00b3 = 2 \u00d7 2 \u00d7 2 = 8* - *3\u00b3 = 3 \u00d7 3 \u00d7 3 = 27* - *4\u00b3 =\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 15,
+            "caption": "l the differences are the same",
+            "file": "figures/p14_22.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 42890,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-15",
+        "query": "how is area related to square numbers?",
+        "label": "normal",
+        "expect_keywords": [
+          "area",
+          "square"
+        ],
+        "answer_clip": "The area of a square is directly related to **square numbers** because a square number is simply the result of multiplying a number by itself\u2014just like how you calculate the area of a square. Imagine a square with each side measuring *n* units. To find its area, you multiply the length of one side by itself: *n \u00d7 n*, which is written as *n\u00b2* (read as \"n squared\"). For example, if a square has sides of 3 units, its area is *3 \u00d7 3 = 9 square units\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 5,
+            "caption": "numbers, as shown below",
+            "file": "figures/p4_4.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 29922,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-16",
+        "query": "what is the squre of 12?",
+        "label": "typo",
+        "expect_keywords": [
+          "144",
+          "square",
+          "12"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Square**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 940,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 5.5,
+          "bugs": [
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-17",
+        "query": "is square root of 2 a perfect square in this chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "perfect",
+          "square",
+          "not"
+        ],
+        "answer_clip": "**To Find** Is the square root of 2 considered a perfect square according to the chapter\u2019s definition?  **Given Information** - The number in question is **2**. - According to the chapter, a **perfect square** is a number obtained by multiplying an integer by itself (e.g., 7 \u00d7 7 = 49). - The **square root of 2** is a number \\( a \\) such that \\( a \\times a = 2 \\).  **Concept Behind It** The chapter defines a **perfect square** as a number that ca\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 34587,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M1-18",
+        "query": "did this chapter invent the steam engine?",
+        "label": "wrong",
+        "expect_keywords": [
+          "square",
+          "cube",
+          "math",
+          "not"
+        ],
+        "answer_clip": "No, **Chapter-1: A Square and a Cube** does *not* invent the steam engine\u2014it\u2019s actually about ancient mathematical ideas, not machines! The chapter focuses on how squares and cubes were understood in ancient India, like how the word *varga* (square) and *ghana* (cube) were used for both shapes *and* their mathematical powers (e.g., 4\u00b2 = 16, 3\u00b3 = 27). It also explains why we call them \"roots\" (like \u221a for square roots) because the Sanskrit word *m\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13021,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [
+            "forbidden content mentioned: steam"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "M1-19",
+        "query": "explain with steps how to check if 81 is a perfect square",
+        "label": "interactive",
+        "expect_keywords": [
+          "81",
+          "square",
+          "9"
+        ],
+        "answer_clip": "**To Find** How to determine whether 81 is a perfect square using prime factorization and grouping.  **Given Information** - The number to check: 81 - Definition of a perfect square: A number that can be expressed as the product of an integer multiplied by itself (e.g., \\( n \\times n \\)). - According to the textbook, if the prime factors of a number can be grouped into two identical groups, then the number is a perfect square.  **Concept Behind \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 31341,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M1-20",
+        "query": "what is the cube of fivve?",
+        "label": "typo",
+        "expect_keywords": [
+          "125",
+          "cube",
+          "5"
+        ],
+        "answer_clip": "The cube of a number means multiplying the number by itself three times. So, the cube of five is calculated as 5 \u00d7 5 \u00d7 5. First, multiply 5 by 5 to get 25, and then multiply that result by 5 again. This gives us 125, so the cube of five is **125**.  To understand this better, think of a cube as a 3D shape where each edge is 5 units long. The total number of tiny 1-unit cubes that fit inside this big cube is 125. This is why we call 125 a *perfec\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 21534,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "M1-01",
+        "source_query": "wait so what is a perfect square? like in simple words",
+        "query": "hold on, what do you mean by To Find?",
+        "derived": true,
+        "answer_clip": "**What is a perfect square?**  A perfect square is a number that you get when you multiply a whole number by itself. For example, if you take the number **4** and multiply it by itself (4 \u00d7 4), you get **16**. So, 16 is a perfect square because it\u2019s the square of 4. The textbook shows examples like 1, 4, 9, 16, 25, and so on\u2014these are all perfect squares because they\u2019re squares of natural numbers (1, 2, 3, 4, 5, etc.).  Think of it like building\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "Perfect Squares and Triangular Numbers",
+            "file": "figures/p6_9.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 18373,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-02",
+        "source_query": "what is a perfect cube then?",
+        "query": "ok but can you explain Given Information in simpler words?",
+        "derived": true,
+        "answer_clip": "**Hi Suneel!**  Let\u2019s break down the **Given Information** about perfect cubes in the simplest way possible\u2014just like we\u2019re solving a puzzle together.  ---  ### **What is a Perfect Cube?** A **perfect cube** is a number that you get when you multiply a whole number by itself **three times**. For example: - \\( 1 \\times 1 \\times 1 = 1 \\) \u2192 **1 is a perfect cube** (because \\( 1^3 = 1 \\)). - \\( 2 \\times 2 \\times 2 = 8 \\) \u2192 **8 is a perfect cube** (b\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 15,
+            "caption": "Compute successive differences over levels for perfect cubes until all the",
+            "file": "figures/p14_23.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12394,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-03",
+        "source_query": "can you show how cube numbers work with an example?",
+        "query": "is 2 \u00d7 2 \u00d7 2 = 8 actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Yes, **2 \u00d7 2 \u00d7 2 = 8** is absolutely in this chapter! The textbook itself introduces cube numbers by showing exactly this pattern on **page 12**, where it writes: *\"Consider the numbers 1, 8, 27, ... These numbers are called perfect cubes. Can you see why they are named so? Each of them is obtained by multiplying a number by itself three times. We note that 1 = 1 \u00d7 1 \u00d7 1, 8 = 2 \u00d7 2 \u00d7 2, 27 = 3 \u00d7 3 \u00d7 3.\"*  The chapter even uses this example to ex\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12619,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-04",
+        "source_query": "is 36 a perfect square? why?",
+        "query": "quiz me with one easy question just about The Formula",
+        "derived": true,
+        "answer_clip": "**To Find** We will quiz you on the formula and concept of perfect squares as explained in the chapter. You will identify whether a given number is a perfect square using prime factorization and the formula for perfect squares.  ---  **Given Information** - The chapter explains that a perfect square is a number that can be written as \\( n = a^2 \\), where \\( a \\) is an integer. - Prime factorization can help determine if a number is a perfect squ\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 18632,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-05",
+        "source_query": "what about 27 \u2014 square or cube?",
+        "query": "show me a figure or example related to 9",
+        "derived": true,
+        "answer_clip": "**27 is a perfect cube, but not a perfect square!** According to the chapter, a *perfect cube* is formed when a number is multiplied by itself *three times*\u2014like 3 \u00d7 3 \u00d7 3 = 27. The textbook even shows examples like 1 = 1\u00b3, 8 = 2\u00b3, and 27 = 3\u00b3, so 27 fits perfectly into this pattern. Think of it like stacking 3 layers of 9 squares each (since 9 is 3\u00b2), but because it\u2019s a cube, it\u2019s a 3D shape with equal length, width, and height\u2014just like a Rubi\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 29441,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-06",
+        "source_query": "how do i find square root of a perfect square?",
+        "query": "wait why is equal pairs important here?",
+        "derived": true,
+        "answer_clip": "The textbook explains that **equal pairs of prime factors** are important when checking if a number is a perfect square because a perfect square is formed by multiplying an integer by itself. Think of it like building a perfect square with blocks: if you can arrange the prime factors into pairs (like matching pairs of socks), you can group them to form a square. For example, take the number **324**. Its prime factors are \\( 2 \\times 2 \\times 3 \\\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 15048,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-07",
+        "source_query": "show a figure or pattern of squares from the book",
+        "query": "can you give one more real-life example of 4?",
+        "derived": true,
+        "answer_clip": "Imagine you\u2019re playing a game of **checkers** or **chess** on a board. The board itself is made up of small squares\u2014each square is a perfect square! If you count the squares along one edge of a standard checkerboard, you\u2019ll find there are **8 squares** in a row. Since a square has equal sides, the total number of tiny squares on the board is **8 \u00d7 8 = 64**, which is 8\u00b2. This is a real-life example of a perfect square: the entire checkerboard is \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12821,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 2.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 6.9,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-08",
+        "source_query": "why do we call it a square number?",
+        "query": "i still don't get Quick Check: \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down slowly:  The question was: *\"If a square has a side length of 4.5 units, what is its area (the square number)?\"* Here\u2019s how to think about it: - A square number is the **area** of a square when you multiply its side length by itself. For example, if the side is 4 units, the area is 4 \u00d7 4 = 16 square units. - Now, if the side is **4.5 units**, you multiply 4.5 by itself:   **4.5 \u00d7 4.5 = ?**   To make it easier, you can break i\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 23146,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-09",
+        "source_query": "quiz me: give one easy square question",
+        "query": "ok so what should i remember about 144 square meters for a test?",
+        "derived": true,
+        "answer_clip": "Here\u2019s what you should remember about **144 square meters** for your test, based on what the textbook teaches about squares:  The number **144** is a perfect square because it can be written as **12 \u00d7 12** (or 12\u00b2). This means a square garden with an area of 144 square meters has sides that are exactly **12 meters long**. The textbook shows how squares grow from their side lengths\u2014like 1\u00b2 = 1, 2\u00b2 = 4, 3\u00b2 = 9, and so on. For 144, you can think of\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 42527,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-10",
+        "source_query": "what is 8 cubed?",
+        "query": "that part about Cube sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Yes! You heard it right\u2014**8 cubed** means multiplying 8 by itself three times. According to the chapter, a perfect cube is a number like 1, 8, 27, or 64, which are obtained by multiplying a number by itself three times. So, 8 cubed is calculated like this:  **8 \u00d7 8 \u00d7 8 = 512** The chapter explains that 8 is a perfect cube because it\u2019s 2 \u00d7 2 \u00d7 2, and its cube (8\u00b3) is 512. Think of it like stacking 8 layers of 8 cubes in each dimension\u2014imagine a b\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 13526,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M1-11",
+        "source_query": "difference between square and cube in one line",
+        "query": "hold on, what do you mean by 2?",
+        "derived": true,
+        "answer_clip": "In the textbook, the notation **2 \u00d7 2 \u00d7 2** refers to multiplying the number **2** by itself **three times**. This is how we calculate a **cube** of a number. For example, when we write **2\u00b3** (read as \"2 cubed\"), it means **2 \u00d7 2 \u00d7 2 = 8**. The small number **3** (the superscript) tells us how many times we multiply the base number (2) by itself. So, **2\u00b3** is a way to show that 2 is being cubed.  Think of it like stacking layers of cubes. If y\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 58252,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-12",
+        "source_query": "are negative numbers perfect squares in this chapter?",
+        "query": "ok but can you explain Negative in simpler words?",
+        "derived": true,
+        "answer_clip": "Hi Suneel! Let\u2019s break this down in a way that makes sense.  In this chapter, **perfect squares** are defined as squares of **natural numbers** (like 1, 2, 3, ...). The textbook only talks about positive whole numbers and their squares\u2014so numbers like 1, 4, 9, 16, etc. It doesn\u2019t mention negative numbers at all.  But here\u2019s the key point: **If you square a negative number, you still get a positive result.** For example, (-3) \u00d7 (-3) = 9, which is\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 13211,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M1-13",
+        "source_query": "list three perfect squares between 1 and 100",
+        "query": "is 5 actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Yes, the number **5** is absolutely part of this chapter\u2014specifically, it appears in the context of **perfect squares and their properties**! The textbook shows examples like 1 + 3 + 5 + 7 + 9 = 25, where 5 is one of the odd numbers being added to reach a perfect square (25). This is a clever way to explore how perfect squares relate to sequences of odd numbers.  The chapter also connects numbers like 5 to **estimating square roots** and **group\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12423,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-14",
+        "source_query": "list three perfect cubes between 1 and 100",
+        "query": "quiz me with one easy question just about 2",
+        "derived": true,
+        "answer_clip": "Let\u2019s start with a simple question about perfect cubes, focusing on the number **2** as you asked.  The chapter explains that a perfect cube is a number like *1, 8, 27*, etc., which can be written as *n \u00d7 n \u00d7 n*. For example, *2 \u00d7 2 \u00d7 2 = 8*, so **8 is a perfect cube**. Now, here\u2019s your question: **What is the cube of 2?** In other words, if you multiply 2 by itself three times, what do you get?  Think of it like stacking identical boxes. If you\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 19044,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-15",
+        "source_query": "how is area related to square numbers?",
+        "query": "show me a figure or example related to Hint",
+        "derived": true,
+        "answer_clip": "The textbook explains that **square numbers** are directly connected to the **area of squares** because a square number is the result of multiplying a number by itself\u2014just like how you calculate the area of a square. For example, if a square has sides of length *n* units, its area is *n \u00d7 n* (or *n\u00b2*), which is a square number. Think of a square made up of tiny unit squares: a 3-unit square has 9 tiny squares (3 \u00d7 3), so its area is 9 square un\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 38336,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-16",
+        "source_query": "what is the squre of 12?",
+        "query": "wait why is Square important here?",
+        "derived": true,
+        "answer_clip": "In this chapter, **squares** are important because they help us understand how numbers grow when multiplied by themselves. The chapter starts by showing us *perfect squares*\u2014numbers like 1, 4, 9, 16, etc., which are the results of multiplying a whole number by itself (e.g., 4 = 2 \u00d7 2, 9 = 3 \u00d7 3). These squares aren\u2019t just random numbers; they follow patterns in their digits (like always ending with 0, 1, 4, 5, 6, or 9) and help us solve real-lif\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 36637,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-17",
+        "source_query": "is square root of 2 a perfect square in this chapter?",
+        "query": "can you give one more real-life example of To Find?",
+        "derived": true,
+        "answer_clip": "Let\u2019s imagine you\u2019re planning a **square-shaped garden** in your backyard. The chapter explains that a perfect square is a number that can be written as *side \u00d7 side*\u2014like 16 being 4 \u00d7 4. Now, suppose you want to know how long each side of your garden should be if the total area is **100 square meters**. This is exactly the kind of problem the chapter\u2019s \"To Find\" approach solves.  Here\u2019s how it works in real life: If your garden\u2019s area is 100 sq\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 20077,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-18",
+        "source_query": "did this chapter invent the steam engine?",
+        "query": "i still don't get root \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Let\u2019s break down the idea of a **root** in math\u2014especially square roots and cube roots\u2014using something you already know.  Imagine you have a **square number**, like 16. If you think of 16 as a square shape made of smaller squares (like a 4x4 grid), the **square root** is the length of one side of that square. So, 4 \u00d7 4 = 16, which means the square root of 16 is **4**. The word \"root\" comes from an old idea: just like a plant\u2019s root supports it, \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 60249,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "unexpected interactive panel",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "source_id": "M1-19",
+        "source_query": "explain with steps how to check if 81 is a perfect square",
+        "query": "ok so what should i remember about Concept Behind It for a test?",
+        "derived": true,
+        "answer_clip": "**Concept Behind It: Perfect Squares and Cube Roots (From the Textbook)**  According to the textbook, a **perfect square** is a number that can be expressed as the product of an integer multiplied by itself (e.g., \\( n \\times n \\)). For example, 16 is a perfect square because it is \\( 4 \\times 4 \\). The textbook also explains that the term *varga* (square) was used in ancient India to describe both the geometric shape of a square and the mathema\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 46487,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-20",
+        "source_query": "what is the cube of fivve?",
+        "query": "that part about First sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Ah, you\u2019re referring to the part on **square roots** from the textbook! Let me clarify what you might have heard or read. The chapter explains how to find the square root of a number, like 1936, by narrowing down the possible answers step by step. For example, it tells you that 1936 is between 40\u00b2 (1600) and 50\u00b2 (2500), so the square root must be between 40 and 50. Then, it uses a trick to check smaller ranges\u2014like comparing 45\u00b2 (2025) to 1936\u2014t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 49698,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 6.0,
+          "bugs": [
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 1
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "M1-01",
+        "query": "wait so what is a perfect square? like in simple words",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "answer_clip": "Got it! So a **perfect square** is just a number you get when you multiply a whole number by itself.  Like, 4 is a perfect square because 2 \u00d7 2 = 4. Or 9 is a perfect square because 3 \u00d7 3 = 9.  It\u2019s like a number that\u2019s a square of another number\u2014simple, right?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 11797,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-02",
+        "query": "what is a perfect cube then?",
+        "label": "normal",
+        "expect_keywords": [
+          "cube"
+        ],
+        "answer_clip": "Got it! A perfect cube is a number made by multiplying a whole number by itself three times.  Like, 8 is a perfect cube because 2 \u00d7 2 \u00d7 2 = 8. Or 27 is a perfect cube because 3 \u00d7 3 \u00d7 3 = 27.  It\u2019s like stacking cubes in layers\u2014each layer is a square, and the total cubes fit the cube\u2019s edge length cubed. So 4 units edge means 4 \u00d7 4 \u00d7 4 = 64 cubes.  Want to check if a number is a perfect cube? See if it\u2019s in the list: 1, 8, 27, 64, 125, and so on.",
+        "images": [
+          {
+            "figure": null,
+            "page": 15,
+            "caption": "Compute successive differences over levels for perfect cubes until all the",
+            "file": "figures/p14_23.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 16544,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-03",
+        "query": "can you show how cube numbers work with an example?",
+        "label": "interactive",
+        "expect_keywords": [
+          "cube"
+        ],
+        "answer_clip": "Got it! Let\u2019s see cube numbers in action.  Take the number **3**. Its cube is 3 \u00d7 3 \u00d7 3 = 27. So, 27 is a cube number because it\u2019s 3 multiplied by itself three times.  Another example: **5** cubed is 5 \u00d7 5 \u00d7 5 = 125. That\u2019s how we find cube numbers\u2014just multiply the number by itself twice.  Want to try one? Let\u2019s say 4. What\u2019s its cube? Pause and think.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 98197,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-04",
+        "query": "is 36 a perfect square? why?",
+        "label": "normal",
+        "expect_keywords": [
+          "36",
+          "square",
+          "6"
+        ],
+        "answer_clip": "Yes, 36 is a perfect square.  Let me show you why. We know that a perfect square is when you multiply a whole number by itself.  So, what number times itself gives 36? Let\u2019s think: 6 \u00d7 6 = 36. That\u2019s exactly what we need!  So, 36 is a perfect square because 6\u00b2 = 36.  You can also check by looking at the square root. The square root of 36 is 6, and 6 is a whole number. That\u2019s another way to confirm it\u2019s a perfect square.  Does that make sense?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 11909,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M1-05",
+        "query": "what about 27 \u2014 square or cube?",
+        "label": "normal",
+        "expect_keywords": [
+          "27",
+          "cube"
+        ],
+        "answer_clip": "Ah, great question!  27 is a **perfect cube** because it\u2019s made by multiplying 3 \u00d7 3 \u00d7 3. That\u2019s how cubes work\u2014three same numbers multiplied together.  A square would be like 5 \u00d7 5 = 25. But 27? That\u2019s a cube, not a square. Nice catch!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12231,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-06",
+        "query": "how do i find square root of a perfect square?",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "root"
+        ],
+        "answer_clip": "Got it! Finding the square root of a perfect square is easy.  First, check if the number is a perfect square. For example, 49 is a perfect square because 7 \u00d7 7 = 49.  Now, to find its square root, just ask: *\"What number multiplied by itself gives this perfect square?\"*  For 49, it\u2019s 7 because 7 \u00d7 7 = 49. For 64, it\u2019s 8 because 8 \u00d7 8 = 64.  The chapter says we\u2019ll only use the positive root here. So, \u221a49 = 7, \u221a64 = 8.  Want to try one together? P\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "Perfect Squares and Triangular Numbers",
+            "file": "figures/p6_9.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 16464,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-07",
+        "query": "show a figure or pattern of squares from the book",
+        "label": "diagram",
+        "expect_keywords": [
+          "square",
+          "figure",
+          "pattern"
+        ],
+        "answer_clip": "Oh, I see! The book shows a table of squares on page 4.  Look at the first few squares they wrote: 1\u00b2 = 1, 2\u00b2 = 4, 3\u00b2 = 9, 4\u00b2 = 16, and so on. The pattern is just drawing dots or blocks in rows and columns.  For example, 4 is a square because you can arrange 4 dots in a 2x2 grid. The book\u2019s table shows how squares grow\u2014try filling in the missing ones!  Want me to explain how to spot the pattern in the table?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 17438,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.2,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-08",
+        "query": "why do we call it a square number?",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "answer_clip": "Ah, that\u2019s a great question!  Imagine a square with sides of length 2 units. You count how many tiny squares fit inside\u2014 that\u2019s 2 \u00d7 2 = 4. So, 4 is a *square number* because it\u2019s the area of a square.  Same for 9: a 3-unit square has 3 \u00d7 3 = 9 tiny squares inside. That\u2019s why we call these numbers *square*\u2014they come from squaring whole numbers!  The chapter even shows it with little tables\u2014 1 \u00d7 1 = 1, 2 \u00d7 2 = 4, and so on. It\u2019s like counting the \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 15498,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-09",
+        "query": "quiz me: give one easy square question",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "?"
+        ],
+        "answer_clip": "Got it! Let\u2019s start with a simple square question.  What is the square of 7? That means you multiply 7 by itself. So, 7 \u00d7 7 = ?  Try to tell me the answer. I\u2019ll check if it\u2019s right.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 9284,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-10",
+        "query": "what is 8 cubed?",
+        "label": "normal",
+        "expect_keywords": [
+          "512",
+          "cube",
+          "8"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Cube**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 571,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 6.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 5.9,
+          "bugs": [
+            "voice transcript thin for interactive topic"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-11",
+        "query": "difference between square and cube in one line",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "cube"
+        ],
+        "answer_clip": "A square is when you multiply a number by itself once. A cube is when you multiply a number by itself three times.  Like, 4 is a square (2 \u00d7 2). But 8 is a cube (2 \u00d7 2 \u00d7 2).",
+        "images": [
+          {
+            "figure": null,
+            "page": 15,
+            "caption": "l the differences are the same",
+            "file": "figures/p14_22.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 17228,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-12",
+        "query": "are negative numbers perfect squares in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "square",
+          "negative",
+          "not"
+        ],
+        "answer_clip": "This chapter only talks about perfect squares of **natural numbers**\u2014like 1, 4, 9, 16.  Negative numbers aren\u2019t even mentioned here. For example, -4 isn\u2019t a perfect square in this book. The chapter focuses on squares of positive whole numbers only.  So no, negative numbers aren\u2019t perfect squares in this chapter. We\u2019ll learn more about squares later, but for now\u2014just natural numbers.",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 9750,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-13",
+        "query": "list three perfect squares between 1 and 100",
+        "label": "normal",
+        "expect_keywords": [
+          "square"
+        ],
+        "answer_clip": "Got it! Perfect squares are numbers you get by multiplying a whole number by itself.  Between 1 and 100, here are three perfect squares: **4** (because 2 \u00d7 2 = 4), **9** (because 3 \u00d7 3 = 9), and **16** (because 4 \u00d7 4 = 16).  Want to check another one? Or should we see how many perfect squares are between 1 and 100?",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 18571,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-14",
+        "query": "list three perfect cubes between 1 and 100",
+        "label": "normal",
+        "expect_keywords": [
+          "cube"
+        ],
+        "answer_clip": "Got it! Let\u2019s find three perfect cubes between 1 and 100.  From the chapter, we know: 1 = 1 \u00d7 1 \u00d7 1 \u2192 **1 is a perfect cube** 8 = 2 \u00d7 2 \u00d7 2 \u2192 **8 is a perfect cube** 27 = 3 \u00d7 3 \u00d7 3 \u2192 **27 is a perfect cube**  The next one, 4 \u00d7 4 \u00d7 4 = 64, is already above 100. So, your three perfect cubes are **1, 8, and 27**.  Want to check how we know these are cubes?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 15592,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-15",
+        "query": "how is area related to square numbers?",
+        "label": "normal",
+        "expect_keywords": [
+          "area",
+          "square"
+        ],
+        "answer_clip": "Ah, great question!  Area of a square is *exactly* how square numbers work. If a square has sides of length **n**, its area is **n \u00d7 n**\u2014that\u2019s the square number. Like, a 3-unit square has area 3 \u00d7 3 = **9 square units**. So square numbers *measure* how much space a square takes up!  The chapter shows this clearly with the table\u2014 1-unit side \u2192 1 square unit (1\u00b2). 2-unit side \u2192 4 square units (2\u00b2). That\u2019s why they\u2019re called *square* numbers!  Doe\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 16057,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M1-16",
+        "query": "what is the squre of 12?",
+        "label": "typo",
+        "expect_keywords": [
+          "144",
+          "square",
+          "12"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Square**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 739,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.3,
+          "bugs": [
+            "voice transcript thin for interactive topic"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M1-17",
+        "query": "is square root of 2 a perfect square in this chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "perfect",
+          "square",
+          "not"
+        ],
+        "answer_clip": "No, the square root of 2 is **not** a perfect square in this chapter.  A perfect square is a number like 4, 9, or 16\u2014numbers you get by multiplying a whole number by itself. The square root of 2 means: what number times itself gives 2? But there\u2019s no whole number that does that.  The chapter says perfect squares have integer roots\u2014like 7 for 49 or 8 for 64. 2 isn\u2019t like that. It\u2019s not a perfect square.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 7398,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M1-18",
+        "query": "did this chapter invent the steam engine?",
+        "label": "wrong",
+        "expect_keywords": [
+          "square",
+          "cube",
+          "math",
+          "not"
+        ],
+        "answer_clip": "No, this chapter isn\u2019t about inventing machines like steam engines. It\u2019s about squares and cubes\u2014numbers like 4 (2\u00d72) or 8 (2\u00d72\u00d72). The chapter talks about ancient Indian math terms like *varga* (square) and *ghana* (cube). It also explains roots\u2014like how *mula* (root) became our word for square/cube roots. Think of it like measuring land or solving puzzles, not building engines.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 5877,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [
+            "forbidden content mentioned: steam"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "M1-19",
+        "query": "explain with steps how to check if 81 is a perfect square",
+        "label": "interactive",
+        "expect_keywords": [
+          "81",
+          "square",
+          "9"
+        ],
+        "answer_clip": "Okay, let\u2019s check if 81 is a perfect square.  First, let\u2019s see if we can find a number that, when multiplied by itself, gives 81.  Try 9 \u00d7 9. That\u2019s 81. So, 9 \u00d7 9 = 81.  That means 81 is a perfect square because it\u2019s the square of 9.  Another way is to use prime factors, like in the textbook. Break down 81 into primes: 81 = 3 \u00d7 3 \u00d7 3 \u00d7 3. Now, group them into pairs: (3 \u00d7 3) \u00d7 (3 \u00d7 3). Each pair is the same, so it\u2019s a perfect square.  So, 81 is d\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "Perfect Squares and Triangular Numbers",
+            "file": "figures/p6_9.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 10306,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M1-20",
+        "query": "what is the cube of fivve?",
+        "label": "typo",
+        "expect_keywords": [
+          "125",
+          "cube",
+          "5"
+        ],
+        "answer_clip": "Oh, you mean the cube of **five**?  That\u2019s 5 \u00d7 5 \u00d7 5. First, 5 \u00d7 5 is 25. Then, 25 \u00d7 5 is **125**.  So, the cube of five is **125**.  The chapter even shows this\u20145\u00b3 = 125. You\u2019ll see it in the table on page 12 too.  Want to check how we got 125?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12718,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "M1-01",
+        "source_query": "wait so what is a perfect square? like in simple words",
+        "query": "hold on, what do you mean by perfect square?",
+        "derived": true,
+        "answer_clip": "**To Find** What a perfect square is, using the simplest explanation from the textbook.  **Given Information** - A perfect square is a number obtained by multiplying a natural number by itself. - Examples given in the textbook: 1, 4, 9, 16, 25, etc. - The textbook defines it as: *\"A number obtained by multiplying a number by itself is called a square number. Squares of natural numbers are called perfect squares.\"*  ---  **Concept Behind It** The\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "Perfect Squares and Triangular Numbers",
+            "file": "figures/p6_9.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 19939,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-02",
+        "source_query": "what is a perfect cube then?",
+        "query": "ok but can you explain 2 in simpler words?",
+        "derived": true,
+        "answer_clip": "Okay, so a perfect cube is just a number you get when you multiply a whole number by itself **three times**.  Like, 8 is a perfect cube because 2 \u00d7 2 \u00d7 2 = 8. Or 27 is a perfect cube because 3 \u00d7 3 \u00d7 3 = 27.  It\u2019s like stacking cubes\u2014each layer is a square, and the total cubes fit the edge length cubed. Got it?",
+        "images": [
+          {
+            "figure": null,
+            "page": 15,
+            "caption": "Compute successive differences over levels for perfect cubes until all the",
+            "file": "figures/p14_23.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 7057,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-03",
+        "source_query": "can you show how cube numbers work with an example?",
+        "query": "is Pause actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, I see why this might sound confusing\u2014it\u2019s not about a *pause* at all! This chapter is all about **square numbers** and **cube numbers**\u2014like 4 is a square (2\u00d72) or 8 is a cube (2\u00d72\u00d72).  The locker puzzle is a fun *story* to help us think about patterns. But the math part? It\u2019s just about squares and cubes\u2014numbers like 1, 4, 9 (squares) or 1, 8, 27 (cubes). No \"pause\" is involved here\u2014just numbers and their roots!  Want to see how squares wor\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 6772,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-04",
+        "source_query": "is 36 a perfect square? why?",
+        "query": "quiz me with one easy question just about Does",
+        "derived": true,
+        "answer_clip": "Here\u2019s your easy quiz question:  **\"Look at the number 156. Can you tell if it\u2019s a perfect square? Just tell me yes or no\u2014no need to explain yet!\"**  (It\u2019s from the chapter\u2019s examples, so you\u2019ll know right away!)  Want to check your answer? I\u2019ll explain after.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 5151,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-05",
+        "source_query": "what about 27 \u2014 square or cube?",
+        "query": "show me a figure or example related to 5",
+        "derived": true,
+        "answer_clip": "Ah, for the number **5**\u2014here\u2019s a quick visual idea from the book!  Look at this: **1 + 3 + 5 + 7 + 9 = 25** That\u2019s five odd numbers adding up to 25\u2014like a little puzzle!  Or think of squares: **5 \u00d7 5 = 25**\u2014that\u2019s how we *see* 5 squared. The book shows how numbers can fit together in patterns. Want me to show how 5 fits into cubes too?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 23692,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-06",
+        "source_query": "how do i find square root of a perfect square?",
+        "query": "wait why is 7 important here?",
+        "derived": true,
+        "answer_clip": "Ah, 7 is important here because it\u2019s the *side length* of a square. The chapter says: if a square has an area of 49 cm\u00b2, its side is 7 cm. That\u2019s why 7 \u00d7 7 = 49\u2014it\u2019s the *square root* of 49.  Think of it like this: the square root tells you how big each side is. Without 7, we wouldn\u2019t know the square\u2019s edge length!  Want to check another example? Try 64\u2014what\u2019s its side length?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 45841,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-07",
+        "source_query": "show a figure or pattern of squares from the book",
+        "query": "can you give one more real-life example of 4?",
+        "derived": true,
+        "answer_clip": "Oh, got it! Here\u2019s another real-life example of **4 as a perfect square**:  Think of a **checkerboard**\u2014it\u2019s made of 4 rows and 4 columns of squares. That\u2019s 16 small squares in total. But just look at **one big square** on the board. It\u2019s formed by 2 \u00d7 2 small squares. So, the area of that big square is **4**\u2014because 2 \u00d7 2 = 4.  The book\u2019s table even shows 2\u00b2 = 4. That\u2019s your checkerboard square! Want to try another?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12461,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.6,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-08",
+        "source_query": "why do we call it a square number?",
+        "query": "i still don't get 1 \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s take this step by step\u2014 you\u2019re asking about *why* we call these numbers \"square numbers.\"  Look at this from the book: If you add up the first **n** odd numbers, you always get a perfect square.  Like: 1 (first odd) = 1 = 1\u00b2 1 + 3 = 4 = 2\u00b2 1 + 3 + 5 = 9 = 3\u00b2  That\u2019s why they\u2019re called *square numbers*\u2014 because they\u2019re built by adding odd numbers, just like how squares grow in layers!  For example, 25 is a square number because 1 + 3 \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 8856,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-09",
+        "source_query": "quiz me: give one easy square question",
+        "query": "ok so what should i remember about you multiply 7 by itself for a test?",
+        "derived": true,
+        "answer_clip": "Ah, I see what you mean now!  When you multiply a number by itself\u2014like 7 \u00d7 7\u2014 you\u2019re finding its **square**. The chapter shows how adding odd numbers gives squares: 1 + 3 + 5 = 9 (which is 3 \u00d7 3). So for 7 \u00d7 7, you\u2019d add 1 + 3 + 5 + 7 = 16? Wait, no\u2014 that\u2019s 4 \u00d7 4.  Actually, the key is just: **multiply the number by itself**. 7 \u00d7 7 = 49. That\u2019s all you need to remember for the test. The chapter\u2019s examples show patterns, but for now, just do the\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "Perfect Squares and Triangular Numbers",
+            "file": "figures/p6_9.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 17102,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-10",
+        "source_query": "what is 8 cubed?",
+        "query": "that part about Cube sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I see why it\u2019s confusing! Let me make it super clear.  A **cube** is when you multiply a number by itself *three times*\u2014not just twice like a square. So, **8 cubed** means 2 \u00d7 2 \u00d7 2 = 8. That\u2019s why 8 is a perfect cube\u2014it\u2019s made by multiplying 2 by itself three times.  Think of it like stacking blocks. If you have 2 layers of 2 blocks each, and stack them three times, you get 8 blocks total. That\u2019s a cube!  Now, the chapter shows examples lik\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 18792,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-11",
+        "source_query": "difference between square and cube in one line",
+        "query": "hold on, what do you mean by 2?",
+        "derived": true,
+        "answer_clip": "In the chapter, when we see something like **2\u00b2**, the little **2** written at the top right is called a *power* or *exponent*. It tells us how many times we multiply the number by itself. So, **2\u00b2** means **2 \u00d7 2 = 4**. The **2** is the *base* (the number being multiplied), and the **2** in the exponent means we multiply it *twice*.  For example, **3\u00b2** is **3 \u00d7 3 = 9**, and **5\u00b2** is **5 \u00d7 5 = 25**. The chapter uses this idea to explain *squar\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 16732,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-12",
+        "source_query": "are negative numbers perfect squares in this chapter?",
+        "query": "ok but can you explain 16 in simpler words?",
+        "derived": true,
+        "answer_clip": "Oh, 16 is a **perfect square**! It\u2019s because 4 \u00d7 4 = 16. So, 16 is the square of 4.  The chapter calls these \"perfect squares\"\u2014numbers you get by multiplying a whole number by itself.",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "A Square and A Cube",
+            "file": "figures/p6_10.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 7904,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-13",
+        "source_query": "list three perfect squares between 1 and 100",
+        "query": "is 1 actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, I see why this is confusing! The chapter *does* talk about perfect squares\u2014like 25, 16, 81, and even 1 (because 1 \u00d7 1 = 1).  The game at the start shows Aribam and Bijou using perfect squares (25, 81, 250), and later it mentions 121 and 144 as perfect squares. So yes, **1 is absolutely in this chapter**\u2014it\u2019s just the smallest perfect square!  Think of it like counting steps: 1 is the first step (1 \u00d7 1), then 4 (2 \u00d7 2), 9 (3 \u00d7 3), and so on. \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 5722,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-14",
+        "source_query": "list three perfect cubes between 1 and 100",
+        "query": "quiz me with one easy question just about 100",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy quiz question about **100**:  *\"Is 100 a perfect cube? Why or why not?\"*  Hint: Think about what makes a number a perfect cube. (You already know 1, 8, 27 are cubes\u2014what\u2019s next?)",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 7787,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-15",
+        "source_query": "how is area related to square numbers?",
+        "query": "show me a figure or example related to 1",
+        "derived": true,
+        "answer_clip": "Ah, I see you want to see the tiny squares figure!  The chapter shows a big square made of smaller squares. For example, a 2\u00d72 square has **4 tiny squares** inside it. A 3\u00d73 square has **9 tiny squares**\u2014that\u2019s 3\u00b2!  The picture isn\u2019t here right now, but you can imagine: Draw a big square and split it into equal smaller squares. Count them\u2014the total is the square number!  Want me to explain how to count them step-by-step?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 13218,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-16",
+        "source_query": "what is the squre of 12?",
+        "query": "wait why is Square important here?",
+        "derived": true,
+        "answer_clip": "Ah, great question! Here\u2019s why squares are important in this chapter.  The chapter shows how adding certain numbers gives perfect squares. Like 3 + 6 = 9, and 9 is a square (3\u00b2). This helps arrange numbers in a row or circle where every pair adds up to a square.  It\u2019s like a puzzle\u2014using squares as clues to organize numbers. That\u2019s why squares are key here!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 11645,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M1-17",
+        "source_query": "is square root of 2 a perfect square in this chapter?",
+        "query": "can you give one more real-life example of not?",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s a real-life example from the chapter:  Think of a **grid**\u2014like a chessboard. If you have a square chessboard with **area 144 squares**, its side length is 12 squares. But if you have a **rectangle** that\u2019s not a perfect square\u2014like 12 by 15\u2014 you can\u2019t find a whole number side that gives that exact area. That\u2019s like **not** being a perfect square!  So, 12\u00d715 isn\u2019t a perfect square\u2014just like 156 in the textbook.",
+        "images": [
+          {
+            "figure": null,
+            "page": 7,
+            "caption": "Perfect Squares and Triangular Numbers",
+            "file": "figures/p6_9.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 6303,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M1-18",
+        "source_query": "did this chapter invent the steam engine?",
+        "query": "i still don't get 4 \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Oh, I see! You\u2019re stuck on how *4* fits into squares. Look\u2014this chapter shows **4 \u00d7 4 = 16**. That\u2019s a square because you\u2019re multiplying the same number by itself. So *4* isn\u2019t the answer\u2014it\u2019s the *side* of the square.  Imagine a square tile with 4 dots on each side. Count all the dots inside\u2014you get 16. That\u2019s why we call it a *perfect square* (4 \u00d7 4 = 16).  The number *4* is just the length of one side. The *square* is the whole 16 dots. Does \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 6054,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-19",
+        "source_query": "explain with steps how to check if 81 is a perfect square",
+        "query": "ok so what should i remember about Another for a test?",
+        "derived": true,
+        "answer_clip": "Ah, you mean the **\"Concept Behind It\"**\u2014the trickiest part!  Here\u2019s what to remember for the test: 1. **Last digit matters**: If a number ends with 1 or 9, its square root ends with 1 or 9.    If it ends with 6, the square root ends with 4 or 6.  2. **Estimate first**: Find two perfect squares around your number.    For example, 250 is between 225 (15\u00b2) and 256 (16\u00b2).    So, the square root is between 15 and 16.  3. **Check the middle**: Use nu\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 15326,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M1-20",
+        "source_query": "what is the cube of fivve?",
+        "query": "that part about 25 sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I see what\u2019s confusing you!  In the chapter, Aribam says **25**, and Bijou replies with **5**\u2014 because 5 \u00d7 5 = 25. That\u2019s correct! You heard it right.  The game is about perfect squares\u2014numbers like 25, which are squares of whole numbers (5 \u00d7 5).  So when Aribam says 25, Bijou gives the square root\u20145. That\u2019s how it works!  Want me to show another example? Like 36? Its root is 6.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10445,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ]
+  },
+  "tutor_avg": 8.67,
+  "voice_avg": 8.46
+}

@@ -25,6 +25,10 @@ LLM_API_KEY = _env_first("LLM_API_KEY", "MISTRAL_API_KEY") or None
 LLM_MODEL = _env_first("LLM_MODEL", "MISTRAL_MODEL", default="mistral-small-latest")
 LLM_TEMPERATURE = float(_env_first("LLM_TEMPERATURE", "MISTRAL_TEMPERATURE", default="0.35"))
 LLM_MAX_TOKENS = int(_env_first("LLM_MAX_TOKENS", "MISTRAL_MAX_TOKENS", default="1024"))
+# Mathematics chat needs prose + ```math-lesson``` JSON — 1024 often truncates mid-fence.
+MATH_CHAT_MAX_TOKENS = int(os.environ.get("MATH_CHAT_MAX_TOKENS", "2048"))
+# Ask AI Tutor: small/medium replies only (text + voice share this budget).
+ASSISTANT_MAX_TOKENS = int(os.environ.get("ASSISTANT_MAX_TOKENS", "512"))
 
 # Optional per-feature model overrides (empty → LLM_MODEL).
 LLM_CHAT_MODEL = _env_first("LLM_CHAT_MODEL")
@@ -192,14 +196,17 @@ CHUNK_OVERLAP_TOKENS = int(os.environ.get("CHUNK_OVERLAP_TOKENS", "51"))
 # Top-k chunks sent to the LLM (typical practice: 3–5).
 RETRIEVAL_K = int(os.environ.get("RETRIEVAL_K", "5"))
 
-# Voice mode: smaller retrieval for conversational answers.
+# Voice mode: keep k small for narrow questions; heading-aware / broad
+# retrieval expands coverage without raising this for every turn.
 VOICE_RETRIEVAL_K = int(os.environ.get("VOICE_RETRIEVAL_K", "3"))
 VOICE_CONTEXT_CHAR_BUDGET = int(os.environ.get("VOICE_CONTEXT_CHAR_BUDGET", "6000"))
-VOICE_MAX_TOKENS = int(os.environ.get("VOICE_MAX_TOKENS", "120"))
+# Must stay above VOICE_PROMPT_EXPAND_WORDS in *tokens* (math symbols burn
+# extra). 220 cut Class 8 explanations mid-sentence ("Want an example? Let's").
+VOICE_MAX_TOKENS = int(os.environ.get("VOICE_MAX_TOKENS", "400"))
 VOICE_EARLY_IMAGE_MIN_CHARS = int(os.environ.get("VOICE_EARLY_IMAGE_MIN_CHARS", "40"))
 # Spoken-turn word caps injected into voice prompts (not hard token limits)
-VOICE_PROMPT_MAX_WORDS = int(os.environ.get("VOICE_PROMPT_MAX_WORDS", "75"))
-VOICE_PROMPT_EXPAND_WORDS = int(os.environ.get("VOICE_PROMPT_EXPAND_WORDS", "100"))
+VOICE_PROMPT_MAX_WORDS = int(os.environ.get("VOICE_PROMPT_MAX_WORDS", "110"))
+VOICE_PROMPT_EXPAND_WORDS = int(os.environ.get("VOICE_PROMPT_EXPAND_WORDS", "160"))
 # Phase 6 — cold-start overlap + HTTP fallback TTS prefetch
 VOICE_EMBEDDING_WARMUP = os.environ.get("VOICE_EMBEDDING_WARMUP", "true").lower() in (
     "1",
@@ -213,11 +220,21 @@ VOICE_HTTP_TTS_PREFETCH = os.environ.get("VOICE_HTTP_TTS_PREFETCH", "true").lowe
     "yes",
 )
 
+# Voice conversational affect engine (hybrid regex → BGE → LLM)
+VOICE_AFFECT_ENGINE = _env_bool("VOICE_AFFECT_ENGINE", "true")
+VOICE_AFFECT_LLM_FALLBACK = _env_bool("VOICE_AFFECT_LLM_FALLBACK", "true")
+VOICE_NATURAL_CHECKINS = _env_bool("VOICE_NATURAL_CHECKINS", "false")
+VOICE_LLM_TEMPERATURE_DIALOGUE = float(
+    os.environ.get("VOICE_LLM_TEMPERATURE_DIALOGUE", "0.45")
+)
+
 # Rough cap on retrieved context size (~4k tokens; avoids huge prompts / latency).
 CONTEXT_CHAR_BUDGET = int(os.environ.get("CONTEXT_CHAR_BUDGET", "14000"))
 
 # Related textbook diagrams returned with chapter-aware answers (ranked).
 TOP_RELATED_IMAGES = int(os.environ.get("TOP_RELATED_IMAGES", "3"))
+# Cap when student asks to list all chapter figures (DB catalog short-circuit).
+MAX_CHAPTER_FIGURE_LIST = int(os.environ.get("MAX_CHAPTER_FIGURE_LIST", "24"))
 # Minimum fused relevance score (weighted CLIP+page+keywords; typical good hit ≈ 22–32).
 MIN_IMAGE_RELEVANCE_SCORE = float(os.environ.get("MIN_IMAGE_RELEVANCE_SCORE", "22"))
 # Drop candidates scoring below this fraction of the top hit (dynamic count).
@@ -309,6 +326,19 @@ DISABLE_PAGE_PROXIMITY_FALLBACK = os.environ.get(
 ENABLE_VISUAL_INTENT_DETECTION = os.environ.get(
     "ENABLE_VISUAL_INTENT_DETECTION", "true"
 ).lower() in ("1", "true", "yes")
+
+# ChatGPT-style final image pick: retrieve candidates, LLM-select against Q+A.
+ENABLE_LLM_IMAGE_SELECT = os.environ.get(
+    "ENABLE_LLM_IMAGE_SELECT", "true"
+).lower() in ("1", "true", "yes")
+LLM_IMAGE_SELECT_CANDIDATES = int(os.environ.get("LLM_IMAGE_SELECT_CANDIDATES", "12"))
+LLM_IMAGE_SELECT_MAX = int(os.environ.get("LLM_IMAGE_SELECT_MAX", "5"))
+LLM_IMAGE_SELECT_MIN_CONFIDENCE = float(
+    os.environ.get("LLM_IMAGE_SELECT_MIN_CONFIDENCE", "0.65")
+)
+LLM_IMAGE_SELECT_TIMEOUT_SEC = float(
+    os.environ.get("LLM_IMAGE_SELECT_TIMEOUT_SEC", "4")
+)
 
 # Frontend defers figure blocks until safe markdown boundaries (see stream-safe util).
 ENABLE_STREAM_SAFE_INSERTION = os.environ.get(

@@ -1,0 +1,276 @@
+{
+  "slug": "math_ch1_square_cube",
+  "subject": "Mathematics",
+  "chapter_id": "38",
+  "chapter": "Chapter-1 : A SQUARE AND A CUBE",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "M1-01",
+      "query": "wait so what is a perfect square? like in simple words",
+      "label": "normal",
+      "expect_keywords": [
+        "square"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-02",
+      "query": "what is a perfect cube then?",
+      "label": "normal",
+      "expect_keywords": [
+        "cube"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-03",
+      "query": "can you show how cube numbers work with an example?",
+      "label": "interactive",
+      "expect_keywords": [
+        "cube"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-04",
+      "query": "is 36 a perfect square? why?",
+      "label": "normal",
+      "expect_keywords": [
+        "36",
+        "square",
+        "6"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-05",
+      "query": "what about 27 \u2014 square or cube?",
+      "label": "normal",
+      "expect_keywords": [
+        "27",
+        "cube"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-06",
+      "query": "how do i find square root of a perfect square?",
+      "label": "normal",
+      "expect_keywords": [
+        "square",
+        "root"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-07",
+      "query": "show a figure or pattern of squares from the book",
+      "label": "diagram",
+      "expect_keywords": [
+        "square",
+        "figure",
+        "pattern"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-08",
+      "query": "why do we call it a square number?",
+      "label": "normal",
+      "expect_keywords": [
+        "square"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-09",
+      "query": "quiz me: give one easy square question",
+      "label": "normal",
+      "expect_keywords": [
+        "square",
+        "?"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-10",
+      "query": "what is 8 cubed?",
+      "label": "normal",
+      "expect_keywords": [
+        "512",
+        "cube",
+        "8"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-11",
+      "query": "difference between square and cube in one line",
+      "label": "normal",
+      "expect_keywords": [
+        "square",
+        "cube"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-12",
+      "query": "are negative numbers perfect squares in this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "square",
+        "negative",
+        "not"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-13",
+      "query": "list three perfect squares between 1 and 100",
+      "label": "normal",
+      "expect_keywords": [
+        "square"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-14",
+      "query": "list three perfect cubes between 1 and 100",
+      "label": "normal",
+      "expect_keywords": [
+        "cube"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-15",
+      "query": "how is area related to square numbers?",
+      "label": "normal",
+      "expect_keywords": [
+        "area",
+        "square"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-16",
+      "query": "what is the squre of 12?",
+      "label": "typo",
+      "expect_keywords": [
+        "144",
+        "square",
+        "12"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-17",
+      "query": "is square root of 2 a perfect square in this chapter?",
+      "label": "wrong",
+      "expect_keywords": [
+        "perfect",
+        "square",
+        "not"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-18",
+      "query": "did this chapter invent the steam engine?",
+      "label": "wrong",
+      "expect_keywords": [
+        "square",
+        "cube",
+        "math",
+        "not"
+      ],
+      "forbidden": [
+        "steam"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "M1-19",
+      "query": "explain with steps how to check if 81 is a perfect square",
+      "label": "interactive",
+      "expect_keywords": [
+        "81",
+        "square",
+        "9"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M1-20",
+      "query": "what is the cube of fivve?",
+      "label": "typo",
+      "expect_keywords": [
+        "125",
+        "cube",
+        "5"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    }
+  ]
+}

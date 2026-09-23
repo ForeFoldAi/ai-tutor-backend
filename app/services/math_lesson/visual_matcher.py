@@ -64,14 +64,39 @@ def build_visualization_query(
 # Topic + visualization affinity boosts (query substring checks).
 _AFFINITY: list[tuple[re.Pattern[str], str, int]] = [
     (re.compile(r"\bcircles?\b", re.I), "circle", 90),
-    (re.compile(r"\bcircles?\b", re.I), "circle-tangent", 85),
+    (re.compile(r"\b(quarter\s+turns?|half\s+turns?|full\s+turns?|turns?\s+equal)\b", re.I), "circle", 95),
+    (re.compile(r"\b(sector|circular\s+segment|areas?\s+related\s+to\s+circles?|segment\s+of\s+(?:a\s+)?circle)\b", re.I), "circle", 100),
     (re.compile(r"\b(tangent|point\s*of\s*contact)\b", re.I), "circle-tangent", 90),
+    (re.compile(r"\b(chord|angles?\s+subtended)\b", re.I), "circle", 85),
     (re.compile(r"\b(die|dice)\b", re.I), "probability-dice", 90),
     (re.compile(r"\b(coin|toss|flip)\b", re.I), "probability-coin", 85),
     (re.compile(r"\b(even|odd)\s+number\b.*\b(die|dice)\b|\b(die|dice)\b.*\b(even|odd)\b", re.I), "probability-dice", 95),
-    (re.compile(r"\b(solve|find\s+(?:the\s+)?(?:value|number)|linear\s+equation|equation)\b", re.I), "linear-graph", 75),
-    (re.compile(r"\b\d*x\s*[\+\-]\s*\d+\s*=|[a-z]\s*[\+\-]\s*\d+\s*=", re.I), "linear-graph", 80),
-    (re.compile(r"\b(cost|pens?|rupees?|rs\.?|price)\b.*\b(find|solve)\b", re.I), "linear-graph", 70),
+    (re.compile(r"\b(solve|find\s+(?:the\s+)?(?:value|number)|linear\s+equation|equation)\b", re.I), "algebra-stepper", 80),
+    (re.compile(r"\b\d*x\s*[\+\-]\s*\d+\s*=|[a-z]\s*[\+\-]\s*\d+\s*=", re.I), "algebra-stepper", 85),
+    (re.compile(r"\b(cost|pens?|rupees?|rs\.?|price)\b.*\b(find|solve)\b", re.I), "algebra-stepper", 70),
+    (re.compile(r"\b(compound\s+interest|discount|GST|tax)\b", re.I), "compound-interest-visual", 90),
+    (re.compile(r"\b(angle\s+of\s+elevation|heights?\s+and\s+distances?)\b", re.I), "heights-distances-scene", 95),
+    (re.compile(r"\b(quadratic|parabola|discriminant)\b", re.I), "linear-graph", 90),
+    (re.compile(r"\b(simplif(?:y|ying)|transpose)\b", re.I), "algebra-stepper", 85),
+    (re.compile(r"\by\s*=\s*mx|slope|intercept\b", re.I), "linear-graph", 80),
+    (
+        re.compile(
+            r"\b(to\s+the\s+power|exponent|exponents?|powers?\s+of|"
+            r"multipl(?:y|ied)\s+by\s+itself|\d+\s*\^\s*\d+)\b",
+            re.I,
+        ),
+        "concept-explorer",
+        95,
+    ),
+    (
+        re.compile(
+            r"\b(open\s+box|cut\s+from\s+(?:its\s+)?(?:four\s+)?corners?|"
+            r"folded?\s+upwards?|squares?\s+of\s+side\s+\d+)\b",
+            re.I,
+        ),
+        "area-resizer",
+        130,
+    ),
     (re.compile(r"\barea\b", re.I), "area-resizer", 75),
     (
         re.compile(
@@ -82,13 +107,14 @@ _AFFINITY: list[tuple[re.Pattern[str], str, int]] = [
         "triangle-angle-sum",
         92,
     ),
-    (re.compile(r"\b(triangle|triangles)\b", re.I), "triangle-angle-sum", 65),
+    (re.compile(r"\b(triangle|triangles)\b", re.I), "triangle-angle-sum", 40),
     (re.compile(r"\b(triangle|triangles)\b", re.I), "triangle-explorer", 60),
     (
         re.compile(
             r"\b(triangle|triangles)\b.*\bangles?\b|\bangles?\b.*\b(triangle|triangles)\b|"
             r"\b(three|3)\s+angles?\b|"
-            r"\binterior\s+angles?\s+(of\s+)?(a\s+)?(triangle|triangles)\b",
+            r"\binterior\s+angles?\s+(of\s+)?(a\s+)?(triangle|triangles)\b|"
+            r"\bangle\s*sums?\b|\bprove\b.*\b180\b",
             re.I,
         ),
         "triangle-angle-sum",
@@ -97,16 +123,55 @@ _AFFINITY: list[tuple[re.Pattern[str], str, int]] = [
     (re.compile(r"\bprove\b.*\b180\b|\bangle\s*sums?\b", re.I), "triangle-angle-sum", 85),
     (re.compile(r"\b(mean|median|mode|statistics)\b", re.I), "statistics-lab", 80),
     (re.compile(r"\b(cylinder)\b", re.I), "mensuration-cylinder", 85),
-    (re.compile(r"\b(cube)\b", re.I), "mensuration-cube", 85),
+    (re.compile(r"\bmatchsticks?\b", re.I), "matchstick-squares", 100),
+    (re.compile(r"(?<!perfect\s)\bsquares?\b(?!\s*root)", re.I), "shape-lab", 95),
+    (re.compile(r"\brectangles?\b", re.I), "shape-lab", 90),
+    (re.compile(r"\b(pentagon|hexagon|cuboid)\b", re.I), "shape-lab", 90),
+    (re.compile(r"\b(2d|2\s*d|plane\s+figures?|polygons?)\b", re.I), "shape-lab", 40),
+    (
+        re.compile(
+            r"\b(perfect\s*(?:cube|square)|smallest\s+number\s+by\s+which|"
+            r"multipl(?:y|ied)\s+to\s+(?:obtain|get|make)|divided\s+to\s+(?:obtain|get|make)\b)",
+            re.I,
+        ),
+        "factor-tree",
+        110,
+    ),
+    (
+        re.compile(
+            r"\b(hcf|lcm|g\.?c\.?d\.?|highest\s*common|lowest\s*common|least\s*common|"
+            r"prime\s*factors?|prime\s*factori[sz]ation|common\s*factors?|factor\s*tree|"
+            r"division\s*method)\b",
+            re.I,
+        ),
+        "factor-tree",
+        100,
+    ),
+    (re.compile(r"\b(surface\s*area|volume)\b.*\bcube\b|\bcube\b.*\b(side|surface|volume)\b", re.I), "mensuration-cube", 90),
+    (re.compile(r"\bcube\b(?!\s*root)", re.I), "mensuration-cube", 35),
     (re.compile(r"\b(transversal|parallel\s+lines?|corresponding)\b", re.I), "parallel-transversal", 85),
     (re.compile(r"\b(factori[sz]e|factori[sz]ation|x\s*[\^²2])\b", re.I), "factor-rectangle", 75),
     (re.compile(r"\b(polynomial|remainder\s+theorem)\b", re.I), "factor-rectangle", 65),
     (re.compile(r"\b((?:a\s*\+\s*b)\s*[\^²2]|algebra\s*tile|2ab)\b", re.I), "algebra-tiles", 85),
     (re.compile(r"\b(irrational|surd|rationali[sz]|sqrt|√|number\s*line)\b", re.I), "number-line", 75),
+    (
+        re.compile(
+            r"(?:√|sqrt|square\s*root).{0,40}number\s*line|"
+            r"number\s*line.{0,40}(?:√|sqrt|square\s*root|construct)|"
+            r"geometrical?\s+construction.{0,40}(?:√|sqrt|square\s*root)|"
+            r"(?:mark|represent|locate).{0,20}(?:√|sqrt|square\s*root)",
+            re.I,
+        ),
+        "sqrt-number-line",
+        120,
+    ),
     (re.compile(r"\b(pythagoras|hypotenuse)\b", re.I), "pythagoras", 85),
     (re.compile(r"\b(quadrilateral|parallelogram|rhombus)\b", re.I), "quadrilateral-morph", 60),
     (re.compile(r"\b(compass|construction|perpendicular\s+bisector)\b", re.I), "geometry-construction", 80),
     (re.compile(r"\b(point|segment|ray)\b.*\b(line|geometry)\b|\belements\s+of\s+geometry\b", re.I), "geometry-basics", 75),
+    # Cube solid vs cube root
+    (re.compile(r"\bcube\s*root\b", re.I), "factor-tree", 90),
+    (re.compile(r"\b(perfect\s+square|square\s*root)\b", re.I), "factor-tree", 50),
 ]
 
 

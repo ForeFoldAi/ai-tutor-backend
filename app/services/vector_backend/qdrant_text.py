@@ -176,6 +176,8 @@ def similarity_search(
     for hit in hits:
         payload = dict(hit.payload or {})
         text = payload.pop("page_content", "") or ""
+        # Cosine collections: Qdrant returns similarity (higher = closer), not distance.
+        payload["_retrieval_score"] = float(hit.score or 0.0)
         docs.append(Document(page_content=text, metadata=payload))
     return docs
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from typing import Any, Callable
 
-from app.services.math_lesson.elementary_catalog import ELEMENTARY_TOPIC_RULES
+from app.services.math_lesson.elementary_catalog import ELEMENTARY_TOPIC_RULES, apply_shape_lab_guide
 from app.services.math_lesson.textbook_catalog import _TOPIC_RULES, _lesson, _viz
 
 _CLASS_NUM_RE = re.compile(r"class[_\s]*(\d{1,2})", re.I)
@@ -189,6 +189,10 @@ def match_math_visualization(
         build_visualization_query,
         pick_best_visualization_rule,
     )
+    from app.services.math_lesson.topic_ontology import (
+        pick_ontology_topic,
+        primary_visualization_type,
+    )
 
     q = build_visualization_query(query, conversation_history)
     if not q:
@@ -197,10 +201,40 @@ def match_math_visualization(
     class_num = _parse_class_num(class_level)
 
     all_rules = _TOPIC_RULES + ELEMENTARY_TOPIC_RULES
+
+    # Ontology-first when the query names a syllabus topic (guarantees Class 1–10 coverage).
+    ont = pick_ontology_topic(q, class_level)
+    if ont:
+        want = primary_visualization_type(ont)
+        if want:
+            for pattern, spec_fn, concept, objective, explanation in all_rules:
+                try:
+                    if str(spec_fn().get("visualizationType") or "") == want:
+                        lesson = _lesson(
+                            str(ont.get("topic") or concept),
+                            objective,
+                            explanation,
+                            spec_fn(),
+                            level,
+                        )
+                        return apply_shape_lab_guide(lesson, q)
+                except Exception:
+                    continue
+            # No catalog builder for this type — synthesize a minimal lesson via grade default
+            # but force visualizationType to the ontology primary.
+            lesson = _grade_band_default(class_num, class_level)
+            lesson["conceptName"] = str(ont.get("topic") or lesson["conceptName"])
+            lesson["visualization"]["visualizationType"] = want
+            if want in ("mensuration-cube", "mensuration-cylinder", "heights-distances-scene"):
+                # Prefer dedicated builders already in _TOPIC_RULES; if missing, leave 2d.
+                pass
+            return apply_shape_lab_guide(lesson, q)
+
     picked = pick_best_visualization_rule(q, all_rules)
     if picked:
         spec_fn, concept, objective, explanation = picked
-        return _lesson(concept, objective, explanation, spec_fn(), level)
+        lesson = _lesson(concept, objective, explanation, spec_fn(), level)
+        return apply_shape_lab_guide(lesson, q)
 
     return _grade_band_default(class_num, class_level)
 

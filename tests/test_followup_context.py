@@ -198,6 +198,23 @@ def test_why_is_follow_up():
     assert is_session_continuation_follow_up("Why?", MARATHAS_HISTORY)
 
 
+def test_pronoun_followups_keep_prior_topic():
+    history = [
+        {"role": "user", "content": "Tell me about the Delhi Sultanate."},
+        {"role": "assistant", "content": "The Delhi Sultanate was a series of dynasties..."},
+    ]
+    why = resolve_conversation_context("Why did it happen?", conversation_history=history)
+    assert "sultanate" in why.retrieval_query.lower() or "delhi" in why.resolved_topic.lower()
+    who = resolve_conversation_context("Who started it?", conversation_history=history)
+    assert "sultanate" in who.retrieval_query.lower() or "delhi" in who.resolved_topic.lower()
+    meaning = resolve_conversation_context("What does that mean?", conversation_history=history)
+    assert meaning.followup_type in (
+        FollowupType.CLARIFICATION.value,
+        FollowupType.CONTINUE_EXPLANATION.value,
+        FollowupType.SIMPLIFY.value,
+    )
+
+
 def test_explain_again_simplification():
     ctx = resolve_conversation_context(
         "Can you explain that again in simple words?",
@@ -298,7 +315,8 @@ def test_session_follow_up_keeps_student_words_as_effective_query():
     )
     assert early is None
     assert effective == "Why?"
-    assert guidance  # prior topic still informs teaching guidance
+    assert "SESSION FOLLOW-UP" in guidance
+    assert "general knowledge" not in guidance.lower()
 
 
 def test_new_topic_not_replaced_by_prior_in_context():

@@ -1,0 +1,277 @@
+{
+  "slug": "english_unit2",
+  "subject": "English",
+  "chapter_id": "27",
+  "chapter": "Unit 2 - Values and Dispositions",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "E2-01",
+      "query": "what values are they talking about in this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-02",
+      "query": "what does disposition mean here?",
+      "label": "normal",
+      "expect_keywords": [
+        "disposition",
+        "attitude",
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-03",
+      "query": "why do values matter for students like me?",
+      "label": "normal",
+      "expect_keywords": [
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-04",
+      "query": "give me one example of a good value from the unit",
+      "label": "normal",
+      "expect_keywords": [
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-05",
+      "query": "is honesty or kindness mentioned?",
+      "label": "normal",
+      "expect_keywords": [
+        "honest",
+        "kind",
+        "value",
+        "respect"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-06",
+      "query": "how can i practice these values at school?",
+      "label": "normal",
+      "expect_keywords": [
+        "value",
+        "school"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-07",
+      "query": "quiz me on one value from the chapter",
+      "label": "normal",
+      "expect_keywords": [
+        "value",
+        "?",
+        "quiz"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-08",
+      "query": "show a picture from this unit if the book has one",
+      "label": "diagram",
+      "expect_keywords": [
+        "figure",
+        "picture",
+        "image",
+        "shown"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-09",
+      "query": "what happens if we ignore good values?",
+      "label": "normal",
+      "expect_keywords": [
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-10",
+      "query": "any story or character that shows good disposition?",
+      "label": "normal",
+      "expect_keywords": [
+        "disposition",
+        "value",
+        "story"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-11",
+      "query": "explain this unit like im in class 6",
+      "label": "normal",
+      "expect_keywords": [
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-12",
+      "query": "what is the main message of Values and Dispositions?",
+      "label": "normal",
+      "expect_keywords": [
+        "value",
+        "disposition"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-13",
+      "query": "how are values different from rules?",
+      "label": "normal",
+      "expect_keywords": [
+        "value",
+        "rule"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-14",
+      "query": "can valus change how we treet frends?",
+      "label": "typo",
+      "expect_keywords": [
+        "value",
+        "friend"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-15",
+      "query": "give two short points for my notebook",
+      "label": "normal",
+      "expect_keywords": [
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-16",
+      "query": "what are valus and dispotisions about?",
+      "label": "typo",
+      "expect_keywords": [
+        "value",
+        "disposition"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-17",
+      "query": "does this chapter teach quadratic equations?",
+      "label": "wrong",
+      "expect_keywords": [
+        "value",
+        "english",
+        "not"
+      ],
+      "forbidden": [
+        "quadratic"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-18",
+      "query": "who discovered bacteria in Values and Dispositions?",
+      "label": "wrong",
+      "expect_keywords": [
+        "value",
+        "chapter",
+        "not"
+      ],
+      "forbidden": [
+        "bacteria"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-19",
+      "query": "why is respect a disposition sometimes?",
+      "label": "normal",
+      "expect_keywords": [
+        "respect",
+        "disposition",
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E2-20",
+      "query": "wrap up the unit in one short paragraph",
+      "label": "normal",
+      "expect_keywords": [
+        "value"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    }
+  ]
+}

@@ -67,6 +67,14 @@ def test_strip_embedded_figure_lines():
     assert "thermometer" in out
     assert "Wind vane" in out
 
+    emoji_raw = "🌱 Concept Overview\n📚 Detailed Explanation\n❓ Quick Check\n💡 Tip ✅ done"
+    emoji_out = strip_embedded_figure_lines(emoji_raw)
+    assert "🌱" not in emoji_out and "📚" not in emoji_out and "❓" not in emoji_out
+    assert "💡" not in emoji_out and "✅" not in emoji_out
+    assert "Concept Overview" in emoji_out
+    assert "Quick Check" in emoji_out
+    assert "Tip" in emoji_out and "done" in emoji_out
+
 
 def test_normalize_direct_answer_prose_merges_lone_bold_heading():
     from app.services.chat_service import normalize_direct_answer_prose

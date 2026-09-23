@@ -1,0 +1,2180 @@
+{
+  "generated_at": "2026-09-09 17:00:22 +0530",
+  "meta": {
+    "slug": "social_ch3_marathas",
+    "subject": "Social",
+    "chapter_id": "34",
+    "chapter": "Chapter 3 - The Rise of the Marathas",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "So3-01",
+        "query": "who was shivaji and why are the marathas important?",
+        "label": "normal",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-02",
+        "query": "how did the marathas rise?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "rise"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-03",
+        "query": "where did maratha power grow geographically?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "maharashtra",
+          "deccan",
+          "region"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-04",
+        "query": "show a map or figure about marathas if available",
+        "label": "diagram",
+        "expect_keywords": [
+          "maratha",
+          "map",
+          "figure"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-05",
+        "query": "what strategies did shivaji use?",
+        "label": "normal",
+        "expect_keywords": [
+          "shivaji",
+          "guerrilla",
+          "fort",
+          "strategy"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-06",
+        "query": "who opposed the marathas?",
+        "label": "normal",
+        "expect_keywords": [
+          "mughal",
+          "maratha",
+          "oppose"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-07",
+        "query": "quiz me one easy maratha question",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "shivaji",
+          "?"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-08",
+        "query": "what is a fort's role in maratha history?",
+        "label": "normal",
+        "expect_keywords": [
+          "fort",
+          "maratha",
+          "shivaji"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-09",
+        "query": "why is this rise important for india's history?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "history"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-10",
+        "query": "any other leaders after shivaji mentioned?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "peshwa",
+          "leader"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-11",
+        "query": "explain guerilla warfare simply",
+        "label": "normal",
+        "expect_keywords": [
+          "guerrilla",
+          "guerilla",
+          "hit",
+          "war",
+          "shivaji"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-12",
+        "query": "how did administration or revenue work roughly?",
+        "label": "normal",
+        "expect_keywords": [
+          "admin",
+          "revenue",
+          "maratha",
+          "tax"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-13",
+        "query": "give 3 key points on rise of marathas",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-14",
+        "query": "what challenges did they face?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "challenge",
+          "mughal"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-15",
+        "query": "compare marathas briefly with mughals if chapter does",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "mughal"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-16",
+        "query": "who was shivaji and the marathas risee?",
+        "label": "typo",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-17",
+        "query": "did the marathas invent the steam engine in this chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "maratha"
+        ],
+        "forbidden": [
+          "steam"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-18",
+        "query": "is this chapter about perfect cubes in math?",
+        "label": "wrong",
+        "expect_keywords": [
+          "maratha",
+          "not"
+        ],
+        "forbidden": [
+          "cube"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-19",
+        "query": "tell me one more thing about how the marathas rose",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "rise"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So3-20",
+        "query": "who was shivajii again briefly?",
+        "label": "typo",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": true,
+    "health": {
+      "status": "ok",
+      "voice": "ws-pcm",
+      "instanceId": "Maniths-MacBook-Air.local:68746",
+      "draining": false,
+      "liveSessions": 0,
+      "redis": "up"
+    },
+    "session_id": "ce8b2d0e-30ef-4e0d-baf5-0998cbf301de",
+    "query_ok": true,
+    "note": "REST ok only; scored via voice_mode stream"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "So3-01",
+        "query": "who was shivaji and why are the marathas important?",
+        "label": "normal",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "answer_clip": "Chhatrapati Shivaji was a visionary warrior-king who rose from a small region in Maharashtra to build the Maratha Empire, starting his campaigns at just 16 years old. The chapter highlights how he united scattered Maratha chiefs by capturing forts and establishing *Swar\u0101jya*\u2014a sovereign kingdom\u2014while the Deccan sultans struggled to control the area. His leadership transformed the Marathas from a scattered group into a powerful political force, i\u2026",
+        "images": [
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          },
+          {
+            "figure": "3.8",
+            "page": 7,
+            "caption": "A court scene with Chhatrapati Shivaji on his throne receiving visitors (panel \u2026",
+            "file": "figures/fig_3_8.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14158,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-02",
+        "query": "how did the marathas rise?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "rise"
+        ],
+        "answer_clip": "The Marathas rose by combining bold leadership with clever military moves. Chhatrapati Shivaji began by creating a disciplined army and securing key forts like Raigad (shown in Fig. 3.1), which became their stronghold. The chapter shows they used guerrilla tactics to outsmart larger enemies like the Mughals, while also collecting taxes (*chauth* and *sardeshmukhi*) from Mughal-controlled areas to fund their growth. Their ability to adapt\u2014like ad\u2026",
+        "images": [
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          },
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13616,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-03",
+        "query": "where did maratha power grow geographically?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "maharashtra",
+          "deccan",
+          "region"
+        ],
+        "answer_clip": "The Marathas first rose as a powerful force in the **Deccan region**, especially in Maharashtra, where Chhatrapati Shivaji built his empire. The chapter explains that their influence spread northward, capturing key areas like **Lahore, Attock, and Peshawar** (in modern-day Pakistan) during their expansion. They also briefly controlled **Delhi** after defeating the Mughals and even challenged the British in the 18th century.  - Their **core power\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11783,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "So3-04",
+        "query": "show a map or figure about marathas if available",
+        "label": "diagram",
+        "expect_keywords": [
+          "maratha",
+          "map",
+          "figure"
+        ],
+        "answer_clip": "The chapter includes a few key figures that show the Maratha world\u2014like **Fig. 3.14** (military structure), **Fig. 3.18** (Tarabai in battle), and **Fig. 3.19** (Ahilyabai Holkar\u2019s stamp). The app will automatically display these for you when you ask to see them.  The chapter also mentions maps implicitly when describing Maratha expansion (e.g., conquering Mughal territories northward). If you\u2019d like to focus on a specific map\u2014like the forts the\u2026",
+        "images": [
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          },
+          {
+            "figure": "3.19",
+            "page": 17,
+            "caption": "A postage stamp commemorating",
+            "file": "figures/fig_3_19.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10570,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-05",
+        "query": "what strategies did shivaji use?",
+        "label": "normal",
+        "expect_keywords": [
+          "shivaji",
+          "guerrilla",
+          "fort",
+          "strategy"
+        ],
+        "answer_clip": "Chhatrapati Shivaji used clever and bold strategies to build his kingdom, many of which surprised his enemies. The chapter explains that he relied on **guerrilla warfare**, where small, fast-moving groups attacked from hidden places like forests\u2014this helped him defeat larger armies. He also built **forts** like Raigad and Sindhudurg to control important routes and protect his people, turning them into strong bases for his army.  Another key move\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6917,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-06",
+        "query": "who opposed the marathas?",
+        "label": "normal",
+        "expect_keywords": [
+          "mughal",
+          "maratha",
+          "oppose"
+        ],
+        "answer_clip": "The Marathas were opposed by two main powers: first, the Mughal Empire under Aurangzeb, who tried to crush their growing strength in the Deccan. The chapter explains that the Mughals struggled to defeat them, and after Aurangzeb\u2019s death, the Marathas even took back Mughal lands. Later, the British became their biggest rivals, fighting three wars (1775\u20131818) to weaken Maratha power.  - **Mughals** (especially Aurangzeb) fought them for control of\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14655,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-07",
+        "query": "quiz me one easy maratha question",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "shivaji",
+          "?"
+        ],
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of the Marathas in a fun way! You\u2019ve been learning about their rise\u2014now let\u2019s see how much you\u2019ve absorbed. Ready to try?  **Questions** 1. The Marathas were originally a group of people from which region of India? (Hint: Think about their language and homeland.) 2. What was the name of the capital city of the Yadava dynasty before the Marathas rose to power? 3. Why were forts like Raigad so important \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6438,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-08",
+        "query": "what is a fort's role in maratha history?",
+        "label": "normal",
+        "expect_keywords": [
+          "fort",
+          "maratha",
+          "shivaji"
+        ],
+        "answer_clip": "Forts were the lifeline of the Maratha kingdom, as the chapter highlights. Chhatrapati Shivaji understood that forts weren\u2019t just buildings\u2014they were the foundation of his state. By controlling key forts like Raigad and Sindhudurg, the Marathas secured vital trade routes and turned their scattered forces into a powerful defensive network. Even when Aurangzeb\u2019s Mughal army conquered nearby kingdoms, the Marathas held on because their fortresses m\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10291,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-09",
+        "query": "why is this rise important for india's history?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "history"
+        ],
+        "answer_clip": "The rise of the Marathas was crucial because it marked India\u2019s first successful regional empire that stood up to the mighty Mughals. The chapter explains that Shivaji\u2019s leadership and military genius proved that a smaller force could defeat a larger one, inspiring future resistance. Beyond this, the Marathas preserved Indian culture, built strong administrative systems, and expanded their influence across the Deccan and north India.  Their legac\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12958,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-10",
+        "query": "any other leaders after shivaji mentioned?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "peshwa",
+          "leader"
+        ],
+        "answer_clip": "After Chhatrapati Shivaji, the chapter highlights key leaders who shaped the Maratha empire\u2019s growth. The most prominent was **Peshwa Bajirao I**, Shivaji\u2019s prime minister, who expanded Maratha control across India and established a powerful decentralized administration. His son, **Nanasaheb Peshwa**, continued this expansion, while later figures like **Mahadji Shinde** (also called Mahadji Scindia) led the Marathas to recapture Delhi in 1771. T\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7877,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-11",
+        "query": "explain guerilla warfare simply",
+        "label": "normal",
+        "expect_keywords": [
+          "guerrilla",
+          "guerilla",
+          "hit",
+          "war",
+          "shivaji"
+        ],
+        "answer_clip": "Guerrilla warfare is a smart way of fighting where small, fast-moving groups use surprise and the land around them to outsmart bigger armies. The chapter shows how Chhatrapati Shivaji used this method\u2014like sneaking attacks in forests or mountains\u2014to defeat stronger enemies. It\u2019s not about direct battles but clever tricks to weaken the opponent over time.  - Fighters **move quickly** and vanish before the enemy can react. - **Hilly or forested ar\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9606,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-12",
+        "query": "how did administration or revenue work roughly?",
+        "label": "normal",
+        "expect_keywords": [
+          "admin",
+          "revenue",
+          "maratha",
+          "tax"
+        ],
+        "answer_clip": "The Marathas managed their empire by collecting taxes called *chauth* and *sardeshmukhi* from independent regions in exchange for protection, without interfering in their local affairs. This system helped them grow their power while keeping local rulers satisfied. The chapter explains that they also used a system of *j\u0101g\u012br*\u2014land grants given to loyal nobles or soldiers in return for military service and tax collection.  - Many *j\u0101g\u012br* holders we\u2026",
+        "images": [
+          {
+            "figure": "3.13",
+            "page": 12,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_13.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10950,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "So3-13",
+        "query": "give 3 key points on rise of marathas",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha"
+        ],
+        "answer_clip": "**Topic** The Rise of the Marathas How a small warrior community from Maharashtra grew into India\u2019s largest pan-Indian power before British rule.  ---  **In Simple Words** Imagine a group of people who started as farmers and warriors in a small region but, through clever strategies and strong leadership, became one of the most powerful forces in India. The Marathas did just that! They used their knowledge of geography, built unbreakable forts, a\u2026",
+        "images": [
+          {
+            "figure": "3.19",
+            "page": 17,
+            "caption": "A postage stamp commemorating",
+            "file": "figures/fig_3_19.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 17958,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-14",
+        "query": "what challenges did they face?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "challenge",
+          "mughal"
+        ],
+        "answer_clip": "The Marathas faced fierce challenges while building their power, including powerful enemies like the Mughals and later the British. The chapter shows how Aurangzeb\u2019s repeated attacks on their forts\u2014like Raigad\u2014kept them on the defensive for years, while their own leaders sometimes clashed over control. Even after defeating the Mughals, they struggled to hold their empire together as the British grew stronger.  - **Forts under siege**: Their stro\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10362,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-15",
+        "query": "compare marathas briefly with mughals if chapter does",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "mughal"
+        ],
+        "answer_clip": "The chapter doesn\u2019t directly compare the Marathas and Mughals in detail, but here\u2019s a quick contrast based on what it teaches:  The **Mughals** were a centralized empire under emperors like Aurangzeb, who ruled through strict royal authority and expanded through military conquests (e.g., defeating Rajputs and Sultanates). They focused on grand palaces, large armies, and a rigid social hierarchy. Meanwhile, the **Marathas** started as a decentral\u2026",
+        "images": [
+          {
+            "figure": "3.19",
+            "page": 17,
+            "caption": "A postage stamp commemorating",
+            "file": "figures/fig_3_19.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9595,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-16",
+        "query": "who was shivaji and the marathas risee?",
+        "label": "typo",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "answer_clip": "Chhatrapati Shivaji was the visionary leader who transformed the Marathas\u2014a people from the Deccan plateau\u2014into a mighty empire. Born in 1630, he began capturing forts as a teenager and later crowned himself Chhatrapati in 1674 at Raigad, establishing a sovereign Maratha kingdom. His clever strategies, like escaping Mughal captivity disguised in gift baskets, showcased his brilliance. The Marathas, known for their Marathi language and cultural h\u2026",
+        "images": [
+          {
+            "figure": "3.8",
+            "page": 7,
+            "caption": "A court scene with Chhatrapati Shivaji on his throne receiving visitors (panel \u2026",
+            "file": "figures/fig_3_8.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12580,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-17",
+        "query": "did the marathas invent the steam engine in this chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "maratha"
+        ],
+        "answer_clip": "The chapter does **not** mention the Marathas inventing the steam engine. According to the textbook, the Marathas were known for their military innovations like disciplined troops, artillery, and metal tube rockets (Fig. 3.15), but these were not related to steam engines. Their focus was on expanding their empire through strategic warfare, forts, and naval tactics\u2014like Kanhoji Angre\u2019s clever battles against European navies.  Beyond this chapter,\u2026",
+        "images": [
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          },
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8986,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 7.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.5,
+          "bugs": [
+            "forbidden content mentioned: steam"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-18",
+        "query": "is this chapter about perfect cubes in math?",
+        "label": "wrong",
+        "expect_keywords": [
+          "maratha",
+          "not"
+        ],
+        "answer_clip": "The Rise of the Marathas tells the story of how a group from Maharashtra became India\u2019s largest pan-Indian power before the British. The chapter focuses on **Chhatrapati Shivaji**, who started as a young leader in Pune and built a kingdom through clever military strategies, like guerrilla warfare and creating a navy. The Marathas\u2019 success also came from their strong cultural roots, shaped by saints who made Marathi literature accessible to all. \u2026",
+        "images": [
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          },
+          {
+            "figure": "3.13",
+            "page": 12,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_13.jpg"
+          },
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 23846,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-19",
+        "query": "tell me one more thing about how the marathas rose",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "rise"
+        ],
+        "answer_clip": "The Marathas rose to power partly because they **built a strong network of forts**\u2014like Raigad (shown in Fig. 3.1)\u2014that became their \"core of the state,\" as the chapter explains. These forts weren\u2019t just military bases; they were centers of governance, where local leaders (*peshwas*, *sardars*) and soldiers gathered. The chapter highlights how Chhatrapati Shivaji\u2019s early victories and later leaders like Tarabai used these forts to outmaneuver la\u2026",
+        "images": [
+          {
+            "figure": "3.5",
+            "page": 4,
+            "caption": "A painting of Chhatrapati Shivaji made in",
+            "file": "figures/fig_3_5.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9009,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-20",
+        "query": "who was shivajii again briefly?",
+        "label": "typo",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "answer_clip": "Chhatrapati Shivaji was a brave and clever ruler who built a strong kingdom in Maharashtra. He was known for his smart strategies, like escaping from Aurangzeb\u2019s court by hiding in baskets of gifts. He was crowned at Raigad in 1674 and expanded his kingdom, even stopping the Dutch from trading slaves. His leadership made the Marathas a powerful force against the Mughals.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6229,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "So3-01",
+        "source_query": "who was shivaji and why are the marathas important?",
+        "query": "hold on, what do you mean by Defied Mughal dominance?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  When the chapter says Shivaji **\"defied Mughal dominance\"**, it means he **challenged and resisted** the powerful Mughal Empire, which ruled most of India at that time.  Imagine if a big school bully (the Mughals) controlled everything in your town. Shivaji was like a clever student who **built his own strong fort (Raigad), gathered loyal friends (Maratha chiefs), and fought back using smart tactics**\u2014like guerrilla \u2026",
+        "images": [
+          {
+            "figure": "3.8",
+            "page": 7,
+            "caption": "A court scene with Chhatrapati Shivaji on his throne receiving visitors (panel \u2026",
+            "file": "figures/fig_3_8.jpg"
+          },
+          {
+            "figure": "3.5",
+            "page": 4,
+            "caption": "A painting of Chhatrapati Shivaji made in",
+            "file": "figures/fig_3_5.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11249,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-02",
+        "source_query": "how did the marathas rise?",
+        "query": "ok but can you explain military cleverness in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** Military cleverness of the Marathas refers to their smart and creative battle strategies that helped them defeat stronger enemies like the Mughals.  **In Simple Words** Imagine playing a game where you\u2019re smaller but use tricks to win. The Marathas did the same in wars. They didn\u2019t just fight head-on\u2014they used forts as safe bases, gathered taxes from nearby areas to fund their army, and even borrowed ideas from other armies to get stro\u2026",
+        "images": [
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          },
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 15461,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-03",
+        "source_query": "where did maratha power grow geographically?",
+        "query": "is Delhi actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The chapter **clearly mentions Delhi** as a key area the Marathas controlled. According to the textbook, they briefly took over Delhi in **1754** and held it until the British captured it decades later. The chapter also highlights their northward expansion, including Delhi, as part of their pan-Indian power.  - Delhi was **conquered by the Marathas** under leaders like Tarabai and later Peshwas. - The chapter explains their **control over Delhi*\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7200,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 6.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So3-07",
+        "source_query": "quiz me one easy maratha question",
+        "query": "quiz me with one easy question just about Encouragement",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s take a quick, easy step to see how well you remember the **encouraging spirit** of the Marathas! You\u2019ve learned about their strength, but what made them *inspire* others? Let\u2019s check your recall.  **Questions** 1. The chapter mentions that Maratha women like **Ahilyabai Holkar** and **Tarabai** were remarkable leaders. What *one* quality of theirs (from the chapter) shows how they encouraged others?  **How to Answer** Reply w\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6570,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-08",
+        "source_query": "what is a fort's role in maratha history?",
+        "query": "show me a figure or example related to Sindhudurg",
+        "derived": true,
+        "answer_clip": "Forts were the heart of the Maratha kingdom because they gave the Marathas a way to fight stronger enemies like the Mughals. Chhatrapati Shivaji started by capturing and strengthening forts such as Raigad and Sindhudurg, which helped him control important areas and protect his growing kingdom. These forts allowed the Marathas to use clever tactics, like hiding and then attacking quickly, which made it difficult for larger armies to defeat them. \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9813,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "So3-11",
+        "source_query": "explain guerilla warfare simply",
+        "query": "wait why is Fighters important here?",
+        "derived": true,
+        "answer_clip": "The Marathas relied on skilled fighters because they turned the odds in their favor through clever tactics. According to the chapter, these fighters\u2014small, agile groups\u2014used guerrilla warfare to fight larger armies. They moved swiftly, hid in forests or mountains, and struck unexpectedly, like a shadowy team playing hide-and-seek with their enemies.  - Their **speed and surprise** made big armies hesitate. - They **used local terrain** (like for\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11717,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 4.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-12",
+        "source_query": "how did administration or revenue work roughly?",
+        "query": "can you give one more real-life example of Mughals?",
+        "derived": true,
+        "answer_clip": "The chapter doesn\u2019t provide a *direct* real-life example of Mughal administration or revenue work, but we can infer one from what we know: **The Mughal *zamindari* system**\u2014where local landowners (*zamindars*) collected taxes for the emperor in exchange for keeping a portion\u2014was a real-life example. The Marathas later copied some of this idea with their *j\u0101g\u012br* system, but the Mughals perfected it first.  - The Mughals also used *mansabdari* ran\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8283,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "source_id": "So3-13",
+        "source_query": "give 3 key points on rise of marathas",
+        "query": "i still don't get Origins as a Warrior Community \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "The Marathas began as **ordinary farmers and warriors** living in the Konkan region (today\u2019s Maharashtra) during the 17th century. They were not a powerful empire yet\u2014just people who felt threatened by stronger rulers like the Bijapur Sultanate and Mughals. The chapter says their **deep pride in their Hindu faith** and the *bhakti* movement\u2019s message of courage gave them strength. When their villages and temples were attacked, they **united unde\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9872,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So3-14",
+        "source_query": "what challenges did they face?",
+        "query": "ok so what should i remember about Forts under siege for a test?",
+        "derived": true,
+        "answer_clip": "Forts were the lifeline of the Marathas, as the chapter highlights: *\"it was due to forts that the Maratha state survived despite decades of onslaught.\"* When Aurangzeb\u2019s armies crushed Bijapur and Golconda, the Marathas\u2019 hill and coastal forts like Raigad and Sindhudurg became their last line of defense. These strongholds let them use guerrilla tactics\u2014hiding in mountains or forests to strike and vanish\u2014while bigger armies got stuck outside.  -\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10148,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So3-15",
+        "source_query": "compare marathas briefly with mughals if chapter does",
+        "query": "that part about Marathas sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "You heard it right! The chapter explains that the Marathas didn\u2019t just fight\u2014they *outsmarted* the Mughals by using forts, guerrilla tactics, and clever alliances. While Aurangzeb\u2019s armies marched into the Deccan, the Marathas defended their strongholds (like Raigad) and even *attacked* Mughal lands after Aurangzeb died. They didn\u2019t rule like the Mughals (one big emperor) but worked through local leaders (like the Peshwa) and taxes (chauth/sarde\u2026",
+        "images": [
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10259,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "So3-01",
+        "query": "who was shivaji and why are the marathas important?",
+        "label": "normal",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "answer_clip": "Shivaji was a brave leader born in 1630. He grew up in Pune, watching the chaos between Deccan sultans. At just 16, he started capturing forts to build his own kingdom\u2014his dream was a free Maratha land.  The Marathas became important because Shivaji united them. He showed anyone could defeat big empires. His sons, Sambhaji and Rajaram, kept fighting after him. Even Aurangzeb couldn\u2019t crush them completely. Their courage inspired others, like Bun\u2026",
+        "images": [
+          {
+            "figure": "3.5",
+            "page": 4,
+            "caption": "A painting of Chhatrapati Shivaji made in",
+            "file": "figures/fig_3_5.jpg"
+          },
+          {
+            "figure": "3.8",
+            "page": 7,
+            "caption": "A court scene with Chhatrapati Shivaji on his throne receiving visitors (panel \u2026",
+            "file": "figures/fig_3_8.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9589,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-02",
+        "query": "how did the marathas rise?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "rise"
+        ],
+        "answer_clip": "The Marathas rose by being clever and strong in battles. They fought Mughals well, even defending their forts. Aurangzeb couldn\u2019t fully defeat them\u2014so they grew stronger.  Then, they started collecting taxes from other areas. They called it *chauth* and *sardeshmukhi*\u2014like a fee for protection. Over time, more places joined them, making their empire bigger.  They also copied Mughal coins but added their own symbols. That showed they were becomin\u2026",
+        "images": [
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8039,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-03",
+        "query": "where did maratha power grow geographically?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "maharashtra",
+          "deccan",
+          "region"
+        ],
+        "answer_clip": "The Marathas grew their power mostly in the **Deccan region** first. Then they expanded north\u2014capturing **Lahore, Attock, and even Peshawar** for a time. Later, they took **Delhi** in 1771 under Mahadji Shinde.  Their biggest push was against the Mughals. They controlled large parts of India by the 1700s. The chapter mentions their northward and central growth clearly.  Want me to highlight any key area on the map?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5745,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-04",
+        "query": "show a map or figure about marathas if available",
+        "label": "diagram",
+        "expect_keywords": [
+          "maratha",
+          "map",
+          "figure"
+        ],
+        "answer_clip": "Look at **Figure 3.14** in your textbook\u2014it\u2019s right there!  That\u2019s the map showing key Maratha regions and their forts. You\u2019ll see Raigad, Sindhudurg, and other strongholds marked. It also shows how they controlled areas beyond just Maharashtra.  Want me to point out anything specific on it?",
+        "images": [
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9486,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-05",
+        "query": "what strategies did shivaji use?",
+        "label": "normal",
+        "expect_keywords": [
+          "shivaji",
+          "guerrilla",
+          "fort",
+          "strategy"
+        ],
+        "answer_clip": "Shivaji used clever tricks to outsmart his enemies.  First, he escaped Mughal house arrest by hiding in gift baskets. That\u2019s right\u2014he tricked the guards with sweet treats!  He also built many forts to control key routes. Forts were like his army\u2019s safe homes during battles.  And he created a navy to protect the west coast. Even without fancy ships, he used smart tactics to challenge Europeans.  His army used swords, lances, and even rockets\u2014mode\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7146,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-06",
+        "query": "who opposed the marathas?",
+        "label": "normal",
+        "expect_keywords": [
+          "mughal",
+          "maratha",
+          "oppose"
+        ],
+        "answer_clip": "The main power that opposed the Marathas was the Mughal Empire. Aurangzeb, the Mughal emperor, tried to control the Marathas for years. He couldn\u2019t fully defeat them, though\u2014they kept fighting back. The chapter shows how the Marathas even pushed into Mughal lands later. So, Mughals were their biggest challenge.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8390,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-07",
+        "query": "quiz me one easy maratha question",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "shivaji",
+          "?"
+        ],
+        "answer_clip": "Got it! Here\u2019s a simple question for you:  *\"What was the first major fort built by Chhatrapati Shivaji?\"*  It\u2019s a key place in the chapter. Hint: It\u2019s on the coast\u2014great for defense! Try to recall its name.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6270,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-08",
+        "query": "what is a fort's role in maratha history?",
+        "label": "normal",
+        "expect_keywords": [
+          "fort",
+          "maratha",
+          "shivaji"
+        ],
+        "answer_clip": "Forts were like the Marathas\u2019 strongest shields. They controlled key roads and hid armies for surprise attacks.  Shivaji built many forts to protect his kingdom. When big enemies like Aurangzeb came, the Marathas held their forts and kept fighting.  Even when outnumbered, forts let them survive. Without them, their land would\u2019ve been lost easily. That\u2019s why the chapter says\u2014*\"forts were the core of the state.\"*",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5284,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-09",
+        "query": "why is this rise important for india's history?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "history"
+        ],
+        "answer_clip": "This rise matters because it showed India could rebuild strength after big empires fell.  Shivaji proved small kingdoms could grow into powerful ones. He didn\u2019t just fight\u2014he built a system where culture, religion, and administration stayed strong.  The Marathas became a symbol of resistance against larger enemies. Their forts and strategies kept their identity alive even when bigger powers tried to control them.  It\u2019s like when a small team kee\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5460,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-10",
+        "query": "any other leaders after shivaji mentioned?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "peshwa",
+          "leader"
+        ],
+        "answer_clip": "Oh, great question!  After Shivaji, the chapter mentions **Tarabai**\u2014she was the queen who led the Marathas after Shivaji\u2019s son Rajaram. They expanded into Mughal lands during that time.  The chapter also briefly highlights **Nana Phadnavis**, a key official under the Peshwas, who helped unite forces against the British later.  Want me to explain how Tarabai\u2019s leadership worked? Or should we look at Nana Phadnavis\u2019s role next?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5082,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-11",
+        "query": "explain guerilla warfare simply",
+        "label": "normal",
+        "expect_keywords": [
+          "guerrilla",
+          "guerilla",
+          "hit",
+          "war",
+          "shivaji"
+        ],
+        "answer_clip": "Guerrilla warfare is like playing hide-and-seek with the enemy.  Instead of facing big armies head-on, small groups use speed, surprise, and the terrain\u2014like forests or mountains\u2014to strike quickly. Think of it like a sneaky raid at night.  The chapter shows how Chhatrapati Shivaji did this. When the Mughal general Shaista Khan attacked with a huge army, Shivaji waited. Then, with just a few soldiers, he attacked Shaista Khan\u2019s camp at night. The\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6107,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-12",
+        "query": "how did administration or revenue work roughly?",
+        "label": "normal",
+        "expect_keywords": [
+          "admin",
+          "revenue",
+          "maratha",
+          "tax"
+        ],
+        "answer_clip": "The Marathas had a clever way to collect money and run things.  They charged taxes called *chauth* (25%) and *sardeshmukhi* (extra 10%) from places not directly under them\u2014like parts of the Deccan or north India. In return, they protected those areas and didn\u2019t interfere with their local rules. It was like a deal: \"We\u2019ll keep you safe, you pay us a share.\"  The Mughals even agreed to this through treaties. Over time, some of those places joined \u2026",
+        "images": [
+          {
+            "figure": "3.13",
+            "page": 12,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_13.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7763,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-13",
+        "query": "give 3 key points on rise of marathas",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha"
+        ],
+        "answer_clip": "Right, let\u2019s break this down simply.  First key point: **Geography was their strength.** The mountains and coastlines helped them fight. They used these to hide, surprise enemies, and control trade.  Second: **Forts were their power base.** The chapter says forts were the core of their state. They built strong forts like Raigad to survive against bigger armies.  Third: **They were good at governance.** They managed their land well, treated peopl\u2026",
+        "images": [
+          {
+            "figure": "3.5",
+            "page": 4,
+            "caption": "A painting of Chhatrapati Shivaji made in",
+            "file": "figures/fig_3_5.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13996,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.3,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "So3-14",
+        "query": "what challenges did they face?",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "challenge",
+          "mughal"
+        ],
+        "answer_clip": "Ah, good question! The chapter shows the Marathas faced *huge* challenges\u2014especially from bigger empires like the Mughals.  First, their small kingdom was *constantly under attack*. The Mughals kept invading, but the Marathas had one big secret: **forts**. Mountains and coastlines helped them build strongholds like Sindhudurg and Raigad. These forts were like their *lifeline*\u2014they survived for decades *because* of them.  Another struggle? Keepin\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4558,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So3-15",
+        "query": "compare marathas briefly with mughals if chapter does",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "mughal"
+        ],
+        "answer_clip": "Okay, let\u2019s break this down simply.  The chapter doesn\u2019t compare Marathas and Mughals directly. But it *does* show how Marathas grew strong *while* Mughals weakened.  Marathas used forts and clever taxes\u2014like *chauth*\u2014to protect lands. Mughals ruled from Delhi but struggled to control the Deccan. That\u2019s the key difference here.",
+        "images": [
+          {
+            "figure": "3.19",
+            "page": 17,
+            "caption": "A postage stamp commemorating",
+            "file": "figures/fig_3_19.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6904,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-16",
+        "query": "who was shivaji and the marathas risee?",
+        "label": "typo",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "answer_clip": "Shivaji was a brilliant leader from Maharashtra. He started as a warrior and built a strong kingdom. The Marathas were people from the Deccan plateau.  Shivaji\u2019s cleverness helped him escape Mughal capture once. He even had his own coronation in 1674 at Raigad fortress. His sons, Sambhaji and Rajaram, continued his legacy after him.  The Marathas became a powerful force in India\u2019s history.",
+        "images": [
+          {
+            "figure": "3.5",
+            "page": 4,
+            "caption": "A painting of Chhatrapati Shivaji made in",
+            "file": "figures/fig_3_5.jpg"
+          },
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8396,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-17",
+        "query": "did the marathas invent the steam engine in this chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "maratha"
+        ],
+        "answer_clip": "No, the Marathas didn\u2019t invent the steam engine in this chapter. The chapter talks about their weapons\u2014swords, lances, guns, and even rockets. They were clever with military tech but not that kind of engine. This chapter focuses on their rise, forts, and battles\u2014not inventions like steam engines. Want to know more about their weapons or how they fought?",
+        "images": [
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          },
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8383,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.7,
+          "bugs": [
+            "forbidden content mentioned: steam"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-18",
+        "query": "is this chapter about perfect cubes in math?",
+        "label": "wrong",
+        "expect_keywords": [
+          "maratha",
+          "not"
+        ],
+        "answer_clip": "Oh, no\u2014this chapter is *not* about math at all!  This is all about the **Marathas**, a powerful group from Maharashtra. They started as a small community but grew into a huge empire. The chapter tells how **Chhatrapati Shivaji** built their strength, fought battles, and even created a navy. It\u2019s about their kingship, wars, and how they shaped India\u2019s history.  So no perfect cubes here\u2014just warriors, forts, and big ideas! Want to know how they st\u2026",
+        "images": [
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          },
+          {
+            "figure": "3.13",
+            "page": 12,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_13.jpg"
+          },
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7638,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.2,
+          "bugs": [
+            "forbidden content mentioned: cube"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So3-19",
+        "query": "tell me one more thing about how the marathas rose",
+        "label": "normal",
+        "expect_keywords": [
+          "maratha",
+          "rise"
+        ],
+        "answer_clip": "One key thing about how the Marathas rose was their **forts**. The chapter says forts were the *core* of their state.  They built strongholds like Raigad and Sindhudurg. These forts let them fight bigger enemies\u2014like the Mughals\u2014from safe spots. Even Aurangzeb couldn\u2019t crush them fully because the Marathas kept defending these fortresses.  So, their smart use of geography and forts helped them grow stronger over time.",
+        "images": [
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8744,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So3-20",
+        "query": "who was shivajii again briefly?",
+        "label": "typo",
+        "expect_keywords": [
+          "shivaji",
+          "maratha"
+        ],
+        "answer_clip": "Shivaji was a brilliant warrior-king from Maharashtra. He built a strong empire by clever battles and smart plans. The Mughals respected him so much they compared him to Alexander.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4826,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "So3-01",
+        "source_query": "who was shivaji and why are the marathas important?",
+        "query": "hold on, what do you mean by Shivaji?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  **Shivaji** was like the captain of a team that became a kingdom. Imagine your school has a group of students who always follow the rules and help each other. Now, one student\u2014let\u2019s call him **Rahul**\u2014starts organizing them better, teaching them to work together, and even building a small fort to protect their area. Rahul becomes the leader, and soon, more people join his team because they trust him.  That\u2019s exactly \u2026",
+        "images": [
+          {
+            "figure": "3.6",
+            "page": 5,
+            "caption": "The Sindhudurg Fort near the Maharashtra-Goa border is one of the several naval\u2026",
+            "file": "figures/fig_3_6.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11313,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-02",
+        "source_query": "how did the marathas rise?",
+        "query": "ok but can you explain They in simpler words?",
+        "derived": true,
+        "answer_clip": "Oh, \"They\" here means the **Marathas**\u2014the warriors and leaders who fought hard. They were a group from Maharashtra who built their own kingdom. They kept winning battles against bigger empires like the Mughals.",
+        "images": [
+          {
+            "figure": "3.14",
+            "page": 13,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_14.jpg"
+          },
+          {
+            "figure": "3.1",
+            "page": 1,
+            "caption": "Raigad Fort, Maharashtra, with the grand entrance to the palace where Chhatrapa\u2026",
+            "file": "figures/fig_3_1.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7144,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So3-05",
+        "source_query": "what strategies did shivaji use?",
+        "query": "is Mughal actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, I see why this is confusing\u2014let\u2019s clear it up!  Yes, the Mughals *are* mentioned in this chapter. The text talks about how Shivaji outsmarted Aurangzeb\u2014like escaping house arrest by hiding in gift baskets! It also says the Marathas fought the Mughals for years, and forts kept them strong.  The chapter doesn\u2019t focus on Mughals as the main topic\u2014it\u2019s about how the Marathas rose *despite* them. Think of it like a game where the Marathas were th\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7257,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-09",
+        "source_query": "why is this rise important for india's history?",
+        "query": "quiz me with one easy question just about India",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy question:  *\"Why did Chhatrapati Shivaji\u2019s rise matter for India\u2019s culture?\"*  Hint: Think about how he helped people feel proud of their traditions.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5312,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "So3-10",
+        "source_query": "any other leaders after shivaji mentioned?",
+        "query": "show me a figure or example related to Shivaji",
+        "derived": true,
+        "answer_clip": "Ah, the chapter shows **Fig. 3.15**\u2014that\u2019s the picture of Maratha weapons. It has swords, lances, and even rockets Shivaji used!  There\u2019s also **Fig. 3.21**, a beautiful painting from the Maratha era. It shows their art style\u2014gold foil work\u2014flourished under their rule.  Want me to tell you more about how these weapons helped Shivaji? Or how the forts tied into this?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7421,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So3-11",
+        "source_query": "explain guerilla warfare simply",
+        "query": "wait why is Shaista Khan important here?",
+        "derived": true,
+        "answer_clip": "Shaista Khan was a big Mughal general who attacked Shivaji\u2019s lands for three years. He brought a huge army, but Shivaji didn\u2019t fight him directly.  Instead, Shivaji used guerrilla tactics\u2014small, fast raids. One night, he struck Shaista Khan\u2019s camp with just a few soldiers. The general barely escaped, losing even some fingers! That scared Shaista Khan so much he left Maharashtra quickly.  So why\u2019s he important here? Because this raid showed how S\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7615,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 4.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-12",
+        "source_query": "how did administration or revenue work roughly?",
+        "query": "can you give one more real-life example of Over?",
+        "derived": true,
+        "answer_clip": "Ah, you mean another example of the *chauth* and *sardeshmukhi* system?  The Marathas charged these taxes from places like **Bijapur and Golconda**\u2014kingdoms that weren\u2019t fully under their control. They\u2019d say, *\"We\u2019ll protect you, but you pay us 25% extra.\"* Over time, some of those kingdoms even joined the Maratha Empire because of this deal.  It was like a \"security fee\" for staying safe. Pretty clever, right?",
+        "images": [
+          {
+            "figure": "3.13",
+            "page": 12,
+            "caption": "The Rise of the Marathas",
+            "file": "figures/fig_3_13.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6937,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-13",
+        "source_query": "give 3 key points on rise of marathas",
+        "query": "i still don't get Second \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Oh, I see! You\u2019re talking about the **second key point**\u2014the one about forts.  Let me say it again slowly. The chapter says: *\"Forts were their power base.\"* This means the Marathas built and controlled forts like **Raigad** to protect themselves. These forts weren\u2019t just walls\u2014they were like their homes, their armies\u2019 hideouts, and their treasure stores. Without them, they couldn\u2019t have grown strong.  Think of it like this: if you had a secret \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6958,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So3-14",
+        "source_query": "what challenges did they face?",
+        "query": "ok so what should i remember about forts for a test?",
+        "derived": true,
+        "answer_clip": "Got it! For your test, remember **three key things** about Maratha forts.  First, they were *built in tough spots*\u2014mountains and coasts. That\u2019s why forts like Sindhudurg and Raigad were so hard to take. The chapter says: *\"it was due to forts that the Maratha state survived despite decades of onslaught.\"*  Second, forts were the *heart of their power*. They stored weapons, food, and soldiers. Without them, the Marathas couldn\u2019t fight bigger enem\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11587,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So3-18",
+        "source_query": "is this chapter about perfect cubes in math?",
+        "query": "that part about India sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I hear you\u2014this part *does* sound a little tangled at first!  The chapter isn\u2019t talking about *all* of India at once. It\u2019s focusing on **one big group**: the Marathas. They were from the **Deccan plateau** (modern-day Maharashtra), and the chapter shows how *they* rose to power\u2014not the whole country.  The confusing part might be when it mentions \"India\" in passing. That\u2019s just because the Marathas\u2019 story *changed India\u2019s history*. But the ch\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6758,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ]
+  },
+  "tutor_avg": 8.54,
+  "voice_avg": 8.17
+}

@@ -38,7 +38,7 @@ def test_understanding_to_student_hint():
     assert "simply" in scores.to_student_hint("I don't understand").lower()
 
     affirm = UnderstandingScores(is_affirmation=True, understanding=0.9)
-    assert "Great" in affirm.to_student_hint("yes got it")
+    assert "glad" in affirm.to_student_hint("yes got it").lower()
 
     scores = UnderstandingScores()
     assert scores.to_student_hint("why do plants need sunlight") == (
@@ -83,7 +83,7 @@ def test_build_voice_messages_teacher_not_encyclopedia():
     )
     system = messages[0]["content"]
     assert "encyclopedia" in system.lower()
-    assert "let's see" in system.lower() or "think about this" in system.lower()
+    assert "FACTUAL GROUNDING" in system
     assert "process whereby" in system.lower()
 
 

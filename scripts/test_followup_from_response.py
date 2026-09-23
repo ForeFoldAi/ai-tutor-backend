@@ -226,7 +226,7 @@ async def run_live_check() -> int:
         return 1
 
     try:
-        answer, _imgs = await chapter_aware_qa(
+        answer, _imgs, _, _ = await chapter_aware_qa(
             followup,
             collection_name=collection,
             chapter_ids=[upload_id],

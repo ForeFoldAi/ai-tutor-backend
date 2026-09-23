@@ -197,15 +197,16 @@ class UnderstandingScores:
             )
         if self.is_affirmation and self.understanding >= 0.65:
             return (
-                "The student understood the last point. Briefly acknowledge what they got right, "
-                "then teach the next small step on the same topic. "
+                "The student understood the last point. Briefly acknowledge — one short spoken line. "
+                "Do NOT teach a new fact, example, or next step unless they asked for it. "
                 "Do NOT quote or recap their earlier questions (for example 'your last question was…') "
                 "unless they explicitly asked you to repeat their question."
             )
         if self.wants_expansion:
             return (
                 "The student asked for more detail. You may use up to 120 words, "
-                "but keep 6–12 word sentences, pause every 1–2 lines, example-led."
+                "but keep 6–12 word sentences, pause every 1–2 lines. "
+                "Stay inside the chapter context — do not add new examples."
             )
         if self.wants_quiz:
             return "Ask ONE short quiz question orally. Wait for their answer next turn."
@@ -221,7 +222,7 @@ class UnderstandingScores:
         if self.wants_quiz:
             return "Quick quiz for you…"
         if self.is_affirmation:
-            return "Great — let's build on that"
+            return "Glad that made sense."
         if self.wants_expansion:
             return "Going a bit deeper for you…"
         q = (student_text or "").strip()
@@ -519,7 +520,8 @@ def _state_guidance(state: TutorState) -> str:
         TutorState.QUIZING: "One short oral quiz question. Don't explain at length. No name.",
         TutorState.CLARIFYING: (
             "They're stuck — you MAY say their first name once for reassurance. "
-            "Simpler words, one 'Imagine…' example, two short sentences max."
+            "Restate the same chapter fact in simpler words, two short sentences max. "
+            "Do not reach for an invented analogy — simplify what the context says."
         ),
     }
     return mapping.get(state, mapping[TutorState.TEACHING])
@@ -554,6 +556,10 @@ def _build_voice_messages(
     quiz_attempts: int = 0,
     explained_points: list[str] | None = None,
     reply_intent: ReplyIntent | None = None,
+    student_affect: Any | None = None,
+    nest_intent: str | None = None,
+    dialogue_act: str | None = None,
+    filler_phrase_played: str | None = None,
 ) -> list[dict[str, str]]:
     scores = understanding or UnderstandingScores()
     history = _normalize_history(conversation_history)
@@ -565,6 +571,7 @@ def _build_voice_messages(
 
     system = build_voice_system_prompt(
         query,
+        context=context,
         class_level=class_level,
         board=board,
         subject_name=subject_name,
@@ -577,6 +584,10 @@ def _build_voice_messages(
         expand_deep=expand_deep,
         last_assistant=last_assistant,
         state_guidance=_state_guidance(tutor_state),
+        # build_affect_persona_block already emits student_affect.to_hint()
+        # under AFFECT GUIDANCE — sending it here too put the same paragraph
+        # in the prompt twice, competing with the grounding rules for
+        # attention in an already 1000-word system message.
         understanding_guidance=scores.to_hint(),
         acknowledgment_guidance=build_acknowledgment_guidance(query, scores),
         reply_intent=reply_intent or classify_reply_intent(query, quiz_pending=quiz_pending),
@@ -584,16 +595,24 @@ def _build_voice_messages(
         quiz_question=quiz_question,
         quiz_attempts=quiz_attempts,
         explained_points=explained_points,
+        student_affect=student_affect,
+        nest_intent=nest_intent,
+        dialogue_act=dialogue_act,
+        filler_phrase_played=filler_phrase_played,
     )
-    user = build_voice_user_message(query, context, expand_deep=expand_deep)
+    user = build_voice_user_message(
+        query, context, expand_deep=expand_deep, dialogue_act=dialogue_act
+    )
     from app.services.chat_service import _prepare_math_engine_block
 
-    math_block = _prepare_math_engine_block(
-        query,
-        subject_name=subject_name,
-        class_level=class_level,
-        context=context,
-    )
+    math_block = None
+    if not dialogue_act:
+        math_block = _prepare_math_engine_block(
+            query,
+            subject_name=subject_name,
+            class_level=class_level,
+            context=context,
+        )
     if math_block:
         user = math_block + "\n\n" + user
 

@@ -362,7 +362,31 @@ def test_conversation_scenario(scenario: dict):
         assert ctx.visual_intent == scenario["visual"]
 
     if "images" in scenario:
-        assert should_retrieve_images(ctx, chapter_ids=["ch1"]) == scenario["images"]
+        from app.config import ENABLE_LLM_IMAGE_SELECT
+
+        expected = scenario["images"]
+        # With answer-grounded LLM select, teaching follow-ups may fetch candidates
+        # (LLM can still return []). Greeting/quiz/small-talk stay blocked.
+        if (
+            ENABLE_LLM_IMAGE_SELECT
+            and not expected
+            and ctx.response_mode
+            not in (
+                ResponseMode.GREETING,
+                ResponseMode.SMALL_TALK,
+                ResponseMode.QUIZ,
+                ResponseMode.MCQ,
+            )
+            and ctx.followup_type
+            not in (
+                FollowupType.GREETING.value,
+                FollowupType.SMALL_TALK.value,
+                FollowupType.GENERATE_QUESTIONS.value,
+                FollowupType.GENERATE_MCQ.value,
+            )
+        ):
+            expected = True
+        assert should_retrieve_images(ctx, chapter_ids=["ch1"]) == expected
 
     for token in scenario.get("resolved_contains", []):
         assert token.lower() in ctx.resolved_topic.lower(), (

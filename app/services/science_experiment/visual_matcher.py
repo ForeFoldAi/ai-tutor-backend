@@ -25,6 +25,43 @@ _AFFINITY: list[tuple[re.Pattern[str], str, int]] = [
     (re.compile(r"\b(water\s+cycle)\b", re.I), "water-cycle", 90),
     (re.compile(r"\b(sound|vibration)\b", re.I), "sound", 85),
     (re.compile(r"\b(force|motion|newton)\b", re.I), "force-motion", 85),
+    (
+        re.compile(
+            r"\b(pressure|P\s*=\s*F\s*/\s*A|N\s*/\s*cm|exerted\s+by\s+the\s+block|"
+            r"contact\s+area|positions?\s+[AB])\b",
+            re.I,
+        ),
+        "force-pressure-lab",
+        110,
+    ),
+    (
+        re.compile(
+            r"\b(transmission|germs?\b|pathogen|wash\s+(?:my\s+)?hands?|"
+            r"spread\s+(?:of\s+)?(?:disease|infection|illness|germs?)|"
+            r"how\s+(?:do\s+)?(?:germs|diseases?)\s+spread|airborne|vector-borne|contagious)\b",
+            re.I,
+        ),
+        "disease-transmission-simulator",
+        100,
+    ),
+    (
+        re.compile(
+            r"\b(stay\s+healthy|nutritious|nutrition|balanced\s+diet|healthy\s+(?:food|habit)|"
+            r"clean\s+water|exercise|body\s+need|hygiene|sanitation|prevention|"
+            r"wash(?:ing)?\s+hands?|disease\s+prevention|keep(?:ing)?\s+(?:clean|healthy))\b",
+            re.I,
+        ),
+        "human-body-system-3d",
+        85,
+    ),
+    (
+        re.compile(
+            r"\b(investigat|hypothesis|observation|experiment\s+steps?|scientific\s+method)\b",
+            re.I,
+        ),
+        "concept-explorer",
+        50,
+    ),
     (re.compile(r"\b(solar\s+system|planet)\b", re.I), "solar-system", 90),
     (re.compile(r"\b(human\s+organ|anatomy|organs?\s+and\s+systems?)\b", re.I), "human-organs", 90),
 ]

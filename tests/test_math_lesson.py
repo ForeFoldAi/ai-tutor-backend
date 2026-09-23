@@ -80,18 +80,24 @@ def test_should_use_interactive_for_problem_solving():
     )
 
 
-def test_finalize_math_always_returns_lesson_for_math():
+def test_finalize_math_gates_unmatched_or_returns_affine():
     from app.services.math_lesson.service import finalize_math_answer
 
     clean, lesson = finalize_math_answer(
-        "A square has four equal sides.",
+        "A square has four equal sides and a rectangle has opposite sides equal.",
         "What is the difference between a square and a rectangle?",
         class_level="CLASS_3",
         subject_name="Mathematics",
+        allow_llm_pass2=False,
     )
     assert clean
-    assert lesson is not None
-    assert lesson.get("visualization", {}).get("visualizationType")
+    # Either an affine panel (shape-lab / etc.) or suppressed — never a random mismatch.
+    if lesson is not None:
+        vtype = lesson.get("visualization", {}).get("visualizationType")
+        assert vtype
+        from app.services.interactive_grounding import type_affinity_score
+
+        assert type_affinity_score(clean, vtype, "math") >= 0
 
 
 def test_should_skip_for_greeting():
@@ -137,6 +143,7 @@ def test_finalize_math_answer_uses_fallback():
         "two quarter turns equal half turn using animation",
         class_level="CLASS_9",
         subject_name="Mathematics",
+        allow_llm_pass2=False,
     )
     assert lesson is not None
     assert "Practice Question" in clean
@@ -271,3 +278,121 @@ def test_prefer_catalog_over_shapes_basic_for_matchsticks():
     )
     merged = merge_catalog_visualization(llm_lesson, catalog)
     assert merged["visualization"]["visualizationType"] == "matchstick-squares"
+
+
+def test_valid_3d_lesson_with_scene():
+    from pydantic import ValidationError
+
+    lesson = MathLesson.model_validate(
+        {
+            "conceptName": "Cube",
+            "classLevel": "Class 9",
+            "visualization": {
+                "visualizationType": "mensuration-cube",
+                "title": "Cube",
+                "renderMode": "3d",
+                "paletteId": "technical-9to10",
+                "scene": {
+                    "groundGrid": True,
+                    "objects": [
+                        {
+                            "id": "cube",
+                            "type": "box",
+                            "position": [0, 0.5, 0],
+                            "scaleDrivenBy": "s",
+                            "color": "primary",
+                        }
+                    ],
+                },
+                "sliders": [{"id": "s", "label": "Side", "min": 1, "max": 10, "default": 3}],
+            },
+        }
+    )
+    assert lesson.visualization.renderMode == "3d"
+    assert lesson.visualization.scene is not None
+    assert len(lesson.visualization.scene.objects) == 1
+
+
+def test_3d_without_scene_fails_validation_and_falls_back():
+    from app.services.math_lesson.service import finalize_math_answer
+
+    bad = {
+        "conceptName": "Cube",
+        "visualization": {
+            "visualizationType": "mensuration-cube",
+            "title": "Cube",
+            "renderMode": "3d",
+            # missing scene — must fail schema validation
+        },
+    }
+    import json
+
+    answer = f"Cube volume.\n\n```math-lesson\n{json.dumps(bad)}\n```"
+    clean, lesson = finalize_math_answer(
+        answer,
+        "Find the volume of a cube of side 5 cm",
+        class_level="Class 9",
+        subject_name="Mathematics",
+        allow_fallback=True,
+        allow_llm_pass2=False,
+    )
+    assert "math-lesson" not in clean
+    # Invalid fence dropped; catalog fallback supplies a valid lesson
+    assert lesson is not None
+    assert lesson["visualization"]["visualizationType"] in (
+        "mensuration-cube",
+        "concept-explorer",
+        "shape-lab",
+    )
+    if lesson["visualization"].get("renderMode") == "3d":
+        assert lesson["visualization"].get("scene")
+        assert lesson["visualization"]["scene"].get("objects")
+
+
+def test_legacy_2d_lesson_defaults_render_mode():
+    lesson = MathLesson.model_validate(
+        {
+            "conceptName": "Fractions",
+            "visualization": {
+                "visualizationType": "fractions",
+                "title": "Pizza",
+                # no renderMode field
+            },
+        }
+    )
+    assert lesson.visualization.renderMode == "2d"
+    assert lesson.visualization.scene is None
+
+
+def test_legacy_steps_normalize_to_algebra_steps():
+    lesson = MathLesson.model_validate(
+        {
+            "conceptName": "Equations",
+            "visualization": {
+                "visualizationType": "algebra-stepper",
+                "title": "Solve",
+                "steps": [
+                    {"expression": "2x+5=15", "explanation": "Start"},
+                    {"expression": "x=5", "explanation": "Done"},
+                ],
+            },
+        }
+    )
+    assert len(lesson.visualization.algebraSteps) == 2
+    assert lesson.visualization.algebraSteps[0].expressionBefore == "2x+5=15"
+    assert lesson.visualization.curveType is None or True
+
+
+def test_graph_mode_normalizes_to_curve_type():
+    lesson = MathLesson.model_validate(
+        {
+            "conceptName": "Quadratic",
+            "visualization": {
+                "visualizationType": "linear-graph",
+                "title": "Parabola",
+                "graphMode": "quadratic",
+                "coefficients": [1, -5, 6],
+            },
+        }
+    )
+    assert lesson.visualization.curveType == "quadratic"

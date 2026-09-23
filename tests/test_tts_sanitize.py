@@ -95,6 +95,10 @@ def test_horizontal_rule():
     out = sanitize_for_tts("Intro\n---\nBody text here.")
     assert "---" not in out
     assert "Body text" in out
+    # After whitespace collapse, HR must not become spoken "dash dash dash"
+    inline = sanitize_for_tts("Intro --- Body text here.")
+    assert "---" not in inline
+    assert "Body text" in inline
 
 
 def test_blockquote():
@@ -167,4 +171,4 @@ def test_voice_live_teaching_vs_full_format():
         voice_mode=True,
         query="what are weather instruments",
         heading_scope=main_scope,
-    ) is True
+    ) is False

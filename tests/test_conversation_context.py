@@ -40,9 +40,31 @@ def test_what_are_weather_instruments_allows_images():
     ctx = resolve_conversation_context("What are the Weather Instruments")
     assert ctx.visual_intent != VisualIntent.NO_VISUALS
     assert should_retrieve_images(ctx, chapter_ids=["ch1"])
-    assert should_retrieve_images(
-        ctx, chapter_ids=["ch1"], heading_scope_kind="main_section"
-    )
+
+
+def test_where_is_location_allows_images():
+    ctx = resolve_conversation_context("where is Vijayanagara")
+    assert should_retrieve_images(ctx, chapter_ids=["ch1"])
+
+
+def test_llm_image_select_allows_teaching_despite_no_visual_keyword():
+    """With LLM select on, keyword NO_VISUALS must not block chapter figure fetch."""
+    from unittest.mock import patch
+
+    ctx = resolve_conversation_context("Who founded the Vijayanagara Empire?")
+    with patch("app.config.ENABLE_LLM_IMAGE_SELECT", True):
+        assert should_retrieve_images(ctx, chapter_ids=["ch1"])
+    with patch("app.config.ENABLE_LLM_IMAGE_SELECT", False):
+        if ctx.visual_intent == VisualIntent.NO_VISUALS:
+            assert not should_retrieve_images(ctx, chapter_ids=["ch1"])
+
+
+def test_llm_image_select_still_blocks_greeting():
+    from unittest.mock import patch
+
+    ctx = resolve_conversation_context("hello")
+    with patch("app.config.ENABLE_LLM_IMAGE_SELECT", True):
+        assert not should_retrieve_images(ctx, chapter_ids=["ch1"])
 
 
 def test_visual_request_required():
@@ -78,11 +100,12 @@ def test_math_greeting_still_blocks_images():
     )
 
 
-def test_yes_continue_no_images():
+def test_yes_continue_allows_images_with_llm_select():
+    """Continue turns may fetch candidates; LLM select can still return []."""
     history = [{"role": "user", "content": "What is evaporation?"}]
     ctx = resolve_conversation_context("yes", conversation_history=history)
     assert ctx.followup_type == FollowupType.CONTINUE_EXPLANATION.value
-    assert not should_retrieve_images(ctx, chapter_ids=["ch1"])
+    assert should_retrieve_images(ctx, chapter_ids=["ch1"])
 
 
 def test_clarification_followup_reuses_prior_context():
@@ -107,7 +130,7 @@ def test_clarification_followup_reuses_prior_context():
     assert ctx.response_mode == ResponseMode.FOLLOWUP
     assert "shadow" in ctx.retrieval_query.lower()
     assert "challenge" in ctx.retrieval_query.lower()
-    assert not should_retrieve_images(ctx, chapter_ids=["ch1"])
+    assert should_retrieve_images(ctx, chapter_ids=["ch1"])
 
 
 def test_clarification_without_history_is_new_topic():

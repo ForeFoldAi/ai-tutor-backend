@@ -6,8 +6,8 @@ from typing import Any
 
 from app.services.science_experiment.experiment_catalog import match_science_experiment
 
-_GENERIC_TYPES = frozenset({"concept-explorer", "generic", ""})
-_WEAK_LLM_TYPES = frozenset({"concept-explorer", "generic", "", "shapes-basic"})
+_GENERIC_TYPES = frozenset({"generic", ""})
+_WEAK_LLM_TYPES = frozenset({"generic", "", "shapes-basic", "concept-explorer"})
 
 
 def build_fallback_science_experiment(query: str, class_level: str = "") -> dict[str, Any]:
@@ -22,13 +22,18 @@ def get_experiment_catalog_hint(query: str, class_level: str = "") -> str:
     etype = exp.get("experimentType") or "concept-explorer"
     sliders = exp.get("sliders") or []
     slider_ids = ", ".join(s.get("id", "") for s in sliders if s.get("id")) or "see catalog"
+    subject = catalog.get("subject") or exp.get("subject") or "evs"
+    kind = catalog.get("kind") or exp.get("kind") or "concept"
     return (
-        "CATALOG SCIENCE EXPERIMENT (mandatory — copy experimentType and slider ids exactly):\n"
-        f"- experimentType: {etype}\n"
-        f"- title: {exp.get('title', 'Interactive Experiment')}\n"
+        "CATALOG SCIENCE LAB (candidate — use only if it matches the concept YOU teach):\n"
+        f"- subject: {subject}\n"
+        f"- kind: {kind}\n"
+        f"- suggested experimentType: {etype}\n"
+        f"- title: {exp.get('title', 'Interactive Lab')}\n"
         f"- slider ids: {slider_ids}\n"
         f"- threeViews: realWorld, microscopic, scientific (all required)\n"
-        f"- catalog reference: {json.dumps(exp, ensure_ascii=False)[:500]}"
+        f"- Copy numbers/formulas from YOUR answer into slider defaults.\n"
+        f"- catalog reference: {json.dumps(exp, ensure_ascii=False)[:600]}"
     )
 
 
@@ -50,17 +55,15 @@ def merge_catalog_experiment(
     llm_type = str(llm_exp.get("experimentType") or "")
     use_catalog = (
         llm_type in _WEAK_LLM_TYPES
-        or llm_type != cat_type
         or not llm_exp.get("sliders")
         or not llm_exp.get("threeViews")
-        or not str(llm_exp.get("title") or "").strip()
     )
     if not use_catalog:
         return lesson
 
     merged = dict(lesson)
     merged["experiment"] = cat_exp
-    for key in ("conceptName", "learningObjective", "conceptExplanation", "classLevel"):
+    for key in ("conceptName", "learningObjective", "conceptExplanation", "classLevel", "subject", "kind"):
         if catalog.get(key) and (not lesson.get(key) or llm_type in _WEAK_LLM_TYPES):
             merged[key] = catalog[key]
     return merged

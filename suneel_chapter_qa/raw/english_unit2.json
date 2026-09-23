@@ -1,0 +1,2466 @@
+{
+  "generated_at": "2026-09-15 13:04:04 +0530",
+  "meta": {
+    "slug": "english_unit2",
+    "subject": "English",
+    "chapter_id": "27",
+    "chapter": "Unit 2 - Values and Dispositions",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "E2-01",
+        "query": "what values are they talking about in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-02",
+        "query": "what does disposition mean here?",
+        "label": "normal",
+        "expect_keywords": [
+          "disposition",
+          "attitude",
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-03",
+        "query": "why do values matter for students like me?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-04",
+        "query": "give me one example of a good value from the unit",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-05",
+        "query": "is honesty or kindness mentioned?",
+        "label": "normal",
+        "expect_keywords": [
+          "honest",
+          "kind",
+          "value",
+          "respect"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-06",
+        "query": "how can i practice these values at school?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "school"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-07",
+        "query": "quiz me on one value from the chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "?",
+          "quiz"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-08",
+        "query": "show a picture from this unit if the book has one",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "shown"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-09",
+        "query": "what happens if we ignore good values?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-10",
+        "query": "any story or character that shows good disposition?",
+        "label": "normal",
+        "expect_keywords": [
+          "disposition",
+          "value",
+          "story"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-11",
+        "query": "explain this unit like im in class 6",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-12",
+        "query": "what is the main message of Values and Dispositions?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "disposition"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-13",
+        "query": "how are values different from rules?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "rule"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-14",
+        "query": "can valus change how we treet frends?",
+        "label": "typo",
+        "expect_keywords": [
+          "value",
+          "friend"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-15",
+        "query": "give two short points for my notebook",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-16",
+        "query": "what are valus and dispotisions about?",
+        "label": "typo",
+        "expect_keywords": [
+          "value",
+          "disposition"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-17",
+        "query": "does this chapter teach quadratic equations?",
+        "label": "wrong",
+        "expect_keywords": [
+          "value",
+          "english",
+          "not"
+        ],
+        "forbidden": [
+          "quadratic"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-18",
+        "query": "who discovered bacteria in Values and Dispositions?",
+        "label": "wrong",
+        "expect_keywords": [
+          "value",
+          "chapter",
+          "not"
+        ],
+        "forbidden": [
+          "bacteria"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-19",
+        "query": "why is respect a disposition sometimes?",
+        "label": "normal",
+        "expect_keywords": [
+          "respect",
+          "disposition",
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E2-20",
+        "query": "wrap up the unit in one short paragraph",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": false,
+    "error": "health: <urlopen error [Errno 61] Connection refused>"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "E2-01",
+        "query": "what values are they talking about in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "This chapter explores **core values like courage, empathy, and loyalty**\u2014shown through stories of soldiers, kind acts, and family support. For example, Major Somnath Sharma\u2019s bravery embodies **honour and duty**, while the boy helping the old woman teaches **compassion**. The chapter also highlights how small choices (like standing by loved ones) build strength and meaning.  - Values here are **actions**, not just words\u2014like helping others or fa\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12548,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-02",
+        "query": "what does disposition mean here?",
+        "label": "normal",
+        "expect_keywords": [
+          "disposition",
+          "attitude",
+          "value"
+        ],
+        "answer_clip": "In this chapter, **disposition** means the natural way someone behaves, showing their true values in daily life. The chapter highlights how dispositions like loyalty or kindness appear in actions\u2014not just words. For instance, the grandmother\u2019s choice to support her grandson\u2019s work in Anand revealed her steadfast dedication.  - It\u2019s your *habitual response* to life\u2019s moments. - Think of it as the \"heart\" behind your choices.  What\u2019s one small act\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 31,
+            "caption": "Illustration of Unit 2 - Values and Dispositions: I Read aloud the list of\u2026",
+            "file": "figures/p30_30.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11462,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-03",
+        "query": "why do values matter for students like me?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "Values matter because they guide your choices and actions, helping you become the best version of yourself. The chapter shows how values like honesty, courage, and loyalty\u2014seen in stories like Major Somnath Sharma\u2019s bravery\u2014turn everyday moments into opportunities to make a positive impact. When you live by these values, you build trust, handle challenges with confidence, and contribute meaningfully to your community. Values also help you focus \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12979,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-04",
+        "query": "give me one example of a good value from the unit",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "The unit introduces **loyalty** as a key value, shown through Major Somnath Sharma\u2019s unwavering commitment to his team during the Battle of Badgam. Loyalty means staying true to your responsibilities and supporting others, even in challenging situations. The chapter emphasizes that loyalty builds trust and strengthens relationships.  - Loyalty is visible when someone follows through on promises, like a soldier protecting their unit. - It also in\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11704,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-05",
+        "query": "is honesty or kindness mentioned?",
+        "label": "normal",
+        "expect_keywords": [
+          "honest",
+          "kind",
+          "value",
+          "respect"
+        ],
+        "answer_clip": "is honesty or kindness mentioned? is not covered in Unit 2 - Values and Dispositions.  How would you like to continue? a) Stay in Unit 2 - Values and Dispositions b) Switch to the right chapter \u2014 open AI Tutor Reply a or b.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1866,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E2-06",
+        "query": "how can i practice these values at school?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "school"
+        ],
+        "answer_clip": "Practicing values like courage, empathy, and loyalty at school is easier than you think\u2014it\u2019s about being present and kind in small moments. The chapter shows how these values grow when we act, not just talk. For instance, helping a classmate who forgot their homework demonstrates empathy, while speaking up against unfairness shows courage. Even simple acts like admitting when you\u2019re wrong or keeping promises build loyalty.  Which of these values\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11698,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-07",
+        "query": "quiz me on one value from the chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "?",
+          "quiz"
+        ],
+        "answer_clip": "**Quiz Time** Let\u2019s explore the value of **courage**\u2014one of the most powerful themes in this chapter! You\u2019ve seen how it shapes actions in stories of soldiers, kindness, and everyday choices. Ready to test your understanding?  **Questions** 1. The chapter mentions **Major Somnath Sharma** as an example of courage. What *specific act* did he perform that embodies this value? (Hint: Think about his role in the poem and his sacrifice.)  2. In the p\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8952,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E2-08",
+        "query": "show a picture from this unit if the book has one",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "shown"
+        ],
+        "answer_clip": "The textbook shows a figure illustrating the poem\u2019s key moments\u2014like the old woman crossing the street or the boy offering help. This visual helps you see the poem\u2019s setting, such as the \"bustling street\" described in the text.  The chapter highlights how imagery, like *\"the street was wet with a recent snow,\"* brings the scene to life. Would you like to guess which part of the figure might show the boy\u2019s moment of courage?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16369,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 2.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 6.2,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-09",
+        "query": "what happens if we ignore good values?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "Ignoring good values can make life feel empty and disconnected, even when things seem fine. The chapter shows that values like honesty and responsibility help us build trust and contribute to others\u2019 happiness. Without them, we might miss chances to help people\u2014like your friend needing support or your community needing your effort\u2014and end up feeling lonely or unfulfilled. The chapter also warns that ignoring values can turn life into a race wher\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13337,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-10",
+        "query": "any story or character that shows good disposition?",
+        "label": "normal",
+        "expect_keywords": [
+          "disposition",
+          "value",
+          "story"
+        ],
+        "answer_clip": "The chapter highlights two inspiring characters who show strong good dispositions. **Poorvi** demonstrates *integrity* and *humility* by staying in Anand instead of pursuing fame, supported by her grandmother\u2019s steadfast belief in her. The chapter explains that her choices were driven by a deep sense of responsibility and respect for others\u2019 contributions.  Another example is **Major Somnath Sharma**, whose bravery in the *Battle of Badgam* refl\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 15678,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-11",
+        "query": "explain this unit like im in class 6",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "This unit is all about **being a good person**\u2014like learning how to treat others with kindness, courage, and respect. The chapter shows real-life examples, like a soldier\u2019s bravery or a boy helping an old woman, to teach us how to act with **values** (good qualities) and **dispositions** (how we show those qualities every day).  It also helps you understand words, grammar (like matching verbs to subjects), and even how to write about helping oth\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11135,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-12",
+        "query": "what is the main message of Values and Dispositions?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "disposition"
+        ],
+        "answer_clip": "**Values and Dispositions** in this chapter teach us that **being a good person means choosing courage, respect, and sacrifice**\u2014even when it\u2019s hard. The story of Major Somnath Sharma shows how his **unwavering duty and bravery** protected his country, proving that **true strength comes from standing for what\u2019s right**. It also reminds us that **everyone carries values** that shape how they act, whether in small everyday choices or big moments. \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 20101,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-13",
+        "query": "how are values different from rules?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "rule"
+        ],
+        "answer_clip": "Values are the deep beliefs that guide how we act, like honesty or courage, and they come from our own heart and choices. The chapter shows how values help us make meaningful decisions, such as helping others or standing up for fairness, even when no one is watching. Rules, however, are clear instructions set by others\u2014like school or traffic rules\u2014that everyone must follow to keep things orderly.  - Values are **personal** and can change as we g\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11940,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-14",
+        "query": "can valus change how we treet frends?",
+        "label": "typo",
+        "expect_keywords": [
+          "value",
+          "friend"
+        ],
+        "answer_clip": "Yes, your values *directly* shape how you treat friends because they\u2019re the principles you follow\u2014like kindness, honesty, or loyalty\u2014that guide your actions. The chapter shows how small choices, such as being trustworthy or patient, create stronger bonds. For instance, if you value respect, you\u2019ll listen to your friend\u2019s feelings, while courage might mean defending them when others are unfair.  - Values act as invisible rules for friendship. - F\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 15857,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-15",
+        "query": "give two short points for my notebook",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "Values and Dispositions are the principles and attitudes that help us act with kindness, courage, and respect\u2014like the examples in the chapter show. The textbook highlights how these qualities, such as Major Somnath Sharma\u2019s bravery or a soldier\u2019s duty, shape our choices in real life.  For your notebook, note: - Values are personal beliefs that guide how we treat others. - Dispositions like courage or honesty make us reliable and trustworthy.  W\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14401,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-16",
+        "query": "what are valus and dispotisions about?",
+        "label": "typo",
+        "expect_keywords": [
+          "value",
+          "disposition"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Values**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1134,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-17",
+        "query": "does this chapter teach quadratic equations?",
+        "label": "wrong",
+        "expect_keywords": [
+          "value",
+          "english",
+          "not"
+        ],
+        "answer_clip": "This chapter is all about **values and dispositions**\u2014the qualities that make us good people, like kindness, courage, and respect. It doesn\u2019t teach math topics like quadratic equations. Instead, it shows how real-life stories, such as Major Somnath Sharma\u2019s bravery, teach us about duty and selflessness. The chapter also explains how small acts of kindness can make a big difference.  Values are personal but also help us connect with others. If yo\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11628,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 7.0,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 6.6,
+          "bugs": [
+            "forbidden content mentioned: quadratic"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-18",
+        "query": "who discovered bacteria in Values and Dispositions?",
+        "label": "wrong",
+        "expect_keywords": [
+          "value",
+          "chapter",
+          "not"
+        ],
+        "answer_clip": "The chapter **Values and Dispositions** does not mention anything about discovering that topic\u2014it focuses entirely on **values, courage, and the story of Major Somnath Sharma**. This topic belongs to **Unit 1 (Wit and Wisdom)**, where scientific discoveries like that topic might be discussed.  Instead, this chapter teaches about **personal qualities** like bravery, sacrifice, and patriotism through Major Somnath Sharma\u2019s life. His story shows ho\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12665,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E2-19",
+        "query": "why is respect a disposition sometimes?",
+        "label": "normal",
+        "expect_keywords": [
+          "respect",
+          "disposition",
+          "value"
+        ],
+        "answer_clip": "Respect is a **disposition** because it\u2019s a lasting attitude, not just a temporary action. The chapter shows how values like respect shape our decisions daily\u2014like Major Somnath Sharma\u2019s unwavering honor in battle. It\u2019s something we *practice* to build trust and dignity in others.  - It\u2019s a **habit of the heart**, not just words. - The chapter highlights it as a soldier\u2019s strength. - Like loyalty, it grows with time and choice.  Why do you think\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 15061,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E2-20",
+        "query": "wrap up the unit in one short paragraph",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "This unit teaches that values like courage, loyalty, and empathy aren\u2019t just words\u2014they\u2019re actions that define who we are. The chapter shows how Major Somnath Sharma\u2019s sacrifice embodies duty, while stories of everyday heroes like Rohan prove that bravery isn\u2019t just for soldiers. It also connects language skills\u2014like correct verb forms and clear speech\u2014to the same honesty and respect we use in life. By the end, you\u2019ll see that small choices, fro\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11757,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "E2-01",
+        "source_query": "what values are they talking about in this chapter?",
+        "query": "hold on, what do you mean by core values like courage, empathy, and loyalty?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  This chapter teaches **values**\u2014these are like the **rules of good character** that guide how we act. Think of them as the **superpowers of a good person**.  1. **Courage** \u2013 Like standing up for what\u2019s right even when it\u2019s scary (like Major Somnath facing battle). 2. **Empathy** \u2013 Understanding others\u2019 feelings (like the boy helping the old woman). 3. **Loyalty** \u2013 Staying true to family, friends, or duty (like sold\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8870,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-02",
+        "source_query": "what does disposition mean here?",
+        "query": "ok but can you explain disposition in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** **Disposition** in this chapter means the *natural way someone thinks, feels, and acts*\u2014especially the core values that guide their choices in life.  ---  **In Simple Words** Disposition is like your *default setting*\u2014the quiet, steady qualities that show up when you face challenges or make decisions. For example, if someone always helps others without expecting anything in return, their disposition includes *kindness* and *loyalty*. T\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 31,
+            "caption": "Illustration of Unit 2 - Values and Dispositions: I Read aloud the list of\u2026",
+            "file": "figures/p30_30.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12984,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-03",
+        "source_query": "why do values matter for students like me?",
+        "query": "is Imagine actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The chapter doesn\u2019t use the word *imagine* directly, but it teaches us to *picture* and understand others\u2019 feelings through stories\u2014like how the boy in *\"The Old Woman\"* saw her pain while others ignored her. Values like empathy help us *visualize* struggles, making us more thoughtful and kind. The chapter shows that noticing details (like the old woman\u2019s bent back or wet feet) lets us connect emotionally.  What\u2019s one small way you\u2019ve noticed so\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11590,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-04",
+        "source_query": "give me one example of a good value from the unit",
+        "query": "quiz me with one easy question just about Battle",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of *Major Somnath Sharma and the Battle of Badgam*\u2014a story of courage and duty! Ready to recall what you learned?  **Questions** 1. What **core value** does Major Somnath Sharma demonstrate when he stays with his wounded soldiers instead of seeking safety? 2. The chapter mentions a **specific award** given to soldiers like Major Sharma. Name it. 3. Why does the chapter say his actions were *\"in all hum\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11822,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-05",
+        "source_query": "is honesty or kindness mentioned?",
+        "query": "show me a figure or example related to Switch",
+        "derived": true,
+        "answer_clip": "In Unit 2 \u2013 Values and Dispositions, **kindness** is definitely included, but **honesty** isn\u2019t mentioned directly. The chapter focuses on values like empathy and loyalty, and you\u2019ll find \"kind\" in the word-search grid on page 28 as part of the activity. It also encourages writing about helping others, which shows kindness in action.  The textbook explains that values are shown through real-life examples, like supporting someone in need.  Would \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 18090,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E2-06",
+        "source_query": "how can i practice these values at school?",
+        "query": "wait why is Even important here?",
+        "derived": true,
+        "answer_clip": "The chapter emphasizes **evenness** (or fairness) because it\u2019s a core value that builds trust and harmony in relationships, just like the wisdom in Unit 1. When people act fairly\u2014whether sharing, taking turns, or treating others equally\u2014it creates a balanced environment where everyone feels respected. For example, if classmates take turns helping with chores or if teachers give equal attention to all students, it shows **loyalty to fairness**, a\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8901,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-07",
+        "source_query": "quiz me on one value from the chapter",
+        "query": "can you give one more real-life example of Hint?",
+        "derived": true,
+        "answer_clip": "In this chapter, a **hint** is a small but meaningful sign that shows someone\u2019s values are alive. For example, if a friend quietly offers to help you with homework without being asked, that\u2019s a hint they value kindness. Another hint could be when someone stands up for a classmate being bullied\u2014it shows loyalty and courage.  The chapter uses Major Somnath Sharma\u2019s bravery as a hint to inspire others. In daily life, a kind word or a small act of g\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16162,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-08",
+        "source_query": "show a picture from this unit if the book has one",
+        "query": "i still don't get the street was wet with a recent snow, \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down step by step:  The line **\"The street was wet with a recent snow\"** means: 1. **Snow fell recently** (not long ago). 2. The snow **melted a little**, leaving the street **damp or slippery** (like when you see wet patches after snow). 3. This shows the weather was **cold** (because of the snow) and **chilly** (because the woman is shivering).  **Why does this matter?** The street\u2019s wetness makes it harder for the old woman to \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12098,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.5,
+          "images_score": 2.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.2,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-09",
+        "source_query": "what happens if we ignore good values?",
+        "query": "ok so what should i remember about Imagine for a test?",
+        "derived": true,
+        "answer_clip": "The poem *\"Imagine\"* by John Lennon encourages us to dream of a better world where people live with kindness, equality, and peace. The chapter highlights how its imagery\u2014like the old woman crossing the street or the boy offering help\u2014shows real-life struggles and the hope of unity. Remember that *\"Imagine\"* calls for us to picture a world without greed, war, or hunger, where everyone shares resources and cares for each other.  What\u2019s one line fr\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11136,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E2-10",
+        "source_query": "any story or character that shows good disposition?",
+        "query": "that part about Another sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "The poem\u2019s phrase **\"Another\"** means the boy\u2019s small act of kindness creates a ripple effect\u2014his help inspires *another* person to care, just as someone else\u2019s kindness might have helped *him* before. The chapter shows this through the boy\u2019s proud yet humble moment, where his action becomes part of a larger story of humanity.  The repetition of \"Somebody\u2019s Mother\" mirrors this\u2014it reminds us that every act of care connects us to others.  Does th\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 15227,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-11",
+        "source_query": "explain this unit like im in class 6",
+        "query": "hold on, what do you mean by dispositions?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down **super simply**:  **Dispositions** are like your **habits of the heart**\u2014the way you *naturally* act when no one is watching. Think of it like this:  - If you see someone drop their books, do you **pick them up** without thinking? That\u2019s a **kind disposition**. - If you always **share** your toys or help a friend who\u2019s sad, that\u2019s a **generous disposition**. - If you **never give up** when something is hard, that\u2019s a **deter\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12053,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-12",
+        "source_query": "what is the main message of Values and Dispositions?",
+        "query": "ok but can you explain everyone carries values in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** **Values and Dispositions** are the **personal beliefs and principles** that guide how we think, act, and treat others\u2014like kindness, honesty, courage, or respect. These values shape who we are and how we face life\u2019s challenges.  ---  **In Simple Words** Imagine you have a **secret rulebook** inside you that tells you what\u2019s right or wrong. That\u2019s your values! Everyone has this rulebook, even if they don\u2019t talk about it. For example, i\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 17823,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-13",
+        "source_query": "how are values different from rules?",
+        "query": "is personal actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The chapter doesn\u2019t use the word *personal*, but it clearly teaches that **values are the inner beliefs and principles we choose**\u2014like honesty or courage\u2014that shape how we act. For instance, Major Somnath Sharma\u2019s bravery and duty came from his own heart, not just orders. The poem also shows how the boy\u2019s kindness was a *personal choice* to help the old woman, even when others didn\u2019t.  - Values are **inside us** (not rules from others). - They \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10881,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-14",
+        "source_query": "can valus change how we treet frends?",
+        "query": "quiz me with one easy question just about Friends",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test how well you remember how values shape friendships\u2014just one question to start!  **Questions** 1. According to the chapter, if a friend values **honesty**, what small action might they take to show it in a friendship? (Hint: Think of a daily choice.)  **How to Answer** Reply with your answer, and I\u2019ll guide you through it like a mentor.  **Encouragement** You\u2019re thinking critically\u2014this is how real understanding grows!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7450,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-15",
+        "source_query": "give two short points for my notebook",
+        "query": "show me a figure or example related to Major Somnath Sharma",
+        "derived": true,
+        "answer_clip": "Major Somnath Sharma\u2019s story continues to inspire because his **courage and self-sacrifice** remind us of the ultimate duty to protect our nation, as the chapter explains. His bravery in the Battle of Badgam ensured Srinagar stayed under Indian control, and his name is honored on the **Honour Wall at the National War Memorial**.  For your notebook, note: - His **legacy of duty and honor** is passed down through generations. - His **ultimate sacr\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13567,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-16",
+        "source_query": "what are valus and dispotisions about?",
+        "query": "wait why is Values important here?",
+        "derived": true,
+        "answer_clip": "Values in this chapter are like invisible guides that help us become better people. The textbook shows how values like honesty, courage, and respect shape our actions\u2014just like Major Somnath Sharma\u2019s bravery inspired others. They teach us to stand by our responsibilities, like your grandmother did for your grandfather, giving strength to face life\u2019s tough moments. Without values, we lose direction, just as a ship loses its way without a compass.\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13848,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-17",
+        "source_query": "does this chapter teach quadratic equations?",
+        "query": "can you give one more real-life example of values and dispositions?",
+        "derived": true,
+        "answer_clip": "The chapter shows how values like kindness and responsibility shape our lives. One real-life example is **a teacher who stays late to help struggling students**\u2014this shows dedication and care. The chapter explains that small acts of kindness, like helping someone cross the street (as in the poem), can inspire others. Values are personal but also connect us to society.  What do you think\u2014how can you practice one of these values in your daily rout\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10296,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-18",
+        "source_query": "who discovered bacteria in Values and Dispositions?",
+        "query": "i still don't get . This topic belongs to \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "This chapter, **Unit 2 \u2013 Values and Dispositions**, is all about **the qualities that make people good and strong**. It shows how **values** like kindness, bravery, and responsibility appear in stories\u2014like Major Somnath Sharma\u2019s courage or the boy helping the old woman in the poem. The chapter teaches that these values **guide our choices** and shape who we are.  It doesn\u2019t cover math or science\u2014just **how people act with integrity and care**. \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12110,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-19",
+        "source_query": "why is respect a disposition sometimes?",
+        "query": "ok so what should i remember about Respect for a test?",
+        "derived": true,
+        "answer_clip": "Respect is a **disposition**\u2014a strong, consistent attitude of valuing others, shown through actions like listening and honoring their contributions. The chapter highlights it as a soldier\u2019s core strength, like Major Somnath Sharma\u2019s unwavering dignity in battle. It\u2019s not just politeness; it\u2019s treating people with fairness and kindness every day.  - It builds **trust and cooperation** in teams. - The chapter ties it to **service and humility**. -\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11801,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-20",
+        "source_query": "wrap up the unit in one short paragraph",
+        "query": "that part about Rohan sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "No, you didn\u2019t miss anything\u2014Rohan\u2019s story is clear and powerful. The chapter explains that a 15-year-old boy named Rohan fearlessly jumped into the Domri River to save a woman struggling in the strong currents. Despite the danger, he pulled her to safety, showing incredible courage. Later, his bravery was recognized with India\u2019s highest award for children, the Pradhan Mantri Rashtriya Bal Puraskar. The chapter highlights how his selfless act in\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8785,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "E2-01",
+        "query": "what values are they talking about in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "This chapter talks about **values** like courage, duty, honour, and patriotism. You see these in stories about soldiers\u2014like Major Somnath Sharma. There\u2019s also **respect** and **loyalty**, like the grandmother supporting her family\u2019s choice.  The chapter shows how these values shape people\u2019s actions. It\u2019s not just about rules\u2014it\u2019s about *how* we treat others and stand by our beliefs. Think of it like choosing kindness over fear or honesty over h\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9580,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-02",
+        "query": "what does disposition mean here?",
+        "label": "normal",
+        "expect_keywords": [
+          "disposition",
+          "attitude",
+          "value"
+        ],
+        "answer_clip": "Oh, great question!  Here, **disposition** means how someone *naturally behaves*\u2014like their usual attitude or way of acting. It\u2019s not just rules, but *who they are inside*.  Think of it like this: if someone always helps others, that\u2019s their *disposition*\u2014a deep, natural part of them. The chapter shows how people like soldiers or family members act *consistently* because of their values and dispositions.  So, it\u2019s about *who you are*, not just w\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7600,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E2-03",
+        "query": "why do values matter for students like me?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "Values matter because they shape *who you become*\u2014not just what you do.  The chapter says life is a privilege. Values like honesty, integrity, and responsibility help you live that privilege well. They turn small acts\u2014helping a friend, doing your best\u2014into something meaningful.  Without values, you might just *survive*. With them, you *contribute*\u2014to your family, your community, even the world. The chapter\u2019s writer says true rewards come from li\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6496,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-04",
+        "query": "give me one example of a good value from the unit",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "One great value from this unit is **honesty**.  The chapter shows it in phrases like *\"to be quite honest\"*\u2014 that means speaking truthfully, even when it\u2019s hard. Another example is *\"hold their heads high\"*\u2014that\u2019s confidence, but honesty is about being true to yourself and others.  The unit also mentions *\"in all humility\"*\u2014that\u2019s kindness with respect. But honesty is key. It builds trust, just like the words in the exercises.  Want to see how i\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10231,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-05",
+        "query": "is honesty or kindness mentioned?",
+        "label": "normal",
+        "expect_keywords": [
+          "honest",
+          "kind",
+          "value",
+          "respect"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Mentor**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 842,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 2.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 3.3,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "E2-06",
+        "query": "how can i practice these values at school?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "school"
+        ],
+        "answer_clip": "Oh, this is easy to practice!  Start small\u2014help a friend with their homework. Use your talents in class, like reading aloud or sharing ideas. Even small acts count, like cleaning the board or helping a teacher.  The chapter says: *look around you*\u2014your friend, your teacher, or your community needs you. No big effort needed. Just be honest, use your skills, and contribute.  Want a quick challenge? Try one thing today\u2014then tell me which value you \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6255,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-07",
+        "query": "quiz me on one value from the chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "?",
+          "quiz"
+        ],
+        "answer_clip": "Alright, let\u2019s pick **courage**\u2014it\u2019s a big one in this chapter. Courage means doing what\u2019s right even when it\u2019s scary. Like Major Somnath Sharma\u2014he kept fighting even when wounded. Another example? A soldier standing up for a friend, even if it\u2019s dangerous. Ready for a quick quiz? What\u2019s the opposite of courage? (Think of a word that means giving up when things get tough.)",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8884,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-08",
+        "query": "show a picture from this unit if the book has one",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "shown"
+        ],
+        "answer_clip": "This unit doesn\u2019t have a picture or diagram in the textbook. But there\u2019s a cool poem on page 25\u2014it describes a busy street. The chapter also has a grammar exercise about soldiers and flags.  Want me to explain the poem\u2019s imagery instead? Or show you the diary-writing example on page 32?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9094,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 5.7,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-09",
+        "query": "what happens if we ignore good values?",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "Oh, that\u2019s a great question!  If we ignore good values, we miss out on the real rewards of life. The chapter says\u2014when you don\u2019t live with courage, kindness, or honesty, you might feel empty inside, even if you have things like medals or awards.  Think of the medal story\u2014it\u2019s not just about keeping it. The *real* reward comes from earning it through hard work and good choices. Without values, life feels shallow, like just collecting things witho\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8139,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-10",
+        "query": "any story or character that shows good disposition?",
+        "label": "normal",
+        "expect_keywords": [
+          "disposition",
+          "value",
+          "story"
+        ],
+        "answer_clip": "Oh, this chapter has *two* great examples right here!  First, **Major Somnath Sharma**\u2014his story shows bravery and duty. He\u2019s the soldier from the Battle of Badgam, standing tall for his country.  Then there\u2019s **Poorvi\u2019s family**\u2014her grandmother\u2019s loyalty and her own integrity. She chose to stay in Anand, working hard with humility.  Both show good values\u2014honour, honesty, and responsibility. Want me to pick one to explain further?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7921,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-11",
+        "query": "explain this unit like im in class 6",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "Oh, I see! This unit is all about **good qualities inside us**\u2014like kindness, bravery, and respect. Think of it like learning how to be a better person, just like how you learn math or science.  The chapter shows **real-life examples**\u2014like a boy helping someone cross the street, or soldiers who show courage. These are called **values and dispositions**. Values are like the rules of a game that help us play fair, and dispositions are how we *act\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7705,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-12",
+        "query": "what is the main message of Values and Dispositions?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "disposition"
+        ],
+        "answer_clip": "This chapter\u2019s main message is simple\u2014**great values shape great people**.  It shows how **courage, loyalty, and duty**\u2014like Major Somnath Sharma\u2019s bravery\u2014inspire others. His story teaches that **honour isn\u2019t just words**; it\u2019s actions. Even with a broken hand, he led his men because he cared more for his country than himself.  The chapter also asks: *What makes a soldier strong?* Not just skills, but **inner qualities**\u2014like respect for others\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12492,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-13",
+        "query": "how are values different from rules?",
+        "label": "normal",
+        "expect_keywords": [
+          "value",
+          "rule"
+        ],
+        "answer_clip": "Oh, that\u2019s a great question\u2014it *does* feel confusing at first!  Values are like the *heart* of who we are. They\u2019re the good qualities inside us\u2014like kindness, honesty, or respect\u2014that help us make choices. For example, if someone shows *respect* for others, that\u2019s a value guiding their actions.  Rules, on the other hand, are like the *rules of a game*. They\u2019re clear instructions\u2014like \"don\u2019t run in the classroom\"\u2014that everyone must follow. Rules \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11464,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-14",
+        "query": "can valus change how we treet frends?",
+        "label": "typo",
+        "expect_keywords": [
+          "value",
+          "friend"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Values**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1336,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-15",
+        "query": "give two short points for my notebook",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "Got it! Here are two short points for your notebook:  First, **values like courage, duty, honour, and patriotism** matter. The chapter mentions Major Somnath Sharma\u2014his life shows how these values inspire others.  Second, **respect and loyalty** are also key. They help build trust, just like in stories where people stand by each other.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8369,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-16",
+        "query": "what are valus and dispotisions about?",
+        "label": "typo",
+        "expect_keywords": [
+          "value",
+          "disposition"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Values**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 743,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-17",
+        "query": "does this chapter teach quadratic equations?",
+        "label": "wrong",
+        "expect_keywords": [
+          "value",
+          "english",
+          "not"
+        ],
+        "answer_clip": "No, this chapter isn\u2019t about quadratic equations at all. It\u2019s all about **values**\u2014like kindness, empathy, and helping others. You\u2019ll see poems and stories about good choices and feelings. Math like equations isn\u2019t here. This is about being a good person.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6303,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.0,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.1,
+          "bugs": [
+            "forbidden content mentioned: quadratic"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E2-18",
+        "query": "who discovered bacteria in Values and Dispositions?",
+        "label": "wrong",
+        "expect_keywords": [
+          "value",
+          "chapter",
+          "not"
+        ],
+        "answer_clip": "This chapter isn\u2019t about who discovered bacteria at all. It\u2019s about **values**\u2014like courage, duty, and patriotism. The story here is about **Major Somnath Sharma**, India\u2019s first Param Vir Chakra winner. His bravery in the **Battle of Badgam** is what\u2019s being taught. Bacteria? That\u2019s not in this lesson\u2014it\u2019s in another unit. Want to hear more about Major Sharma\u2019s story instead?",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11080,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.2,
+          "bugs": [
+            "forbidden content mentioned: bacteria"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E2-19",
+        "query": "why is respect a disposition sometimes?",
+        "label": "normal",
+        "expect_keywords": [
+          "respect",
+          "disposition",
+          "value"
+        ],
+        "answer_clip": "Respect is called a **disposition** here because it\u2019s not just a rule\u2014 it\u2019s something you *choose* to carry inside you. Like the writer says, it\u2019s about being brave enough to love others, strong enough to celebrate their wins, and wise enough to share. That\u2019s not a rule\u2014it\u2019s a *way of being*.  The chapter shows respect as a **deep quality**, not just saying \"please\" or \"thank you\". It\u2019s like the grandmother\u2019s choice to stand by her husband\u2014 that\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10109,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E2-20",
+        "query": "wrap up the unit in one short paragraph",
+        "label": "normal",
+        "expect_keywords": [
+          "value"
+        ],
+        "answer_clip": "This unit is all about **values**\u2014like courage, duty, and respect. It shows how people like Major Somnath Sharma stand for what\u2019s right. You also learned about **loyalty** and **honour** through stories. The chapter even helped you practice speaking about helping others. It\u2019s about being a good person, just like learning math or science.",
+        "images": [
+          {
+            "figure": null,
+            "page": 20,
+            "caption": "a statue of a man in a park. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p19_18.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8689,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "E2-01",
+        "source_query": "what values are they talking about in this chapter?",
+        "query": "hold on, what do you mean by values?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  **Values** are like the *rules of the heart*\u2014they\u2019re the things that guide how we act, think, and treat others. Think of them as your personal *compass* for life.  In this chapter, the textbook talks about **specific values** shown by Major Somnath Sharma and others: - **Courage**: Doing what\u2019s right even when it\u2019s scary (like standing up for your country). - **Duty**: Fulfilling your responsibilities, no matter what\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10061,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-02",
+        "source_query": "what does disposition mean here?",
+        "query": "ok but can you explain how someone in simpler words?",
+        "derived": true,
+        "answer_clip": "Oh, okay!  Here, **disposition** is just how someone *naturally acts*\u2014like their usual way of being. It\u2019s not rules, but *who they are inside*.  Think of it like this: if someone always helps others, that\u2019s their *disposition*\u2014a deep, natural part of them. The chapter shows how people like soldiers or family members act *consistently* because of their values and dispositions.  So, it\u2019s about *who you are*, not just what you *do*. Like the boy wh\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 31,
+            "caption": "Illustration of Unit 2 - Values and Dispositions: I Read aloud the list of\u2026",
+            "file": "figures/p30_30.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10084,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-03",
+        "source_query": "why do values matter for students like me?",
+        "query": "is Without actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Ah, I see what you\u2019re asking\u2014let me clear this up.  This chapter *does* talk about values directly. It\u2019s not guessing. The chapter shows how **values** like kindness, empathy, and responsibility appear in stories\u2014like the boy helping the old woman. That\u2019s a real example from the poem.  The chapter also mentions **sacrifices** for the motherland. That\u2019s another value\u2014loyalty. So yes, the chapter uses words like \"courage,\" \"duty,\" and \"honour\" to \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6757,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-04",
+        "source_query": "give me one example of a good value from the unit",
+        "query": "quiz me with one easy question just about honesty",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy honesty question:  *\"Which phrase from the chapter means \u2018to speak in a truthful way\u2019?\"*  It\u2019s one of the matching words from the exercise. Pick between: - in all humility - to be quite honest - hold their heads high  Which one sounds like honesty to you?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4743,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E2-05",
+        "source_query": "is honesty or kindness mentioned?",
+        "query": "show me a figure or example related to Mentor",
+        "derived": true,
+        "answer_clip": "The chapter doesn\u2019t show a figure or diagram for **Mentor**\u2014it\u2019s not even mentioned there. But it *does* talk about **mentors** in a way.  The letter-writing task on page 47 asks you to thank your grandparents. That\u2019s like writing to a mentor\u2014someone who guides you. It\u2019s about gratitude and learning from them.  For an example, think of how Major Somnath Sharma\u2019s story inspires others. His actions show **courage and duty**\u2014like a mentor\u2019s wisdom.\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8421,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E2-06",
+        "source_query": "how can i practice these values at school?",
+        "query": "wait why is Even important here?",
+        "derived": true,
+        "answer_clip": "Ah, you mean *values*\u2014not \"Even\"! The chapter says: *values* like honesty, responsibility, and helping others matter. They shape who you are and how you live.  See, Dr. Kurien talks about *life as a privilege*\u2014so using your talents, like helping friends or teachers, makes it meaningful. Even small acts\u2014like cleaning up or sharing\u2014add up.  No big effort needed. Just be present and do your best. That\u2019s how you practice values every day.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7992,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-07",
+        "source_query": "quiz me on one value from the chapter",
+        "query": "can you give one more real-life example of Think?",
+        "derived": true,
+        "answer_clip": "Oh, you mean **the act of thinking deeply**\u2014like when someone takes time to understand a problem. Like in the chapter, when the writer talks about their grandmother\u2019s choice. She didn\u2019t just *do* something\u2014she *thought* about what was right for the family. Another example? When soldiers plan their moves before a mission. They don\u2019t act on impulse\u2014they *think* first. Got it? Want to try another value next?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6877,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-08",
+        "source_query": "show a picture from this unit if the book has one",
+        "query": "i still don't get 32 \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Oh, I see what\u2019s confusing you\u2014page 32 isn\u2019t a poem or a big lesson. It\u2019s a **diary-writing exercise**. The chapter asks you to write a letter to your grandparents.  Here\u2019s what it\u2019s asking: - Thank them for lessons they taught you. - Explain how their wisdom shaped *your* values\u2014like honesty, kindness, or responsibility. - Think of a time their advice helped you.  It\u2019s not about numbers or math\u2014just writing about gratitude and values. Want me t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6590,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 2.0,
+          "bugs": [
+            "missing expected keywords",
+            "wanted images but got none"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E2-09",
+        "source_query": "what happens if we ignore good values?",
+        "query": "ok so what should i remember about Think for a test?",
+        "derived": true,
+        "answer_clip": "For your test, remember this key idea from the chapter: **Life is about responsibility and effort, not just success.**  The chapter says\u2014 - You must use your talents and help others. - Failure isn\u2019t about not winning\u2014it\u2019s about not trying your best. - Happiness comes from effort and contribution, not just what you have.  So for \"Think\" questions, focus on: 1. **Why effort matters**\u2014it\u2019s about doing your best, not just winning. 2. **Helping other\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7550,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-10",
+        "source_query": "any story or character that shows good disposition?",
+        "query": "that part about Poorvi\u2019s family sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I hear you\u2014this part *does* sound a little tangled at first. Let me untangle it for you.  Poorvi\u2019s family isn\u2019t *directly* in the story you\u2019re reading right now. But the chapter *does* mention her grandmother\u2019s kindness and how Poorvi herself shows **integrity**\u2014she stays in Anand and works hard, even when others might have left.  The confusing part might be the **grandmother\u2019s traits**\u2014the chapter says she\u2019s *not* \"encouraging\" (that\u2019s opti\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7425,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-11",
+        "source_query": "explain this unit like im in class 6",
+        "query": "hold on, what do you mean by values and dispositions?",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s break it down super simply\u2014like how we learn new words in math!  **Values** are like the *rules* or *good habits* that help us live well. For example: - **Honesty** (telling the truth) - **Kindness** (helping others) - **Courage** (doing the right thing even when it\u2019s scary)  **Dispositions** are how we *actually show* those values in our daily life. Think of it like this: - If **honesty** is the rule, **disposition** is *always* tel\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11096,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-12",
+        "source_query": "what is the main message of Values and Dispositions?",
+        "query": "ok but can you explain Even in simpler words?",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s break it down simply.  This chapter is all about **inner strengths**\u2014like **courage, duty, and respect**. It shows how **Major Somnath Sharma** stayed brave even when hurt, and how **grandparents\u2019 support** gives strength. It\u2019s about **doing what\u2019s right**, not just following rules.  Think of it like this: **Values are the heart of who we are**.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11262,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-13",
+        "source_query": "how are values different from rules?",
+        "query": "is don\u2019t run in the classroom actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "No, \"don\u2019t run in the classroom\" isn\u2019t in this chapter at all. This unit is about *values*\u2014like kindness, empathy, and respect\u2014shown in stories, not classroom rules.  The chapter focuses on how people act with goodness inside them. For example, the poem shows a boy helping an old woman, not about following school rules.  Want me to explain how values appear in the poem instead?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7680,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-14",
+        "source_query": "can valus change how we treet frends?",
+        "query": "quiz me with one easy question just about Values",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy quiz question:  *\"What\u2019s one way **honesty** helps us treat friends better?\"*  Think about how being truthful makes trust stronger. Ready?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 17955,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-15",
+        "source_query": "give two short points for my notebook",
+        "query": "show me a figure or example related to First",
+        "derived": true,
+        "answer_clip": "The poem on **page 25** shows a figure\u2014 a boy helping an old woman cross the street. That\u2019s your first example right there!  The **events in order** (1\u20138) tell the story. Look at how the boy\u2019s kindness grows\u2014 from helping her to feeling proud. That\u2019s the \"First\" you asked about!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9486,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E2-16",
+        "source_query": "what are valus and dispotisions about?",
+        "query": "wait why is Values important here?",
+        "derived": true,
+        "answer_clip": "Values matter here because they shape *who we become*\u2014 like how the writer\u2019s grandmother chose to support her husband\u2019s work. That choice gave him strength to face life\u2019s challenges.  See? Values aren\u2019t just rules\u2014they\u2019re the *why* behind actions. Like loyalty, courage, or kindness. They help us make tough choices, just like the grandmother did. Without them, life feels empty.  This chapter shows how values turn small moments\u2014 like earning a med\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8439,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-17",
+        "source_query": "does this chapter teach quadratic equations?",
+        "query": "can you give one more real-life example of values?",
+        "derived": true,
+        "answer_clip": "Here\u2019s a real-life example from the chapter: The boy who helped the old woman cross the street showed **kindness**. He thought about his own mother needing help\u2014 that\u2019s **empathy** in action. Another one? The grandmother choosing to support her son\u2019s work showed **loyalty** and **commitment**. Values are just good choices we make every day.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6635,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E2-18",
+        "source_query": "who discovered bacteria in Values and Dispositions?",
+        "query": "i still don't get Major Somnath Sharma \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s break this down slowly.  Major Somnath Sharma was a **very brave soldier** from **Kangra, Himachal Pradesh**. He was born in **1923**\u2014that\u2019s a long time ago! He trained in **Sandhurst**, a famous military school in England. Then, in **1942**, he joined the army as an officer.  Now, the big moment: **Battle of Badgam**. He led his team into **Srinagar** to fight for India. Even though they were outnumbered, he **urged his men to fight\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12482,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.3,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E2-19",
+        "source_query": "why is respect a disposition sometimes?",
+        "query": "ok so what should i remember about deep quality for a test?",
+        "derived": true,
+        "answer_clip": "Ah, I see why this feels tricky\u2014it\u2019s not just about remembering words, it\u2019s about *feeling* what these qualities mean inside. Let\u2019s break it down.  **\"Deep quality\"** here means the *real* kind of goodness\u2014 not just doing things right, but doing them *with heart*. Like the writer says: it\u2019s about **loving bravely**, **celebrating others\u2019 wins**, and knowing there\u2019s enough joy to share. That\u2019s not a rule\u2014it\u2019s a *way of living*.  For the test, rem\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8369,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E2-20",
+        "source_query": "wrap up the unit in one short paragraph",
+        "query": "that part about Major Somnath Sharma sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I totally get why that part feels confusing\u2014let\u2019s break it down.  Major Somnath Sharma wasn\u2019t just *talking* about bravery. He was *showing* it. The chapter says he moved through the battlefield even when he was injured. He kept filling magazines, encouraging his men\u2014*despite* the chaos. That\u2019s not just a story; it\u2019s proof of **courage** and **duty** in action.  The key word here is **\"despite\"**\u2014he didn\u2019t stop because of injuries or danger.\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 8,
+            "caption": "a stamp with a picture of a soldier. English textbook figure, Unit 2 -\u2026",
+            "file": "figures/p7_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7560,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.3,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      }
+    ]
+  },
+  "tutor_avg": 8.13,
+  "voice_avg": 7.37
+}

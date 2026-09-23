@@ -89,7 +89,7 @@ async def main() -> None:
         )
         print(f"  coverage: {assessment.level.value}  topic={assessment.topic_label!r}")
 
-        answer, _, _ = await chapter_aware_qa(q, **kw)
+        answer, _, _, _ = await chapter_aware_qa(q, **kw)
         preview = (answer or "")[:280].replace("\n", " ")
         print(f"  response: {preview}...")
 

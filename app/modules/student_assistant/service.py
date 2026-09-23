@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.modules.student_assistant.context import build_student_context, build_suggested_prompts
 from app.modules.student_learning import service as learning_service
 from app.modules.users.models import User
+from app.config import ASSISTANT_MAX_TOKENS
 from app.services.chapter_scope import (
     chapter_number_from_name,
     extract_mentioned_chapter_numbers,
@@ -19,6 +20,23 @@ from app.services.conversation_context import resolve_conversation_context
 from app.services.conversation_memory import format_memory_for_prompt, prepare_conversation_inputs
 
 _AGENT_MODES = frozenset({"free", "ask", "practice", "explain"})
+
+_CONTINUE_USER = (
+    "Continue exactly where you left off. Finish the answer completely. "
+    "Do not repeat what you already wrote. Keep it short."
+)
+
+# Shared by text chat and voice (same student_assistant stream).
+_LENGTH_STYLE = """
+Length and style (text and voice — same rules):
+- Keep every reply SMALL or MEDIUM only — about 40 to 120 words.
+- Use simple words a school student understands. Short sentences.
+- At most 3 short steps or bullets. No long lectures, essays, or long methodology.
+- One small example is enough. Stop when the question is answered.
+- Always finish completely — never stop mid-sentence, mid-bullet, or mid-step.
+- Never use markdown formatting.
+- Never output the '*' character (asterisk).
+"""
 
 _FREE_PROMPT = """You are the AI Tutor assistant for {student_name}, a student on the AI Tutor learning platform.
 
@@ -38,10 +56,8 @@ Academic / out-of-book help:
 
 Rules:
 - Never reveal other students' data or admin-only information.
-- Keep answers clear, friendly, and age-appropriate. Use short paragraphs or bullets when helpful.
-- Never use markdown formatting.
-- Never output the '*' character (asterisk).
-
+- Keep answers clear, friendly, and age-appropriate.
+""" + _LENGTH_STYLE + """
 STUDENT CONTEXT:
 {context}
 {detected}
@@ -68,9 +84,7 @@ Detect subject/topic from the question when possible. Do not ask them to pick a 
 Rules:
 - Age-appropriate for their grade.
 - Never invent enrollment data.
-- Never use markdown formatting or the '*' character.
-- Keep answers concise (a few short paragraphs or bullets).
-
+""" + _LENGTH_STYLE + """
 STUDENT CONTEXT:
 {context}
 {detected}
@@ -87,7 +101,7 @@ Do NOT dump a long explanation or open lecture.
 When the student asks a concrete mathematical question / pastes a problem:
 1. Answer the exact question (same numbers, conditions, quantities — never substitute a different question).
 2. Explain briefly how the answer was obtained.
-3. Show step-by-step mathematical reasoning when appropriate.
+3. Show step-by-step mathematical reasoning when appropriate (keep it short).
 4. Then ask ONE short follow-up question (check understanding or a related practice step). Do NOT lead with a different problem instead of answering.
 5. Do NOT restate or repost their question.
 
@@ -111,10 +125,8 @@ Detect subject/topic from the request when possible. Do not ask them to pick a s
 
 Rules:
 - Match difficulty to their grade.
-- Keep explanations concise and suitable for the student.
-- Never use markdown formatting or the '*' character.
 - Prefer short problems; one at a time when generating practice.
-
+""" + _LENGTH_STYLE + """
 STUDENT CONTEXT:
 {context}
 {detected}
@@ -123,9 +135,9 @@ STUDENT CONTEXT:
 
 _EXPLAIN_PROMPT = """You are the AI Tutor for {student_name}. Mode: Explain a Topic.
 
-Purpose: Teach with a clear step-by-step explanation of a textbook topic (mini-lesson).
+Purpose: Give a short, simple mini-explanation of a textbook topic (not a full lecture).
 Do NOT start a quiz or practice problems unless the student explicitly asks.
-Do NOT give only a one-line definition — explain with short steps and a simple example when useful.
+Do NOT give only a one-line definition — use a few short steps and one simple example when useful.
 
 Textbook rule (STRICT):
 - Explain ONLY using TEXTBOOK CONTEXT below (and detected subject/chapter).
@@ -136,8 +148,7 @@ Detect subject/topic from the request when possible. Do not ask them to pick a s
 
 Rules:
 - Use short steps and simple wording for their grade.
-- Never use markdown formatting or the '*' character.
-
+""" + _LENGTH_STYLE + """
 STUDENT CONTEXT:
 {context}
 {detected}
@@ -155,6 +166,29 @@ _MODE_PROMPTS = {
 def normalize_agent_mode(mode: str | None) -> str:
     m = (mode or "free").strip().lower()
     return m if m in _AGENT_MODES else "free"
+
+
+def _looks_incomplete(text: str) -> bool:
+    """True when the model likely stopped mid-answer (token cut / stream drop)."""
+    t = (text or "").rstrip()
+    if len(t) < 40:
+        return False
+    if t.endswith((":", "—", "–", "-", ",", ";", "/", "(")):
+        return True
+    last = t.rsplit("\n", 1)[-1].strip()
+    if re.match(r"^(?:[-•]|\d+[.)])\s+\S+", last) and not re.search(r"[.!?…][\"')\]]*$", last):
+        return True
+    if re.search(r"\b(?:step|example|for example|like this|as follows)\s*\d*\s*:?\s*$", t, re.I):
+        return True
+    return False
+
+
+def _with_continue(messages: list[dict[str, str]], partial: str) -> list[dict[str, str]]:
+    return [
+        *messages,
+        {"role": "assistant", "content": partial},
+        {"role": "user", "content": _CONTINUE_USER},
+    ]
 
 
 def _first_name(full_name: str | None) -> str:
@@ -648,7 +682,18 @@ async def chat(
         textbook=textbook,
         conversation_memory=format_memory_for_prompt(mem),
     )
-    answer = (await _call_mistral_async(messages, max_tokens=900, feature="assistant") or "").strip()
+    answer = (await _call_mistral_async(messages, max_tokens=ASSISTANT_MAX_TOKENS, feature="assistant") or "").strip()
+    if _looks_incomplete(answer):
+        more = (
+            await _call_mistral_async(
+                _with_continue(messages, answer),
+                max_tokens=ASSISTANT_MAX_TOKENS,
+                feature="assistant",
+            )
+            or ""
+        ).strip()
+        if more:
+            answer = f"{answer.rstrip()}\n{more}".strip()
     return answer, mode_suggested_prompts(db, user, mode)
 
 
@@ -686,7 +731,21 @@ async def chat_stream(
         textbook=textbook,
         conversation_memory=format_memory_for_prompt(mem),
     )
-    async for token in _stream_mistral_async(messages, max_tokens=900, feature="assistant"):
+    parts: list[str] = []
+    async for token in _stream_mistral_async(
+        messages, max_tokens=ASSISTANT_MAX_TOKENS, feature="assistant"
+    ):
+        parts.append(token)
+        yield token
+    answer = "".join(parts).strip()
+    if not _looks_incomplete(answer):
+        return
+    # One continuation pass — stream the rest so the UI finishes the cut-off reply.
+    async for token in _stream_mistral_async(
+        _with_continue(messages, answer),
+        max_tokens=ASSISTANT_MAX_TOKENS,
+        feature="assistant",
+    ):
         yield token
 
 
@@ -697,13 +756,18 @@ if __name__ == "__main__":
     # Modes stay distinct: free = out-of-book OK; quick-start = textbook-only redirect.
     assert "outside their uploaded textbook" in _FREE_PROMPT
     assert "SHORT, direct answer" in _ASK_PROMPT
+    assert "SMALL or MEDIUM" in _LENGTH_STYLE
+    assert "40 to 120 words" in _FREE_PROMPT
+    assert "Always finish completely" in _FREE_PROMPT
+    assert _looks_incomplete("Step 2: Add Single-Digit Numbers. Write them vertically:")
+    assert not _looks_incomplete("Adding is combining groups. 4 + 7 = 11.")
     assert "ANY enrolled textbook chapter" in _ASK_PROMPT
     assert "do not need to say \"switch\"" in _ASK_PROMPT
     assert "ONE practice problem" in _PRACTICE_PROMPT
     assert "Answer the exact question" in _PRACTICE_PROMPT
     assert "ONE short follow-up question" in _PRACTICE_PROMPT
     assert "Chapter stickiness" in _PRACTICE_PROMPT
-    assert "step-by-step explanation" in _EXPLAIN_PROMPT
+    assert "step-by-step explanation" in _EXPLAIN_PROMPT or "mini-explanation" in _EXPLAIN_PROMPT
     for prompt in (_ASK_PROMPT, _PRACTICE_PROMPT, _EXPLAIN_PROMPT):
         assert "Ask AI Tutor" in prompt
         assert "TEXTBOOK CONTEXT" in prompt

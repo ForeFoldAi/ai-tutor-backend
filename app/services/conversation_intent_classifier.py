@@ -134,7 +134,8 @@ _CONFUSION_RE = re.compile(
     r"don'?t\s+understand|do\s+not\s+understand|didn'?t\s+understand|did\s+not\s+understand|"
     r"i\s+don'?t\s+get|don'?t\s+get\s+the|not\s+clear|confused|what\s+do\s+you\s+mean|"
     r"no\s+idea|still\s+confused|too\s+hard|explain\s+again|say\s+that\s+again|"
-    r"can\s+you\s+explain\s+(?:that|this|it)\s+again|lost\s+me|didn'?t\s+follow"
+    r"can\s+you\s+explain\s+(?:that|this|it)\s+again|lost\s+me|didn'?t\s+follow|"
+    r"what\s+does\s+(?:that|this|it)\s+mean"
     r")\b",
     re.I,
 )

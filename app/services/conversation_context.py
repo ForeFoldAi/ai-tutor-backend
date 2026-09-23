@@ -81,6 +81,7 @@ class ConversationContext:
 _CONCEPTUAL_RE = re.compile(
     r"\b(explain|describe|what\s+is|what\s+are|how\s+does|why\s+does|define|"
     r"tell\s+me\s+about|list|types?\s+of|name\s+the|"
+    r"where\s+(?:is|are|was|were)|located|capital\s+of|"
     r"process|formation|structure|location|region|climate|desert|river|mountain|map|"
     r"instrument|instruments|weather|temperature|precipitation|humidity|wind|pressure)\b",
     re.I,
@@ -446,8 +447,10 @@ def should_retrieve_images(
     """
     Master gate: images only when chapter scope exists and pedagogy allows visuals.
     Voice mode relaxes gating so chapter diagrams appear during spoken lessons.
+    With LLM image select enabled, keyword visual_intent is not a hard block —
+    candidates are fetched and the answer-grounded LLM pick may still return [].
     """
-    from app.config import ENABLE_VISUAL_INTENT_DETECTION
+    from app.config import ENABLE_LLM_IMAGE_SELECT, ENABLE_VISUAL_INTENT_DETECTION
 
     if not chapter_ids:
         return False
@@ -483,6 +486,24 @@ def should_retrieve_images(
                 FollowupType.SMALL_TALK.value,
             ):
                 return True
+    # Production: answer-grounded LLM select — allow chapter teaching turns through;
+    # only block clear non-teaching modes (same set as voice). LLM may still pick none.
+    if ENABLE_LLM_IMAGE_SELECT:
+        if ctx.response_mode in (
+            ResponseMode.QUIZ,
+            ResponseMode.MCQ,
+            ResponseMode.GREETING,
+            ResponseMode.SMALL_TALK,
+        ):
+            return False
+        if ctx.followup_type in (
+            FollowupType.GENERATE_QUESTIONS.value,
+            FollowupType.GENERATE_MCQ.value,
+            FollowupType.GREETING.value,
+            FollowupType.SMALL_TALK.value,
+        ):
+            return False
+        return True
     if not ENABLE_VISUAL_INTENT_DETECTION:
         return True
     if ctx.visual_intent == VisualIntent.NO_VISUALS:

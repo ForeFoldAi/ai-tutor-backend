@@ -471,6 +471,10 @@ def _force_motion(class_level: str) -> dict:
     )
 
 
+def _disease(class_level: str) -> dict:
+    return {"experimentType": "disease-transmission-simulator", "title": "Disease transmission"}
+
+
 def _solar_system(class_level: str) -> dict:
     return _exp(
         "solar-system",
@@ -539,7 +543,41 @@ _EXPERIMENT_RULES: list[tuple[re.Pattern[str], Callable[[str], dict], str, str, 
     (re.compile(r"\b(heat\s+transfer|conduction|convection|radiation|thermal)\b", re.I), _heat_transfer, "Heat Transfer", "Heat flowing between objects.", "Heat moves from hot to cold."),
     (re.compile(r"\b(water\s+cycle|evaporation|condensation|precipitation|rain\s+cycle)\b", re.I), _water_cycle, "Water Cycle", "Continuous environmental water movement.", "Solar energy drives the cycle."),
     (re.compile(r"\b(sound\s+wave|vibration|frequency|pitch|loudness|echo)\b", re.I), _sound, "Sound", "Vibrating particles and waves.", "Sound is a longitudinal wave."),
-    (re.compile(r"\b(force|motion|newton|friction|accelerat|velocity|momentum)\b", re.I), _force_motion, "Force & Motion", "See how force changes motion.", "F = ma governs acceleration."),
+    (
+        re.compile(
+            r"\b(pressure|P\s*=\s*F\s*/\s*A|N\s*/\s*cm|contact\s+area|"
+            r"force|motion|newton|friction|accelerat|velocity|momentum)\b",
+            re.I,
+        ),
+        _force_motion,
+        "Force & Pressure",
+        "See how force and area change pressure.",
+        "P = F / A; F = ma governs acceleration.",
+    ),
+    (
+        re.compile(
+            r"\b(transmission|germs?\b|pathogen|wash\s+(?:my\s+)?hands?|"
+            r"spread\s+(?:of\s+)?(?:disease|infection|illness|germs?)|"
+            r"how\s+(?:do\s+)?(?:germs|diseases?)\s+spread|airborne|vector-borne|contagious)\b",
+            re.I,
+        ),
+        _disease,
+        "Disease Transmission",
+        "How germs spread and how to stop them.",
+        "Blocking the path keeps people healthy.",
+    ),
+    (
+        re.compile(
+            r"\b(stay\s+healthy|nutritious|nutrition|balanced\s+diet|healthy\s+(?:food|habit)|"
+            r"clean\s+water|exercise|body\s+need|hygiene|sanitation|prevention|"
+            r"wash(?:ing)?\s+hands?|disease\s+prevention|keep(?:ing)?\s+(?:clean|healthy))\b",
+            re.I,
+        ),
+        _human_organs,
+        "Staying healthy",
+        "See how the body stays well with food, water, and rest.",
+        "Body systems work together to keep us healthy.",
+    ),
     (re.compile(r"\b(solar\s+system|planet|orbit|earth\s+revolution|sun\s+and\s+moon)\b", re.I), _solar_system, "Solar System", "Planets orbiting the Sun.", "Gravity keeps planets in orbit."),
     (re.compile(r"\b(human\s+organ|body\s+system|anatomy|heart|lung|kidney|brain|organs?\s+and\s+systems?)\b", re.I), _human_organs, "Human Organs", "Explore organ systems.", "Organs work together in systems."),
     (re.compile(r"\b(experiment|lab|observe|demonstration|activity)\b", re.I), _concept_explorer, "Science Experiment", "Hands-on exploration.", "Observe, predict, test."),
@@ -548,23 +586,49 @@ _EXPERIMENT_RULES: list[tuple[re.Pattern[str], Callable[[str], dict], str, str, 
 
 def match_science_experiment(query: str, class_level: str = "") -> dict[str, Any]:
     """Match query to the best science experiment. Always returns a lesson dict."""
+    from app.services.science_experiment.topic_ontology import (
+        pick_ontology_topic,
+        primary_visualization_type,
+    )
+    from app.services.science_experiment.visual_catalog import build_for_type
     from app.services.science_experiment.visual_matcher import pick_best_experiment_rule
 
     q = (query or "").strip()
-    level = _display_level(class_level)
     if not q:
-        lesson = _lesson("Science Explorer", "Explore science interactively.", "Change variables and observe.", _concept_explorer(class_level), level)
+        return build_for_type("concept-explorer", class_level)
+
+    # Ontology rows win when the query names a syllabus topic (Phase 5).
+    ont = pick_ontology_topic(q, class_level)
+    if ont is not None:
+        etype = primary_visualization_type(ont) or "concept-explorer"
+        kind = str(ont.get("kind") or "concept")
+        lesson = build_for_type(etype, class_level, kind=kind)
+        lesson["conceptName"] = str(ont.get("topic") or lesson.get("conceptName") or "")[:80]
+        strand = str(ont.get("strand") or "").lower()
+        subject = {
+            "physics": "physics",
+            "chemistry": "chemistry",
+            "biology": "biology",
+            "evs": "evs",
+        }.get(strand, lesson.get("subject") or "evs")
+        lesson["subject"] = subject
+        if lesson.get("experiment"):
+            lesson["experiment"]["subject"] = subject
+            lesson["experiment"]["kind"] = kind
         return lesson
 
     picked = pick_best_experiment_rule(q, _EXPERIMENT_RULES)
     if picked:
         spec_fn, concept, objective, explanation = picked
-        return _lesson(concept, objective, explanation, spec_fn(class_level), level)
+        # Prefer ontology-canonical experimentType from the built legacy spec.
+        legacy = spec_fn(class_level)
+        etype = str(legacy.get("experimentType") or "concept-explorer")
+        from app.services.science_experiment.topic_ontology import canonicalize_type
 
-    return _lesson(
-        "Science Explorer",
-        "Explore this science topic interactively.",
-        "Use the sliders and watch all three views.",
-        _concept_explorer(class_level),
-        level,
-    )
+        lesson = build_for_type(canonicalize_type(etype), class_level)
+        lesson["conceptName"] = concept
+        lesson["learningObjective"] = objective
+        lesson["conceptExplanation"] = explanation
+        return lesson
+
+    return build_for_type("concept-explorer", class_level)

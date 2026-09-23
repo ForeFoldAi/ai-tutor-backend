@@ -110,7 +110,7 @@ async def main(*, images_only: bool = False, run_llm: bool = True) -> None:
         if not images_only and run_llm:
             print("\n  --- LLM answer ---")
             try:
-                answer, qa_imgs, _lesson = await chapter_aware_qa(
+                answer, qa_imgs, _lesson, _experiment = await chapter_aware_qa(
                     q,
                     collection_name=COLLECTION,
                     chapter_ids=[UPLOAD_ID],

@@ -11,13 +11,74 @@ from __future__ import annotations
 import re
 from typing import Any, Callable
 
-_DEFAULT_COLORS = {
-    "primary": "#3B82F6",
-    "secondary": "#10B981",
-    "accent": "#F59E0B",
-    "background": "#F8FAFC",
-    "text": "#1E293B",
-}
+from app.services.math_lesson.math_tokens import class_level_to_default_palette, default_colors
+
+
+def _cube_scene() -> dict[str, Any]:
+    return {
+        "camera": {"position": [4.8, 3.2, 5.6], "target": [0, 0.65, 0], "fov": 40},
+        "groundGrid": True,
+        "objects": [
+            {
+                "id": "cube",
+                "type": "box",
+                "position": [0, 0, 0],
+                "rotation": [0, 0, 0],
+                "scale": [1, 1, 1],
+                "scaleDrivenBy": "s",
+                "color": "primary",
+                "roughness": 0.35,
+                "metalness": 0.15,
+                "wireframeAccent": True,
+            }
+        ],
+    }
+
+
+def _cylinder_scene() -> dict[str, Any]:
+    return {
+        "camera": {"position": [3.5, 2.8, 4.5], "target": [0, 0.8, 0], "fov": 45},
+        "groundGrid": True,
+        "objects": [
+            {
+                "id": "cyl",
+                "type": "cylinder",
+                "position": [0, 0.8, 0],
+                "rotation": [0, 0, 0],
+                "scale": [1, 1, 1],
+                "scaleDrivenBy": "r",
+                "color": "secondary",
+                "wireframeAccent": True,
+            }
+        ],
+    }
+
+
+def _heights_scene() -> dict[str, Any]:
+    return {
+        "camera": {"position": [6, 4, 8], "target": [2, 1, 0], "fov": 45},
+        "groundGrid": True,
+        "objects": [
+            {
+                "id": "tower",
+                "type": "box",
+                "position": [4, 1.2, 0],
+                "scale": [0.5, 2.4, 0.5],
+                "scaleDrivenBy": "angle",
+                "color": "primary",
+                "wireframeAccent": True,
+            },
+            {
+                "id": "observer",
+                "type": "sphere",
+                "position": [0, 0.2, 0],
+                "scale": [0.2, 0.2, 0.2],
+                "color": "accent",
+                "wireframeAccent": False,
+            },
+        ],
+        "labels": [{"id": "angle", "text": "θ", "position": [1.5, 0.8, 0]}],
+    }
 
 
 def _viz(
@@ -29,21 +90,52 @@ def _viz(
     buttons: list[dict] | None = None,
     calcs: list[dict] | None = None,
     draggables: list[dict] | None = None,
+    objects: list[dict] | None = None,
     interactions: list[dict] | None = None,
     animations: list[dict] | None = None,
+    steps: list[dict] | None = None,
+    algebra_steps: list[dict] | None = None,
+    render_mode: str = "2d",
+    graph_mode: str = "",
+    curve_type: str = "",
+    coefficients: list[float] | None = None,
+    scene: dict[str, Any] | None = None,
+    palette_id: str | None = None,
+    finance_spec: dict[str, Any] | None = None,
+    class_level: str = "Class 9",
 ) -> dict[str, Any]:
-    return {
+    pid = palette_id or class_level_to_default_palette(class_level)
+    out: dict[str, Any] = {
         "visualizationType": vtype,
         "title": title,
         "description": description,
+        "renderMode": render_mode,
+        "paletteId": pid,
         "sliders": sliders or [],
         "buttons": buttons or [],
         "liveCalculations": calcs or [],
         "draggableObjects": draggables or [],
+        "interactiveObjects": objects or [],
         "studentInteractions": interactions or [],
         "animations": animations or [],
-        "colors": dict(_DEFAULT_COLORS),
+        "colors": default_colors(pid),
     }
+    if scene is not None:
+        out["scene"] = scene
+    if algebra_steps:
+        out["algebraSteps"] = algebra_steps
+    elif steps:
+        # legacy → will be normalized by schema validator
+        out["steps"] = steps
+    ct = curve_type or (graph_mode if graph_mode in ("linear", "quadratic") else "")
+    if ct:
+        out["curveType"] = ct
+        out["graphMode"] = ct  # compat
+    if coefficients:
+        out["coefficients"] = coefficients
+    if finance_spec:
+        out["financeSpec"] = finance_spec
+    return out
 
 
 def _lesson(
@@ -180,6 +272,121 @@ def _linear_graph_spec() -> dict[str, Any]:
             {"id": "c", "label": "Intercept (c)", "min": -10, "max": 10, "step": 1, "default": 0},
         ],
         calcs=[{"id": "eq", "label": "Equation", "formula": "m * 1 + c", "unit": " at x=1"}],
+        graph_mode="linear",
+    )
+
+
+def _quadratic_grapher_spec() -> dict[str, Any]:
+    """Sub-mode of linear-graph: y = ax² + bx + c (visualizationType stays linear-graph)."""
+    return _viz(
+        "linear-graph",
+        "Quadratic Grapher — y = ax² + bx + c",
+        "Change a, b, c to move the parabola. Watch the discriminant and roots.",
+        sliders=[
+            {"id": "a", "label": "a (opens)", "min": -3, "max": 3, "step": 0.5, "default": 1},
+            {"id": "b", "label": "b", "min": -5, "max": 5, "step": 0.5, "default": 0},
+            {"id": "c", "label": "c", "min": -5, "max": 5, "step": 0.5, "default": -1},
+        ],
+        calcs=[
+            {"id": "disc", "label": "Discriminant b²−4ac", "formula": "b * b - 4 * a * c", "unit": ""},
+        ],
+        curve_type="quadratic",
+        coefficients=[1, 0, -1],
+        class_level="Class 10",
+    )
+
+
+def _algebra_stepper_spec() -> dict[str, Any]:
+    return _viz(
+        "algebra-stepper",
+        "Algebra Stepper — solve step by step",
+        "Press Next to apply one inverse operation at a time.",
+        algebra_steps=[
+            {
+                "id": "s0",
+                "expressionBefore": "2x + 5 = 15",
+                "expressionAfter": "2x + 5 = 15",
+                "operation": "Start with the equation.",
+                "highlightTerms": ["2x", "5", "15"],
+            },
+            {
+                "id": "s1",
+                "expressionBefore": "2x + 5 = 15",
+                "expressionAfter": "2x = 10",
+                "operation": "Subtract 5 from both sides",
+                "highlightTerms": ["5"],
+            },
+            {
+                "id": "s2",
+                "expressionBefore": "2x = 10",
+                "expressionAfter": "x = 5",
+                "operation": "Divide both sides by 2",
+                "highlightTerms": ["2"],
+            },
+        ],
+        buttons=[
+            {"id": "next", "label": "Next step", "action": "animate"},
+            {"id": "reset", "label": "Reset", "action": "reset"},
+        ],
+        interactions=[
+            {
+                "id": "step",
+                "type": "click",
+                "description": "Walk through each algebraic move.",
+                "expectedObservation": "Both sides stay equal after every step.",
+            }
+        ],
+        class_level="Class 8",
+    )
+
+
+def _compound_interest_spec() -> dict[str, Any]:
+    return _viz(
+        "compound-interest-visual",
+        "Compound Interest Growth",
+        "Change principal, rate and years. Watch the amount stack year by year.",
+        sliders=[
+            {"id": "P", "label": "Principal (₹)", "min": 1000, "max": 50000, "step": 1000, "default": 10000},
+            {"id": "r", "label": "Rate % p.a.", "min": 1, "max": 20, "step": 0.5, "default": 8},
+            {"id": "n", "label": "Years", "min": 1, "max": 10, "step": 1, "default": 5},
+        ],
+        calcs=[
+            {"id": "amount", "label": "Amount A", "formula": "P * ((1 + r / 100) ** n)", "unit": "₹"},
+            {"id": "ci", "label": "CI = A − P", "formula": "P * ((1 + r / 100) ** n) - P", "unit": "₹"},
+        ],
+        buttons=[{"id": "animate", "label": "▶ Grow year by year", "action": "animate"}],
+        finance_spec={
+            "principal": 10000,
+            "rate": 8,
+            "timeYears": 5,
+            "mode": "compound-interest",
+            "compoundingFrequency": "annually",
+        },
+        class_level="Class 8",
+    )
+
+
+def _heights_distances_spec() -> dict[str, Any]:
+    return _viz(
+        "heights-distances-scene",
+        "Heights & Distances (3D)",
+        "Set the angle of elevation and distance. See the tower height update in 3D.",
+        render_mode="3d",
+        scene=_heights_scene(),
+        sliders=[
+            {"id": "angle", "label": "Angle of elevation", "min": 15, "max": 75, "step": 1, "default": 30},
+            {"id": "distance", "label": "Distance (m)", "min": 10, "max": 100, "step": 5, "default": 40},
+        ],
+        calcs=[
+            {
+                "id": "height",
+                "label": "Height",
+                "formula": "distance * tan(angle * 3.14159 / 180)",
+                "unit": "m",
+            }
+        ],
+        buttons=[{"id": "animate", "label": "▶ Sight line", "action": "animate"}],
+        class_level="Class 10",
     )
 
 
@@ -254,12 +461,15 @@ def _mensuration_cube_spec() -> dict[str, Any]:
         "mensuration-cube",
         "3D Cube Explorer",
         "Change the side length and see surface area and volume update.",
-        sliders=[{"id": "s", "label": "Side length", "min": 1, "max": 10, "step": 1, "default": 3}],
+        render_mode="3d",
+        scene=_cube_scene(),
+        sliders=[{"id": "s", "label": "Side length (cm)", "min": 1, "max": 10, "step": 1, "default": 5}],
         calcs=[
-            {"id": "sa", "label": "Surface area", "formula": "6 * s * s", "unit": " sq units"},
-            {"id": "vol", "label": "Volume", "formula": "s * s * s", "unit": " cu units"},
+            {"id": "sa", "label": "Surface area", "formula": "6 * s * s", "unit": " cm^2"},
+            {"id": "vol", "label": "Volume", "formula": "s * s * s", "unit": " cm^3"},
         ],
         buttons=[{"id": "rotate", "label": "▶ Rotate", "action": "animate"}],
+        class_level="Class 9",
     )
 
 
@@ -268,6 +478,8 @@ def _mensuration_cylinder_spec() -> dict[str, Any]:
         "mensuration-cylinder",
         "3D Cylinder Explorer",
         "Adjust radius and height to see volume and curved surface area.",
+        render_mode="3d",
+        scene=_cylinder_scene(),
         sliders=[
             {"id": "r", "label": "Radius", "min": 1, "max": 8, "step": 1, "default": 3},
             {"id": "h", "label": "Height", "min": 1, "max": 12, "step": 1, "default": 5},
@@ -276,6 +488,7 @@ def _mensuration_cylinder_spec() -> dict[str, Any]:
             {"id": "vol", "label": "Volume", "formula": "3.14159 * r * r * h", "unit": " cu units"},
             {"id": "csa", "label": "Curved SA", "formula": "2 * 3.14159 * r * h", "unit": " sq units"},
         ],
+        class_level="Class 9",
     )
 
 
@@ -294,6 +507,39 @@ def _area_resizer_spec() -> dict[str, Any]:
             {"id": "rectArea", "label": "Rectangle area", "formula": "width * height", "unit": ""},
             {"id": "triArea", "label": "Triangle area", "formula": "0.5 * base * triHeight", "unit": ""},
         ],
+    )
+
+
+def _open_box_spec() -> dict[str, Any]:
+    """Net → open box: sheet cut at corners, fold up. Sliders match worked solutions."""
+    return _viz(
+        "area-resizer",
+        "Open Box from a Sheet",
+        "Adjust sheet, cut, and box dimensions; volume updates live (fold animation deferred).",
+        sliders=[
+            {"id": "sheetLength", "label": "Sheet length (cm)", "min": 10, "max": 80, "step": 1, "default": 30},
+            {"id": "sheetWidth", "label": "Sheet width (cm)", "min": 10, "max": 80, "step": 1, "default": 20},
+            {"id": "cut", "label": "Cut square side (cm)", "min": 1, "max": 20, "step": 1, "default": 5},
+            {"id": "length", "label": "Box length (cm)", "min": 1, "max": 60, "step": 1, "default": 20},
+            {"id": "width", "label": "Box width (cm)", "min": 1, "max": 60, "step": 1, "default": 10},
+            {"id": "height", "label": "Box height (cm)", "min": 1, "max": 20, "step": 1, "default": 5},
+        ],
+        calcs=[
+            {"id": "volume", "label": "Volume", "formula": "length * width * height", "unit": " cm^3"},
+            {
+                "id": "baseLength",
+                "label": "Base length check",
+                "formula": "sheetLength - 2 * cut",
+                "unit": " cm",
+            },
+            {
+                "id": "baseWidth",
+                "label": "Base width check",
+                "formula": "sheetWidth - 2 * cut",
+                "unit": " cm",
+            },
+        ],
+        buttons=[{"id": "animate", "label": "▶ Fold box", "action": "animate"}],
     )
 
 
@@ -357,6 +603,47 @@ def _circle_explorer_spec() -> dict[str, Any]:
 _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = [
     (
         re.compile(
+            r"\b(compound\s+interest|CI\b|amount\s*=\s*P|A\s*=\s*P\s*\(|\bGST\b|\btax\b|discount)\b",
+            re.I,
+        ),
+        _compound_interest_spec,
+        "Compound Interest",
+        "See how money grows when interest is added to the principal each year.",
+        "A = P(1 + r/100)^n",
+    ),
+    (
+        re.compile(
+            r"\b(height[s]?\s+and\s+distances?|angle\s+of\s+elevation|angle\s+of\s+depression)\b",
+            re.I,
+        ),
+        _heights_distances_spec,
+        "Heights and Distances",
+        "Link trigonometry to a real tower / observer scene.",
+        "height = distance × tan(θ)",
+    ),
+    (
+        re.compile(
+            r"\b(quadratic\s+equation|parabola|discriminant|ax\s*\^?\s*2|ax²|"
+            r"roots?\s+of\s+(?:the\s+)?quadratic)\b",
+            re.I,
+        ),
+        _quadratic_grapher_spec,
+        "Quadratic Equations",
+        "Graph y = ax² + bx + c and relate roots to the discriminant.",
+        "Discriminant Δ = b² − 4ac",
+    ),
+    (
+        re.compile(
+            r"\b(simplif(?:y|ying)|transpose|expand\s+and\s+simplif)\b",
+            re.I,
+        ),
+        _algebra_stepper_spec,
+        "Algebra Stepper",
+        "Apply one inverse operation per step until the variable is isolated.",
+        "Whatever you do to one side, do to the other.",
+    ),
+    (
+        re.compile(
             r"\bcircles?\b(?!\s*(?:of\s+)?(?:a\s+)?cylinder)|"
             r"circumference|diameter.*circle|circle.*diameter|"
             r"area\s+of\s+(?:a\s+)?circle|circle.*\barea\b",
@@ -384,10 +671,10 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
             r"number\s+when\s+added|gives\s+\d+|cost\s+of\s+one",
             re.I,
         ),
-        _linear_graph_spec,
+        _algebra_stepper_spec,
         "Linear Equations",
-        "See how changing values affects the equation balance.",
-        "Isolate the variable using inverse operations.",
+        "Isolate the variable using inverse operations, one step at a time.",
+        "Whatever you do to one side, do to the other.",
     ),
     (
         re.compile(
@@ -453,6 +740,30 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
         "Polynomials are sums of terms; factorisation splits expressions.",
     ),
     (
+        re.compile(
+            r"(?:√\s*\d|sqrt\s*\(\s*\d+|square\s*root\s+of\s+\d+).{0,60}number\s*line|"
+            r"number\s*line.{0,60}(?:√|sqrt|square\s*root|geometrical?\s+construction)|"
+            r"geometrical?\s+construction.{0,40}(?:√|sqrt|square\s*root)|"
+            r"(?:mark|represent|locate)\s+(?:√|sqrt|square\s*root)",
+            re.I,
+        ),
+        lambda: _viz(
+            "sqrt-number-line",
+            "Construct √n on the number line",
+            "Build a right triangle, then swing an arc to mark √n.",
+            sliders=[
+                {"id": "n", "label": "n (√n)", "min": 2, "max": 50, "step": 1, "default": 5},
+                {"id": "a", "label": "Leg a", "min": 1, "max": 20, "step": 1, "default": 2},
+                {"id": "b", "label": "Leg b", "min": 1, "max": 20, "step": 1, "default": 1},
+            ],
+            calcs=[{"id": "check", "label": "a² + b²", "formula": "a * a + b * b", "unit": ""}],
+            buttons=[{"id": "reset", "label": "Reset", "action": "reset"}],
+        ),
+        "Square Root on the Number Line",
+        "Construct √n using a right triangle and compass arc.",
+        "If a² + b² = n, the hypotenuse is √n; transfer it to the line with an arc.",
+    ),
+    (
         re.compile(r"\b(irrational|surd|rationali[sz]|represent.*sqrt|√\s*\d|number\s*line)\b", re.I),
         lambda: _viz(
             "number-line",
@@ -465,7 +776,7 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
             calcs=[{"id": "result", "label": "Position", "formula": "start + jump", "unit": ""}],
         ),
         "Real Numbers on the Number Line",
-        "Place √2 and other irrationals using geometry.",
+        "Jump along the line to explore positions. For geometric √n construction, ask to mark √n on the number line.",
         "Every real number has a unique point on the number line.",
     ),
     (
@@ -476,7 +787,11 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
         "(a+b)² = a² + 2ab + b², not a² + b².",
     ),
     (
-        re.compile(r"factori[sz]e|factori[sz]ation|x\s*[\²^2].*\+.*x|rectangle\s*model|x\^2", re.I),
+        re.compile(
+            r"(?<!prime\s)factori[sz]ation|(?<!prime\s)factori[sz]e|"
+            r"x\s*[\²^2].*\+.*x|rectangle\s*model|x\^2",
+            re.I,
+        ),
         _factor_rectangle_spec,
         "Factorising Quadratics",
         "Find factors using the rectangle area model.",
@@ -565,7 +880,19 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
         "V = πr²h.",
     ),
     (
-        re.compile(r"cube|3d.*side|surface\s*area.*volume", re.I),
+        re.compile(
+            r"open\s+box|cut\s+from\s+(?:its\s+)?(?:four\s+)?corners?|"
+            r"folded?\s+upwards?|squares?\s+of\s+side\s+\d+.*cut|"
+            r"sheet\s+of\s+paper.*(?:cut|fold)",
+            re.I,
+        ),
+        _open_box_spec,
+        "Open Box from a Rectangular Sheet",
+        "Resize length, width, and height to match the folded box; volume updates live.",
+        "Box length = sheet length − 2×cut; volume = l × w × h.",
+    ),
+    (
+        re.compile(r"(?<!perfect\s)cube|3d.*side|surface\s*area.*volume", re.I),
         _mensuration_cube_spec,
         "Cube — Surface Area & Volume",
         "Rotate a cube and change its side length.",
@@ -593,11 +920,57 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
         "The radius is perpendicular to the tangent at contact.",
     ),
     (
+        re.compile(
+            r"\b(sector|circular\s+segment|areas?\s+related\s+to\s+circles?|"
+            r"area\s+of\s+(?:a\s+)?sector|segment\s+of\s+(?:a\s+)?circle)\b",
+            re.I,
+        ),
+        lambda: _viz(
+            "circle",
+            "Sector of a Circle",
+            "Change radius and central angle; watch the sector sweep and the area update.",
+            sliders=[
+                {"id": "r", "label": "Radius r", "min": 1, "max": 12, "step": 1, "default": 5},
+                {"id": "theta", "label": "Central angle θ (°)", "min": 0, "max": 360, "step": 5, "default": 90},
+            ],
+            calcs=[
+                {
+                    "id": "sectorArea",
+                    "label": "Sector area",
+                    "formula": "(theta / 360) * 3.14159 * r * r",
+                    "unit": "",
+                }
+            ],
+            buttons=[{"id": "reset", "label": "Reset", "action": "reset"}],
+        ),
+        "Areas Related to Circles",
+        "See how sector area grows with central angle.",
+        "Sector area = (θ/360) × πr²",
+    ),
+    (
+        re.compile(r"\b(chord|angles?\s+subtended|circle\s+theorems?)\b", re.I),
+        lambda: _viz(
+            "circle",
+            "Circle Explorer",
+            "Explore radius and circle relationships for chords and subtended angles.",
+            sliders=[
+                {"id": "r", "label": "Radius r", "min": 1, "max": 12, "step": 1, "default": 5},
+            ],
+            calcs=[
+                {"id": "d", "label": "Diameter", "formula": "2 * r", "unit": ""},
+                {"id": "circ", "label": "Circumference", "formula": "2 * 3.14159 * r", "unit": ""},
+            ],
+        ),
+        "Circles — Chords and Angles",
+        "Relate radius and circle measures while studying chords.",
+        "A chord is a line segment joining two points on a circle.",
+    ),
+    (
         re.compile(r"compass|ruler|perpendicular\s*bisector|construction|construct\s*a\s*triangle", re.I),
         lambda: _viz(
             "geometry-construction",
             "Compass & Ruler Construction",
-            "Place points A and B, then run the guided perpendicular bisector steps.",
+            "Guided perpendicular bisector of segment AB (step scrubber).",
             draggables=[
                 {"id": "A", "label": "A", "initialX": 60, "initialY": 100, "color": "#3B82F6"},
                 {"id": "B", "label": "B", "initialX": 180, "initialY": 100, "color": "#10B981"},
@@ -609,8 +982,8 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
             ],
         ),
         "Geometrical Constructions",
-        "Learn compass-and-ruler constructions step by step.",
-        "Construct perpendicular bisectors and triangles with virtual tools.",
+        "Learn the perpendicular bisector construction step by step.",
+        "Virtual compass arcs meet on the perpendicular bisector of AB.",
     ),
     (
         re.compile(r"quarter\s*turn|half\s*turn|full\s*turn", re.I),

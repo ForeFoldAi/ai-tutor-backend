@@ -66,6 +66,16 @@ def test_referenced_table_match():
     assert referenced_asset_matches(intent, im) is True
 
 
+def test_referenced_figure_match():
+    intent = extract_image_intent("can you show me figure 3.4", [])
+    assert intent.referenced_asset_number == "3.4"
+    assert intent.referenced_asset_kind == "figure"
+    im = _im(content_kind="figure", figure_number="3.4", caption="Fig. 3.4 Pathogen spread")
+    assert referenced_asset_matches(intent, im) is True
+    wrong = _im(content_kind="figure", figure_number="3.5", caption="Fig. 3.5 Other")
+    assert referenced_asset_matches(intent, wrong) is False
+
+
 def test_asset_retrieval_text_includes_structured():
     im = _im(
         content_kind="table",

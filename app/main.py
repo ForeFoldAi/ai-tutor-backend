@@ -14,7 +14,7 @@ from app.services.document_service import process_document
 from app.services.vector_service import create_vector_store, load_vector_store
 from app.config import RETRIEVAL_K
 from app.services.chat_service import chapter_aware_qa, chapter_aware_qa_stream, get_qa_chain
-from app.core.student_messages import ANSWER_NOT_IN_CHAPTER, PDF_ONLY
+from app.core.student_messages import ANSWER_NOT_IN_CHAPTER, CHAT_ANSWER_FAILED, PDF_ONLY
 from app.services.query_match import document_page, keyword_match_score
 from app.voice_api import router as voice_router
 from app.voice_ws import ws_router
@@ -383,6 +383,16 @@ class ChapterChatRequest(BaseModel):
     images_only: bool = False
     agent_mode: str | None = None  # ask | practice | explain
     voice_mode: bool = False
+    # Voice session state (NestJS → FastAPI)
+    tutor_state: str | None = None
+    explained_points: list[str] | None = None
+    quiz_pending: bool = False
+    quiz_question: str | None = None
+    quiz_attempts: int = 0
+    nest_intent: str | None = None  # simplify | example | quiz | none
+    dialogue_act: str | None = None  # closing | ack | intro — skip chapter RAG
+    filler_phrase_played: str | None = None
+    affect_trajectory: list[str] | None = None
 
 
 def _fallback_answer_from_docs(query: str):
@@ -551,7 +561,7 @@ async def chapter_chat_stream(
 
         async def emit_imgs(imgs: list[dict]) -> None:
             pending.append(
-                (json.dumps({"type": "related_images", "images": imgs}, ensure_ascii=False) + "\n").encode()
+                (json.dumps({"type": "related_images", "images": imgs}, ensure_ascii=False, default=str) + "\n").encode()
             )
 
         async def emit_clean(clean: str) -> None:
@@ -567,6 +577,7 @@ async def chapter_chat_stream(
                     json.dumps(
                         {"type": "math_lesson", "lesson": lesson, "clean_answer": clean_answer},
                         ensure_ascii=False,
+                        default=str,
                     )
                     + "\n"
                 ).encode()
@@ -584,6 +595,7 @@ async def chapter_chat_stream(
                             "clean_answer": clean_answer,
                         },
                         ensure_ascii=False,
+                        default=str,
                     )
                     + "\n"
                 ).encode()
@@ -594,32 +606,68 @@ async def chapter_chat_stream(
             if req.conversation_history
             else None
         )
-        async for token in chapter_aware_qa_stream(
-            req.query,
-            collection_name=collection,
-            chapter_ids=req.chapter_ids,
-            class_level=req.class_level,
-            board=req.board,
-            subject_name=req.subject_name,
-            chapter=req.chapter or "",
-            chapter_names=req.chapter_names,
-            emit_related_images=emit_imgs,
-            emit_clean_answer=emit_clean,
-            emit_math_lesson=emit_lesson,
-            emit_science_experiment=emit_experiment,
-            conversation_history=history,
-            student_name=_current_user.full_name,
-            student_key=str(_current_user.id),
-            agent_mode=req.agent_mode,
-            voice_mode=req.voice_mode,
-        ):
+        voice_meta: dict = {}
+        try:
+            async for token in chapter_aware_qa_stream(
+                req.query,
+                collection_name=collection,
+                chapter_ids=req.chapter_ids,
+                class_level=req.class_level,
+                board=req.board,
+                subject_name=req.subject_name,
+                chapter=req.chapter or "",
+                chapter_names=req.chapter_names,
+                emit_related_images=emit_imgs,
+                emit_clean_answer=emit_clean,
+                emit_math_lesson=emit_lesson,
+                emit_science_experiment=emit_experiment,
+                conversation_history=history,
+                student_name=_current_user.full_name,
+                student_key=str(_current_user.id),
+                agent_mode=req.agent_mode,
+                voice_mode=req.voice_mode,
+                tutor_state=req.tutor_state or "TEACHING",
+                explained_points=req.explained_points,
+                quiz_pending=req.quiz_pending,
+                quiz_question=req.quiz_question or "",
+                quiz_attempts=req.quiz_attempts,
+                nest_intent=req.nest_intent,
+                dialogue_act=req.dialogue_act,
+                filler_phrase_played=req.filler_phrase_played,
+                affect_trajectory=req.affect_trajectory,
+                voice_metadata_out=voice_meta,
+            ):
+                while pending:
+                    yield pending.pop(0)
+                yield (json.dumps({"type": "token", "content": token}, ensure_ascii=False) + "\n").encode()
+
             while pending:
                 yield pending.pop(0)
-            yield (json.dumps({"type": "token", "content": token}, ensure_ascii=False) + "\n").encode()
-
-        while pending:
-            yield pending.pop(0)
-        yield (json.dumps({"type": "done"}, ensure_ascii=False) + "\n").encode()
+            done_payload: dict = {"type": "done"}
+            if req.voice_mode and voice_meta:
+                done_payload.update(
+                    {
+                        k: voice_meta[k]
+                        for k in (
+                            "tutor_state",
+                            "explained_points",
+                            "affect_summary",
+                            "affect_hint",
+                            "affect_primary",
+                            "affect_trajectory",
+                        )
+                        if k in voice_meta
+                    }
+                )
+            yield (json.dumps(done_payload, ensure_ascii=False, default=str) + "\n").encode()
+        except Exception as exc:
+            logger.exception("[STREAM] chapter chat failed: %s", exc)
+            while pending:
+                yield pending.pop(0)
+            yield (
+                json.dumps({"type": "token", "content": CHAT_ANSWER_FAILED}, ensure_ascii=False) + "\n"
+            ).encode()
+            yield (json.dumps({"type": "done"}, ensure_ascii=False) + "\n").encode()
 
     return StreamingResponse(
         ndjson_generator(),

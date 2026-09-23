@@ -47,3 +47,20 @@ def test_bare_yes_after_choice_menu_stays_affirmation():
     assert not _is_accepting_tutor_continue_offer("Yes", history)
     assert _is_affirmation_followup("Yes", history)
     assert _resolve_answer_type("Yes", conversation_history=history) == "affirmation"
+
+
+def test_good_thanks_mid_lesson_is_affirmation_not_greeting():
+    """Screenshot bug: 'Good thanks' must not reboot with Welcome back."""
+    history = [
+        {"role": "user", "content": "What is social health"},
+        {
+            "role": "assistant",
+            "content": (
+                "Social health means feeling connected with friends and community. "
+                "Can you think of one way to improve your social health this week?"
+            ),
+        },
+    ]
+    assert _is_affirmation_followup("Good thanks", history)
+    assert _resolve_answer_type("Good thanks", conversation_history=history) == "affirmation"
+    assert _resolve_answer_type("thanks", conversation_history=history) == "affirmation"

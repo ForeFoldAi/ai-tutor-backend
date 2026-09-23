@@ -95,7 +95,7 @@ def concept_tag_overlap_score(intent: ImageIntent, im: TextbookImage) -> float:
 
 
 def referenced_asset_matches(intent: ImageIntent, im: TextbookImage) -> bool:
-    """True when query cites Table N / Equation N and asset number matches."""
+    """True when query cites Table/Equation/Fig N and asset number matches."""
     ref_kind = getattr(intent, "referenced_asset_kind", None)
     ref_num = getattr(intent, "referenced_asset_number", None)
     if not ref_kind or not ref_num:
@@ -109,5 +109,8 @@ def referenced_asset_matches(intent: ImageIntent, im: TextbookImage) -> bool:
             asset_num = m.group(1) if m else ""
         elif ref_kind == "formula":
             m = re.search(r"(?i)\b(?:formula|equation|eq\.?)\s*(\d+(?:\.\d+)*)", im.caption)
+            asset_num = m.group(1) if m else ""
+        elif ref_kind == "figure":
+            m = re.search(r"(?i)\b(?:fig(?:ure)?\.?)\s*(\d+(?:\.\d+)*)", im.caption)
             asset_num = m.group(1) if m else ""
     return asset_num == ref_num

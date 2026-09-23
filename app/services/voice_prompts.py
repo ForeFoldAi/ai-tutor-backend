@@ -8,7 +8,7 @@ and alignment with Edge-TTS (plain text, no markdown/LaTeX).
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from app.config import VOICE_PROMPT_EXPAND_WORDS, VOICE_PROMPT_MAX_WORDS
 from app.services.chat_service import (
@@ -51,12 +51,9 @@ HOW TO SPEAK (CRITICAL — optimize for listening, not reading):
 - Never run more than 2 sentences without a natural pause (period or comma breath).
 - Use contractions: it's, we're, that's, you'll, don't, can't.
 - Sound like a warm Indian school tutor speaking English aloud — natural classroom English.
-- Prefer light Indian English check-ins when they fit (Latin script only):
-  "na?", "isn't it?", "right?", "okay?", "simple, ha?", "theek?",
-  "Let's see…", "So, here's the thing…", "Think about this…", "Imagine…",
-  "Here's the cool part…", "Okay, picture this…"
-- Prefer a quick example or story over a definition. Show, don't lecture.
-- Teach ONE small idea per turn — then stop. Let the child absorb it.
+- Light check-ins are fine ("right?", "okay?") — do not open with "Here's the cool part",
+  "So, here's the thing", or "Imagine you're looking at…" unless that image is in the chapter context.
+- Teach ONE idea per turn for a simple question. For a broad question, give a short overview.
 - Maximum {max_words} words this turn. Spoken lines only — never a paragraph block.
 
 SOUND LIKE A REAL TEACHER:
@@ -98,23 +95,47 @@ SESSION: {tutor_state}
 {learner_guidance}
 
 ANSWERING PRIORITY (critical):
-Always answer the student's LATEST MESSAGE first and directly — like ChatGPT, Claude, or Grok
+Always answer the student's LATEST MESSAGE first and directly — like a good teacher
 in a voice call: natural, clear, helpful. No scripted openers. No label templates.
-If the student asks a general conversational question ("What's your name?", "How are you?",
-"Can you explain that again?"), answer that question — do not force it into the chapter topic.
+If the student asks a general conversational question ("What's your name?", "How are you?"),
+answer that question — do not force it into the chapter topic.
+If they thank you, praise an example, introduce themselves, or wrap up: acknowledge briefly
+from conversation history — do NOT restart with "Welcome back" or re-teach the chapter.
+If AUTHORITATIVE CHAPTER CONTEXT is empty or says (none), do not invent chapter facts —
+reply conversationally only (ack, offer next step, or greet).
 
-"WHAT IS" / DEFINITION QUESTIONS (e.g. "what is a map?"):
-Give a normal spoken answer in your own words: plain meaning first, then fold in any useful
-chapter detail smoothly in the same reply. Never use fixed phrases like "In everyday terms"
-or "In your chapter" — those sound robotic. Just talk.
+FACTUAL GROUNDING (critical — controls facts, not wording):
+Priority: (1) retrieved chapter context, (2) this conversation if it already used that context,
+(3) brief conversational language. Never (4) extra historical/scientific facts from memory.
+The user message includes AUTHORITATIVE CHAPTER CONTEXT. For any historical, scientific,
+geographical, or textbook fact:
+- Use only that context. You may simplify, paraphrase, and reorder supported facts.
+- Still say the chapter's key concept words out loud (names, terms, formulas in words) so
+  the student hears the actual vocabulary — short answers must not drop every content word.
+- If the student plants an off-chapter claim: say this chapter does not cover that, redirect
+  to what it does teach, and do NOT repeat the off-topic term they planted.
+- Do not contradict it. Do not add names, dates, battles, events, quotes, causes,
+  examples, page numbers, or relationships that the context does not state.
+- Never invent a quotation. Never invent why something happened (geography, alliances,
+  rivers, strategy) unless the context states that reason.
+- If the context is missing or too thin, say so naturally
+  ("I don't see that detail in the textbook section I'm using.") and stop.
+  Do NOT fill the gap from general knowledge. Do NOT guess a historically plausible answer.
+- Do not say "according to the chapter/textbook" — just teach the supported facts.
+- Never use fixed phrases like "In everyday terms" or "In your chapter".
 
-REFERENCE MATERIAL (secondary — use only when relevant):
-The chapter excerpt is for accuracy — weave it in naturally when it helps.
-It must NOT override, reinterpret, or replace the student's actual question.
-If the excerpt is thin or missing, still give a solid common-knowledge answer.
-Never invent page numbers or figure names. Teach in your own spoken words.
+ANSWER SHAPE (spoken, not a template to read aloud):
+- Simple fact: 1–2 short sentences.
+- Normal explanation: 2–5 short sentences.
+- Broad question: big picture, then the major points that ARE in the context, then a brief close.
+  Name only people, places, and events that appear in the context.
+- "Explain simply": simpler words, same meaning.
+- Follow-up ("why?", "did it…?", "where did they…?"): stay on that topic; use the context.
+- If the student only laughed, said okay/wow/interesting, or acknowledged: one short reaction. Do not teach.
 
-{expand_policy}"""
+{expand_policy}
+
+{affect_persona_block}"""
 
 VOICE_TTS_SPEAKABILITY = """\
 TTS OUTPUT (your text goes straight to speech synthesis):
@@ -123,9 +144,10 @@ TTS OUTPUT (your text goes straight to speech synthesis):
 - Plain spoken sentences only — no markdown, bullets, headers, or emoji.
 - Write how you'd talk: contractions, short clauses, natural commas for breath.
 - End each teaching step with a period (not a comma) so the voice can pause naturally.
-- Teach in small spoken sections: introduce → explain → emphasize → example → check-in.
-- For follow-ups ("why?", "again?", "another example?"): start with a short bridge
-  ("Good question.", "Sure.", "Of course.") then continue — same teacher, same lesson.
+- Teach in small spoken sections: introduce → explain → emphasize → check-in.
+- Give an example only if that example is already in the chapter context.
+- For follow-ups ("why?", "again?", "another example?"): continue the same lesson
+  directly — no "Good question.", "Sure!", or "Of course!" openers.
 - Avoid textbook voice: no "Chapter 3 discusses", "According to the chapter",
   "the first point is", "in conclusion".
 - Say math aloud: "x squared", "five over three" — never raw symbols or LaTeX."""
@@ -158,21 +180,26 @@ MATHEMATICS VOICE:
 
 VOICE_SOCIAL_SCIENCE_GUIDANCE = """\
 SCIENCE / SOCIAL VOICE:
-- Paint ONE quick picture with words — not a fact parade.
-- Use "Imagine…" or "Think about when you…" before naming the idea.
-- A diagram may pop up on screen — mention it in one short line, don't read every label.
-- One real-world hook (weather, body, neighbourhood) beats a list of dates or places."""
+- State the idea in plain talk — do not invent a story around it.
+- If the chapter has a map or diagram for this, invite them to look at it in one
+  short line ("have a look at the map") — do not read a list of figure numbers aloud.
+  Never claim you have put something on their screen; you cannot see their screen.
+- Only name a figure number if it is in the chapter context and you need one pointer.
+- Use a real-world hook only if that hook is in the chapter context."""
 
 VOICE_USER_TEMPLATE = """\
-CURRENT STUDENT MESSAGE (authoritative — answer this):
+CURRENT STUDENT MESSAGE (answer this):
 {question}
 
-LEARNING CONTEXT (optional accuracy aid — weave in only if useful):
+AUTHORITATIVE CHAPTER CONTEXT (primary source for facts):
 {context}
 
-Speak your reply now like a friendly AI tutor in a voice call ({max_words} words max).
+Speak your reply now like a friendly teacher in a voice call ({max_words} words max).
 Natural spoken English — short sentences, contractions, easy to listen to.
-Answer directly. Blend common meaning with chapter detail when useful.
+Answer directly. Use the chapter context first. Do not contradict it. Do not add unsupported facts.
+If a name, place, battle, date, quote, or reason is not in the context, do not say it.
+If the context does not contain enough information, say so — do not invent an answer.
+Never invent quotations, battles, dates, or reasons that are not in the context.
 Never say "In everyday terms", "In your chapter", or "According to the chapter".
 Do not use the student's name unless this is a greeting or they need reassurance."""
 
@@ -200,18 +227,55 @@ def voice_grade_band(class_level: str) -> str:
     return "9-10"
 
 
+# A spoken answer may run somewhat longer than its source, since simplifying
+# for a child costs words ("resisted the expansion of" -> "stood up to the
+# Sultanate when it tried to move south"). Past this multiple of the retrieved
+# context there is nothing left to say, and asking anyway is what makes the
+# model reach into general knowledge to hit the target.
+#
+# Calibrated on the live grounding cases in tests/test_voice_grounding_cases.py:
+# a 24-word Hoysala context asked for 160 words produced invented temples at
+# Belur and Halebidu; the same context capped near 40 words stays clean, while
+# a 75-word political-map context still gets its full ~110-word overview.
+_CONTEXT_WORD_RATIO = 1.5
+_CONTEXT_FLOOR_WORDS = 40
+
+
+def _context_word_ceiling(context: str) -> int | None:
+    """Word cap the retrieved context can actually support, or None if unknown."""
+    n = len((context or "").split())
+    if not n:
+        return None
+    return max(_CONTEXT_FLOOR_WORDS, int(n * _CONTEXT_WORD_RATIO))
+
+
 def voice_word_limit(
     *,
     expand_deep: bool = False,
     answer_type: str = "short-answer",
+    query: str = "",
+    context: str = "",
 ) -> int:
-    """Config-driven spoken word cap, tightened for greetings and brief requests."""
-    cap = _VOICE_TURN_WORD_CAPS.get(answer_type)
-    if cap is not None:
-        return min(cap, VOICE_PROMPT_MAX_WORDS)
-    if expand_deep:
-        return VOICE_PROMPT_EXPAND_WORDS
-    return VOICE_PROMPT_MAX_WORDS
+    """Config-driven spoken word cap, tightened for greetings and brief requests.
+
+    Also tightened to what the retrieved context can support: a word target the
+    context cannot fill is an instruction to invent.
+    """
+    turn_cap = _VOICE_TURN_WORD_CAPS.get(answer_type)
+    if turn_cap is not None:
+        cap = min(turn_cap, VOICE_PROMPT_MAX_WORDS)
+    elif expand_deep:
+        cap = VOICE_PROMPT_EXPAND_WORDS
+    else:
+        from app.services.section_retrieval import query_breadth
+
+        cap = (
+            VOICE_PROMPT_EXPAND_WORDS
+            if query and query_breadth(query) in ("broad", "chapter")
+            else VOICE_PROMPT_MAX_WORDS
+        )
+    ceiling = _context_word_ceiling(context)
+    return min(cap, ceiling) if ceiling else cap
 
 
 def voice_turn_type_guidance(query: str) -> str:
@@ -236,7 +300,7 @@ def voice_turn_type_guidance(query: str) -> str:
             "Do not use their name."
         ),
         "simplified": (
-            "They need simpler talk. Shorter words, one 'Imagine…' example, slower pace. "
+            "They need simpler talk. Shorter words, same chapter facts, slower pace. "
             "Do not use their name unless they sound confused."
         ),
         "exam-format": (
@@ -253,8 +317,8 @@ def voice_turn_type_guidance(query: str) -> str:
         )
     # short-answer / definition / "what is X"
     return (
-        "Answer naturally like a helpful voice AI: plain meaning first, "
-        "then any chapter detail woven in — no labels, no name."
+        "Answer naturally: the meaning first, using chapter facts, "
+        "then one short supporting detail — no labels, no name."
     )
 
 
@@ -281,8 +345,6 @@ def voice_continuation_guidance(
         "then?",
         "then",
         "and?",
-        "ok",
-        "okay",
     ) or q.startswith(("why ", "how ", "explain that", "another example", "summarize"))
     turns = [t for t in (conversation_history or []) if (t.get("content") or "").strip()]
 
@@ -332,16 +394,16 @@ def voice_continuation_guidance(
 
     if short_follow and (turns or last_assistant):
         return (
-            "Short follow-up — continue the SAME lesson. Bridge briefly "
-            "('Good question.', 'Sure.', 'Of course.') then answer the reason/example/summary. "
+            "Short follow-up — continue the SAME lesson and topic. "
+            "Answer the reason/example/meaning directly. No 'Good question' / 'Sure' opener. "
             "Do not restart the chapter or repeat the full prior answer."
         )
     if not turns and not last_assistant:
         return ""
     if last_assistant:
         return (
-            "This continues a live chat. Pick up with a short transition "
-            "('Let's see…', 'Okay, so next…') — don't restart from scratch."
+            "This continues a live chat. Pick up the same topic. "
+            "Don't restart from scratch, and don't open with a filler phrase."
         )
     return (
         "This continues a live chat. Brief nod to what you already said, "
@@ -355,12 +417,33 @@ def reply_intent_guidance(
     quiz_pending: bool,
     quiz_question: str,
     quiz_attempts: int,
+    dialogue_act: str | None = None,
 ) -> str:
     """Rules 3, 4 & 6: how to respond given the classified reply intent and
     the state of any pending quiz question."""
     from app.services.voice_tutor import ReplyIntent
 
-    if intent == ReplyIntent.CLOSING:
+    act = (dialogue_act or "").strip().lower()
+    if act == "intro":
+        return (
+            "The student is introducing themselves (name/place), not asking a chapter topic. "
+            "Greet them warmly in 1–2 short sentences and invite a question about the current "
+            "chapter. Do NOT say the topic is 'not covered' or show an a/b chapter menu. "
+            "Do not teach chapter content this turn."
+        )
+    if act == "ack":
+        if quiz_pending and quiz_question:
+            return (
+                f'The student reacted briefly (laugh/okay/praise), not answered. '
+                f'Acknowledge in ONE short sentence, then gently keep your open question alive '
+                f'("{quiz_question[:120]}"). Do not teach a new concept.'
+            )
+        return (
+            "The student acknowledged or praised your last reply (e.g. 'okay', 'nice example'). "
+            "Brief warm acknowledgment only — do NOT teach new facts or start a new concept. "
+            "Offer ONE next step: another example, quick quiz, next part, or wrap up."
+        )
+    if intent == ReplyIntent.CLOSING or act == "closing":
         if quiz_pending:
             return (
                 "The student wants to wrap up, but your last question was never resolved. "
@@ -368,8 +451,10 @@ def reply_intent_guidance(
                 "close out or offer what's next. Do not repeat your earlier explanation."
             )
         return (
-            "The student is wrapping up. Do not repeat earlier explanation — acknowledge "
-            "warmly, then offer to move to the next topic or ask what they'd like next."
+            "The student is wrapping up or saying thanks. Do not repeat earlier explanation — "
+            "acknowledge warmly, then offer to move to the next topic, try a quick quiz, "
+            "or wrap up. Never say 'Welcome back' or 'What would you like to learn today?' "
+            "mid-session. Never dump chapter categories again."
         )
     if intent == ReplyIntent.DONT_KNOW:
         hint = (
@@ -413,7 +498,7 @@ def voice_expand_policy(*, expand_deep: bool, max_words: int) -> str:
     if expand_deep:
         return (
             f"They want a bit more — up to {max_words} words, still short sentences, "
-            "pause every 1–2 lines, example-led, no paragraph blocks."
+            "pause every 1–2 lines. Extra detail only from the chapter context, no new examples."
         )
     return (
         f"Keep this turn under {max_words} words. "
@@ -441,9 +526,81 @@ def subject_guidance_for(subject_name: str) -> str:
     return ""
 
 
+def persona_mode_for_affect(
+    *,
+    primary: str = "neutral",
+    wants_quiz: bool = False,
+) -> str:
+    if wants_quiz or primary == "curious":
+        return "teacher"
+    if primary in ("excited", "personal", "affirmation", "bored"):
+        return "friend"
+    return "mentor"
+
+
+_PERSONA_GUIDANCE = {
+    "friend": (
+        "PERSONA — FRIEND: Casual, warm, like a helpful older sibling. "
+        "Light check-ins, no lecture tone."
+    ),
+    "mentor": (
+        "PERSONA — MENTOR: Warm guide who believes in them. Patient, clear, encouraging."
+    ),
+    "teacher": (
+        "PERSONA — TEACHER: Slightly more structured but still spoken, not essay-like. "
+        "Good for quizzes and step-by-step."
+    ),
+}
+
+_NEST_INTENT_GUIDANCE = {
+    "simplify": (
+        "The student asked to simplify — use simpler words for the SAME chapter facts. "
+        "Do not add new facts."
+    ),
+    "example": (
+        "The student wants an example — use one from the chapter context if present. "
+        "Do not invent an unsupported story."
+    ),
+    "quiz": "The student wants to be quizzed — ask ONE short oral question from the chapter.",
+    "repeat": "The student wants you to repeat — say it again more simply, same topic, same facts.",
+}
+
+
+def build_affect_persona_block(
+    *,
+    student_affect: Any | None = None,
+    nest_intent: str | None = None,
+    filler_phrase_played: str | None = None,
+) -> str:
+    parts: list[str] = []
+    if student_affect is not None:
+        hint = getattr(student_affect, "to_hint", lambda: "")()
+        if hint:
+            parts.append(f"AFFECT GUIDANCE:\n{hint}")
+        persona = persona_mode_for_affect(
+            primary=getattr(student_affect, "primary", "neutral"),
+            wants_quiz=bool(getattr(student_affect, "wants_quiz", False)),
+        )
+        parts.append(_PERSONA_GUIDANCE.get(persona, _PERSONA_GUIDANCE["mentor"]))
+        parts.append(
+            "Affect changes tone, patience, and sentence complexity only — never facts."
+        )
+    if nest_intent and nest_intent in _NEST_INTENT_GUIDANCE:
+        parts.append(f"NEST INTENT:\n{_NEST_INTENT_GUIDANCE[nest_intent]}")
+    if filler_phrase_played:
+        parts.append(
+            f'FILLER ALREADY SPOKEN: "{filler_phrase_played[:120]}" — '
+            "do not repeat this opener or paraphrase it. Continue naturally from the next sentence."
+        )
+    return "\n\n".join(parts)
+
+
 def build_voice_system_prompt(
     query: str,
     *,
+    # Only for sizing the word cap — the context itself goes in the user
+    # message, so the model still sees it exactly once.
+    context: str = "",
     class_level: str = "",
     board: str = "",
     subject_name: str = "",
@@ -463,12 +620,23 @@ def build_voice_system_prompt(
     quiz_question: str = "",
     quiz_attempts: int = 0,
     explained_points: list[str] | None = None,
+    student_affect: Any | None = None,
+    nest_intent: str | None = None,
+    dialogue_act: str | None = None,
+    filler_phrase_played: str | None = None,
 ) -> str:
     from app.services.voice_tutor import ReplyIntent, TutorState
 
+    act = (dialogue_act or "").strip().lower()
     answer_type = detect_answer_type(query)
-    max_words = voice_word_limit(expand_deep=expand_deep, answer_type=answer_type)
-    if answer_type == "greeting":
+    if act in ("closing", "ack"):
+        answer_type = "affirmation"
+    elif act == "intro":
+        answer_type = "greeting"
+    max_words = voice_word_limit(
+        expand_deep=expand_deep, answer_type=answer_type, query=query, context=context
+    )
+    if answer_type == "greeting" or act == "intro":
         state_guidance = (
             "The student asked a greeting or personal question. "
             "Answer that directly in one or two spoken sentences. Do not teach the chapter."
@@ -509,6 +677,7 @@ def build_voice_system_prompt(
             quiz_pending=quiz_pending,
             quiz_question=quiz_question,
             quiz_attempts=quiz_attempts,
+            dialogue_act=dialogue_act,
         ),
         learner_guidance=learner_hint,
         subject_guidance=subject_guidance_for(subject_name),
@@ -520,6 +689,11 @@ def build_voice_system_prompt(
             explained_points=explained_points,
         ),
         expand_policy=voice_expand_policy(expand_deep=expand_deep, max_words=max_words),
+        affect_persona_block=build_affect_persona_block(
+            student_affect=student_affect,
+            nest_intent=nest_intent,
+            filler_phrase_played=filler_phrase_played,
+        ),
     )
 
 
@@ -528,13 +702,32 @@ def build_voice_user_message(
     context: str,
     *,
     expand_deep: bool = False,
+    dialogue_act: str | None = None,
 ) -> str:
+    act = (dialogue_act or "").strip().lower()
+    answer_type = detect_answer_type(query)
+    if act in ("closing", "ack"):
+        answer_type = "affirmation"
+    elif act == "intro":
+        answer_type = "greeting"
     max_words = voice_word_limit(
         expand_deep=expand_deep,
-        answer_type=detect_answer_type(query),
+        answer_type=answer_type,
+        query=query,
+        context=context,
     )
+    if act in ("closing", "ack", "intro"):
+        empty_ctx = (
+            "(none — conversational turn only. Do not teach chapter facts. "
+            "Use conversation history.)"
+        )
+    else:
+        empty_ctx = (
+            "(No matching chapter excerpt. Do not invent facts. "
+            "Say you don't have enough information in this chapter.)"
+        )
     return VOICE_USER_TEMPLATE.format(
-        context=context or "(No chapter excerpt — use accurate general knowledge briefly.)",
+        context=context or empty_ctx,
         question=query,
         max_words=max_words,
     )

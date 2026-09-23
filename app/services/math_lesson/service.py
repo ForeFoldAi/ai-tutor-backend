@@ -63,45 +63,170 @@ IMPORTANT RULES:
 (**To Find**, **Given Information**, **Concept Behind It**, **The Formula**, **Solution**, \
 **Quick Check**, **Final Answer**, **Key Takeaway**, **Practice Question**) exactly as before.
 - Do NOT wrap the answer in ```markdown or any code fence — use **bold** headings directly in plain text.
-- Do NOT replace the standard sections with "Concept Name" / "Learning Objective" headings.
-- AFTER **Practice Question**, append ONE complete ```math-lesson``` JSON block for the interactive visualization.
-- The JSON must be valid, complete, and closed with ``` — keep strings concise so the block is not cut off.
-- Keep the math-lesson JSON focused on the interactive visualization only.
-- Do NOT include practiceMode, commonMistakes, aiHints, or assessment unless the student \
-explicitly asked for them (see OPTIONAL FIELDS below).
+- AFTER **Practice Question**, append ONE complete ```math-lesson``` JSON block.
+- The JSON must be valid and closed with ```.
+- Do NOT invent a per-lesson `colors` object. Choose `paletteId` from: \
+"primary-1to2" | "primary-3to5" | "middle-6to8" | "technical-9to10" \
+(match the student's class band).
+- Do NOT include practiceMode, commonMistakes, aiHints, or assessment unless the student asked.
 
+WORKED EXAMPLE — fractions (2d):
 ```math-lesson
 {
-  "conceptName": "...",
-  "classLevel": "Class N",
-  "learningObjective": "...",
-  "conceptExplanation": "one-sentence summary for the viz panel",
+  "conceptName": "Fractions",
+  "classLevel": "Class 5",
   "visualization": {
-    "visualizationType": "counting|number-line|place-value|multiplication-grid|bar-model|decimal-blocks|percent-circle|ratio-bar|integer-line|clock-time|money|pattern|shapes-basic|matchstick-squares|symmetry|factor-tree|pythagoras|trig-basic|concept-explorer|algebra-tiles|factor-rectangle|geometry-basics|angle-explorer|parallel-transversal|linear-graph|line-intersection|triangle-explorer|triangle-angle-sum|quadrilateral-morph|statistics-lab|mensuration-cube|mensuration-cylinder|area-resizer|probability-dice|probability-coin|circle-tangent|geometry-construction|fractions|circle|coordinate|graph|probability|statistics|mensuration|generic",
-    "title": "...",
-    "description": "what the student should explore",
-    "sliders": [{"id": "turnSlider", "label": "Quarter turns", "min": 0, "max": 4, "step": 1, "default": 1, "unit": ""}],
-    "liveCalculations": [{"id": "angle", "label": "Angle", "formula": "turnSlider * 90", "unit": "°"}],
-    "buttons": [{"id": "reset", "label": "Reset", "action": "reset"}],
-    "colors": {"primary": "#3B82F6", "secondary": "#10B981", "accent": "#F59E0B", "background": "#F8FAFC", "text": "#1E293B"},
-    "studentInteractions": [{"id": "s1", "type": "slide", "description": "Move the slider", "expectedObservation": "..."}]
+    "visualizationType": "fractions",
+    "title": "Pizza Fractions",
+    "description": "Change numerator and denominator",
+    "paletteId": "primary-3to5",
+    "renderMode": "2d",
+    "sliders": [
+      {"id": "numerator", "label": "Numerator", "min": 0, "max": 8, "step": 1, "default": 3},
+      {"id": "denominator", "label": "Denominator", "min": 1, "max": 8, "step": 1, "default": 4}
+    ],
+    "liveCalculations": [{"id": "pct", "label": "Percent", "formula": "numerator / denominator * 100", "unit": "%"}]
   },
-  "guidedExploration": ["What happens if..."]
+  "guidedExploration": ["What happens if the denominator increases?"]
 }
 ```
 
-Visualization rules (Class 1–10 — always pick the most student-friendly interactive type):
-- Class 1–2: counting, number-line, shapes-basic, matchstick-squares, clock-time, money, pattern
-- Class 3–5: multiplication-grid, fractions, place-value, bar-model (division), perimeter/area-resizer
-- Class 6–8: integer-line, ratio-bar, percent-circle, linear-graph, angle-explorer, statistics-lab
-- Class 9–10: algebra-tiles, factor-rectangle, parallel-transversal, pythagoras, trig-basic, circle-tangent
-- Lines / rays / segments: use geometry-basics (drag points, switch Segment / Ray / Line)
-- ANY concept: use concept-explorer with relevant sliders only if no exact match
-- Always include sliders OR draggables OR animate button — never static-only
-- Match complexity to the student's class level from the prompt context
-- Include at least one slider OR draggable object OR interactive button.
-- liveCalculations must use slider id names as variables (e.g. turnSlider, r, numerator, denominator).
-- Never use static diagrams when interaction is possible."""
+WORKED EXAMPLE — algebra-stepper (solve 2x + 5 = 15):
+```math-lesson
+{
+  "conceptName": "Linear Equations",
+  "classLevel": "Class 8",
+  "visualization": {
+    "visualizationType": "algebra-stepper",
+    "title": "Solve 2x + 5 = 15",
+    "paletteId": "middle-6to8",
+    "renderMode": "2d",
+    "algebraSteps": [
+      {"id": "s0", "expressionBefore": "2x + 5 = 15", "expressionAfter": "2x + 5 = 15", "operation": "Start", "highlightTerms": ["2x", "5"]},
+      {"id": "s1", "expressionBefore": "2x + 5 = 15", "expressionAfter": "2x = 10", "operation": "Subtract 5 from both sides", "highlightTerms": ["5"]},
+      {"id": "s2", "expressionBefore": "2x = 10", "expressionAfter": "x = 5", "operation": "Divide both sides by 2", "highlightTerms": ["2"]}
+    ]
+  }
+}
+```
+
+WORKED EXAMPLE — compound-interest-visual (3-year CI):
+```math-lesson
+{
+  "conceptName": "Compound Interest",
+  "classLevel": "Class 8",
+  "visualization": {
+    "visualizationType": "compound-interest-visual",
+    "title": "CI Growth",
+    "paletteId": "middle-6to8",
+    "financeSpec": {"principal": 10000, "rate": 8, "timeYears": 3, "mode": "compound-interest", "compoundingFrequency": "annually"},
+    "sliders": [
+      {"id": "P", "label": "Principal", "min": 1000, "max": 50000, "step": 1000, "default": 10000},
+      {"id": "r", "label": "Rate %", "min": 1, "max": 20, "step": 0.5, "default": 8},
+      {"id": "n", "label": "Years", "min": 1, "max": 10, "step": 1, "default": 3}
+    ]
+  }
+}
+```
+
+WORKED EXAMPLE — quadratic grapher (x² − 5x + 6 = 0):
+```math-lesson
+{
+  "conceptName": "Quadratic Equations",
+  "classLevel": "Class 10",
+  "visualization": {
+    "visualizationType": "linear-graph",
+    "title": "y = x² − 5x + 6",
+    "paletteId": "technical-9to10",
+    "curveType": "quadratic",
+    "coefficients": [1, -5, 6],
+    "sliders": [
+      {"id": "a", "label": "a", "min": -3, "max": 3, "step": 0.5, "default": 1},
+      {"id": "b", "label": "b", "min": -8, "max": 8, "step": 0.5, "default": -5},
+      {"id": "c", "label": "c", "min": -8, "max": 8, "step": 0.5, "default": 6}
+    ]
+  }
+}
+```
+
+WORKED EXAMPLE — 3d cube (renderMode 3d + scene required):
+```math-lesson
+{
+  "conceptName": "Cube",
+  "classLevel": "Class 9",
+  "visualization": {
+    "visualizationType": "mensuration-cube",
+    "title": "Cube Explorer",
+    "paletteId": "technical-9to10",
+    "renderMode": "3d",
+    "scene": {
+      "groundGrid": true,
+      "camera": {"position": [4.8, 3.2, 5.6], "target": [0, 0.65, 0], "fov": 40},
+      "objects": [{"id": "cube", "type": "box", "position": [0, 0, 0], "scaleDrivenBy": "s", "color": "primary", "wireframeAccent": true}]
+    },
+    "sliders": [{"id": "s", "label": "Side", "min": 1, "max": 10, "step": 1, "default": 5}]
+  }
+}
+```
+
+WORKED EXAMPLE — composite cone-on-cylinder (Class 10 solids):
+```math-lesson
+{
+  "conceptName": "Combination of Solids",
+  "classLevel": "Class 10",
+  "visualization": {
+    "visualizationType": "mensuration-cylinder",
+    "title": "Cone on Cylinder",
+    "paletteId": "technical-9to10",
+    "renderMode": "3d",
+    "scene": {
+      "groundGrid": true,
+      "objects": [{
+        "id": "combo",
+        "type": "composite",
+        "position": [0, 0, 0],
+        "children": [
+          {"id": "cyl", "type": "cylinder", "position": [0, 0.6, 0], "color": "primary"},
+          {"id": "cone", "type": "cone", "position": [0, 1.6, 0], "color": "accent"}
+        ]
+      }]
+    }
+  }
+}
+```
+
+WORKED EXAMPLE — heights-and-distances (3d):
+```math-lesson
+{
+  "conceptName": "Heights and Distances",
+  "classLevel": "Class 10",
+  "visualization": {
+    "visualizationType": "heights-distances-scene",
+    "title": "Angle of Elevation",
+    "paletteId": "technical-9to10",
+    "renderMode": "3d",
+    "scene": {
+      "groundGrid": true,
+      "objects": [
+        {"id": "tower", "type": "box", "position": [4, 1.2, 0], "scale": [0.5, 2.4, 0.5], "color": "primary"},
+        {"id": "eye", "type": "sphere", "position": [0, 0.2, 0], "scale": [0.2, 0.2, 0.2], "color": "accent"}
+      ]
+    },
+    "sliders": [
+      {"id": "angle", "label": "Angle °", "min": 15, "max": 75, "step": 1, "default": 30},
+      {"id": "distance", "label": "Distance m", "min": 10, "max": 100, "step": 5, "default": 40}
+    ]
+  }
+}
+```
+
+Type rules:
+- Solving / simplify / rationalise: "algebra-stepper" with algebraSteps (SymPy-verified steps may be injected server-side — keep concise).
+- CI / discount / tax: "compound-interest-visual" + financeSpec.
+- Quadratic: "linear-graph" + curveType "quadratic" + coefficients [a,b,c].
+- Solids / heights-distances: renderMode "3d" with a non-empty scene.objects array.
+- Never use static-only diagrams; include sliders, buttons, or scene scaleDrivenBy.
+- liveCalculations must use slider id names as variables."""
 
 
 def should_use_interactive_math_lesson(
@@ -153,10 +278,9 @@ _MATH_VISUALIZATION_APPENDIX_ELEMENTARY = """\
 INTERACTIVE VISUALIZATION (MANDATORY for every elementary mathematics answer):
 - Write a SHORT kid-friendly prose answer FIRST (60–120 words, no section headers).
 - You MUST append ONE complete ```math-lesson``` JSON block for the interactive visual.
-- Do NOT use **To Find**, **Given Information**, **The Formula**, or other exam-style section headers.
-- The JSON must be valid, complete, and closed with ``` — keep strings concise so the block is not cut off.
-- Do NOT include practiceMode, commonMistakes, aiHints, or assessment unless the student \
-explicitly asked for them (see OPTIONAL FIELDS below).
+- Do NOT use exam-style section headers.
+- Do NOT invent a `colors` object — set paletteId to "primary-1to2" (Class 1–2) or "primary-3to5" (Class 3–5).
+- Do NOT include practiceMode / aiHints / assessment unless asked.
 
 ```math-lesson
 {
@@ -165,15 +289,106 @@ explicitly asked for them (see OPTIONAL FIELDS below).
   "learningObjective": "...",
   "conceptExplanation": "one-sentence summary for the viz panel",
   "visualization": {
-    "visualizationType": "shapes-basic|matchstick-squares|counting|number-line|multiplication-grid|fractions|concept-explorer|generic",
+    "visualizationType": "shape-lab|matchstick-squares|counting|number-line|multiplication-grid|fractions|concept-explorer|generic",
     "title": "...",
     "description": "what the student should explore",
-    "sliders": [{"id": "sides", "label": "Sides", "min": 3, "max": 8, "step": 1, "default": 4}],
-    "buttons": [{"id": "animate", "label": "▶ Draw shape", "action": "animate"}]
+    "paletteId": "primary-3to5",
+    "renderMode": "2d",
+    "interactiveObjects": [{"id": "shape", "label": "Square", "type": "square"}],
+    "sliders": [{"id": "s", "label": "Side length", "min": 1, "max": 10, "step": 1, "default": 4}],
+    "buttons": [{"id": "animate", "label": "▶ Draw square", "action": "animate"}]
   },
   "guidedExploration": ["What happens if..."]
 }
 ```"""
+
+
+def algebra_steps_from_math_engine(query: str, class_level: str = "") -> list[dict[str, Any]]:
+    """Map SymPy MathEngineResult steps → algebraSteps for algebra-stepper grounding."""
+    try:
+        from app.services.math_engine import try_solve
+    except Exception:
+        return []
+    try:
+        result = try_solve(query, class_level=class_level)
+    except Exception as exc:
+        logger.debug("try_solve for algebraSteps failed: %s", exc)
+        return []
+    if not result or not getattr(result, "solved", False):
+        return []
+
+    steps_out: list[dict[str, Any]] = []
+    engine_steps = list(getattr(result, "steps", None) or [])
+    sol_lines = list(getattr(result, "solution_latex", None) or [])
+
+    if engine_steps:
+        prev = ""
+        for i, step in enumerate(engine_steps):
+            lines = list(getattr(step, "latex_lines", None) or [])
+            expr = (lines[-1] if lines else "").replace("$$", "").strip()
+            before = prev or (lines[0].replace("$$", "").strip() if lines else expr)
+            after = expr or before
+            steps_out.append(
+                {
+                    "id": f"sympy-{i}",
+                    "expressionBefore": before or after,
+                    "expressionAfter": after or before,
+                    "operation": getattr(step, "label", "") or getattr(step, "note", "") or "",
+                    "highlightTerms": [],
+                }
+            )
+            prev = after
+    elif sol_lines:
+        cleaned = [ln.replace("$$", "").strip() for ln in sol_lines if ln.strip()]
+        for i, line in enumerate(cleaned):
+            before = cleaned[i - 1] if i else line
+            steps_out.append(
+                {
+                    "id": f"sympy-{i}",
+                    "expressionBefore": before,
+                    "expressionAfter": line,
+                    "operation": "Verified step" if i else "Start",
+                    "highlightTerms": [],
+                }
+            )
+
+    final = str(getattr(result, "final_answer", "") or "").strip()
+    if final and steps_out and final not in steps_out[-1].get("expressionAfter", ""):
+        steps_out.append(
+            {
+                "id": f"sympy-final",
+                "expressionBefore": steps_out[-1]["expressionAfter"],
+                "expressionAfter": final.replace("$$", "").strip(),
+                "operation": "Final answer",
+                "highlightTerms": [],
+            }
+        )
+    return steps_out
+
+
+def inject_sympy_algebra_steps(
+    lesson: dict[str, Any] | None,
+    query: str,
+    class_level: str = "",
+) -> dict[str, Any] | None:
+    """If lesson is algebra-stepper and algebraSteps empty, fill from SymPy."""
+    if not lesson:
+        return lesson
+    viz = lesson.get("visualization") or {}
+    vtype = str(viz.get("visualizationType") or "")
+    if vtype != "algebra-stepper":
+        return lesson
+    existing = viz.get("algebraSteps") or []
+    if existing:
+        return lesson
+    steps = algebra_steps_from_math_engine(query, class_level)
+    if not steps:
+        return lesson
+    viz = dict(viz)
+    viz["algebraSteps"] = steps
+    out = dict(lesson)
+    out["visualization"] = viz
+    return out
 
 
 def get_visualization_appendix_prompt(query: str = "", *, elementary: bool = False) -> str:
@@ -195,6 +410,8 @@ def apply_math_lesson_display_policy(
     """Strip optional lesson panels unless the student explicitly asked for them."""
     if not lesson:
         return None
+    from app.services.math_lesson.elementary_catalog import apply_shape_lab_guide
+
     out = dict(lesson)
     if not query_requests_hints(query):
         out["aiHints"] = []
@@ -203,7 +420,7 @@ def apply_math_lesson_display_policy(
     if not query_requests_practice_mode(query):
         out["practiceMode"] = {"easy": "", "medium": "", "hard": "", "challenge": ""}
         out["commonMistakes"] = []
-    return out
+    return apply_shape_lab_guide(out, query)
 
 
 def _try_parse_lesson(raw: str) -> MathLesson | None:
@@ -227,6 +444,26 @@ def clean_tutor_answer_text(answer: str) -> str:
     return text.strip()
 
 
+def safe_finalize_math_answer(
+    answer: str,
+    query: str,
+    **kwargs: Any,
+) -> tuple[str, dict[str, Any] | None]:
+    """finalize_math_answer with fail-open fallback — never crash the chat path."""
+    try:
+        clean, lesson = finalize_math_answer(answer, query, **kwargs)
+    except Exception as exc:
+        logger.exception("finalize_math_answer failed: %s", exc)
+        return clean_tutor_answer_text(answer or ""), None
+    if lesson is not None:
+        try:
+            lesson = json.loads(json.dumps(lesson, default=str))
+        except Exception as exc:
+            logger.warning("math_lesson JSON sanitize failed: %s", exc)
+            lesson = None
+    return clean, lesson
+
+
 def finalize_math_answer(
     answer: str,
     query: str,
@@ -236,37 +473,44 @@ def finalize_math_answer(
     existing_lesson: dict[str, Any] | None = None,
     allow_fallback: bool = True,
     conversation_history: list[dict[str, str]] | None = None,
+    allow_llm_pass2: bool = True,
 ) -> tuple[str, dict[str, Any] | None]:
-    """Extract math-lesson JSON from answer, or synthesize a fallback for math subjects."""
+    """Extract/build math-lesson grounded on the answer; suppress if type/numbers mismatch."""
+    from app.services.interactive_grounding import match_text, resolve_grounded_panel
+
     clean, lesson = extract_math_lesson_from_answer(answer)
     if lesson is None:
         lesson = existing_lesson
     if not _is_mathematics_subject(subject_name):
         return clean, lesson
-    if lesson is None and not allow_fallback:
+    if not allow_fallback and lesson is None:
         return clean, None
+
+    text = match_text(clean, query)
     catalog = (
         build_fallback_math_lesson(
-            query, class_level, conversation_history=conversation_history
+            text, class_level, conversation_history=conversation_history
         )
         if allow_fallback
         else None
     )
-    if lesson is None:
-        if catalog is None:
-            return clean, None
-        logger.info("Using Class 1-10 math visualization for query=%r", query[:80])
-        return clean, apply_math_lesson_display_policy(catalog, query)
-    if catalog is None:
-        return clean, apply_math_lesson_display_policy(lesson, query)
-    merged = merge_catalog_visualization(lesson, catalog)
-    if merged is not lesson:
-        logger.info(
-            "Merged catalog viz %s for query=%r",
-            catalog.get("visualization", {}).get("visualizationType"),
-            query[:80],
-        )
-    return clean, apply_math_lesson_display_policy(merged, query)
+    # Soft-merge only when first fence is weak — resolve_grounded_panel is source of truth.
+    if lesson is not None and catalog is not None:
+        lesson = merge_catalog_visualization(lesson, catalog)
+
+    grounded = resolve_grounded_panel(
+        answer=clean,
+        query=query,
+        kind="math",
+        class_level=class_level,
+        first_panel=lesson,
+        catalog_panel=catalog,
+        allow_llm_pass2=allow_llm_pass2 and allow_fallback,
+    )
+    if grounded is None:
+        return clean, None
+    lesson = apply_math_lesson_display_policy(grounded, query)
+    return clean, inject_sympy_algebra_steps(lesson, query, class_level)
 
 
 def extract_math_lesson_from_answer(answer: str) -> tuple[str, dict[str, Any] | None]:

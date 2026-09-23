@@ -93,3 +93,18 @@ def get_request_context(
     x_forwarded_for: str | None = Header(default=None),
 ) -> dict[str, str | None]:
     return {"user_agent": user_agent, "ip_address": x_forwarded_for}
+
+
+def authorize_voice_tts(
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
+    db: Annotated[Session, Depends(get_db)],
+    x_voice_token: str | None = Header(default=None, alias="X-Voice-Token"),
+) -> None:
+    """Nest voice server may call Edge TTS with a shared secret instead of a student JWT."""
+    import os
+    import secrets
+
+    expected = (os.environ.get("VOICE_INTERNAL_TOKEN") or "").strip()
+    if expected and x_voice_token and secrets.compare_digest(x_voice_token, expected):
+        return
+    get_current_user(credentials, db)

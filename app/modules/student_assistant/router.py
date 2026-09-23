@@ -78,5 +78,9 @@ async def assistant_chat_stream(
     return StreamingResponse(
         ndjson_generator(),
         media_type="application/x-ndjson",
-        headers={"Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff"},
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Content-Type-Options": "nosniff",
+            "X-Accel-Buffering": "no",
+        },
     )

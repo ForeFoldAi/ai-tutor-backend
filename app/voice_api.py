@@ -20,7 +20,7 @@ from pydantic import BaseModel, Field
 
 from app.config import VOICE_MAX_AUDIO_BYTES
 from app.core.student_messages import EMPTY_VOICE_MESSAGE
-from app.modules.auth.dependencies import get_current_user
+from app.modules.auth.dependencies import authorize_voice_tts, get_current_user
 from app.modules.users.models import User
 
 from app.services.tts_provider import (
@@ -447,7 +447,7 @@ def _mp3_to_pcm16(mp3: bytes, rate: int = 16000) -> bytes:
 @router.post("/auth/voice-tts-pcm")
 async def voice_tts_pcm(
     req: TtsPcmRequest,
-    _current_user: Annotated[User, Depends(get_current_user)],
+    _authorized: Annotated[None, Depends(authorize_voice_tts)],
 ):
     """
     Text -> raw mono PCM16 @16kHz, for the Nest RTC voice server.

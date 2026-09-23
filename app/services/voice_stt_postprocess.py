@@ -120,6 +120,73 @@ def echo_similarity(user_text: str, assistant_text: str) -> float:
 
 
 # Cut-off STT: "what would", "can you tell" — not a complete question.
+# Whisper on silence/noise often hallucinates bracket annotations — never treat as student speech.
+_WHISPER_JUNK_PHRASES = frozenset(
+    {
+        "blank audio",
+        "blank_audio",
+        "inaudible",
+        "music",
+        "applause",
+        "silence",
+        "laughs",
+        "laughter",
+        "clear throat",
+        "clears throat",
+        "cough",
+        "coughs",
+        "sigh",
+        "sighs",
+        "breathing",
+        "background noise",
+        "thank you for watching",
+        "thanks for watching",
+        "subscribe",
+        "subtitles by",
+        "amara org",
+    }
+)
+_SHORT_OK = frozenset({"ok", "okay", "yes", "no", "hi", "hey", "bye", "stop", "wait", "why", "how"})
+
+
+def _junk_normalize(text: str) -> str:
+    t = re.sub(r"[\[\](){}]", " ", (text or "").lower())
+    return _WHITESPACE.sub(" ", t).strip(" .,!?-")
+
+
+def is_whisper_hallucination(text: str) -> bool:
+    """True when STT output is a known silence/noise artifact, not real speech."""
+    raw = (text or "").strip()
+    if not raw:
+        return True
+    key = _junk_normalize(raw)
+    if key in _WHISPER_JUNK_PHRASES:
+        return True
+    m = re.match(r"^[\[\(](.+)[\]\)]\.?$", raw, flags=re.I)
+    if m and _junk_normalize(m.group(1)) in _WHISPER_JUNK_PHRASES:
+        return True
+    return False
+
+
+def is_meaningful_voice_transcript(text: str) -> bool:
+    """Reject punctuation-only and Whisper junk before a voice turn is committed."""
+    raw = (text or "").strip()
+    if len(raw) < 2:
+        return False
+    if is_whisper_hallucination(raw):
+        return False
+    if not re.search(r"[a-zA-Z0-9]", raw):
+        return False
+    words = [re.sub(r"^[^\w]+|[^\w]+$", "", w) for w in raw.split()]
+    words = [w for w in words if w]
+    if not words:
+        return False
+    if len(words) == 1:
+        w = words[0].lower()
+        return w in _SHORT_OK or len(w) >= 4
+    return any(len(w) >= 2 for w in words)
+
+
 _INCOMPLETE_QUESTION = re.compile(
     r"^(?:"
     r"what\s+(?:would|is|are|was|were|will|do|does|did|can|could|should)|"

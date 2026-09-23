@@ -8,6 +8,7 @@ Subsection question → chunks for that subtopic only.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 from app.config import RETRIEVAL_K
@@ -35,6 +36,101 @@ SECTION_WIDE_K = max(RETRIEVAL_K, 12)
 MAIN_SECTION_MAX_CHUNKS = 40
 SUBSECTION_MAX_CHUNKS = 12
 _MIN_SUBTOPIC_IMAGE_SCORE = 25.0
+# Qdrant Cosine score is similarity (higher = better). Relative keep avoids
+# discarding useful near-neighbors; floor only drops clearly irrelevant tops.
+_RELATIVE_KEEP = 0.50
+_WEAK_TOP_FLOOR = 0.28
+_BROAD_CONTEXT_CHAR_BUDGET = 11000
+
+_BROAD_ASK_RE = re.compile(
+    r"\b("
+    r"tell\s+me\s+about|explain(?:\s+(?:this|the|about))?|describe|"
+    r"what(?:'s|\s+is)\s+this\s+(?:chapter|topic|unit|lesson)\s+about|"
+    r"overview|whole\s+(?:chapter|topic|lesson|unit)|"
+    r"entire\s+(?:chapter|topic|lesson|unit)"
+    r")\b",
+    re.I,
+)
+_NARROW_FACT_RE = re.compile(
+    r"\b("
+    r"who\s+(?:was|is|were|are)|when\s+(?:did|was|is)|where\s+(?:is|was|did)|"
+    r"which|first\s+battle|what\s+was|what\s+were|define|definition|"
+    r"named|invented|date|year"
+    r")\b",
+    re.I,
+)
+
+
+def query_breadth(query: str) -> str:
+    """'narrow' | 'broad' | 'chapter' — retrieval width, not spoken length."""
+    q = (query or "").strip()
+    if not q:
+        return "narrow"
+    from app.services.chapter_scope import is_current_lesson_query
+
+    if is_current_lesson_query(q):
+        return "chapter"
+    if re.search(r"\b(whole|entire|full)\s+(chapter|topic|lesson|unit)\b", q, re.I):
+        return "chapter"
+    if _BROAD_ASK_RE.search(q) and not (_NARROW_FACT_RE.search(q) and len(q.split()) <= 12):
+        return "broad"
+    return "narrow"
+
+
+def filter_weak_semantic_hits(docs: list[Any]) -> list[Any]:
+    """Drop clearly irrelevant semantic hits. Docs without scores are kept.
+
+    ponytail: relative-to-top, not a hard BGE cutoff — score distributions
+    vary by chapter; raise _WEAK_TOP_FLOOR only if logs show junk still passing.
+    """
+    scored: list[tuple[Any, float]] = []
+    unscored: list[Any] = []
+    for d in docs:
+        meta = getattr(d, "metadata", None) or {}
+        if "_retrieval_score" in meta:
+            try:
+                scored.append((d, float(meta["_retrieval_score"])))
+            except (TypeError, ValueError):
+                unscored.append(d)
+        else:
+            unscored.append(d)
+    if not scored:
+        return docs
+    top = max(s for _d, s in scored)
+    if top < _WEAK_TOP_FLOOR:
+        return []
+    keep = [d for d, s in scored if s >= top * _RELATIVE_KEEP]
+    return keep + unscored
+
+
+def _spread_chapter_chunks(chunks: list[Any], n: int) -> list[Any]:
+    if not chunks or n <= 0:
+        return []
+    if len(chunks) <= n:
+        return list(chunks)
+    step = (len(chunks) - 1) / max(n - 1, 1)
+    idxs = sorted({min(len(chunks) - 1, int(round(i * step))) for i in range(n)})
+    return [chunks[i] for i in idxs]
+
+
+def _merge_unique(primary: list[Any], extra: list[Any], cap: int) -> list[Any]:
+    seen: set[int] = set()
+    out: list[Any] = []
+    for doc in primary + extra:
+        oid = id(doc)
+        if oid in seen:
+            continue
+        seen.add(oid)
+        out.append(doc)
+        if len(out) >= cap:
+            break
+    return out
+
+
+def voice_context_budget(base: int, query: str) -> int:
+    if query_breadth(query) in ("broad", "chapter"):
+        return max(base, _BROAD_CONTEXT_CHAR_BUDGET)
+    return base
 
 
 def _catalog_for_heading_scope(
@@ -84,7 +180,10 @@ def retrieve_for_tutor_query(
     Uses semantic search plus full-chapter scan when chapter_ids are available.
     """
     semantic_k = k if k is not None else RETRIEVAL_K
+    breadth = query_breadth(query)
     wide_k = max(semantic_k, SECTION_WIDE_K)
+    if breadth in ("broad", "chapter"):
+        wide_k = max(wide_k, 16)
 
     semantic = retrieve_from_collection(
         query,
@@ -93,11 +192,24 @@ def retrieve_for_tutor_query(
         chapter_names=chapter_names,
         k=wide_k,
     )
+    semantic = filter_weak_semantic_hits(semantic)
 
     if not chapter_ids:
         scope = resolve_heading_scope(query, semantic)
-        max_c = MAIN_SECTION_MAX_CHUNKS if scope.is_main_section else SUBSECTION_MAX_CHUNKS
+        if breadth in ("broad", "chapter") and scope.kind == "subsection":
+            scope = HeadingScope(kind="general")
+        max_c = MAIN_SECTION_MAX_CHUNKS if (
+            scope.is_main_section or breadth in ("broad", "chapter")
+        ) else (SUBSECTION_MAX_CHUNKS if scope.is_subsection else semantic_k)
         docs = select_chunks_for_scope([], scope, semantic_ranked=semantic, max_chunks=max_c)
+        logger.info(
+            "[RAG] breadth=%s scope=%s docs=%d scores=%s q=%r",
+            breadth,
+            scope.kind,
+            len(docs),
+            _score_preview(semantic),
+            (query or "")[:80],
+        )
         return docs, scope, scope_instruction_for_prompt(scope, chunks=docs)
 
     chapter_chunks = fetch_chapter_chunks(
@@ -107,27 +219,53 @@ def retrieve_for_tutor_query(
         enrich_chunks_with_section_metadata(chapter_chunks)
     catalog = _catalog_for_heading_scope(chapter_ids, chapter_chunks, semantic)
     scope = resolve_heading_scope(query, catalog)
+    if breadth in ("broad", "chapter") and scope.kind == "subsection":
+        scope = HeadingScope(kind="general")
 
-    max_chunks = MAIN_SECTION_MAX_CHUNKS if scope.is_main_section else (
-        SUBSECTION_MAX_CHUNKS if scope.is_subsection else semantic_k
-    )
+    if breadth == "chapter" or (breadth == "broad" and scope.is_main_section):
+        max_chunks = MAIN_SECTION_MAX_CHUNKS
+    elif breadth == "broad":
+        max_chunks = max(semantic_k, 12)
+    else:
+        max_chunks = MAIN_SECTION_MAX_CHUNKS if scope.is_main_section else (
+            SUBSECTION_MAX_CHUNKS if scope.is_subsection else semantic_k
+        )
     docs = select_chunks_for_scope(
         catalog or semantic,
         scope,
         semantic_ranked=semantic,
         max_chunks=max_chunks,
     )
-
-    if scope.matched:
-        logger.info(
-            "[SECTION] scope=%s matched=%r children=%d docs=%d",
-            scope.kind,
-            scope.matched.title,
-            len(scope.child_headings or []),
-            len(docs),
+    if breadth == "chapter" and catalog:
+        docs = _merge_unique(
+            _spread_chapter_chunks(catalog, min(24, MAIN_SECTION_MAX_CHUNKS)),
+            docs,
+            MAIN_SECTION_MAX_CHUNKS,
         )
 
+    logger.info(
+        "[RAG] breadth=%s scope=%s matched=%r docs=%d scores=%s q=%r",
+        breadth,
+        scope.kind,
+        getattr(scope.matched, "title", None),
+        len(docs),
+        _score_preview(semantic),
+        (query or "")[:80],
+    )
+
     return docs, scope, scope_instruction_for_prompt(scope, chunks=docs)
+
+
+def _score_preview(docs: list[Any], n: int = 4) -> str:
+    out: list[str] = []
+    for d in docs[:n]:
+        meta = getattr(d, "metadata", None) or {}
+        if "_retrieval_score" in meta:
+            try:
+                out.append(f"{float(meta['_retrieval_score']):.3f}")
+            except (TypeError, ValueError):
+                continue
+    return ",".join(out) if out else "-"
 
 
 def _pool_image_for_candidate(pool: list[Any], candidate: dict) -> Any | None:

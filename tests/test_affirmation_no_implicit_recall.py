@@ -8,3 +8,5 @@ def test_affirmation_hint_forbids_implicit_last_question_recap():
     hint = scores.to_hint().lower()
     assert "your last question" in hint
     assert "unless they explicitly asked" in hint
+    assert "next small step" not in hint
+    assert "new fact" in hint

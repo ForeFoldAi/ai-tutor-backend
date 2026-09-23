@@ -11,6 +11,10 @@ ANSWER_NOT_IN_CHAPTER = (
     "or open Learning Studio and pick the right chapter."
 )
 
+CHAT_ANSWER_FAILED = (
+    "Sorry — something went wrong. Please try again or ask your question in a different way."
+)
+
 # Voice WebSocket
 VOICE_ANSWER_FAILED = (
     "Sorry — I had trouble answering that. Please try again in a moment."

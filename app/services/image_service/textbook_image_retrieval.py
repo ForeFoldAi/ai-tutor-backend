@@ -88,9 +88,11 @@ _GENERIC_ASSET_NAME = re.compile(r"^(im\d+|p\d+_\d+|image\d+)\.", re.I)
 _IMAGE_REQUEST_PATTERNS = re.compile(
     r"\b("
     r"with\s+(?:an?\s+)?(?:images?|diagrams?|pictures?|figures?|maps?|illustrations?)|"
-    r"show\s+(?:me\s+)?(?:an?\s+|the\s+)?(?:diagrams?|figures?|pictures?|maps?|illustrations?)|"
+    r"(?:show|bring|get|fetch|display|open)\s+(?:me\s+)?(?:an?\s+|the\s+)?(?:diagrams?|figures?|pictures?|maps?|illustrations?)|"
     r"include\s+(?:an?\s+)?images?|using\s+(?:diagrams?|pictures?|illustrations?)|"
     r"(?:see|want|need)\s+(?:an?\s+)?(?:images?|diagrams?|pictures?|figures?)|"
+    r"(?:list|name)\s+(?:the\s+|all\s+)?(?:figures?|figs?|diagrams?|images?|maps?)|"
+    r"(?:images?|figures?|diagrams?)\s+from\s+(?:the\s+|this\s+)?(?:textbook|chapter|book)|"
     r"textbook\s+(?:diagram|figure|image)s?"
     r")\b",
     re.I,
@@ -459,6 +461,11 @@ def _hard_concept_filter(intent: "ImageIntent", im: TextbookImage) -> tuple[bool
     Symbolic-first hard filter pipeline. Returns (reject, reason).
     """
     from app.config import HARD_REJECT_SPECIFICITY, MIN_TOPIC_PURITY, SIDEBAR_MIN_SPECIFICITY
+    from app.services.image_service.content_kind_retrieval import referenced_asset_matches
+
+    # Exact Fig/Table/Eq N from the student question must never be filtered out.
+    if isinstance(intent, ImageIntent) and referenced_asset_matches(intent, im):
+        return False, ""
 
     cap_norm = _get_caption_normalized(im)
     spec = _concept_specificity_score(intent, im)
@@ -1146,6 +1153,94 @@ def _attach_upload_refs(
             im.upload = up
 
 
+def _resolved_figure_number(im: TextbookImage) -> str:
+    num = (getattr(im, "figure_number", None) or "").strip()
+    if num:
+        return num
+    from app.services.image_service.textbook_image_extraction import extract_figure_number
+
+    return (extract_figure_number(im.caption or "") or "").strip()
+
+
+def chapter_figures_by_number(
+    chapter_ids: list[str] | None,
+    numbers: list[str],
+    *,
+    max_n: int = 8,
+) -> list[dict]:
+    """
+    Load chapter figures by exact figure_number (no ranking / pedagogy gates).
+    Used when the student or LLM answer cites Fig./Figure N.
+    """
+    wanted = [str(n).strip() for n in (numbers or []) if str(n).strip()]
+    if not chapter_ids or not wanted or max_n <= 0:
+        return []
+    wanted_set = set(wanted)
+    with SessionLocal() as db:
+        uploads = _load_uploads(db, chapter_ids)
+        if not uploads:
+            return []
+        images = _list_images(db, list(uploads.keys()))
+        _attach_upload_refs(images, uploads)
+        by_num: dict[str, TextbookImage] = {}
+        for im in images:
+            from app.services.image_service.content_kind_retrieval import get_content_kind
+
+            if get_content_kind(im) != "figure":
+                continue
+            num = _resolved_figure_number(im)
+            if num not in wanted_set or num in by_num:
+                continue
+            disk = image_disk_path(
+                im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None)
+            )
+            if not image_has_visible_content(disk):
+                continue
+            by_num[num] = im
+        out: list[dict] = []
+        for n in wanted:
+            im = by_num.get(n)
+            if im is None:
+                continue
+            out.append(_payload_row(im, 100.0))
+            if len(out) >= max_n:
+                break
+        return out
+
+
+def chapter_figures_catalog(
+    chapter_ids: list[str] | None,
+    *,
+    max_n: int | None = None,
+) -> list[dict]:
+    """All visible chapter figures in page/figure_number order (list-ask path)."""
+    from app.config import MAX_CHAPTER_FIGURE_LIST
+    from app.services.image_service.content_kind_retrieval import get_content_kind
+
+    cap = MAX_CHAPTER_FIGURE_LIST if max_n is None else max_n
+    if not chapter_ids or cap <= 0:
+        return []
+    with SessionLocal() as db:
+        uploads = _load_uploads(db, chapter_ids)
+        if not uploads:
+            return []
+        images = _list_images(db, list(uploads.keys()))
+        _attach_upload_refs(images, uploads)
+        rows: list[tuple[int, str, TextbookImage]] = []
+        for im in images:
+            if get_content_kind(im) != "figure":
+                continue
+            disk = image_disk_path(
+                im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None)
+            )
+            if not image_has_visible_content(disk):
+                continue
+            num = _resolved_figure_number(im)
+            rows.append((int(im.page_index), num, im))
+        rows.sort(key=lambda t: (t[0], t[1]))
+        return [_payload_row(im, 100.0) for _, _, im in rows[:cap]]
+
+
 # ---------------------------------------------------------------------------
 # Primary pedagogy ranker
 # ---------------------------------------------------------------------------
@@ -1307,6 +1402,15 @@ def related_images_payload(
         if fb:
             logger.info("[IMAGES] page-proximity fallback (query=%r)", query[:60])
             return fb
+        if intent.requested_visuals:
+            # Explicit show-diagram ask with no ranked hit — still return chapter figures.
+            soft = [
+                _payload_row(im, 25.0)
+                for im in images[: max(1, top_n)]
+            ]
+            if soft:
+                logger.info("[IMAGES] chapter soft fail-open (query=%r n=%d)", query[:60], len(soft))
+            return soft
         return []
 
 

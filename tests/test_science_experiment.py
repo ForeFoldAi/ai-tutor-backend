@@ -59,11 +59,21 @@ def test_should_use_for_science_subject():
     )
 
 
-def test_should_skip_factual_materials_question():
-    assert not should_use_interactive_science_experiment(
+def test_should_use_for_factual_science_teaching():
+    """Factual classify must still enable interactive for real science teaching asks."""
+    assert should_use_interactive_science_experiment(
         subject_name="Science",
         answer_type="factual",
         query="What kind of materials do we need to make a lamp glow?",
+        class_level="CLASS_9",
+    )
+
+
+def test_should_skip_greeting_not_factual():
+    assert not should_use_interactive_science_experiment(
+        subject_name="Science",
+        answer_type="greeting",
+        query="Hello there friend",
         class_level="CLASS_9",
     )
 
@@ -73,7 +83,7 @@ def test_lamp_glow_matches_electricity_catalog():
         "What kind of materials do we need to make a lamp glow?",
         "CLASS_9",
     )
-    assert lesson["experiment"]["experimentType"] == "electricity"
+    assert lesson["experiment"]["experimentType"] == "circuit-builder"
 
 
 def test_finalize_skips_generic_concept_explorer():
@@ -82,6 +92,7 @@ def test_finalize_skips_generic_concept_explorer():
         "What is science?",
         class_level="CLASS_8",
         subject_name="Science",
+        allow_llm_pass2=False,
     )
     assert exp is None
 
@@ -96,24 +107,25 @@ def test_should_skip_for_greeting():
 
 def test_finalize_science_answer_uses_fallback():
     clean, exp = finalize_science_answer(
-        "Plants make food using sunlight.",
+        "Plants make food using sunlight. Photosynthesis needs light, water, and carbon dioxide.",
         "Explain photosynthesis with an experiment",
         class_level="CLASS_7",
         subject_name="Science",
+        allow_llm_pass2=False,
     )
     assert exp is not None
-    assert exp["experiment"]["experimentType"] == "photosynthesis"
+    assert exp["experiment"]["experimentType"] == "plant-anatomy-lab"
     assert exp["experiment"]["threeViews"]["microscopic"]["title"]
 
 
 def test_photosynthesis_catalog_match():
     lesson = build_fallback_science_experiment("Explain photosynthesis in plants", "CLASS_7")
-    assert lesson["experiment"]["experimentType"] == "photosynthesis"
+    assert lesson["experiment"]["experimentType"] == "plant-anatomy-lab"
 
 
 def test_chemical_reaction_catalog_match():
     lesson = build_fallback_science_experiment("Magnesium ribbon burning experiment", "CLASS_9")
-    assert lesson["experiment"]["experimentType"] == "chemical-reaction"
+    assert lesson["experiment"]["experimentType"] == "reaction-simulator"
 
 
 def test_merge_catalog_overrides_weak_llm():
@@ -123,20 +135,20 @@ def test_merge_catalog_overrides_weak_llm():
     }
     catalog = build_fallback_science_experiment("What happens when magnesium burns?", "CLASS_9")
     merged = merge_catalog_experiment(llm, catalog)
-    assert merged["experiment"]["experimentType"] == "chemical-reaction"
+    assert merged["experiment"]["experimentType"] == "reaction-simulator"
 
 
 EXPERIMENT_CASES = [
-    ("photosynthesis", "Explain photosynthesis with molecules entering leaves"),
-    ("respiration", "How does cellular respiration work?"),
-    ("electricity", "Show me a simple electric circuit experiment"),
-    ("acids-bases", "Acids and bases pH indicator lab"),
-    ("chemical-reaction", "Magnesium ribbon burning chemical reaction"),
-    ("water-cycle", "Explain the water cycle experiment"),
-    ("magnetism", "Magnetic field lines around a bar magnet"),
-    ("force-motion", "Newton force and motion experiment"),
-    ("solar-system", "Planets in the solar system orbit"),
-    ("human-organs", "Human body organs and systems"),
+    ("plant-anatomy-lab", "Explain photosynthesis with molecules entering leaves"),
+    ("human-body-system-3d", "How does cellular respiration work?"),
+    ("circuit-builder", "Show me a simple electric circuit experiment"),
+    ("acid-base-indicator-lab", "Acids and bases pH indicator lab"),
+    ("reaction-simulator", "Magnesium ribbon burning chemical reaction"),
+    ("water-cycle-animator", "Explain the water cycle experiment"),
+    ("magnet-field-visualizer", "Magnetic field lines around a bar magnet"),
+    ("force-pressure-lab", "Newton force and motion experiment"),
+    ("solar-system-3d", "Planets in the solar system orbit"),
+    ("human-body-system-3d", "Human body organs and systems"),
 ]
 
 

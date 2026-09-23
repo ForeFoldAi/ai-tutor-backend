@@ -1,0 +1,2464 @@
+{
+  "generated_at": "2026-09-15 12:50:25 +0530",
+  "meta": {
+    "slug": "english_unit1",
+    "subject": "English",
+    "chapter_id": "26",
+    "chapter": "Unit 1 - Wit and Wisdom",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "E1-01",
+        "query": "hey what is this unit Wit and Wisdom even about?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-02",
+        "query": "who is tenali or the witty person in this unit?",
+        "label": "normal",
+        "expect_keywords": [
+          "tenali",
+          "rama",
+          "wit"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-03",
+        "query": "what does wit mean here in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "clever"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-04",
+        "query": "can you tell the main story briefly?",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen",
+          "story"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-05",
+        "query": "why did the king get angry at the queen?",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-06",
+        "query": "how did clever words fix the problem?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "clever"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-07",
+        "query": "is there a poem or tricky writing in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "poem",
+          "king",
+          "wit"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-08",
+        "query": "what should i learn from this unit for life?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "learn"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-09",
+        "query": "quiz me with one easy question on wit",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "question",
+          "quiz",
+          "?"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-10",
+        "query": "show me any picture or figure from this unit if there is one",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "illustration",
+          "shown"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-11",
+        "query": "what is wisdom different from wit?",
+        "label": "normal",
+        "expect_keywords": [
+          "wisdom",
+          "wit"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-12",
+        "query": "can you give one funny moment from the chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "laugh",
+          "funny",
+          "wit",
+          "yawn"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-13",
+        "query": "why is listening important in the story?",
+        "label": "normal",
+        "expect_keywords": [
+          "listen",
+          "king",
+          "queen",
+          "wit"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-14",
+        "query": "explain the misunderstanding in simpler words",
+        "label": "normal",
+        "expect_keywords": [
+          "misunderstand",
+          "king",
+          "queen"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-15",
+        "query": "whats the theeem of wit and wisdum?",
+        "label": "typo",
+        "expect_keywords": [
+          "theme",
+          "wit",
+          "wisdom"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-16",
+        "query": "who was tenali ramakrisna again?",
+        "label": "typo",
+        "expect_keywords": [
+          "tenali",
+          "rama",
+          "wit"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-17",
+        "query": "who invented photosynthesis in Wit and Wisdom?",
+        "label": "wrong",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "chapter",
+          "not"
+        ],
+        "forbidden": [
+          "photosynthesis"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-18",
+        "query": "did this unit teach gravity formulas?",
+        "label": "wrong",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "english",
+          "not"
+        ],
+        "forbidden": [
+          "gravity",
+          "formula"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-19",
+        "query": "i still dont get why the king stopped talking \u2014 explain again",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E1-20",
+        "query": "ok summarize the whole unit in 4 short bullets",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": false,
+    "error": "health: <urlopen error [Errno 61] Connection refused>"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "E1-01",
+        "query": "hey what is this unit Wit and Wisdom even about?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom"
+        ],
+        "answer_clip": "Hi Suneel! This unit is all about **cleverness in different forms**\u2014how wit (quick, funny thinking) and wisdom (deep, thoughtful choices) help people solve problems and connect with others.  Think of it like this: **Wit is like a sharp joke that makes people laugh**, while **wisdom is like a wise old teacher who guides you to make the right choice**. The chapter shows how both can fix big misunderstandings, like the story of Tenali Ramakrishna a\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7027,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-02",
+        "query": "who is tenali or the witty person in this unit?",
+        "label": "normal",
+        "expect_keywords": [
+          "tenali",
+          "rama",
+          "wit"
+        ],
+        "answer_clip": "Tenali Ramakrishna was a legendary poet and advisor in King Krishnadeva Raya\u2019s court, famous for his sharp wit and clever problem-solving. The chapter describes how his quick thinking and humor made him a beloved figure\u2014like when he outsmarted a scholar by mentioning an imaginary work (which turned out to be a bundle of sticks!). His stories show how wit and wisdom work together to turn tough situations into teachable moments.  Tenali\u2019s cleverne\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13472,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-03",
+        "query": "what does wit mean here in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "clever"
+        ],
+        "answer_clip": "Let\u2019s break down **wit** in the simplest way possible\u2014like a fun puzzle!  Imagine you\u2019re playing a game with your friends. Someone says, *\"It\u2019s raining, and I forgot my umbrella!\"* Now, a **witty** person might reply: *\"Don\u2019t worry! Just think of it as nature\u2019s way of giving you a free raincoat!\"*  **Wit** means: 1. **Quick, clever jokes or funny answers** (like the raincoat joke). 2. **Thinking fast** to solve problems in a smart or funny way\u2014e\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11100,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-04",
+        "query": "can you tell the main story briefly?",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen",
+          "story"
+        ],
+        "answer_clip": "The chapter\u2019s main story is about **four clever young men** who travel to Ujjain to become the king\u2019s advisors. They face a tricky challenge: a merchant accuses them of stealing his camel, but they cleverly prove their innocence by observing small details\u2014like the camel\u2019s unusual behavior and the merchant\u2019s suspicious reactions. Their wit and wisdom impress the king, who trusts them instead of the merchant. The story shows how **observation, pat\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11027,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-05",
+        "query": "why did the king get angry at the queen?",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen"
+        ],
+        "answer_clip": "The king became furious because he saw the queen\u2019s yawns as a personal insult to his poetry. The chapter shows that he had recited his poem to her, expecting admiration, but her exhaustion made her yawn\u2014something he misunderstood as disrespect. His pride was deeply wounded, and he left in anger, believing she had intentionally mocked him.  - The queen didn\u2019t mean to offend; she was just tired. - The king\u2019s pride made him react strongly to what h\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9118,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-06",
+        "query": "how did clever words fix the problem?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "clever"
+        ],
+        "answer_clip": "Clever words fix problems by using humor, quick thinking, or thoughtful speech\u2014just as the chapter\u2019s stories demonstrate. The chapter shows how wit (clever humor) and wisdom (wise choices) work together to ease conflicts or reveal truths without anger. For instance, Tenali Rama\u2019s sharp remarks turned a tense situation into a lesson for the king.  - Wit **lightens moods** with humor, making people see things differently. - Wisdom adds **depth**, \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10530,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-07",
+        "query": "is there a poem or tricky writing in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "poem",
+          "king",
+          "wit"
+        ],
+        "answer_clip": "This chapter features the poem *\"A Concrete Example\"*, which uses wit and humor to describe Mrs. Jones\u2019 garden\u2014filled with tiny plants and clever wordplay. The poem\u2019s tone is lighthearted, and its title cleverly plays on the word *concrete* (both as a material and as an example of wisdom).  - The poem\u2019s humor comes from unexpected details, like tiny plants \"planted with a needle.\" - The chapter also includes tricky writing, such as puns and iron\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9951,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-08",
+        "query": "what should i learn from this unit for life?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "learn"
+        ],
+        "answer_clip": "This unit helps you become sharper in life by teaching you the difference between cleverness and true wisdom. Wit is the playful, quick thinking that makes you stand out\u2014like solving a tricky riddle or making someone laugh with your words. Wisdom, though, is deeper: it\u2019s about making thoughtful choices, like listening more than you speak or learning from mistakes instead of repeating them. The chapter shows how both skills help you handle surpri\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12810,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-09",
+        "query": "quiz me with one easy question on wit",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "question",
+          "quiz",
+          "?"
+        ],
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of wit with a simple but clever question! Wit is all about cleverness and humor\u2014just like how a quick joke can turn a boring moment into a fun one.  **Questions** 1. From the chapter, which quality *does not* belong to a person who uses wit? Choose from the list:    - Clever    - Humorous    - Stubborn    - Observant  **How to Answer** Reply with your choice (1, 2, 3, or 4) and I\u2019ll guide you through t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5297,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "E1-10",
+        "query": "show me any picture or figure from this unit if there is one",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "illustration",
+          "shown"
+        ],
+        "answer_clip": "The chapter shows two key figures to bring the story to life. One figure displays **the camel\u2019s tracks** left in the sand, helping you see how the Datt brothers carefully study small details to uncover clues. Another figure likely depicts **the four brothers standing together**, showing their thoughtful discussion as they share their observations.  These visuals make the story\u2019s cleverness and teamwork clearer. Would you like me to explain how t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11862,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.0,
+          "images_score": 2.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.1,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E1-11",
+        "query": "what is wisdom different from wit?",
+        "label": "normal",
+        "expect_keywords": [
+          "wisdom",
+          "wit"
+        ],
+        "answer_clip": "Wisdom and wit are both clever tools, but they work in different ways. Wisdom is the deep, thoughtful ability to make the right choices\u2014like the old man in the chapter who says wisdom comes from patience and learning. It\u2019s about understanding what truly matters, such as valuing family time over wealth or forgiving mistakes. Wit, on the other hand, is the quick, clever, and often funny way someone reacts to life\u2019s moments, like turning a tense si\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13768,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-12",
+        "query": "can you give one funny moment from the chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "laugh",
+          "funny",
+          "wit",
+          "yawn"
+        ],
+        "answer_clip": "The funniest moment in the chapter is when the merchant, overwhelmed by the brothers\u2019 precise descriptions of his lost camel, gasps, *\"How could you possibly know that?\"*\u2014especially after Dev Datt reveals the camel\u2019s stomach pain. Their cool, detailed answers (like the short tail or blind eye) turn the accusation into a playful puzzle, leaving the merchant flustered and the court in stitches.  - The merchant\u2019s escalating confusion (*\"Astonished,\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11468,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 6.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E1-13",
+        "query": "why is listening important in the story?",
+        "label": "normal",
+        "expect_keywords": [
+          "listen",
+          "king",
+          "queen",
+          "wit"
+        ],
+        "answer_clip": "In the story about the old man and the young boy, listening is crucial because wisdom grows when we pay attention rather than just speak. The chapter explains that the old man\u2019s advice\u2014*\"You should listen more than you speak\"*\u2014shows how listening helps us learn and avoid mistakes. Without listening, the boy might have missed the wisdom the old man offered.  - Listening helps us **absorb advice** and grow over time. - It prevents **impatience** a\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10509,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.8,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-14",
+        "query": "explain the misunderstanding in simpler words",
+        "label": "normal",
+        "expect_keywords": [
+          "misunderstand",
+          "king",
+          "queen"
+        ],
+        "answer_clip": "Let\u2019s break this down in the simplest way possible.  The chapter is talking about **two clever ways people think**: 1. **Wit** \u2013 This is when someone says or does something *quick and clever* to make people laugh or think in a funny way. It\u2019s like when your friend tells a joke that makes everyone smile right away. 2. **Wisdom** \u2013 This is when someone thinks *deeply and carefully* to make the *right* choice, even if it\u2019s not the easiest or most o\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11589,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-15",
+        "query": "whats the theeem of wit and wisdum?",
+        "label": "typo",
+        "expect_keywords": [
+          "theme",
+          "wit",
+          "wisdom"
+        ],
+        "answer_clip": "The theme of **Wit and Wisdom** in this chapter is about how cleverness and deep thinking can solve problems, bring joy, and even outsmart challenges\u2014especially when others rely on force or sarcasm. The chapter shows that wit (quick, clever humor) and wisdom (thoughtful, wise choices) work together to turn difficult situations into opportunities. For example, Tenali Rama uses wit to teach the king a lesson about trust and effort, while the poem \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 227843,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-16",
+        "query": "who was tenali ramakrisna again?",
+        "label": "typo",
+        "expect_keywords": [
+          "tenali",
+          "rama",
+          "wit"
+        ],
+        "answer_clip": "Wit and Wisdom 7 orchestrated:  arranged brimmed:  overflowed  That evening, the king approached the queen with a softened  expression. \u201cThirumalambal,\u201d he began, his voice gentle, \u201cI have  been foolish. I see now that I overreacted.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 227964,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E1-17",
+        "query": "who invented photosynthesis in Wit and Wisdom?",
+        "label": "wrong",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "chapter",
+          "not"
+        ],
+        "answer_clip": "The chapter **\"Wit and Wisdom\"** doesn\u2019t cover photosynthesis\u2014it\u2019s about cleverness and insight, like how **Tenali Ramakrishna** used humor and quick thinking to fix problems. The story shows wisdom isn\u2019t just facts but understanding people and finding smart solutions, such as turning a quarrel into peace with humor.  The chapter highlights how wit and wisdom work together\u2014wit is playful cleverness, while wisdom is thoughtful judgment. For insta\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14327,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "forbidden content mentioned: photosynthesis"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-18",
+        "query": "did this unit teach gravity formulas?",
+        "label": "wrong",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "english",
+          "not"
+        ],
+        "answer_clip": "This chapter doesn\u2019t cover gravity formulas at all. Instead, it explores clever thinking and observation\u2014like how characters in the story deduce facts about a camel by carefully watching its tracks or behavior. The focus is on **wit** (quick, clever ideas) and **wisdom** (thoughtful reasoning), not scientific rules.  The chapter shows how paying attention to details (like which leaves were eaten) can reveal hidden truths. It\u2019s all about **seeing\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13054,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 6.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [
+            "forbidden content mentioned: gravity",
+            "forbidden content mentioned: formula"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-19",
+        "query": "i still dont get why the king stopped talking \u2014 explain again",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen"
+        ],
+        "answer_clip": "Let\u2019s break this down step by step, just like the king\u2019s reaction in the story.  The king stopped talking because he felt **deeply hurt and offended** when the queen yawned while he was reciting his poem. Here\u2019s why:  1. **The king was sharing something important** \u2013 He was reciting a poem he wrote, which he likely took pride in. Poets often feel their work is special, like a treasure they want to share.  2. **The queen\u2019s yawns were seen as disr\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14190,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-20",
+        "query": "ok summarize the whole unit in 4 short bullets",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom"
+        ],
+        "answer_clip": "Here\u2019s a clear 4-point summary of **Unit 1 \u2013 Wit and Wisdom** based on the chapter:  1. **Wit vs. Wisdom**: Wit is clever, quick thinking (like jokes or riddles) to charm or solve problems in the moment, while wisdom is thoughtful judgment\u2014choosing the right path even when it\u2019s harder (e.g., the queen\u2019s patience or the king\u2019s later humility).  2. **Conflict and Resolution**: A king misinterprets the queen\u2019s yawn as disrespect after hearing his p\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10098,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "E1-01",
+        "source_query": "hey what is this unit Wit and Wisdom even about?",
+        "query": "hold on, what do you mean by cleverness in different forms?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  **Wit** is like being quick and funny in tricky situations\u2014like telling a joke that makes people laugh or solving a problem in a clever way. For example, if someone is upset, you might say something funny to lighten the mood.  **Wisdom** is deeper\u2014it\u2019s about making thoughtful choices, like knowing when to be patient or understanding why someone might feel hurt. Think of it like a wise teacher who helps you see the bi\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 29,
+            "caption": "three men kneeling in the desert. English textbook figure, Unit 1 - Wit and\u2026",
+            "file": "figures/p28_29.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7594,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-02",
+        "source_query": "who is tenali or the witty person in this unit?",
+        "query": "ok but can you explain King Krishnadeva Raya in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** King Krishnadeva Raya \u2013 A Wise and Powerful King of the Vijayanagara Empire  **In Simple Words** King Krishnadeva Raya was a brilliant ruler who turned the Vijayanagara Empire into a golden age of art, learning, and culture. He was not just a strong warrior but also a poet and a wise leader who surrounded himself with clever and funny advisors like Tenali Ramakrishna. His reign was famous for its beauty, knowledge, and harmony.  ---  *\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14979,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E1-03",
+        "source_query": "what does wit mean here in simple words?",
+        "query": "is wit actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The chapter *Unit 1: Wit and Wisdom* definitely includes wit\u2014it\u2019s the focus! The folktale about the four young men shows wit as clever, quick thinking that solves tricky situations. The poem about Mrs. Jones\u2019 garden also uses wit through playful observations and humor. Even the activity on page 1 asks you to pick qualities like *clever* and *humorous*\u2014both linked to wit.  The textbook explains wit through stories, poems, and exercises. Want to s\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14599,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-04",
+        "source_query": "can you tell the main story briefly?",
+        "query": "quiz me with one easy question just about They",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of the clever young men\u2019s journey in the folktale! You\u2019ve got this\u2014just think back to how their wit and wisdom played a key role.  **Questions** 1. Why did the merchant become suspicious of the four young men when they arrived in Ujjain? What small detail made him doubt them?  **How to Answer** Reply with your answer in one sentence. I\u2019ll guide you through it like we\u2019re discussing it together!  **Encou\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9461,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E1-05",
+        "source_query": "why did the king get angry at the queen?",
+        "query": "show me a figure or example related to king became furious he saw queen\u2019s yawns as a personal insult to",
+        "derived": true,
+        "answer_clip": "The king became furious because he took the queen\u2019s yawns as a deliberate insult to his poetry. The chapter shows he recited his work to her, expecting admiration, but her exhaustion made her yawn\u2014something he misunderstood as disrespect. His pride was deeply wounded, and he left in anger, believing she had mocked him.  - The queen didn\u2019t mean to offend; she was simply tired. - The king\u2019s pride made him react strongly to what he thought was disr\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10816,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-06",
+        "source_query": "how did clever words fix the problem?",
+        "query": "wait why is lightens moods important here?",
+        "derived": true,
+        "answer_clip": "Lightening moods matters because wit acts like a bridge between tension and understanding. When someone is angry\u2014like the king who saw the queen\u2019s yawns as an insult\u2014the chapter shows how clever words can soften the moment. Instead of escalating the conflict, humor or thoughtful speech **calms emotions** and opens space for better communication.  - Wit **reduces anger** by making people laugh or pause. - It **creates connection**, making others \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10452,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-07",
+        "source_query": "is there a poem or tricky writing in this chapter?",
+        "query": "can you give one more real-life example of Concrete Example?",
+        "derived": true,
+        "answer_clip": "Think of a time someone said, *\"I\u2019m the best at this!\"*\u2014but their effort didn\u2019t match their words. For example, if a friend claims to be a \"rock-climbing expert\" but trips over a curb, their confidence feels funny because it doesn\u2019t fit reality. The poem *\"A Concrete Example\"* works the same way: Mrs. Jones sees her garden as magical, but the speaker notices tiny plants and odd details that make it seem ordinary. The humor comes from the mismatc\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12700,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E1-08",
+        "source_query": "what should i learn from this unit for life?",
+        "query": "i still don't get Wisdom \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Wisdom is like a steady light that helps you make the right choices\u2014not just knowing facts, but *using* them wisely. The chapter explains that while knowledge is like a toolbox (you know how to fix things), wisdom is knowing *when* to use each tool. For example, the old man in the story says wisdom comes from listening more than speaking and learning from mistakes\u2014just like how you\u2019d choose patience over anger when solving a tough math problem. \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6617,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-09",
+        "source_query": "quiz me with one easy question on wit",
+        "query": "ok so what should i remember about Quiz Time for a test?",
+        "derived": true,
+        "answer_clip": "For your test, focus on how wit and wisdom work together in questions. Wit is clever, quick thinking\u2014like Dev Datt\u2019s sharp replies\u2014while wisdom is thoughtful, like Mrs. Rao\u2019s lesson about responsibility. The chapter teaches you to use question words (*who, why, when, how, where, what*) to explore stories or ideas logically.  **Key takeaways:** - Always use the right question word for the right question. - Pay attention to word order\u2014correct stru\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12539,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E1-10",
+        "source_query": "show me any picture or figure from this unit if there is one",
+        "query": "that part about These sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "The confusing part you\u2019re asking about is the **listening exercise on page 12**, where you hear a story and fill in blanks with missing words or details. The chapter doesn\u2019t include a figure for this, but the activity tests how well you listen for clues\u2014just like how Tenali Rama carefully observes the camel\u2019s tracks to solve the king\u2019s problem.  The chapter explains that **listening helps you catch clever hints** in stories, much like how wisdom\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 18986,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.0,
+          "images_score": 2.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.1,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E1-11",
+        "source_query": "what is wisdom different from wit?",
+        "query": "hold on, what do you mean by Wisdom?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down even simpler:  **Wisdom** is like a wise old teacher who helps you make the *right* choices in life. It\u2019s not just knowing facts\u2014it\u2019s knowing *how* to use them. For example: - The old man in the story says wisdom comes from patience and listening more than speaking. That\u2019s wisdom because it\u2019s about *good judgment*. - When Mr. Kumar chooses family time over money (from the activity on page 27), that\u2019s wisdom because it\u2019s a tho\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13543,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-12",
+        "source_query": "can you give one funny moment from the chapter?",
+        "query": "ok but can you explain Taken in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** The word **\"taken aback\"** in the chapter means being **suddenly surprised or shocked** in a way that makes you pause or feel confused.  ---  **In Simple Words** Imagine you\u2019re playing a game, and someone suddenly tells you a secret about your favorite character that you didn\u2019t expect. You\u2019d stop for a second, your eyes might widen, and you\u2019d think, *\"Wait, really?\"*\u2014that\u2019s what **\"taken aback\"** feels like. In the chapter, the merchan\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 15246,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 6.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E1-13",
+        "source_query": "why is listening important in the story?",
+        "query": "is You should listen more than you speak actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The chapter *exactly* includes the phrase **\"You should listen more than you speak\"** when the old man advises the boy about gaining wisdom. He says, *\"Wisdom **necessarily** be earned through patience. You **should** listen, more than you speak.\"* This shows how listening helps wisdom develop over time.  - The chapter highlights this as a **core lesson** about patience and learning. - It contrasts speaking with **absorbing advice** for growth. \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12711,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E1-14",
+        "source_query": "explain the misunderstanding in simpler words",
+        "query": "quiz me with one easy question just about Why does the chapter mention this?",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of why the chapter *Wit and Wisdom* is important! This question is simple but key\u2014it\u2019ll help you see the bigger picture.  ---  **Questions** 1. The chapter opens with a dusty road and four young men traveling to Ujjain. Why does the chapter start this way? What does this setting tell us about the *purpose* of the story?  --- **How to Answer** Reply with your answer in **one or two sentences**. Think ab\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6592,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E1-15",
+        "source_query": "whats the theeem of wit and wisdum?",
+        "query": "show me a figure or example related to Rama",
+        "derived": true,
+        "answer_clip": "Poorvi 4 reciting it to his ministers, they all avoided him, making excuses. It was late evening when he came to me, seeking an audience. He  began reciting it to me, but I was so exhausted after a tiring day  that I yawned\u2014 not once, but several times.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 106289,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 5.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.2,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E1-16",
+        "source_query": "who was tenali ramakrisna again?",
+        "query": "wait why is 7 important here?",
+        "derived": true,
+        "answer_clip": "In the chapter, the number **7** isn\u2019t just a number\u2014it\u2019s part of a clever moment where Tenali Rama outsmarts the king. The king had already counted the steps in the palace courtyard as **7**, but Tenali Rama replied, *\u201cYour Highness, you\u2019ve already counted them\u2014it\u2019s 7,\u201d* using wit to gently point out the king\u2019s mistake without being rude. This small detail shows how cleverness can turn a simple observation into a lesson about patience and insig\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 48054,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E1-17",
+        "source_query": "who invented photosynthesis in Wit and Wisdom?",
+        "query": "can you give one more real-life example of \"Wit and Wisdom\"?",
+        "derived": true,
+        "answer_clip": "Wit and wisdom work together like a well-timed joke that also makes sense. For example, if a classmate is frustrated because their project is messy, instead of laughing at them, you could say, *\"Hey, let\u2019s turn this into a fun challenge\u2014who can find the most creative way to fix it?\"* Here, wit is the playful twist, while wisdom is choosing to help instead of mocking.  The chapter\u2019s story shows wisdom isn\u2019t just about being smart\u2014it\u2019s about using\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 39654,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E1-18",
+        "source_query": "did this unit teach gravity formulas?",
+        "query": "i still don't get wisdom \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Wisdom is the ability to use knowledge wisely\u2014like choosing the right path even when it\u2019s hard. The chapter shows wisdom as **deep understanding**, not just facts. For example, the old man\u2019s advice to listen more than speak isn\u2019t about words; it\u2019s about patience and learning.  - Wisdom helps us make **good choices** in tough situations. - It grows slowly, like a tree, through experience and mistakes.  Imagine you\u2019re stuck between two answers in \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11603,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.8,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-19",
+        "source_query": "i still dont get why the king stopped talking \u2014 explain again",
+        "query": "ok so what should i remember about The queen\u2019s yawns were seen as disrespect for a test?",
+        "derived": true,
+        "answer_clip": "The queen\u2019s yawns upset the king because he saw them as a **deliberate insult** to his poem, which he had recited with pride. The chapter explains that his deep attachment to his work made him feel deeply hurt when she yawned\u2014he assumed she was showing disdain. This misunderstanding led to their quarrel.  Key points: - His **pride** made him take her yawns personally. - The queen didn\u2019t realize her yawns could cause offense.  This shows how **em\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 6,
+            "caption": "so personally,\u201d he thought, regret filling his heart",
+            "file": "figures/p5_8.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13088,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-20",
+        "source_query": "ok summarize the whole unit in 4 short bullets",
+        "query": "that part about Wit vs. Wisdom sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "The chapter teaches that **wit and wisdom are both clever, but they serve different purposes**. Wit is cleverness used for quick, playful solutions\u2014like jokes or clever tricks (such as Tenali Rama\u2019s plan to resolve the king\u2019s anger). Wisdom, on the other hand, is deeper thoughtfulness that helps make the right choices, even when they\u2019re difficult (like the queen\u2019s patience or the king\u2019s later apology).  - Wit is like a clever word or trick to so\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11938,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "E1-01",
+        "query": "hey what is this unit Wit and Wisdom even about?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom"
+        ],
+        "answer_clip": "Oh, this unit is all about cleverness and deep thinking!  It shows how wit\u2014quick, funny cleverness\u2014and wisdom\u2014wise, thoughtful choices\u2014work together. You\u2019ll see stories of kings, poets, and clever solutions. Ready to explore?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5991,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-02",
+        "query": "who is tenali or the witty person in this unit?",
+        "label": "normal",
+        "expect_keywords": [
+          "tenali",
+          "rama",
+          "wit"
+        ],
+        "answer_clip": "Ah, Tenali Ramakrishna\u2014that\u2019s the witty poet from the chapter!  He was one of the *Ashtadiggajas*, the eight clever poets in King Krishnadeva Raya\u2019s court. The king trusted him so much because Tenali could solve tricky problems with quick, funny ideas. Even when the king was upset with his queen, Tenali helped fix things with his cleverness.  His name became famous for his wit\u2014like solving problems with humor and smart thinking. That\u2019s why he\u2019s \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7257,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-03",
+        "query": "what does wit mean here in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "clever"
+        ],
+        "answer_clip": "Got it! So, **wit** here means being quick and clever with words.  It\u2019s like when someone makes you laugh with a smart joke or turns a boring moment into something fun. The chapter says witty people make serious things funny\u2014 like Speaker (i) who loves characters who think fast and solve problems with humor.  Think of it as the ability to say the right thing at the right time to charm or surprise people. That\u2019s wit!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6129,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-04",
+        "query": "can you tell the main story briefly?",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen",
+          "story"
+        ],
+        "answer_clip": "This chapter\u2019s main story is about four clever young men. They travel to Ujjain, face a merchant\u2019s false accusation. Their sharp wit and wisdom help them solve a problem. The king trusts them for their cleverness.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5655,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-05",
+        "query": "why did the king get angry at the queen?",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen"
+        ],
+        "answer_clip": "Oh, I see why you\u2019re confused\u2014let\u2019s untangle this.  The king got angry because he thought the queen\u2019s yawns were a *personal insult* to his poem. He saw it as disrespect, not just tiredness. His pride got hurt\u2014he took it *very* seriously.  The queen later says she\u2019d have picked a better day if she\u2019d known. That shows she *didn\u2019t mean* to offend him\u2014it was just exhaustion. The king\u2019s reaction wasn\u2019t about the yawns alone; it was about his *love f\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7275,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-06",
+        "query": "how did clever words fix the problem?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "clever"
+        ],
+        "answer_clip": "Ah, you\u2019re thinking of the story with Tenali Rama!  When the king got furious over the queen\u2019s yawns, Rama didn\u2019t argue or fight back. Instead, he *planted* those \"special\" paddy seeds. The king, excited to test them, had to *wait*\u2014and that gave Rama time to explain. Clever words turned anger into curiosity. The king forgot his insult, and the problem vanished with laughter.  Wit\u2014quick, funny cleverness\u2014fixed it here. No fighting, just smart tal\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7227,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-07",
+        "query": "is there a poem or tricky writing in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "poem",
+          "king",
+          "wit"
+        ],
+        "answer_clip": "Oh, I see why this might sound confusing at first!  This chapter *does* have a poem\u2014it\u2019s about Mrs. Jones and her unusual garden. The poem is playful and funny, with rhymes and clever word choices. It\u2019s not super tricky, but it\u2019s there to make you think about wit and humor in writing.  The rest of the chapter has short stories and riddles too\u2014like the math problems with riddles on the board. They\u2019re not poems, but they\u2019re still full of clever th\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6103,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-08",
+        "query": "what should i learn from this unit for life?",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "learn"
+        ],
+        "answer_clip": "This unit teaches two big life lessons\u2014both simple but powerful.  First, **wit** isn\u2019t just jokes or quick answers. It\u2019s about being clever *and* kind\u2014like making people laugh *or* see things differently without hurting them. The chapter shows wit as a tool to connect, not just to impress.  Second, **wisdom** isn\u2019t just knowing facts\u2014it\u2019s using them *well*. The old man in the story says wisdom comes from listening more than talking. That\u2019s a big\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6633,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-09",
+        "query": "quiz me with one easy question on wit",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "question",
+          "quiz",
+          "?"
+        ],
+        "answer_clip": "Got it! Here\u2019s your easy wit question:  *\"What quality does the chapter say makes a person \u2018charming\u2019 when they use wit?\"*  Think of it like this: if someone makes you laugh with a clever joke, they\u2019re using wit. Which word from the list\u2014*clever, humorous, or charming*\u2014fits best?  (You\u2019ll find the answer in the first activity on page 1.)",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 39922,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-10",
+        "query": "show me any picture or figure from this unit if there is one",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "illustration",
+          "shown"
+        ],
+        "answer_clip": "This unit doesn\u2019t have any pictures or figures in the text you see here. But there\u2019s a fun part on page 30\u2014it\u2019s a little scene with four men studying camel tracks. It\u2019s like a puzzle for them to solve together.  The chapter mostly has words and activities\u2014like riddles and matching games. If you want to see something visual, check the textbook\u2019s front or back cover. Sometimes they include small sketches there.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7786,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 4.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 5.3,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-11",
+        "query": "what is wisdom different from wit?",
+        "label": "normal",
+        "expect_keywords": [
+          "wisdom",
+          "wit"
+        ],
+        "answer_clip": "Wit is like a quick joke or clever comeback\u2014 it\u2019s all about being funny or sharp in the moment. Like the speakers talking about witty characters\u2014they\u2019re fast, funny, and solve problems on the spot.  Wisdom, though? That\u2019s deeper. It\u2019s not just knowing things\u2014 it\u2019s *using* that knowledge to make the right choices. Like the old man in the story who says wisdom comes from patience and listening more than speaking.  One example from the chapter: Riy\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7189,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-12",
+        "query": "can you give one funny moment from the chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "laugh",
+          "funny",
+          "wit",
+          "yawn"
+        ],
+        "answer_clip": "Oh, this one\u2019s a classic! Picture this\u2014 the merchant\u2019s *panicking* about his lost camel. He asks the four brothers if they\u2019ve seen it. Then\u2014*boom*\u2014they start asking *super* specific questions: \"Is it lame? Blind in the right eye? Short tail?\" The merchant\u2019s jaw drops\u2014*how do they know?* Turns out, they *weren\u2019t* thieves\u2014they were just *testing* him! The whole scene\u2019s a mix of confusion and laughter. Funny, right? The merchant\u2019s *stunned* by thei\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7166,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-13",
+        "query": "why is listening important in the story?",
+        "label": "normal",
+        "expect_keywords": [
+          "listen",
+          "king",
+          "queen",
+          "wit"
+        ],
+        "answer_clip": "Ah, great question!  In this chapter, listening is key because the story *depends* on it. You see the exercises\u2014like filling in blanks while listening to a woman\u2019s tale\u2014show how *hearing* the right words helps you understand the lesson.  Even in the quiz story, the narrator *misses* answers because she didn\u2019t listen enough. Listening helps you catch details, learn from others, and avoid mistakes\u2014just like the girl in the essay.  So, when you lis\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7403,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.3,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E1-14",
+        "query": "explain the misunderstanding in simpler words",
+        "label": "normal",
+        "expect_keywords": [
+          "misunderstand",
+          "king",
+          "queen"
+        ],
+        "answer_clip": "Oh, I see why this might feel confusing! Let me break it down simply.  The question is about the line: *\"See beyond the obvious.\"* This means looking at things that others might miss.  Option A says: *\"challenge common beliefs with reasoning\"* \u2014 that\u2019s not quite right. Option B says: *\"interpret information in traditional ways\"* \u2014 no, that\u2019s the opposite. Option C says: *\"notice details that others might overlook\"* \u2014 **that\u2019s it!** Option D says\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7292,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E1-15",
+        "query": "whats the theeem of wit and wisdum?",
+        "label": "typo",
+        "expect_keywords": [
+          "theme",
+          "wit",
+          "wisdom"
+        ],
+        "answer_clip": "Oh, great question!  The theme of this chapter is all about **cleverness in two forms**\u2014wit *and* wisdom. Wit is quick, funny cleverness\u2014like jokes or sharp replies. Wisdom is deeper, thoughtful choices\u2014like learning patience or seeing beyond the obvious.  The chapter shows how both matter. For example, Tenali Rama\u2019s clever tricks (wit) solve problems, but the real lesson? Thinking carefully first (wisdom). So it\u2019s not just being funny\u2014it\u2019s usin\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8586,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-16",
+        "query": "who was tenali ramakrisna again?",
+        "label": "typo",
+        "expect_keywords": [
+          "tenali",
+          "rama",
+          "wit"
+        ],
+        "answer_clip": "Ah, Tenali Ramakrishna\u2014he was one of the *Ashtadiggajas*, the eight famous poets in King Krishnadeva Raya\u2019s court.  He stood out for his *quick wit* and humor. The king loved his clever ideas so much that Ramakrishna became a trusted advisor. His smart solutions to tricky problems made him a beloved figure.  This chapter shows how his humor and cleverness helped fix even big problems\u2014like the king and queen\u2019s quarrel. He didn\u2019t just joke around;\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5922,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-17",
+        "query": "who invented photosynthesis in Wit and Wisdom?",
+        "label": "wrong",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "chapter",
+          "not"
+        ],
+        "answer_clip": "This chapter doesn\u2019t mention who *invented* photosynthesis at all. It\u2019s all about cleverness\u2014wit and wisdom\u2014like King Krishnadeva Raya\u2019s court. The story focuses on Tenali Ramakrishna\u2019s quick thinking to fix the king\u2019s quarrel.  Photosynthesis isn\u2019t even in this unit. You\u2019ll learn about it later\u2014maybe in Unit 3. Right now, we\u2019re talking about wit (like jokes or clever fixes) and wisdom (deep, thoughtful choices). Want to hear how Ramakrishna sol\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6811,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.0,
+          "bugs": [
+            "forbidden content mentioned: photosynthesis"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E1-18",
+        "query": "did this unit teach gravity formulas?",
+        "label": "wrong",
+        "expect_keywords": [
+          "wit",
+          "wisdom",
+          "english",
+          "not"
+        ],
+        "answer_clip": "No, this unit isn\u2019t about gravity formulas at all. It\u2019s all about cleverness\u2014wit and wisdom. You\u2019ll see riddles, funny stories, and how quick thinking helps people solve problems.  The chapter talks about wit\u2014like jokes or smart comebacks\u2014 and wisdom\u2014deep, thoughtful choices. No math, no physics here. Just clever words and ideas.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6552,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 6.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.3,
+          "bugs": [
+            "forbidden content mentioned: gravity",
+            "forbidden content mentioned: formula"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-19",
+        "query": "i still dont get why the king stopped talking \u2014 explain again",
+        "label": "normal",
+        "expect_keywords": [
+          "king",
+          "queen"
+        ],
+        "answer_clip": "Oh, I see why this is confusing\u2014let\u2019s break it down simply.  The king stopped talking because he thought the queen was *disrespecting* his poem. She yawned a few times while he was reciting it, and he took it as a big insult. Kings back then were very proud of their poetry\u2014it was like their reputation on paper. So when she yawned, he felt like she was mocking him, not realizing she was just tired. That\u2019s why he stormed off and hasn\u2019t spoken to h\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6045,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E1-20",
+        "query": "ok summarize the whole unit in 4 short bullets",
+        "label": "normal",
+        "expect_keywords": [
+          "wit",
+          "wisdom"
+        ],
+        "answer_clip": "Here\u2019s the quick summary for you:  1. **Wit vs. Wisdom** \u2013 Wit is quick, clever humor or smart talk. 2. **Queen\u2019s Yawn** \u2013 A small mistake caused a big quarrel, showing how pride can blind us. 3. **Tenali Rama\u2019s Plan** \u2013 Used wit and wisdom to fix the king\u2019s anger with a clever trick. 4. **Lesson Learned** \u2013 Both wit and wisdom help solve problems, but wisdom comes from patience and thought.  Want me to explain any of these points more?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9988,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "E1-01",
+        "source_query": "hey what is this unit Wit and Wisdom even about?",
+        "query": "hold on, what do you mean by Oh, unit is all cleverness deep thinking!?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  **Wit** is like being quick and funny in a smart way\u2014think of someone making you laugh with clever words or solving a tricky problem with humor. For example, if someone says, *\"Why did the chicken cross the road?\"* and you answer, *\"To prove it wasn\u2019t chicken soup!\"*\u2014that\u2019s wit!  **Wisdom**, on the other hand, is about making thoughtful, long-term choices. It\u2019s like knowing when to speak up or when to stay quiet to a\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 29,
+            "caption": "three men kneeling in the desert. English textbook figure, Unit 1 - Wit and\u2026",
+            "file": "figures/p28_29.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9524,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-02",
+        "source_query": "who is tenali or the witty person in this unit?",
+        "query": "ok but can you explain Tenali Ramakrishna in simpler words?",
+        "derived": true,
+        "answer_clip": "Tenali Ramakrishna was a *super clever* poet in King Krishnadeva Raya\u2019s court. He was known for his quick, funny answers\u2014like solving big problems with wit. The king trusted him so much that he became a key advisor!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5393,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E1-03",
+        "source_query": "what does wit mean here in simple words?",
+        "query": "is Speaker actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, I see why this is confusing! The chapter doesn\u2019t actually mention a person named \"Speaker\" at all.  The text you\u2019re looking at is about two friends\u2014Ravi and Arun\u2014and a scene with performers. The chapter focuses on **wit and wisdom** through their conversations and observations, not a character called Speaker.  If you\u2019re thinking of a \"Speaker\" from another story or example, this chapter doesn\u2019t include that. It\u2019s all about cleverness in dial\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7513,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-04",
+        "source_query": "can you tell the main story briefly?",
+        "query": "quiz me with one easy question just about Ujjain",
+        "derived": true,
+        "answer_clip": "Here\u2019s your easy Ujjain quiz question: *\"Why did the merchant get suspicious of the four young men?\"*  Think: what did he notice that made him think they might be thieves? Hint: it\u2019s about their *camel* and how they looked at it.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5387,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E1-05",
+        "source_query": "why did the king get angry at the queen?",
+        "query": "show me a figure or example related to Rama",
+        "derived": true,
+        "answer_clip": "Ah, you\u2019re thinking of the *queen\u2019s yawns* story\u2014where Rama helps fix the king\u2019s anger.  This chapter doesn\u2019t show Rama directly with King Rama (the legendary king). Instead, it\u2019s about a *wise courtier* named Tenali Rama. He\u2019s the clever one who solves problems with wit and wisdom\u2014like the paddy seeds story or the queen\u2019s yawns.  Want me to show you *how* he fixes the queen\u2019s problem next? Or would you like to see the paddy seeds example first?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8672,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-06",
+        "source_query": "how did clever words fix the problem?",
+        "query": "wait why is special important here?",
+        "derived": true,
+        "answer_clip": "Ah, the *special* paddy seeds!  Rama didn\u2019t just say \"I\u2019ll fix this\"\u2014he *planned*. Those seeds needed time to grow, just like his clever idea. The king\u2019s anger would fade while he waited. Without those seeds, the king would\u2019ve stayed furious. The \"special\" part shows Rama\u2019s *wit*\u2014he turned a problem into a game of patience. Clever words needed a clever setup!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6210,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-07",
+        "source_query": "is there a poem or tricky writing in this chapter?",
+        "query": "can you give one more real-life example of Jones?",
+        "derived": true,
+        "answer_clip": "Oh, got it! You\u2019re asking for a real-life example of *Mrs. Jones*\u2014the neighbor from the poem.  Here\u2019s one: Imagine your friend has a garden full of tiny plants, a pond, and rocks\u2014just like Mrs. Jones. But instead of tiny plants, they grow *tiny flowers* between the stones. You\u2019d think, *\"How did they even plant those?\"*\u2014just like the poem\u2019s surprise twist!  The poem\u2019s humor comes from how ordinary things (like a garden) become *extraordinary* in\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7695,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-08",
+        "source_query": "what should i learn from this unit for life?",
+        "query": "i still don't get First \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Ah, I see what you\u2019re asking about\u2014let\u2019s break it down slowly.  The word **\"First\"** here isn\u2019t a name or a title. It\u2019s part of the story\u2019s *order*\u2014like the first thing that happens in the chapter.  In the dialogue, the brothers are walking toward Ujjain. **Ram Datt says first:** *\"If only we could secure an audience with the King of Ujjain.\"* That\u2019s their *first* big hope. Then they talk about how hard it\u2019ll be to get that meeting.  So **\"First\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6366,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E1-09",
+        "source_query": "quiz me with one easy question on wit",
+        "query": "ok so what should i remember about Think for a test?",
+        "derived": true,
+        "answer_clip": "For your test, remember this key idea from the chapter:  The story shows that **wisdom isn\u2019t just about knowing things\u2014it\u2019s about being responsible**. The narrator forgot to revise, got stressed, and learned the hard way.  The teacher\u2019s lesson? **Small, regular efforts matter more than last-minute cramming**. That\u2019s wisdom in action.  For the quiz, focus on: - The *lesson* the narrator took away. - How *responsibility* connects to wisdom.  (That\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8086,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-10",
+        "source_query": "show me any picture or figure from this unit if there is one",
+        "query": "that part about 30 sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I see what you mean! That page 30 part isn\u2019t a big story\u2014it\u2019s actually a small activity. You\u2019re looking at the *camel tracks* puzzle from the \"Let us learn\" section.  It\u2019s not a full story with pictures\u2014just a blank space where you\u2019d draw or imagine camel tracks. The idea is simple: four men are studying tracks to guess which way the camel went. It\u2019s like a riddle about clues\u2014just like the wit and wisdom we\u2019ve been talking about!  The chapte\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6391,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 4.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 5.3,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-11",
+        "source_query": "what is wisdom different from wit?",
+        "query": "hold on, what do you mean by Riya?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  **Wit** is like a **quick joke or clever trick**\u2014 it\u2019s what makes someone funny or smart *right now*. Example: A character in a story says something funny to lighten a tense moment.  **Wisdom**, though, is about **making the right choices** over time. Example: The old man in the story (on page 42) says wisdom comes from *listening more than talking* and *learning from mistakes*. That\u2019s not a joke\u2014it\u2019s a deep lesson. \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8149,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-12",
+        "source_query": "can you give one funny moment from the chapter?",
+        "query": "ok but can you explain Short in simpler words?",
+        "derived": true,
+        "answer_clip": "Oh, \"short\" here just means *brief*\u2014like the camel\u2019s tail. The brothers asked *quick* questions about the camel\u2019s details. The merchant was *shocked*\u2014they knew things he didn\u2019t! So \"short\" means *not long*\u2014just the camel\u2019s tail was *short*. Got it?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5655,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E1-13",
+        "source_query": "why is listening important in the story?",
+        "query": "is Even actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "No, \"Even\" isn\u2019t mentioned in this chapter at all. The chapter focuses on words like *Ravi*, *Arun*, *King*, and the four young men. It\u2019s all about wit and wisdom\u2014like the story of the camel and the merchant.  If you\u2019re thinking of a different \"Even,\" this chapter doesn\u2019t cover it. Want to talk about the *four young men* or the *camel story* instead?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6675,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-14",
+        "source_query": "explain the misunderstanding in simpler words",
+        "query": "quiz me with one easy question just about see beyond the obvious",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy quiz question:  *\"The four young men noticed the camel\u2019s short tail and limp\u2014* *what does this show about their ability?\"*  **Answer:** They could **notice details others missed**\u2014just like *\"see beyond the obvious.\"*  (It\u2019s option C from the quiz you saw earlier!)",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5120,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E1-15",
+        "source_query": "whats the theeem of wit and wisdum?",
+        "query": "show me a figure or example related to Tenali Rama",
+        "derived": true,
+        "answer_clip": "Ah, Tenali Rama\u2019s cleverness is shown in the chapter when the king and queen quarrel. The queen asks him to help because he\u2019s known for **quick wit and humor**\u2014like solving tricky problems with clever ideas.  The chapter doesn\u2019t show a *figure* (like a drawing), but it does describe his **strategy**: He listens carefully, plans thoughtfully, and uses humor to make the king see his mistake. For example, he turns the king\u2019s vague poem into a funny\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "a cartoon of a man in a throne surrounded by a group of men\u2026",
+            "file": "figures/p2_4.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9954,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-16",
+        "source_query": "who was tenali ramakrisna again?",
+        "query": "wait why is Ramakrishna important here?",
+        "derived": true,
+        "answer_clip": "Ramakrishna is important here because he\u2019s the *clever problem-solver* the queen trusts.  The king and queen were fighting, and no one could fix it\u2014until she said only Ramakrishna could help. His *wit* and *wisdom* made him special. He didn\u2019t just joke; he *planned* a way to show the king his mistake without angering him.  This chapter shows how his smart ideas brought peace back to the palace. He used cleverness to fix big problems\u2014just like th\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "a cartoon of a man in a throne surrounded by a group of men\u2026",
+            "file": "figures/p2_4.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7415,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-17",
+        "source_query": "who invented photosynthesis in Wit and Wisdom?",
+        "query": "can you give one more real-life example of Photosynthesis?",
+        "derived": true,
+        "answer_clip": "This chapter isn\u2019t about photosynthesis at all. It\u2019s all about cleverness\u2014like how plants make food from sunlight. But here, we\u2019re talking about wit and wisdom in stories.  Want to hear how plants use sunlight instead? That\u2019s science class, not this chapter. This unit\u2019s about clever people solving problems\u2014like Tenali Ramakrishna. Want to hear how he fixed the king\u2019s quarrel? It\u2019s a fun story!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6093,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [
+            "forbidden content mentioned: photosynthesis"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "source_id": "E1-18",
+        "source_query": "did this unit teach gravity formulas?",
+        "query": "i still don't get No, unit isn\u2019t gravity formulas at all \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Oh, I see why this might feel confusing! This unit isn\u2019t about math or gravity at all. It\u2019s about clever *words* and smart thinking\u2014like jokes, riddles, and deep ideas.  Look at this example from the chapter: A neighbour has a garden with stones, a pond, and a sundial. The sundial isn\u2019t just a clock\u2014it\u2019s a *clever* way to tell time. That\u2019s wit! Using something in a smart, unexpected way.  And wisdom? That\u2019s like the riddles you\u2019ll solve. They ma\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7034,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 6.0,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.3,
+          "bugs": [
+            "forbidden content mentioned: gravity",
+            "forbidden content mentioned: formula"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E1-19",
+        "source_query": "i still dont get why the king stopped talking \u2014 explain again",
+        "query": "ok so what should i remember about Kings for a test?",
+        "derived": true,
+        "answer_clip": "For your test, remember **three key things** about the king here.  First, he\u2019s **impressed by the four young men\u2019s wisdom**. He picks them as advisers *because* they showed cleverness\u2014like noticing the camel\u2019s blind spot. That\u2019s why he says, *\u201cLet it be known\u2026 four new advisers stand by my side.\u201d*  Second, he **values deep thinking over quick talk**. The merchant accused the men of stealing, but the king trusted them. That\u2019s because the men *obs\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8805,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E1-20",
+        "source_query": "ok summarize the whole unit in 4 short bullets",
+        "query": "that part about Lesson Learned sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I see why that part felt confusing! Let me make it clearer.  The \"Lesson Learned\" part isn't about a new story\u2014it's actually the *essay you just read* called \"A Lesson in Responsibility.\" The narrator learns that wisdom comes from being *consistently prepared*, not just being smart once. They forgot to revise, got stressed, and then their teacher taught them: small daily efforts matter more than last-minute cramming.  The \"wisdom\" here isn\u2019t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8327,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ]
+  },
+  "tutor_avg": 8.11,
+  "voice_avg": 7.97
+}

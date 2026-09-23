@@ -140,20 +140,32 @@ def get_visualization_catalog_hint(
     vtype = viz.get("visualizationType") or "concept-explorer"
     sliders = viz.get("sliders") or []
     slider_ids = ", ".join(s.get("id", "") for s in sliders if s.get("id")) or "see catalog"
+    objs = viz.get("interactiveObjects") or []
+    locked = str((objs[0] or {}).get("type") or "") if objs else ""
+    lock_line = f"- locked shape (do not draw any other polygon): {locked}\n" if locked and locked != "picker" else ""
     return (
-        "CATALOG VISUALIZATION (mandatory — copy visualizationType and slider ids exactly):\n"
-        f"- visualizationType: {vtype}\n"
+        "CATALOG VISUALIZATION (candidate — use only if it matches the concept YOU teach):\n"
+        f"- suggested visualizationType: {vtype}\n"
+        f"{lock_line}"
         f"- title: {viz.get('title', 'Interactive Explorer')}\n"
         f"- slider ids: {slider_ids}\n"
+        f"- If your answer is a different concept, pick a better type; copy numbers from YOUR solution.\n"
         f"- catalog reference: {json.dumps(viz, ensure_ascii=False)[:400]}"
     )
+
+
+def _locked_shape_type(viz: dict[str, Any]) -> str:
+    objs = viz.get("interactiveObjects") or []
+    if not objs or not isinstance(objs[0], dict):
+        return ""
+    return str(objs[0].get("type") or "").lower()
 
 
 def merge_catalog_visualization(
     lesson: dict[str, Any] | None,
     catalog: dict[str, Any] | None,
 ) -> dict[str, Any] | None:
-    """Ensure the lesson uses the best catalog visualization for the query topic."""
+    """Merge catalog into weak LLM lessons only — never overwrite a specific LLM type."""
     if catalog is None:
         return lesson
     if lesson is None:
@@ -166,21 +178,24 @@ def merge_catalog_visualization(
 
     llm_viz = lesson.get("visualization") or {}
     llm_type = str(llm_viz.get("visualizationType") or "")
-    # Always prefer catalog when it has a specific visualization for this topic.
+    llm_sliders = llm_viz.get("sliders") or []
+    # Only replace when LLM type is weak/empty or missing controls — not merely different.
     use_catalog = (
         llm_type in _WEAK_LLM_VIZ_TYPES
-        or llm_type != cat_type
-        or not llm_viz.get("sliders")
-        or not llm_viz.get("buttons")
-        or not str(llm_viz.get("title") or "").strip()
+        or not llm_sliders
+        or (
+            cat_type == "shape-lab"
+            and _locked_shape_type(cat_viz)
+            and _locked_shape_type(cat_viz) != _locked_shape_type(llm_viz)
+        )
     )
     if not use_catalog:
         return lesson
 
     merged = dict(lesson)
     merged["visualization"] = cat_viz
-    for key in ("conceptName", "learningObjective", "conceptExplanation", "classLevel"):
-        if catalog.get(key) and (not lesson.get(key) or llm_type in _WEAK_LLM_VIZ_TYPES):
+    for key in ("conceptName", "learningObjective", "conceptExplanation", "classLevel", "guidedExploration"):
+        if catalog.get(key) and (not lesson.get(key) or llm_type in _WEAK_LLM_VIZ_TYPES or cat_type == "shape-lab"):
             merged[key] = catalog[key]
     return merged
 

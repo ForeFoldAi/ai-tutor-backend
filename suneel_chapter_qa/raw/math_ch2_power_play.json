@@ -1,0 +1,2572 @@
+{
+  "generated_at": "2026-09-11 20:07:33 +0530",
+  "meta": {
+    "slug": "math_ch2_power_play",
+    "subject": "Mathematics",
+    "chapter_id": "39",
+    "chapter": "Chapter-2 : POWER PLAY",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "M2-01",
+        "query": "what does power play mean? is it about exponents?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "exponent"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-02",
+        "query": "ok explain 2 to the power 5 slowly",
+        "label": "interactive",
+        "expect_keywords": [
+          "32",
+          "power",
+          "2"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-03",
+        "query": "what is a base and an exponent?",
+        "label": "normal",
+        "expect_keywords": [
+          "base",
+          "exponent",
+          "power"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-04",
+        "query": "why do we use powers instead of long multiplications?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "multiply"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-05",
+        "query": "what is 10 to the power 3?",
+        "label": "normal",
+        "expect_keywords": [
+          "1000",
+          "10",
+          "power"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-06",
+        "query": "any laws of exponents in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "exponent",
+          "law",
+          "power"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-07",
+        "query": "show a diagram or table about powers if the book has one",
+        "label": "diagram",
+        "expect_keywords": [
+          "power",
+          "figure",
+          "table"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-08",
+        "query": "quiz me on powers with one easy question",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "?"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-09",
+        "query": "what happens when exponent is 0?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "zero",
+          "1",
+          "exponent"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-10",
+        "query": "how do i multiply same bases with powers?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "multiply",
+          "add"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-11",
+        "query": "explain 3^4 with expanded form",
+        "label": "interactive",
+        "expect_keywords": [
+          "81",
+          "3",
+          "power"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-12",
+        "query": "is 2^3 same as 3^2?",
+        "label": "normal",
+        "expect_keywords": [
+          "8",
+          "9",
+          "not",
+          "power"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-13",
+        "query": "real life use of powers?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "life",
+          "example"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-14",
+        "query": "big numbers with powers of 10?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "10"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-15",
+        "query": "give two practice problems from this idea",
+        "label": "normal",
+        "expect_keywords": [
+          "power"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-16",
+        "query": "what is 5 too the powr of 3?",
+        "label": "typo",
+        "expect_keywords": [
+          "125",
+          "5",
+          "power"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-17",
+        "query": "is power play about electricity in social studies?",
+        "label": "wrong",
+        "expect_keywords": [
+          "power",
+          "exponent",
+          "math",
+          "not"
+        ],
+        "forbidden": [
+          "electricity"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "M2-18",
+        "query": "who were the mughals in power play math chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "power",
+          "math",
+          "not"
+        ],
+        "forbidden": [
+          "mughal"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "M2-19",
+        "query": "i keep forgetting \u2014 say again what exponent means",
+        "label": "normal",
+        "expect_keywords": [
+          "exponent",
+          "power"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      },
+      {
+        "id": "M2-20",
+        "query": "explain 2^4 agian slowly pls",
+        "label": "typo",
+        "expect_keywords": [
+          "16",
+          "power",
+          "2"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": true,
+        "want_science": false
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": true,
+    "health": {
+      "status": "ok",
+      "voice": "ws-pcm",
+      "instanceId": "Maniths-MacBook-Air.local:50443",
+      "draining": false,
+      "liveSessions": 0,
+      "redis": "down"
+    },
+    "session_id": "0ff599f2-8867-41c4-9bd8-5f14bcd6f0a7",
+    "query_ok": true,
+    "note": "REST ok only; scored via voice_mode stream"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "M2-01",
+        "query": "what does power play mean? is it about exponents?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "exponent"
+        ],
+        "answer_clip": "**\"Power Play\" in this chapter is all about *exponential growth*\u2014how something increases *very quickly* when it doubles (or triples) repeatedly. Imagine folding a piece of paper: after just 10 folds, it\u2019s already over a foot thick! That\u2019s because each fold *multiplies* the thickness by 2. The chapter shows how tiny changes (like folding once more) can lead to *huge* results\u2014like a paper reaching the Moon after 46 folds. This is called \"power pla\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "An Impossible Venture!",
+            "file": "figures/p0_0.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 47345,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-02",
+        "query": "ok explain 2 to the power 5 slowly",
+        "label": "interactive",
+        "expect_keywords": [
+          "32",
+          "power",
+          "2"
+        ],
+        "answer_clip": "Hello Suneel! Let\u2019s break down **2 to the power of 5** step by step.  Imagine you have **2** and you multiply it by itself **5** times. That\u2019s what *2 to the power of 5* means\u2014**2 \u00d7 2 \u00d7 2 \u00d7 2 \u00d7 2**.  Let\u2019s do it slowly: 1. First multiplication: **2 \u00d7 2 = 4** 2. Second multiplication: **4 \u00d7 2 = 8** 3. Third multiplication: **8 \u00d7 2 = 16** 4. Fourth multiplication: **16 \u00d7 2 = 32** 5. Fifth multiplication: **32 \u00d7 2 = 64**  So, **2\u2075 = 64**. It\u2019s like\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 8827,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-03",
+        "query": "what is a base and an exponent?",
+        "label": "normal",
+        "expect_keywords": [
+          "base",
+          "exponent",
+          "power"
+        ],
+        "answer_clip": "Let\u2019s break down **base** and **exponent** in the simplest way\u2014imagine you\u2019re building a tower with Lego blocks!  A **base** is the number you\u2019re using as your building block. For example, if you have 3 blocks and stack them 4 times, the **base** is 3. It\u2019s the number you multiply by itself. So, in 3\u2074, the **base** is 3.  An **exponent** tells you *how many times* you multiply the base by itself. In 3\u2074, the **exponent** is 4, meaning you multipl\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 25817,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-04",
+        "query": "why do we use powers instead of long multiplications?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "multiply"
+        ],
+        "answer_clip": "Imagine you\u2019re playing a game where you have to count how many candies you have after sharing them with friends. If you have 10 candies and each friend gets 1 candy, you can write it as 10 \u00d7 1 = 10. But what if you have 10 candies and each friend gets 10 candies? You\u2019d write 10 \u00d7 10 = 100. Now, what if you have 10 candies and each friend gets 10 candies *again*? You\u2019d write 10 \u00d7 10 \u00d7 10 = 1,000. See how the pattern repeats? Instead of writing ou\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 27684,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 6.1,
+          "bugs": [
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M2-05",
+        "query": "what is 10 to the power 3?",
+        "label": "normal",
+        "expect_keywords": [
+          "1000",
+          "10",
+          "power"
+        ],
+        "answer_clip": "**Understanding Powers: What is 10 to the Power of 3?**  When we talk about powers, we\u2019re essentially talking about repeated multiplication. The expression **10\u00b3** means 10 multiplied by itself three times. So, 10\u00b3 = 10 \u00d7 10 \u00d7 10. Imagine you have three stacks of 10 marbles each\u2014if you count all the marbles together, you\u2019d have 1000 marbles. That\u2019s how 10\u00b3 works: 10 \u00d7 10 = 100, and then 100 \u00d7 10 = 1000. So, **10\u00b3 = 1000**. This is a fundamental \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 19044,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-06",
+        "query": "any laws of exponents in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "exponent",
+          "law",
+          "power"
+        ],
+        "answer_clip": "In **Chapter 2: Power Play**, you\u2019ll learn about the **laws of exponents**\u2014simple but powerful rules that help you simplify and solve problems with powers (like *n\u00b3* or *5\u2074*) more easily. The chapter introduces two key ideas: **multiplying powers with the same base** and **raising a power to another power**. For example, when you multiply *p\u2074 \u00d7 p\u2076*, you don\u2019t have to write out all the *p*s\u2014you just add the exponents! The rule is: **na \u00d7 nb = na+\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 53712,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-07",
+        "query": "show a diagram or table about powers if the book has one",
+        "label": "diagram",
+        "expect_keywords": [
+          "power",
+          "figure",
+          "table"
+        ],
+        "answer_clip": "The textbook shows a helpful diagram on **page 24** to explain how powers work using the story of the king\u2019s daughters and their baskets. Imagine each daughter has baskets, each basket has keys, and each key opens rooms with necklaces\u2014all arranged in groups of 3. The diagram visually breaks down the layers: - **Daughters \u2192 Baskets \u2192 Keys \u2192 Rooms \u2192 Necklaces \u2192 Diamonds** Each step multiplies by 3, showing how repeated multiplication builds up to \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 40843,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 2.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 5.7,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M2-08",
+        "query": "quiz me on powers with one easy question",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "?"
+        ],
+        "answer_clip": "Let\u2019s start with a fun and simple quiz question to test your understanding of powers!  Imagine you have a magic box that doubles in size every day. On Day 1, it has **1 lotus**. On Day 2, it has **2 lotuses**, and so on. If the box is completely full on Day 10, how many lotuses were there on Day 9? Think about how powers help us represent this quickly\u2014it\u2019s not just counting one by one!  This is similar to the \"Magical Pond\" example in your textb\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 13838,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-09",
+        "query": "what happens when exponent is 0?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "zero",
+          "1",
+          "exponent"
+        ],
+        "answer_clip": "When the exponent is 0, any number raised to the power of 0 equals **1**. This might seem a little strange at first, but it\u2019s a special rule that helps keep math consistent. Imagine you have a number like 2, and you keep dividing it by itself over and over again. For example, 2 divided by 2 is 1, and 1 divided by 2 is 0.5. But if you keep dividing by 2 repeatedly, you\u2019d eventually reach a point where you\u2019re dividing by an increasingly smaller nu\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 25404,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-10",
+        "query": "how do i multiply same bases with powers?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "multiply",
+          "add"
+        ],
+        "answer_clip": "When you multiply two numbers with the **same base** (like 2, 3, or *p*), but different powers (like exponents), there\u2019s a handy rule to simplify it. Let\u2019s say you have *a\u207f \u00d7 a\u1d50*\u2014this means you\u2019re multiplying *a* by itself *n* times and then multiplying that result by *a* by itself *m* times. For example, *3\u00b2 \u00d7 3\u00b3* means you first calculate *3 \u00d7 3* (which is *3\u00b2 = 9*), then multiply that by *3 \u00d7 3 \u00d7 3* (which is *3\u00b3 = 27*). But instead of doing \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 32762,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-11",
+        "query": "explain 3^4 with expanded form",
+        "label": "interactive",
+        "expect_keywords": [
+          "81",
+          "3",
+          "power"
+        ],
+        "answer_clip": "Let\u2019s break down **3\u2074** in a simple way. The small number **4** (called the *exponent*) tells us how many times the base (**3**) is multiplied by itself. So, **3\u2074** means **3 \u00d7 3 \u00d7 3 \u00d7 3**. Each multiplication step builds on the previous one: - First, **3 \u00d7 3 = 9** - Then, **9 \u00d7 3 = 27** - Finally, **27 \u00d7 3 = 81**  So, **3\u2074 = 81**. Think of it like stacking 3 layers of 3 apples: you start with 3 apples, then double them twice more to get 9, then\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 15817,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-12",
+        "query": "is 2^3 same as 3^2?",
+        "label": "normal",
+        "expect_keywords": [
+          "8",
+          "9",
+          "not",
+          "power"
+        ],
+        "answer_clip": "Let\u2019s think about what \\(2^3\\) and \\(3^2\\) mean step by step.  When we write \\(2^3\\), it means we multiply the number **2** by itself **3 times**: \\(2^3 = 2 \\times 2 \\times 2 = 8\\). So, \\(2^3\\) is **8**.  Now, \\(3^2\\) means we multiply the number **3** by itself **2 times**: \\(3^2 = 3 \\times 3 = 9\\). So, \\(3^2\\) is **9**.  Since **8** and **9** are not the same, \\(2^3\\) is **not** the same as \\(3^2\\). The order of the base and the exponent matte\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 14076,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-13",
+        "query": "real life use of powers?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "life",
+          "example"
+        ],
+        "answer_clip": "Powers are like superpowers for numbers\u2014they help us handle *huge* or *tiny* quantities easily, which we see all around us! For example, when you hear about the **distance to the Moon** or the **number of cells in your body**, powers of 10 make these numbers manageable. Imagine trying to write \"100,000,000,000\" (a trillion) every time you talk about the Sun\u2019s size\u2014powers let us say **10\u00b9\u00b2** instead! In real life, powers help scientists measure t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 30497,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-14",
+        "query": "big numbers with powers of 10?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "10"
+        ],
+        "answer_clip": "Let\u2019s break down how powers of 10 help us handle big numbers in a simpler way. Imagine you\u2019re counting stars in the sky\u2014say, 1,00,00,000 stars. Writing it out takes forever, but with powers of 10, we can write it as **1 \u00d7 10\u2077** (1 followed by 7 zeros). The chapter explains that any large number can be written as a number between 1 and 10 multiplied by a power of 10. For example, the Sun\u2019s distance from the center of our galaxy is **30,00,00,00,0\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 20613,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-15",
+        "query": "give two practice problems from this idea",
+        "label": "normal",
+        "expect_keywords": [
+          "power"
+        ],
+        "answer_clip": "Let\u2019s dive into **estimation and approximation**\u2014a super useful skill in math where we don\u2019t always need exact numbers but can still get a *reasonably close* answer. Imagine you\u2019re at a market and want to know how many 5-rupee coins would make up \u20b9500. Instead of counting every single coin (which could take forever!), you can **guess** that \u20b9500 \u00f7 \u20b95 per coin \u2248 **100 coins**. That\u2019s a quick estimate! The textbook shows how this works with real-l\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 25115,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 3.8,
+          "bugs": [
+            "missing expected keywords",
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "M2-16",
+        "query": "what is 5 too the powr of 3?",
+        "label": "typo",
+        "expect_keywords": [
+          "125",
+          "5",
+          "power"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Power**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1991,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 5.5,
+          "bugs": [
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M2-17",
+        "query": "is power play about electricity in social studies?",
+        "label": "wrong",
+        "expect_keywords": [
+          "power",
+          "exponent",
+          "math",
+          "not"
+        ],
+        "answer_clip": "No, **Power Play** in **Chapter 2 of your Mathematics textbook** is *not* about electricity in Social Studies. Instead, it\u2019s about **exponential growth**\u2014a powerful way numbers multiply rapidly when repeated. The chapter uses a fun example: folding a sheet of paper. Each fold doubles its thickness. After just 10 folds, it\u2019s over 1 cm thick! After 46 folds, it would be taller than the Moon\u2014because the thickness grows exponentially, not just a lit\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 5,
+            "caption": "Textbook illustration",
+            "file": "figures/p4_4.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 19106,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "unexpected interactive panel",
+          "overall": 8.9,
+          "bugs": [
+            "forbidden content mentioned: electricity"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "M2-18",
+        "query": "who were the mughals in power play math chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "power",
+          "math",
+          "not"
+        ],
+        "answer_clip": "The topic **\"Power Play\"** in your Math chapter isn\u2019t about historical figures like the Mughals\u2014it\u2019s about a fascinating idea called **exponential growth**. The chapter uses a fun example: folding a sheet of paper repeatedly. Each fold doubles the thickness, and after just a few folds, the paper becomes incredibly thick! For instance, after 10 folds, it\u2019s over 1 cm thick, and after 46 folds, it would be taller than the Moon. This rapid increase \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "An Impossible Venture!",
+            "file": "figures/p0_0.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 20004,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "unexpected interactive panel",
+          "overall": 8.1,
+          "bugs": [
+            "forbidden content mentioned: mughal"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-19",
+        "query": "i keep forgetting \u2014 say again what exponent means",
+        "label": "normal",
+        "expect_keywords": [
+          "exponent",
+          "power"
+        ],
+        "answer_clip": "Let\u2019s break down **exponent** in the simplest way possible\u2014imagine you\u2019re stacking pancakes!  An **exponent** tells you how many times a number (called the **base**) is multiplied by itself. For example, if you have 3 pancakes and stack them 4 times, you write it as **3\u2074** (read as \"3 to the power of 4\"). This means 3 \u00d7 3 \u00d7 3 \u00d7 3 = **81**. The little number (4) is the exponent, and the big number (3) is the base. It\u2019s like a shortcut to say \"mul\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 13251,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-20",
+        "query": "explain 2^4 agian slowly pls",
+        "label": "typo",
+        "expect_keywords": [
+          "16",
+          "power",
+          "2"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Show**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1064,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 3.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 3.5,
+          "bugs": [
+            "missing expected keywords",
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 0
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "M2-01",
+        "source_query": "what does power play mean? is it about exponents?",
+        "query": "hold on, what do you mean by Power Play?",
+        "derived": true,
+        "answer_clip": "**\"Power Play\"** in this chapter is all about *exponential growth*\u2014how something grows *extremely fast* when it doubles (or triples) repeatedly. Imagine folding a piece of paper: after just 10 folds, it\u2019s already over a foot thick, and after 46 folds, it would be *thicker than the distance to the Moon*! This happens because each fold *multiplies* the thickness by 2. For example, if a paper starts at 0.001 cm, after 3 folds it becomes 0.001 \u00d7 2 \u00d7\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 57350,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-02",
+        "source_query": "ok explain 2 to the power 5 slowly",
+        "query": "ok but can you explain and you multiply it by itself in simpler words?",
+        "derived": true,
+        "answer_clip": "Let\u2019s think of **2 to the power of 5** like stacking layers of 2s\u2014just like building a tower where each step is multiplying by 2 again.  Imagine you have **2 candies**, and you double them **5 times**: 1. Start with **2 candies**. 2. First double: **2 \u00d7 2 = 4** candies. 3. Second double: **4 \u00d7 2 = 8** candies. 4. Third double: **8 \u00d7 2 = 16** candies. 5. Fourth double: **16 \u00d7 2 = 32** candies. 6. Fifth double: **32 \u00d7 2 = 64** candies.  So, **2 to\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 18248,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-03",
+        "source_query": "what is a base and an exponent?",
+        "query": "is Lego actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "You\u2019re absolutely right to ask! The **Lego blocks** example I used earlier was *not* from this chapter\u2014it was just a way to help you *understand* the idea of **base** and **exponent** in a fun way. This chapter (Chapter 2: Power Play) actually teaches these concepts using **prime factorization** and **powers of numbers**, not toys!  In this chapter, you\u2019ll see how numbers like **648** or **405** can be broken down into smaller prime numbers (lik\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 31781,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-04",
+        "source_query": "why do we use powers instead of long multiplications?",
+        "query": "quiz me with one easy question just about Imagine",
+        "derived": true,
+        "answer_clip": "Let\u2019s imagine you\u2019re playing a game where you double your points every turn. On the first turn, you have **2 points**. On the second turn, you have **2 \u00d7 2 = 4 points**. On the third turn, you have **2 \u00d7 2 \u00d7 2 = 8 points**, and so on. This is exactly how powers work\u2014they show repeated multiplication in a simple way. For example, **2\u00b3** means 2 multiplied by itself three times (2 \u00d7 2 \u00d7 2 = 8). This is much easier than writing out all the multipli\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 18916,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-05",
+        "source_query": "what is 10 to the power 3?",
+        "query": "show me a figure or example related to Power",
+        "derived": true,
+        "answer_clip": "**What is 10 to the Power of 3?**  When we see **10\u00b3**, it means 10 multiplied by itself three times. Think of it like stacking three identical boxes, each containing 10 marbles. If you count all the marbles together, you\u2019d have 10 \u00d7 10 \u00d7 10 = 1000 marbles. So, **10\u00b3 = 1000**. This is a simple but powerful idea in math because powers help us write large numbers more easily. For example, instead of writing \"10 \u00d7 10 \u00d7 10,\" we can just write 10\u00b3. T\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 13573,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-06",
+        "source_query": "any laws of exponents in this chapter?",
+        "query": "wait why is na\u1d47 = na\u00d7b important here?",
+        "derived": true,
+        "answer_clip": "The rule **na\u1d47 = na\u00d7b** is like a superpower for exponents because it lets you **combine or break apart powers** without doing all the multiplication at once. Imagine you\u2019re stacking blocks: if you have a tower of 2 blocks stacked 3 times (*2\u00b3*), and then you stack that whole tower 4 times (*(2\u00b3)\u2074*), you\u2019d end up with a *huge* tower\u2014but instead of building it step-by-step, the rule tells you it\u2019s the same as stacking 2 blocks 12 times (*2\u00b9\u00b2*). T\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 23799,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-07",
+        "source_query": "show a diagram or table about powers if the book has one",
+        "query": "can you give one more real-life example of Keys?",
+        "derived": true,
+        "answer_clip": "In the chapter, the story of the king\u2019s daughters uses **keys** as a step in building up to larger powers\u2014each basket has three keys, and each key opens a room. This is like how real-life **codes or passwords** work! Imagine you have a digital lockbox (like a safe or a phone\u2019s fingerprint scanner). To open it, you need a **code** (like a key) that unlocks the next layer. For example: - First, you enter a **4-digit PIN** (like the first \"key\" in \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 21841,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 2.0,
+          "interactive_score": 3.0,
+          "interactive_note": "",
+          "overall": 4.2,
+          "bugs": [
+            "wanted images but got none",
+            "expected math_lesson missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-08",
+        "source_query": "quiz me on powers with one easy question",
+        "query": "i still don't get Quick Check \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Let\u2019s break down the **Quick Check** question again in a simple way.  The question is about Roxie\u2019s age, which she tells Estu in three different ways: 1. **\"I completed 13 years a few weeks ago!\"** \u2192 This is her age in *years*. 2. **\"I\u2019m 4840 days old today!\"** \u2192 This is her age in *days*. 3. **\"I\u2019m ______ hours old!\"** \u2192 This is her age in *hours*, which is what we need to find.  The key idea here is that **powers of 10 help us represent large \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 44913,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-09",
+        "source_query": "what happens when exponent is 0?",
+        "query": "ok so what should i remember about 0 for a test?",
+        "derived": true,
+        "answer_clip": "According to the textbook, when any number (except 0) is raised to the power of 0, the result is **always 1**. This rule might seem odd at first, but it\u2019s actually a clever way to keep math consistent. Imagine you have a number like 5, and you keep dividing it by itself over and over. For example, 5 divided by 5 is 1, and 1 divided by 5 is 0.2. But if you keep dividing by 5 repeatedly, you\u2019d eventually reach a point where you\u2019re dividing by an i\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 27915,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "source_id": "M2-10",
+        "source_query": "how do i multiply same bases with powers?",
+        "query": "that part about add the exponents sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Yes, you heard it right! When you multiply two numbers with the **same base** (like *a*), but different exponents (like *n* and *m*), you **add the exponents** instead of multiplying the bases. For example, if you have *a\u207f \u00d7 a\u1d50*, the rule says *a\u207f \u00d7 a\u1d50 = a^(n+m)*. This is because you\u2019re essentially combining the same base multiplied by itself *n* times and *m* times\u2014so you just add the total number of times it\u2019s multiplied.  Let\u2019s break it down \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 9992,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-11",
+        "source_query": "explain 3^4 with expanded form",
+        "query": "hold on, what do you mean by means?",
+        "derived": true,
+        "answer_clip": "When the textbook says **\"means\"** in math, it\u2019s referring to a way to show how numbers are grouped or combined using exponents. For example, if you see **3\u2074**, the **4** is the *exponent* (or \"power\"), and it tells you how many times the base (**3**) is multiplied by itself. So, **3\u2074** means **3 \u00d7 3 \u00d7 3 \u00d7 3**, which is the *expanded form*. The \"means\" here is the shortcut notation (**3\u2074**) instead of writing out all the multiplications.  Think \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 20305,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-12",
+        "source_query": "is 2^3 same as 3^2?",
+        "query": "ok but can you explain .\n\nSince in simpler words?",
+        "derived": true,
+        "answer_clip": "Hi Suneel!  Let\u2019s break it down in the simplest way possible.  When we say \\(2^3\\), it means **2 multiplied by itself 3 times**: \\(2 \\times 2 \\times 2 = 8\\).  When we say \\(3^2\\), it means **3 multiplied by itself 2 times**: \\(3 \\times 3 = 9\\).  So, \\(2^3 = 8\\) and \\(3^2 = 9\\). They are **not** the same!  Think of it like stacking cookies: - \\(2^3\\) is like stacking **2 cookies** on top of each other **3 times** (total 8 cookies). - \\(3^2\\) is l\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 8683,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-13",
+        "source_query": "real life use of powers?",
+        "query": "is number of cells in your body actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The number of cells in your body is **absolutely covered in this chapter**\u2014specifically in the examples on **page 38**! The textbook uses it to show how powers of 10 help us handle *huge* numbers like the **38 trillion bacterial cells** in a single human body. This isn\u2019t just a guess; it\u2019s a real-world example the chapter uses to practice converting large numbers into scientific notation (like **38 \u00d7 10\u00b9\u00b2**). The textbook even multiplies this by\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 27852,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-14",
+        "source_query": "big numbers with powers of 10?",
+        "query": "quiz me with one easy question just about Imagine",
+        "derived": true,
+        "answer_clip": "Let\u2019s play a quick quiz about **powers of 10**\u2014the chapter\u2019s way of simplifying big or tiny numbers! Imagine you\u2019re looking at a tiny speck under a microscope. The thickness of a human hair is about **0.00007 meters**. Instead of writing all those zeros, we can write it as **7 \u00d7 10\u207b\u2075 meters**. Here\u2019s why: the tiny number (7) is multiplied by a power of 10 that tells us how many places we move the decimal point. The exponent **-5** means we move \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 19679,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-15",
+        "source_query": "give two practice problems from this idea",
+        "query": "show me a figure or example related to 10 km/day",
+        "derived": true,
+        "answer_clip": "Here are two practice problems inspired by the chapter\u2019s focus on **linear vs. exponential growth** and **estimating large numbers**\u2014just like the examples in the textbook!  The first problem lets you explore **linear growth** by imagining a real-world scenario: *\"A farmer plants 100 saplings in a row, and each sapling grows 20 cm taller every month. If the farmer wants the tallest sapling to reach the height of a 10-meter tree, how many months \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 28620,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-16",
+        "source_query": "what is 5 too the powr of 3?",
+        "query": "wait why is Power important here?",
+        "derived": true,
+        "answer_clip": "**Why Powers Are Important in Math (Like in Chapter 2: Power Play)**  Powers are like math\u2019s shortcuts\u2014they help us write big numbers or repeated multiplications in a simple way. Imagine you have 5 apples, and you want to share them equally among 3 friends. Instead of writing 5 \u00d7 5 \u00d7 5 \u00d7 5 \u00d7 5 (which is 3125), you can just say **5\u2075** (5 to the power of 5). This saves time and makes calculations easier, especially when dealing with large numbers \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 20536,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-17",
+        "source_query": "is power play about electricity in social studies?",
+        "query": "can you give one more real-life example of Power Play?",
+        "derived": true,
+        "answer_clip": "**\"Power Play\"** in this chapter is all about **exponential growth**\u2014how something increases *rapidly* when multiplied by itself over and over. The textbook uses paper folding to show this: each fold doubles the thickness, so after just 10 folds, the paper is over 1 cm thick, and after 46 folds, it would reach the Moon! This isn\u2019t just about paper\u2014it\u2019s about how tiny, repeated changes can lead to *huge* results in real life.  A great real-life e\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 5,
+            "caption": "Textbook illustration",
+            "file": "figures/p4_4.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 32239,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "unexpected interactive panel",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-18",
+        "source_query": "who were the mughals in power play math chapter?",
+        "query": "i still don't get \"Power Play\" \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "**\"Power Play\"** in this chapter is all about **how small, repeated multiplications can create huge changes**\u2014like how folding a paper just once doubles its thickness, and doing it again doubles it *again*, and again, and again. Imagine starting with a paper that\u2019s as thin as a sheet of notebook paper (about 0.001 cm thick). After **10 folds**, it\u2019s already over 1 cm thick (like the width of your pinky finger). After **20 folds**, it\u2019s over 10 m\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "An Impossible Venture!",
+            "file": "figures/p0_0.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 24955,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "unexpected interactive panel",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-19",
+        "source_query": "i keep forgetting \u2014 say again what exponent means",
+        "query": "ok so what should i remember about exponent for a test?",
+        "derived": true,
+        "answer_clip": "For your test, remember these **key ideas about exponents** from the chapter:  An exponent tells you how many times a number (the **base**) is multiplied by itself. For example, 3\u00b3 means 3 \u00d7 3 \u00d7 3 = 27. The exponent is the little number (3), and the base is the big number (3). Think of it like stacking pancakes: the exponent is how many layers you stack! The chapter also shows that exponents can be **negative**\u2014like 2\u207b\u00b9 = 1/2 (or 0.5). This mean\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 37021,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-20",
+        "source_query": "explain 2^4 agian slowly pls",
+        "query": "that part about Show sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Ah, I think you\u2019re referring to the **exponent** part\u2014specifically, **2\u2074** (2 raised to the power of 4). Let me explain it slowly and clearly using the chapter\u2019s ideas.  In this chapter, we learn that **powers of 10** (like 10\u00b9, 10\u00b2, etc.) help us understand *huge* or *tiny* numbers in real life\u2014like the number of leaves on trees or how long it takes for blood to circulate in your body. But exponents like **2\u2074** are also useful! Here\u2019s what **2\u2074\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 29844,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "M2-01",
+        "query": "what does power play mean? is it about exponents?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "exponent"
+        ],
+        "answer_clip": "Ah, great question! In this chapter, **\"Power Play\"** isn\u2019t about exponents *directly*\u2014 it\u2019s about something *way* more surprising.  See, it\u2019s about how tiny changes\u2014like folding paper\u2014can grow *super fast*. Each fold doubles the thickness. So after 46 folds? The paper would be *millions* of kilometers thick! That\u2019s **exponential growth**\u2014numbers multiplying by themselves, not just adding.  Exponents *are* in the chapter later, but here? It\u2019s ab\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "An Impossible Venture!",
+            "file": "figures/p0_0.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 17069,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-02",
+        "query": "ok explain 2 to the power 5 slowly",
+        "label": "interactive",
+        "expect_keywords": [
+          "32",
+          "power",
+          "2"
+        ],
+        "answer_clip": "Okay, let\u2019s break it down.  **2 to the power 5** means 2 multiplied by itself 5 times. So, it\u2019s **2 \u00d7 2 \u00d7 2 \u00d7 2 \u00d7 2**.  Let\u2019s do it step by step: First, 2 \u00d7 2 = 4. Then, 4 \u00d7 2 = 8. Next, 8 \u00d7 2 = 16. Finally, 16 \u00d7 2 = **32**.  So, **2 to the power 5 is 32**. Got it?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12871,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-03",
+        "query": "what is a base and an exponent?",
+        "label": "normal",
+        "expect_keywords": [
+          "base",
+          "exponent",
+          "power"
+        ],
+        "answer_clip": "Got it! Let\u2019s break it down simply.  The **base** is the number you\u2019re multiplying by itself. The **exponent** is the tiny number (like the 4 in **3\u2074**) that tells you *how many times* to multiply that base.  So, **3\u2074** means **3 \u00d7 3 \u00d7 3 \u00d7 3**\u2014the **3** is the base, and the **4** is the exponent. Think of it like stacking: the exponent is the *height* of the stack.  The chapter even says: **na** means **n \u00d7 n \u00d7 n \u00d7 \u2026** *a* times. That\u2019s your bas\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 14356,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-04",
+        "query": "why do we use powers instead of long multiplications?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "multiply"
+        ],
+        "answer_clip": "Oh, great question!  See, powers help us write *huge* numbers easily\u2014like the Sun\u2019s distance. Imagine writing 30,00,00,00,00,00,00,00,00,000 every time. That\u2019s messy! Powers like 10\u00b3 (1,000) or 10\u2076 (1,000,000) make it simple: 3 \u00d7 10\u00b9\u2076.  Long multiplications? Too slow for big numbers. Powers let us *see* patterns\u2014like 3\u00b2 \u00d7 3\u00b3 = 3\u2075\u2014without doing all the work. It\u2019s like using a shortcut to skip counting steps!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 19072,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M2-05",
+        "query": "what is 10 to the power 3?",
+        "label": "normal",
+        "expect_keywords": [
+          "1000",
+          "10",
+          "power"
+        ],
+        "answer_clip": "Ah, great question!  So, **10 to the power 3** means 10 multiplied by itself three times. That\u2019s **10 \u00d7 10 \u00d7 10**.  Let me write it out\u2014 First, 10 \u00d7 10 = 100. Then, 100 \u00d7 10 = **1000**.  So, **10\u00b3 = 1000**. Easy, right?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 7800,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-06",
+        "query": "any laws of exponents in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "exponent",
+          "law",
+          "power"
+        ],
+        "answer_clip": "Ah, great question! This chapter shows *how* exponents work in practice\u2014not just rules.  Look at this: **37 = 3\u00b2 \u00d7 3\u2075** (from page 24). The chapter *doesn\u2019t* list laws like *a\u207f \u00d7 a\u1d50 = a\u207f\u207a\u1d50*\u2014but it *does* use exponents to break numbers apart smartly. For example, **8\u2076 = (8\u00b2)\u00b3** or **2\u00b9\u2078** (page 24). That\u2019s *power play*: rewriting big powers as smaller, easier chunks.  Want to see a law in action? Try this: **2\u2079 \u00d7 2\u00b3 = 2\u00b9\u00b2** (because you add expon\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 19610,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-07",
+        "query": "show a diagram or table about powers if the book has one",
+        "label": "diagram",
+        "expect_keywords": [
+          "power",
+          "figure",
+          "table"
+        ],
+        "answer_clip": "Ah, the book has a *great* little diagram for you\u2014right in the story about the king\u2019s daughters!  It shows a tiny tree of boxes: **King \u2192 3 daughters \u2192 each gets 3 baskets \u2192 each basket has 3 keys \u2192 each key opens 3 rooms \u2192 each room has 3 necklaces \u2192 each necklace has 3 diamonds.**  The book even writes it as steps: **3 \u00d7 3 = 9 rooms per daughter** **9 \u00d7 3 = 27 rooms total** Then it jumps to **3\u2077** for diamonds\u2014all connected!  You\u2019ll see it dra\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 22462,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 2.0,
+          "bugs": [
+            "missing expected keywords",
+            "wanted images but got none"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "M2-08",
+        "query": "quiz me on powers with one easy question",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "?"
+        ],
+        "answer_clip": "Got it! Let\u2019s try this:  What\u2019s **5\u00b2**? That\u2019s five multiplied by itself\u2014just once more. So, five times five equals what?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 145125,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M2-09",
+        "query": "what happens when exponent is 0?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "zero",
+          "1",
+          "exponent"
+        ],
+        "answer_clip": "Ah, great question! When any number\u2014like 2, 5, or even 10\u2014has an exponent of 0, it\u2019s always **1**. That\u2019s because dividing the number by itself cancels out.  For example, the book shows **2\u2070 = 1** because: 2\u2074 \u00f7 2\u2074 = 2\u2074\u207b\u2074 = 2\u2070 = 1. Same for any number *except* zero\u2014like 5\u2070 = 1 too.  So, **x\u2070 = 1** when *x* isn\u2019t zero. That\u2019s the rule!",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 1817016,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-10",
+        "query": "how do i multiply same bases with powers?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "multiply",
+          "add"
+        ],
+        "answer_clip": "Got it! When multiplying same bases with powers\u2014like **2\u00b3 \u00d7 2\u2074**\u2014you add the exponents.  So, **2\u00b3 \u00d7 2\u2074 = 2^(3+4) = 2\u2077**.  Think of it like stacking the same blocks. Three blocks of 2 (2\u00b3) plus four more blocks (2\u2074) makes seven blocks total (2\u2077).  Try this: **3\u00b2 \u00d7 3\u2075 = 3^(2+5) = 3\u2077**. That\u2019s 3 multiplied by itself seven times!  Want to test it? Try **5\u00b9 \u00d7 5\u00b3**\u2014what\u2019s the answer?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 18342,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-11",
+        "query": "explain 3^4 with expanded form",
+        "label": "interactive",
+        "expect_keywords": [
+          "81",
+          "3",
+          "power"
+        ],
+        "answer_clip": "Okay, let\u2019s break down **3\u2074** step by step.  This means **3 multiplied by itself 4 times**. So, the expanded form is **3 \u00d7 3 \u00d7 3 \u00d7 3**.  Let\u2019s write it out: First, **3 \u00d7 3 = 9**. Then, **9 \u00d7 3 = 27**. Finally, **27 \u00d7 3 = 81**.  So, **3\u2074 = 81** in expanded form.  You\u2019re multiplying the base (**3**) by itself four times\u2014just like the chapter shows with **n\u2074 = n \u00d7 n \u00d7 n \u00d7 n**.  Want to try another example together?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 13595,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-12",
+        "query": "is 2^3 same as 3^2?",
+        "label": "normal",
+        "expect_keywords": [
+          "8",
+          "9",
+          "not",
+          "power"
+        ],
+        "answer_clip": "No, they\u2019re not the same at all.  **2\u00b3** means 2 \u00d7 2 \u00d7 2 = **8**. **3\u00b2** means 3 \u00d7 3 = **9**.  Different numbers, different answers. The little number (exponent) tells you *how many times* to multiply the base. So 2\u00b3 is *three* twos multiplied, while 3\u00b2 is *two* threes multiplied.  Want to check? Try it yourself\u2014you\u2019ll see they\u2019re not equal.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 11605,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "M2-13",
+        "query": "real life use of powers?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "life",
+          "example"
+        ],
+        "answer_clip": "Oh, great question! Powers help us handle *huge* numbers easily.  See, the chapter shows how **10\u2074 leaves per tree** helps find total leaves in the world. Or how **10\u00b9\u2070 seconds** is like the age of the universe\u2014way bigger than we can count!  Even Roxie\u2019s age is shown in powers\u2014**4840 days** is like **10\u00b3** days roughly. That\u2019s how we compare big things\u2014like time, leaves, or even space!  Want to see another? The chapter asks: how many paper sheet\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 22255,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M2-14",
+        "query": "big numbers with powers of 10?",
+        "label": "normal",
+        "expect_keywords": [
+          "power",
+          "10"
+        ],
+        "answer_clip": "Ah, big numbers with powers of 10? That\u2019s exactly what this chapter helps with!  See, numbers like 10, 100, 1000 are all powers of 10. 10 is 10\u00b9, 100 is 10\u00b2, and 1000 is 10\u00b3.  For huge numbers, we use **scientific notation**\u2014like writing 59,00,00,000 as 5.9 \u00d7 10\u00b9\u2070. That\u2019s way easier to read and compare!  So, 10\u00b9\u00b3 is a 1 followed by 13 zeros\u2014like Roxie\u2019s number in the game. That\u2019s how we handle *big* numbers cleanly. Makes sense?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 36861,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-15",
+        "query": "give two practice problems from this idea",
+        "label": "normal",
+        "expect_keywords": [
+          "power"
+        ],
+        "answer_clip": "Got it! Let\u2019s practice with two problems from the chapter\u2019s style.  First, try writing **5\u00b3 \u00d7 5\u00b2** as a single power of 5. Hint: Remember how exponents add when multiplying same bases.  Second, simplify **2\u2074 \u00d7 3\u00b3**\u2014no need to expand fully, just combine cleverly.  Take your time. Want me to share the answers after?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 31883,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M2-16",
+        "query": "what is 5 too the powr of 3?",
+        "label": "typo",
+        "expect_keywords": [
+          "125",
+          "5",
+          "power"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Power**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 2723,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.3,
+          "bugs": [
+            "voice transcript thin for interactive topic"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "M2-17",
+        "query": "is power play about electricity in social studies?",
+        "label": "wrong",
+        "expect_keywords": [
+          "power",
+          "exponent",
+          "math",
+          "not"
+        ],
+        "answer_clip": "Oh, no\u2014this isn\u2019t about electricity at all! **\"Power Play\"** is all about *how tiny things grow super fast*\u2014like folding paper. Every fold doubles the thickness. So 1 fold \u2192 2 layers, 2 folds \u2192 4 layers, and so on. That\u2019s *exponential growth*\u2014numbers multiplying themselves, not adding. The chapter shows how 46 folds could reach the Moon! It\u2019s math magic, not science.",
+        "images": [
+          {
+            "figure": null,
+            "page": 4,
+            "caption": "a diagram of the number of the numbers in the following column. Mathematics tex\u2026",
+            "file": "figures/p3_3.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 27678,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.2,
+          "bugs": [
+            "forbidden content mentioned: electricity"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "M2-18",
+        "query": "who were the mughals in power play math chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "power",
+          "math",
+          "not"
+        ],
+        "answer_clip": "Oh, I see what you\u2019re asking\u2014 but this chapter isn\u2019t about the Mughals at all. It\u2019s called *Power Play* because it\u2019s about **how tiny changes grow super fast**.  Like folding paper\u2014each fold doubles the thickness. That\u2019s the *power* of exponential growth. The chapter uses paper folding to show how small steps can become huge.  No kings or Mughals here\u2014just math magic! Want to see how the numbers work?",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "An Impossible Venture!",
+            "file": "figures/p0_0.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 36492,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.1,
+          "bugs": [
+            "forbidden content mentioned: mughal"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-19",
+        "query": "i keep forgetting \u2014 say again what exponent means",
+        "label": "normal",
+        "expect_keywords": [
+          "exponent",
+          "power"
+        ],
+        "answer_clip": "Oh, I see why this is tricky\u2014exponents can feel like a magic trick at first!  Think of it like stacking the same number on top of itself. If you write **3 \u00d7 3 \u00d7 3 \u00d7 3**, that\u2019s *four* threes multiplied together. We call that **3 raised to the power 4**, or **3\u2074**\u2014the little number (4) is the *exponent*. It tells you how many times the base (3) gets multiplied by itself.  So, **5\u2074** means **5 \u00d7 5 \u00d7 5 \u00d7 5**\u2014the exponent (4) is the count of multipl\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 40053,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "M2-20",
+        "query": "explain 2^4 agian slowly pls",
+        "label": "typo",
+        "expect_keywords": [
+          "16",
+          "power",
+          "2"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Show**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4550,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 3.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 3.7,
+          "bugs": [
+            "missing expected keywords",
+            "voice transcript thin for interactive topic"
+          ],
+          "keyword_hits": 0
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "M2-01",
+        "source_query": "what does power play mean? is it about exponents?",
+        "query": "hold on, what do you mean by Power Play?",
+        "derived": true,
+        "answer_clip": "**\"Power Play\"** in this chapter is all about how tiny, repeated actions\u2014like folding a piece of paper\u2014can create *massive* changes over time. Imagine starting with a sheet of paper just 0.001 cm thick. After **one fold**, it\u2019s twice as thick. After **two folds**, it\u2019s four times thicker. Each fold *doubles* the thickness, and this doubling keeps happening again and again. The chapter shows how this simple action leads to **exponential growth**\u2014\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 3,
+            "caption": "2.2 Exponential Notation and Operations",
+            "file": "figures/p2_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 24002,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-02",
+        "source_query": "ok explain 2 to the power 5 slowly",
+        "query": "ok but can you explain 2 \u00d7 2 \u00d7 2 \u00d7 2 \u00d7 2 in simpler words?",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s think of **2 \u00d7 2 \u00d7 2 \u00d7 2 \u00d7 2** like stacking cups.  Imagine you have one cup. That\u2019s just **2**. Now, you stack another cup on top\u2014now you have **2 \u00d7 2 = 4**. Keep adding cups one by one: Next cup \u2192 **4 \u00d7 2 = 8**. Next cup \u2192 **8 \u00d7 2 = 16**. Last cup \u2192 **16 \u00d7 2 = 32**.  So, **2 \u00d7 2 \u00d7 2 \u00d7 2 \u00d7 2** is the same as **2 to the power 5**, which equals **32**.  It\u2019s like saying: \"Take 2 and multiply it by itself 5 times.\" Simple, right?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 8144,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-03",
+        "source_query": "what is a base and an exponent?",
+        "query": "is means actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, I see why this is confusing\u2014let\u2019s clear it up right away!  In this chapter, **\"guessing\"** isn\u2019t just random\u2014it\u2019s called **estimation**. The book actually says it\u2019s *perfectly fine* to guess first, especially when exact numbers aren\u2019t given. For example, when Roxie says she\u2019s 4840 days old, you\u2019re supposed to *estimate* her age in years first before calculating.  The chapter even gives examples: *\"Guess how many people would benefit from you\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16885,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "M2-04",
+        "source_query": "why do we use powers instead of long multiplications?",
+        "query": "quiz me with one easy question just about 30",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy quiz question:  **\"What is 3 \u00d7 44 in expanded form using powers of 10?\"** *(Hint: Break it down like 300 + 40 + 4!)*  Try it\u2014just write it out step by step!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 12713,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-05",
+        "source_query": "what is 10 to the power 3?",
+        "query": "show me a figure or example related to First",
+        "derived": true,
+        "answer_clip": "Ah, you\u2019re asking about the **\"First\"** part in the names like **2.0 \u00d7 10\u00b2\u00b3** or **6.25 \u00d7 10\u00b2\u00b2**?  That\u2019s the *number before* the \"\u00d7 10\" part. For example, in **2.0 \u00d7 10\u00b2\u00b3**, the **2.0** is the first part. It tells us how many *thousands* (or millions, billions, etc.) we\u2019re dealing with\u2014 but in a smaller, easier-to-read form.  The chapter says it\u2019s the *coefficient*\u2014the part that adjusts the power of 10. Think of it like the \"main number\" in a b\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 8968,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-06",
+        "source_query": "any laws of exponents in this chapter?",
+        "query": "wait why is Look important here?",
+        "derived": true,
+        "answer_clip": "Ah, you\u2019re asking about the **\"Look\"** part in the estimation section?  This chapter isn\u2019t about *looking* at pictures\u2014it\u2019s about **guessing first** before calculating. See those examples? Estu and Roxie *guess* how much money or people they\u2019d help. That\u2019s the **\"Look\"**\u2014your *instinctive* first thought. It trains your brain to think fast.  Then you *check* with math. The chapter says guesses are okay\u2014even if wrong at first. That\u2019s how you get b\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 23579,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "M2-07",
+        "source_query": "show a diagram or table about powers if the book has one",
+        "query": "can you give one more real-life example of 27?",
+        "derived": true,
+        "answer_clip": "Oh, here\u2019s a fun one from the book\u2019s story!  Imagine a **clock tower** with 3 big bells. Each bell rings **3 times** in a row. Then, each ring makes **3 smaller chimes**\u2014like a tiny echo. So, total chimes? **3 \u00d7 3 \u00d7 3 = 27**\u2014just like the diamonds!  The book\u2019s tree example already showed 27 rooms. Now clocks do it too\u2014same math, different real life. Got it?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 19745,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 2.0,
+          "bugs": [
+            "missing expected keywords",
+            "wanted images but got none"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "M2-08",
+        "source_query": "quiz me on powers with one easy question",
+        "query": "i still don't get Let\u2019s try What\u2019s 5\u00b2 ? \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s take it *super* slow.  When we write **5\u00b2**, that little **2** up top is called the *exponent*. It\u2019s like asking: *\"Multiply 5 by itself **twice**\u2014once for the 5, and once more for the 2.\"*  So, **5\u00b2 = 5 \u00d7 5**. Now, five times five is\u2026 *let me count on my fingers*\u201410, 15, 20, 25. So, **5\u00b2 = 25**.  Think of it like stacking: if you have 5 candies in one hand and 5 in the other, you\u2019ve got 25 candies *total*\u2014that\u2019s **5\u00b2**.  Want to che\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 7913,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-09",
+        "source_query": "what happens when exponent is 0?",
+        "query": "ok so what should i remember about 2\u2070 = 1 for a test?",
+        "derived": true,
+        "answer_clip": "Ah, this is a key rule! The book shows that **any number to the power of 0 is 1**. It explains it like this: if you divide a number by itself, like 2\u2074 \u00f7 2\u2074, you get 2\u2074\u207b\u2074 = 2\u2070 = 1. Same for any number *except* zero.  So, **2\u2070 = 1** because it\u2019s like asking: what\u2019s left when you divide a number by itself? The answer is always 1\u2014just like the book says!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 36010,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-10",
+        "source_query": "how do i multiply same bases with powers?",
+        "query": "that part about 2\u00b3 \u00d7 2\u2074 = 2^(3+4) = 2\u2077 sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I see why that sounded tricky! You\u2019re *absolutely* hearing it right.  When you multiply **2\u00b3 \u00d7 2\u2074**, you *add* the exponents\u2014just like the chapter shows with **3\u00b2 \u00d7 3\u2075 = 3\u2077**. It\u2019s not magic, it\u2019s a rule: same base? Add the powers!  Think of it like stacking books. Three stacks of 2 (2\u00b3) plus four stacks of 2 (2\u2074) makes seven stacks total (2\u2077). That\u2019s why **2\u00b3 \u00d7 2\u2074 = 2\u2077**.  Want to try another? **5\u00b2 \u00d7 5\u00b3**\u2014what\u2019s that? (Hint: add the exponen\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 34514,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-11",
+        "source_query": "explain 3^4 with expanded form",
+        "query": "hold on, what do you mean by .\n\nLet\u2019s write it out:\nFirst,?",
+        "derived": true,
+        "answer_clip": "Ah, you\u2019re asking about **negative exponents**\u2014that\u2019s a great question! Let\u2019s break it down simply.  When you see something like **2\u207b\u2074**, it might look confusing, but it\u2019s just a way to write a fraction. The textbook explains that **n\u207b\u1d43** means **1 divided by n\u1d43**. So, **2\u207b\u2074** is the same as **1 \u00f7 2\u2074**, which is **1 \u00f7 16** or **1/16**.  Think of it like this: if you have a pizza cut into 16 slices, and you want to share it with someone who has *\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16176,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-12",
+        "source_query": "is 2^3 same as 3^2?",
+        "query": "ok but can you explain 8 in simpler words?",
+        "derived": true,
+        "answer_clip": "Oh, **8** is just **2 \u00d7 2 \u00d7 2**\u2014that\u2019s **2\u00b3**! It\u2019s like stacking three 2\u2019s on top of each other.  Or, if you think of it as **folding paper**: Start with 1 sheet (that\u2019s **2\u2070 = 1**). Fold it once \u2192 2 sheets (**2\u00b9**). Fold it *again* \u2192 4 sheets (**2\u00b2**). Fold it *one more time* \u2192 **8 sheets** (**2\u00b3**).  So **8 = 2\u00b3**\u2014that\u2019s all!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 25601,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.3,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-13",
+        "source_query": "real life use of powers?",
+        "query": "is Powers actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, no guessing here! This chapter *is* all about powers\u2014 **exactly** what you see on pages 16 and 31.  See? The chapter asks: *\"If each tree had about **10\u2074 leaves**, find the total number of leaves on all the trees in the world.\"* That\u2019s powers in action. Or *\"How many sheets of paper to reach the Moon?\"*\u2014another power of 10 problem.  Even Roxie\u2019s age is shown in powers: **4840 days** is like **10\u00b3** days roughly. The chapter *shows* how we us\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 41817,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-14",
+        "source_query": "big numbers with powers of 10?",
+        "query": "quiz me with one easy question just about 1000",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy quiz question:  **\"Which is bigger: 1000 or 10\u00b3?** *(Hint: Think about what 10\u00b3 really means!)\"*  Take your time\u2014just tell me which one you pick!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13858,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-15",
+        "source_query": "give two practice problems from this idea",
+        "query": "show me a figure or example related to Take",
+        "derived": true,
+        "answer_clip": "Ah, I see what you\u2019re asking\u2014you want a real-life example or figure from the chapter\u2019s idea.  The chapter shows how we **guess first, then calculate** to solve problems. For example, it asks: *\"How many people could benefit if someone donates notebooks worth their weight every year?\"* Or: *\"How long ago did travelers start their 400 km journey?\"*  The textbook doesn\u2019t have a drawn figure, but it *does* show how to **approximate**\u2014like guessing i\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 20875,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "M2-16",
+        "source_query": "what is 5 too the powr of 3?",
+        "query": "wait why is Power important here?",
+        "derived": true,
+        "answer_clip": "Ah, great question! Here\u2019s why **Power** matters in this chapter.  See, powers help us write *huge* or *tiny* numbers neatly. Like, **10\u00b3** is 1000, but **10\u207b\u00b3** is just **1/1000**\u2014it\u2019s the same number, just flipped!  This helps us simplify tricky math problems. For example, **2\u207b\u2074** isn\u2019t a big scary number\u2014it\u2019s **1/2\u2074**, which is **1/16**. That\u2019s why we learn these rules: to make calculations *easier* and *cleaner*.  Right?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13290,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-17",
+        "source_query": "is power play about electricity in social studies?",
+        "query": "can you give one more real-life example of Power Play?",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s another wild example from the chapter: **\"After 30 folds, the paper\u2019s thickness is about 10.7 km\u2014taller than a plane flies!\"** That\u2019s the Mariana Trench\u2019s depth (11 km) in just 32 folds! See how tiny actions (folding) create *huge* changes? That\u2019s exponential growth in action.",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "An Impossible Venture!",
+            "file": "figures/p0_0.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 53301,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "M2-18",
+        "source_query": "who were the mughals in power play math chapter?",
+        "query": "i still don't get Power Play \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s start fresh\u2014this is *not* about kings or history. **\"Power Play\"** is about something *way* cooler: **how tiny things grow huge when you repeat them**.  Imagine folding a paper just once\u2014it\u2019s thin. Fold it again\u2014thicker. Keep going: **each fold doubles the thickness**. The chapter shows a table where after 10 folds, it\u2019s over 1 cm. After 20 folds? **10 meters tall**\u2014like a 3-story building! After 30 folds? **10 km**\u2014higher than plane\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 4,
+            "caption": "a diagram of the number of the numbers in the following column. Mathematics tex\u2026",
+            "file": "figures/p3_3.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 37729,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.2,
+          "bugs": [
+            "forbidden content mentioned: mughal"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "M2-19",
+        "source_query": "i keep forgetting \u2014 say again what exponent means",
+        "query": "ok so what should i remember about means for a test?",
+        "derived": true,
+        "answer_clip": "For your test, remember **three key things** about estimation and powers of 10.  First, **always guess first**\u2014just a rough idea. The chapter shows Roxie saying she\u2019s *4840 days old* instead of 13 years. That\u2019s a big jump, but it\u2019s a start!  Second, **use powers of 10** to simplify huge numbers. Like, 100 seconds is *1 second*, 10\u00b2 seconds is *10 seconds*\u2014it\u2019s like counting in jumps. The chapter compares these to real things: blood circulation, \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 51301,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "M2-20",
+        "source_query": "explain 2^4 agian slowly pls",
+        "query": "that part about Show sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I think you might\u2019ve mixed up the word\u2014**Show** isn\u2019t in this chapter at all. This is about **Power Play**, which is all about *big numbers* and *estimating* things like leaves on trees or how many sheets of paper you\u2019d need to reach the Moon!  The chapter uses **powers of 10**\u2014like 10\u00b2, 10\u00b3\u2014to show how numbers grow *super fast*. For example, **10\u00b2 = 100**, and **10\u00b3 = 1,000**. It\u2019s like counting in jumps: 10, 100, 1,000, and so on.  If you \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": true,
+        "has_science_experiment": false,
+        "ms": 34519,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ]
+  },
+  "tutor_avg": 8.29,
+  "voice_avg": 7.47
+}

@@ -1,6 +1,10 @@
 """Tests for voice STT post-processing."""
 
-from app.services.voice_stt_postprocess import postprocess_voice_transcript
+from app.services.voice_stt_postprocess import (
+    is_meaningful_voice_transcript,
+    is_whisper_hallucination,
+    postprocess_voice_transcript,
+)
 
 
 def test_photo_synthesis_fix():
@@ -37,3 +41,18 @@ def test_word_typo_fix():
 def test_empty_passthrough():
     assert postprocess_voice_transcript("") == ""
     assert postprocess_voice_transcript("  hello  ") == "hello"
+
+
+def test_whisper_junk_rejected():
+    for junk in ("[BLANK_AUDIO]", "(clear throat)", "(music)"):
+        assert is_whisper_hallucination(junk)
+        assert not is_meaningful_voice_transcript(junk)
+    for junk in ("()", "[]"):
+        assert not is_meaningful_voice_transcript(junk)
+
+
+def test_real_speech_accepted():
+    assert is_meaningful_voice_transcript("what is photosynthesis")
+    assert is_meaningful_voice_transcript("yes")
+    assert is_meaningful_voice_transcript("hi")
+    assert not is_meaningful_voice_transcript("you")

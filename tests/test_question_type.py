@@ -72,9 +72,12 @@ def test_is_mathematics_subject():
 
 
 def test_math_short_answer_not_capped_at_direct_tokens():
+    from app.config import MATH_CHAT_MAX_TOKENS
     from app.services.chat_service import (
         _DIRECT_ANSWER_TOKEN_LIMIT,
+        _MAIN_SECTION_TOKEN_LIMIT,
         _mistral_token_limit_for_answer_type,
+        detect_answer_type,
         detect_question_type,
     )
 
@@ -82,12 +85,32 @@ def test_math_short_answer_not_capped_at_direct_tokens():
     assert detect_question_type("is 49 a perfect square?") == "problem-solving"
     assert (
         _mistral_token_limit_for_answer_type("short-answer", subject_name="Mathematics")
-        is None
+        == MATH_CHAT_MAX_TOKENS
     )
     assert (
         _mistral_token_limit_for_answer_type("short-answer", subject_name="Science")
         == _DIRECT_ANSWER_TOKEN_LIMIT
     )
+
+
+def test_science_calculate_not_capped_at_direct_tokens():
+    from app.services.chat_service import (
+        _DIRECT_ANSWER_TOKEN_LIMIT,
+        _MAIN_SECTION_TOKEN_LIMIT,
+        _mistral_token_limit_for_answer_type,
+        detect_answer_type,
+    )
+
+    q = (
+        "A puri takes 12 seconds to puff at 180°C. If R=1/t, calculate the puffing rate "
+        "and the percentage decrease when it takes 18 seconds."
+    )
+    assert detect_answer_type(q) == "stepwise"
+    limit = _mistral_token_limit_for_answer_type(
+        "stepwise", subject_name="Science", query=q
+    )
+    assert limit == _MAIN_SECTION_TOKEN_LIMIT
+    assert limit > _DIRECT_ANSWER_TOKEN_LIMIT
 
 
 def test_mathematics_prompt_eight_section_format():

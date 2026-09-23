@@ -20,13 +20,38 @@ def test_voice_word_limit_greeting_shorter():
     assert voice_word_limit(expand_deep=True) >= voice_word_limit()
 
 
+def test_voice_word_limit_never_exceeds_what_the_context_supports():
+    """A word target the context cannot fill is an instruction to invent.
+
+    Regression for the live Hoysala case: a three-line context asked for 160
+    words produced temples at Belur and Halebidu, neither of which was in it.
+    """
+    thin = (
+        "The Hoysalas were a regional kingdom in southern India. "
+        "They ruled in the region of Karnataka. "
+        "They resisted the expansion of the Delhi Sultanate."
+    )
+    thin_cap = voice_word_limit(
+        query="Tell me more about the Hoysalas.", expand_deep=True, context=thin
+    )
+    assert thin_cap <= 45, f"thin context still asks for {thin_cap} words"
+
+    # A real chapter excerpt must keep its full budget — this only bites when
+    # retrieval genuinely came back thin.
+    rich = " ".join(["word"] * 400)
+    assert voice_word_limit(query="Tell me about the chapter", context=rich) >= 110
+
+    # Unknown context (callers that do not pass it) keeps the old behaviour.
+    assert voice_word_limit(query="what is a map") >= 110
+
+
 def test_voice_turn_type_guidance_greeting():
     guidance = voice_turn_type_guidance("Hi there!")
     assert "greet" in guidance.lower() or "small talk" in guidance.lower()
 
 
 def test_voice_prompt_contains_speaking_rules():
-    from app.services.voice_prompts import VOICE_SYSTEM_PROMPT
+    from app.services.voice_prompts import VOICE_SOCIAL_SCIENCE_GUIDANCE, VOICE_SYSTEM_PROMPT
 
     assert "6–12" in VOICE_SYSTEM_PROMPT
     assert "contractions" in VOICE_SYSTEM_PROMPT.lower()
@@ -37,6 +62,17 @@ def test_voice_prompt_contains_speaking_rules():
     assert "NAME RULE" in VOICE_SYSTEM_PROMPT
     # Must ban the robotic labels, not require them as spoken openers.
     assert 'Never use fixed phrases like "In everyday terms"' in VOICE_SYSTEM_PROMPT
+    assert "common-knowledge" not in VOICE_SYSTEM_PROMPT.lower()
+    assert "FACTUAL GROUNDING" in VOICE_SYSTEM_PROMPT
+    assert "Never invent a quotation" in VOICE_SYSTEM_PROMPT
+    # The tutor cannot see the student's screen, so it must never claim to
+    # have put anything there — it can only invite them to look at the figure.
+    assert "on your screen" not in VOICE_SOCIAL_SCIENCE_GUIDANCE.lower()
+    assert "have a look at the map" in VOICE_SOCIAL_SCIENCE_GUIDANCE.lower()
+    assert "do not read a list of figure numbers" in VOICE_SOCIAL_SCIENCE_GUIDANCE.lower()
+    assert "Never (4) extra historical" in VOICE_SYSTEM_PROMPT or "Never (4)" in VOICE_SYSTEM_PROMPT
+    assert "Here's the cool part" in VOICE_SYSTEM_PROMPT  # banned opener, listed as do-not
+    assert "Imagine you're looking at" in VOICE_SYSTEM_PROMPT
 
 
 def test_voice_turn_type_what_is_natural():
@@ -46,13 +82,20 @@ def test_voice_turn_type_what_is_natural():
     assert "in everyday terms" not in guidance.lower()
 
 
-def test_voice_user_message_natural_shape():
+def test_empty_chapter_context_forbids_general_knowledge():
     from app.services.voice_prompts import build_voice_user_message
 
-    user = build_voice_user_message("what is a map", "A map is a drawing of the Earth.")
-    assert "Answer directly" in user
-    assert 'Never say "In everyday terms"' in user
-    assert "According to the chapter" in user
+    empty = build_voice_user_message("what is a quark", "")
+    assert "Do not invent facts" in empty
+    assert "Never invent quotations" in empty
+    assert "general knowledge" not in empty.lower()
+
+    filled = build_voice_user_message("what is a map", "A map is a drawing of the Earth.")
+    assert "Use the chapter context first" in filled
+    assert 'Never say "In everyday terms"' in filled
+    assert "According to the chapter" in filled
+    assert "optional accuracy aid" not in filled.lower()
+    assert "Never invent quotations" in filled
 
 
 def test_repeated_question_gets_answer_not_pivot():

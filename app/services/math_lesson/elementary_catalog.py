@@ -9,7 +9,198 @@ from __future__ import annotations
 import re
 from typing import Any, Callable
 
-from app.services.math_lesson.textbook_catalog import _lesson, _quadrilateral_morph_spec, _viz
+from app.services.math_lesson.textbook_catalog import _quadrilateral_morph_spec, _viz
+
+# Locked 2D/3D shape lab — one named shape, never a morphing n-gon.
+_SHAPE_LAB_GUIDES: dict[str, list[str]] = {
+    "square": [
+        "Resize the side. Every side stays equal — it never becomes a rectangle or pentagon.",
+        "Watch perimeter (4 × side) and area (side × side) update together.",
+        "Switch to 3D: a cube is six of these squares as faces.",
+    ],
+    "rectangle": [
+        "Change length and width separately. Opposite sides stay equal.",
+        "When length equals width, the rectangle becomes a square.",
+        "Switch to 3D: a cuboid is the solid with this rectangle as its face.",
+    ],
+    "triangle": [
+        "A triangle has 3 sides and 3 corners. Resize a side and keep all three.",
+        "Switch to 3D to see a triangular prism built from this triangle.",
+    ],
+    "pentagon": [
+        "A regular pentagon has 5 equal sides. Only this pentagon is shown.",
+        "Switch to 3D to see a pentagonal prism.",
+    ],
+    "hexagon": [
+        "A regular hexagon has 6 equal sides. Only this hexagon is shown.",
+        "Switch to 3D to see a hexagonal prism.",
+    ],
+    "cuboid": [
+        "A cuboid is the 3D box whose faces are rectangles.",
+        "Switch to 2D to see one rectangular face.",
+    ],
+    "picker": [
+        "Tap one shape name. Only that shape is drawn.",
+        "Use 2D for the face and 3D for the solid.",
+    ],
+}
+
+
+def _shape_lab_spec(shape: str, *, default_view: str = "2d") -> dict[str, Any]:
+    """Professional locked shape explorer. `shape` is square|rectangle|triangle|pentagon|hexagon|cuboid|picker."""
+    shape = shape.lower()
+    titles = {
+        "square": "Square Lab — 2D face & 3D cube",
+        "rectangle": "Rectangle Lab — 2D face & 3D cuboid",
+        "triangle": "Triangle Lab — 2D face & 3D prism",
+        "pentagon": "Pentagon Lab — 2D face & 3D prism",
+        "hexagon": "Hexagon Lab — 2D face & 3D prism",
+        "cuboid": "Cuboid Lab — 3D box & 2D rectangular face",
+        "picker": "2D & 3D Shape Lab",
+    }
+    descriptions = {
+        "square": "Only a square. Resize the side, then switch to 3D to see the cube made of 6 squares.",
+        "rectangle": "Only a rectangle. Change length and width, then switch to 3D for the cuboid.",
+        "triangle": "Only a triangle. Resize a side, then switch to 3D for the prism.",
+        "pentagon": "Only a regular pentagon. Resize a side, then switch to 3D for the prism.",
+        "hexagon": "Only a regular hexagon. Resize a side, then switch to 3D for the prism.",
+        "cuboid": "A cuboid (rectangular box). Adjust length, width and height. Switch to 2D for one face.",
+        "picker": "Pick one named shape. Explore that shape in 2D, then its solid in 3D.",
+    }
+    if shape in ("rectangle", "cuboid"):
+        sliders = [
+            {"id": "length", "label": "Length", "min": 1, "max": 10, "step": 1, "default": 6},
+            {"id": "width", "label": "Width", "min": 1, "max": 10, "step": 1, "default": 4},
+            {"id": "height", "label": "Height (3D)", "min": 1, "max": 10, "step": 1, "default": 3},
+        ]
+        calcs = [
+            {"id": "perim", "label": "Perimeter (2D)", "formula": "2 * (length + width)", "unit": ""},
+            {"id": "area", "label": "Face area", "formula": "length * width", "unit": ""},
+            {"id": "vol", "label": "Volume (3D)", "formula": "length * width * height", "unit": ""},
+        ]
+    else:
+        sliders = [
+            {"id": "s", "label": "Side length", "min": 1, "max": 10, "step": 1, "default": 4},
+            {"id": "height", "label": "Height (3D)", "min": 1, "max": 10, "step": 1, "default": 4},
+        ]
+        if shape == "square":
+            calcs = [
+                {"id": "perim", "label": "Perimeter", "formula": "4 * s", "unit": ""},
+                {"id": "area", "label": "Area", "formula": "s * s", "unit": ""},
+                {"id": "sa", "label": "Cube surface area", "formula": "6 * s * s", "unit": ""},
+                {"id": "vol", "label": "Cube volume", "formula": "s * s * s", "unit": ""},
+            ]
+        elif shape == "triangle":
+            calcs = [
+                {"id": "perim", "label": "Perimeter", "formula": "3 * s", "unit": ""},
+                {"id": "area", "label": "Area (equilateral)", "formula": "0.433 * s * s", "unit": ""},
+            ]
+        elif shape == "pentagon":
+            calcs = [
+                {"id": "perim", "label": "Perimeter", "formula": "5 * s", "unit": ""},
+                {"id": "area", "label": "Area", "formula": "1.72 * s * s", "unit": ""},
+            ]
+        elif shape == "hexagon":
+            calcs = [
+                {"id": "perim", "label": "Perimeter", "formula": "6 * s", "unit": ""},
+                {"id": "area", "label": "Area", "formula": "2.598 * s * s", "unit": ""},
+            ]
+        else:
+            calcs = [
+                {"id": "perim", "label": "Perimeter", "formula": "4 * s", "unit": ""},
+                {"id": "area", "label": "Area", "formula": "s * s", "unit": ""},
+            ]
+    draw_label = {
+        "square": "▶ Draw square",
+        "rectangle": "▶ Draw rectangle",
+        "triangle": "▶ Draw triangle",
+        "pentagon": "▶ Draw pentagon",
+        "hexagon": "▶ Draw hexagon",
+        "cuboid": "▶ Build cuboid",
+        "picker": "▶ Draw shape",
+    }.get(shape, "▶ Draw")
+    return _viz(
+        "shape-lab",
+        titles.get(shape, "Shape Lab"),
+        descriptions.get(shape, "Explore this shape in 2D and 3D."),
+        objects=[{
+            "id": "shape",
+            "label": shape.title(),
+            "type": shape,
+            "properties": {"lock": shape != "picker", "defaultView": default_view},
+        }],
+        sliders=sliders,
+        calcs=calcs,
+        buttons=[
+            {"id": "animate", "label": draw_label, "action": "animate"},
+            {"id": "reset", "label": "Reset", "action": "reset"},
+        ],
+        interactions=[
+            {
+                "id": "i1",
+                "type": "slide",
+                "description": "Use the sliders to resize. The shape name never changes.",
+                "expectedObservation": "Only this shape is on screen.",
+            },
+            {
+                "id": "i2",
+                "type": "toggle",
+                "description": "Switch 2D (face) and 3D (solid).",
+                "expectedObservation": "The 3D solid is built from this 2D face.",
+            },
+        ],
+        animations=[{"id": "draw", "trigger": "button", "description": "Draw sides one by one", "duration": 2.4}],
+    )
+
+
+def apply_shape_lab_guide(lesson: dict[str, Any], query: str = "") -> dict[str, Any]:
+    """Fill guidedExploration (shape-lab) and pin slider defaults from the question (e.g. side 5)."""
+    viz = lesson.get("visualization") or {}
+    vtype = str(viz.get("visualizationType") or "")
+    if vtype == "shape-lab":
+        objs = viz.get("interactiveObjects") or []
+        shape = str((objs[0] or {}).get("type") or "picker").lower() if objs else "picker"
+        if not lesson.get("guidedExploration"):
+            lesson["guidedExploration"] = list(_SHAPE_LAB_GUIDES.get(shape, _SHAPE_LAB_GUIDES["picker"]))
+    # Prefer "side … N" / "side length … N", else first in-range number for s/r/length
+    side_m = re.search(
+        r"\b(?:side(?:\s*length)?|length)\s*(?:of|=|:)?\s*(\d{1,2})\b",
+        query or "",
+        re.I,
+    )
+    nums = [int(side_m.group(1))] if side_m else [int(n) for n in re.findall(r"\b(\d{1,5})\b", query or "")]
+    if vtype == "factor-tree":
+        pair = [n for n in nums if 2 <= n <= 20000][:2]
+        sliders = viz.get("sliders") or []
+        for s in sliders:
+            # Allow pinning large textbook numbers (e.g. 8788)
+            if int(s.get("max") or 99) < 20000:
+                s["max"] = 20000
+        if pair and sliders:
+            if len(pair) >= 1:
+                sliders[0]["default"] = pair[0]
+            if len(pair) >= 2 and len(sliders) > 1:
+                sliders[1]["default"] = pair[1]
+            elif len(pair) == 1 and len(sliders) > 1:
+                # Single-number prime factorisation — mirror on B so ladder still runs
+                sliders[1]["default"] = pair[0]
+        # Tag perfect cube / square so the FE shows the missing multiplier
+        qlow = (query or "").lower()
+        if "perfect cube" in qlow:
+            viz["title"] = "Perfect Cube — Division Method"
+        elif "perfect square" in qlow:
+            viz["title"] = "Perfect Square — Division Method"
+        return lesson
+    # Only simple side/radius labs — not open-box nets (sheetLength + folded length).
+    if nums and vtype in ("shape-lab", "mensuration-cube", "mensuration-cylinder", "circle"):
+        n = nums[0]
+        for slider in viz.get("sliders") or []:
+            sid = str(slider.get("id") or "")
+            if sid in ("s", "length", "r", "side") and slider.get("min", 1) <= n <= slider.get("max", 10):
+                slider["default"] = n
+                break
+    return lesson
+
 
 # (pattern, spec_fn, concept, objective, explanation)
 ELEMENTARY_TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = [
@@ -36,6 +227,47 @@ ELEMENTARY_TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str
         "Matchstick Squares",
         "Build more than one square using the same matchsticks by sharing sides.",
         "Each new square adds 3 matchsticks when it shares a side (rule: 3n + 1).",
+    ),
+    (
+        re.compile(
+            r"(?is)^(?!.*(?:matchsticks?|perfect\s+square|square\s+root|\bsquared\b))"
+            r"(?!.*\b(?:rectangle|rhombus|parallelogram)\b)"
+            r".*\bsquares?\b"
+        ),
+        lambda: _shape_lab_spec("square"),
+        "Square",
+        "A square has 4 equal sides and 4 right angles.",
+        "Resize the side — it stays a square. 3D analogue: cube.",
+    ),
+    (
+        re.compile(
+            r"(?is)^(?!.*\b(?:square|rhombus|parallelogram)\b).*\brectangles?\b"
+        ),
+        lambda: _shape_lab_spec("rectangle"),
+        "Rectangle",
+        "A rectangle has opposite sides equal and 4 right angles.",
+        "Change length and width separately. 3D analogue: cuboid.",
+    ),
+    (
+        re.compile(r"\b(cuboid|rectangular\s+prism|rectangular\s+box)\b", re.I),
+        lambda: _shape_lab_spec("cuboid", default_view="3d"),
+        "Cuboid",
+        "A cuboid is a 3D box with rectangular faces.",
+        "Volume = length × width × height.",
+    ),
+    (
+        re.compile(r"\bpentagons?\b", re.I),
+        lambda: _shape_lab_spec("pentagon"),
+        "Pentagon",
+        "A regular pentagon has 5 equal sides.",
+        "Only a pentagon is shown. 3D analogue: pentagonal prism.",
+    ),
+    (
+        re.compile(r"\bhexagons?\b", re.I),
+        lambda: _shape_lab_spec("hexagon"),
+        "Hexagon",
+        "A regular hexagon has 6 equal sides.",
+        "Only a hexagon is shown. 3D analogue: hexagonal prism.",
     ),
     (
         re.compile(r"\b(count|counting|how\s+many|objects?|apples?|stars?)\b", re.I),
@@ -239,17 +471,16 @@ ELEMENTARY_TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str
         "A square has four equal sides; a rectangle has opposite sides equal.",
     ),
     (
-        re.compile(r"\b(2d|2\s*d|shape|square|rectangle|pentagon|hexagon)\b", re.I),
-        lambda: _viz(
-            "shapes-basic",
-            "2D Shapes Explorer",
-            "Pick a shape. Count its sides and corners.",
-            sliders=[{"id": "sides", "label": "Sides", "min": 3, "max": 8, "step": 1, "default": 4}],
-            buttons=[{"id": "animate", "label": "▶ Draw shape", "action": "animate"}],
+        re.compile(
+            r"\b(2d|2\s*d|2-dimensional)\b.*\bshapes?\b|"
+            r"\bshapes?\b.*\b(2d|2\s*d|2-dimensional)\b|"
+            r"\b(2d\s+shapes?|basic\s+shapes?|plane\s+figures?|polygons?)\b",
+            re.I,
         ),
-        "2D Shapes",
-        "Shapes are named by their sides and corners.",
-        "A triangle has 3 sides; a square has 4 equal sides.",
+        lambda: _shape_lab_spec("picker"),
+        "2D & 3D Shapes",
+        "Name a shape, then explore only that shape in 2D and 3D.",
+        "Pick one shape at a time — square, rectangle, triangle, pentagon or hexagon.",
     ),
     (
         re.compile(r"\b(symmetry|symmetric|mirror|line\s*of\s*symmetry|fold)\b", re.I),
@@ -296,19 +527,26 @@ ELEMENTARY_TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str
         "SOH CAH TOA helps remember the ratios.",
     ),
     (
-        re.compile(r"\b(hcf|lcm|highest\s*common|lowest\s*common|factor\s*tree)\b", re.I),
+        re.compile(
+            r"\b(perfect\s*(?:cube|square)|smallest\s+number\s+by\s+which|"
+            r"multipl(?:y|ied)\s+to\s+(?:obtain|get|make)|"
+            r"hcf|lcm|g\.?c\.?d\.?|highest\s*common|lowest\s*common|least\s*common|"
+            r"factor\s*tree|prime\s*factors?|prime\s*factori[sz]ation|common\s*factor)\b",
+            re.I,
+        ),
         lambda: _viz(
             "factor-tree",
-            "Factor Tree / HCF & LCM",
-            "Pick two numbers. Explore common factors.",
+            "Prime Factors — Division Method",
+            "Division ladder for prime factors, LCM / HCF, or completing a perfect cube / square.",
             sliders=[
-                {"id": "x", "label": "Number A", "min": 2, "max": 48, "step": 1, "default": 12},
-                {"id": "y", "label": "Number B", "min": 2, "max": 48, "step": 1, "default": 18},
+                {"id": "x", "label": "Number A", "min": 2, "max": 20000, "step": 1, "default": 12},
+                {"id": "y", "label": "Number B", "min": 2, "max": 20000, "step": 1, "default": 18},
             ],
+            buttons=[{"id": "animate", "label": "▶ Show steps", "action": "animate"}],
         ),
-        "HCF and LCM",
-        "HCF is the largest shared factor; LCM is the smallest shared multiple.",
-        "Break numbers into prime factors.",
+        "Prime Factors, HCF and LCM",
+        "Use the division method to factorise; for a perfect cube, every exponent must be a multiple of 3.",
+        "Missing primes make the smallest multiplier that completes the cube or square.",
     ),
     (
         re.compile(r"\b(profit|loss|discount|simple\s*interest|principal|rate)\b", re.I),

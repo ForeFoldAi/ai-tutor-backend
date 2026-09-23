@@ -37,6 +37,9 @@ class ConversationMemory:
     last_ai_snippet: str = ""
     current_concept: str = ""
     turn_count: int = 0
+    affect_trajectory: list[str] = field(default_factory=list)
+    engagement_trend: float = 0.5
+    last_positive_moment: str = ""
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -54,6 +57,9 @@ class ConversationMemory:
             last_ai_snippet=str(data.get("last_ai_snippet") or ""),
             current_concept=str(data.get("current_concept") or ""),
             turn_count=int(data.get("turn_count") or 0),
+            affect_trajectory=list(data.get("affect_trajectory") or [])[:5],
+            engagement_trend=float(data.get("engagement_trend") or 0.5),
+            last_positive_moment=str(data.get("last_positive_moment") or ""),
         )
 
 
@@ -195,6 +201,12 @@ def format_memory_for_prompt(memory: ConversationMemory | dict | None) -> str:
         lines.append(f"Current concept: {mem.current_concept}")
     if mem.last_student_question:
         lines.append(f"Last student question: {mem.last_student_question[:160]}")
+    if mem.affect_trajectory:
+        from app.services.student_affect import rapport_from_trajectory
+
+        rapport = rapport_from_trajectory(mem.affect_trajectory)
+        if rapport:
+            lines.append(rapport)
     return "\n".join(lines)
 
 

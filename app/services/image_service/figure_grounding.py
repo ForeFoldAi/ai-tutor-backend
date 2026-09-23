@@ -334,6 +334,15 @@ def classify_mandatory_figure(
         primary_parts.insert(1, (getattr(im, "section_title", None) or ""))
     primary_context = " ".join(filter(None, primary_parts)).lower()
 
+    from app.services.image_service.content_kind_retrieval import (
+        get_content_kind,
+        referenced_asset_matches,
+    )
+
+    # Exact Table/Eq/Fig N from the student question wins over semantic gates.
+    if referenced_asset_matches(intent, im):
+        return True, True, "referenced_asset_match"
+
     gate_text = figure_descriptive_text_for_gates(im, normalize_caption(im.caption or ""))
     if is_offtopic_for_broad_definition_query(
         im,
@@ -342,15 +351,6 @@ def classify_mandatory_figure(
         core_concept=intent.core_concept or "",
     ):
         return False, False, "offtopic_broad_definition"
-
-    from app.services.image_service.content_kind_retrieval import (
-        get_content_kind,
-        referenced_asset_matches,
-    )
-
-    if referenced_asset_matches(intent, im):
-        reasons.append("referenced_asset_match")
-        topic_anchor = True
 
     rag_ref = _figure_referenced_in_rag(fig_num, rag_docs) or _figure_referenced_in_context(
         im, fig_num

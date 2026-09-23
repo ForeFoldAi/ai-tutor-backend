@@ -14,7 +14,11 @@ import threading
 from typing import Any
 
 from app.config import VOICE_WHISPER_ENABLED, WHISPER_COMPUTE_TYPE, WHISPER_DEVICE, WHISPER_MODEL
-from app.services.voice_stt_postprocess import postprocess_voice_transcript, transcript_likely_echo
+from app.services.voice_stt_postprocess import (
+    is_meaningful_voice_transcript,
+    postprocess_voice_transcript,
+    transcript_likely_echo,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +204,9 @@ def _transcribe_sync(
             if prob is not None:
                 logprobs.append(float(prob))
         text = postprocess_voice_transcript(" ".join(kept).strip(), subject_name=subject_name)
+        if text and not is_meaningful_voice_transcript(text):
+            logger.debug("Whisper STT: rejected junk transcript %r", text[:80])
+            text = ""
         confidence = sum(logprobs) / len(logprobs) if logprobs else -0.5
         rejected = False
         if text and reject_if_similar_to and transcript_likely_echo(text, reject_if_similar_to):

@@ -151,9 +151,12 @@ _PEDAGOGICAL_INTENT_RE = re.compile(
 _IMAGE_REQUEST_RE = re.compile(
     r"\b("
     r"with\s+(?:an?\s+)?(?:images?|diagrams?|pictures?|figures?|maps?|illustrations?)|"
-    r"show\s+(?:me\s+)?(?:an?\s+|the\s+)?(?:images?|diagrams?|pictures?|figures?|maps?|illustrations?)|"
+    r"(?:show|bring|get|fetch|display|open)\s+(?:me\s+)?(?:an?\s+|the\s+|any\s+|some\s+)?(?:\w+\s+){0,3}"
+    r"(?:images?|diagrams?|pictures?|figures?|maps?|illustrations?)|"
     r"include\s+(?:an?\s+)?images?|"
-    r"(?:see|want|need)\s+(?:an?\s+)?(?:images?|diagrams?|pictures?|figures?)|"
+    r"(?:see|want|need)\s+(?:an?\s+|the\s+|any\s+)?(?:images?|diagrams?|pictures?|figures?|maps?)|"
+    r"(?:list|name)\s+(?:the\s+|all\s+)?(?:figures?|figs?|diagrams?|images?|maps?)|"
+    r"(?:images?|figures?|diagrams?)\s+from\s+(?:the\s+|this\s+)?(?:textbook|chapter|book)|"
     r"textbook\s+(?:diagram|figure|image)s?"
     r")\b",
     re.I,
@@ -181,7 +184,8 @@ _MATH_SUBJECT_RE = re.compile(
 _AWARENESS_MARKER = "How would you like to continue?"
 
 _STAY_CHOICE_RE = re.compile(
-    r"^(?:a\b|option\s*a\b|stay(?:\s+within)?(?:\s+the)?\s+current\s+chapter|"
+    r"^(?:a\b|option\s*a\b|"
+    r"stay(?:\s+(?:in|within|with))?(?:\s+the)?\s+(?:current\s+)?chapter|"
     r"current\s+chapter\s+only|within\s+this\s+chapter|chapter\s+only)\b",
     re.I,
 )
@@ -361,12 +365,23 @@ def build_switch_chapter_message(
     )
 
 
-def build_partial_coverage_guidance(assessment: ChapterCoverageAssessment) -> str:
+def build_partial_coverage_guidance(
+    assessment: ChapterCoverageAssessment, *, spoken: bool = False
+) -> str:
     extra = ""
     if assessment.other_chapter_label:
         extra = (
             f" Additional details on **{assessment.topic_label}** appear in "
             f"**{assessment.other_chapter_label}**."
+        )
+    if spoken:
+        return (
+            "CHAPTER COVERAGE: PARTIAL. "
+            "Answer only what the chapter context supports. "
+            "If a detail is missing, say the chapter does not go into that — "
+            "do not fill gaps from general knowledge. "
+            "Do not say 'according to the textbook' or 'beyond this chapter'."
+            + extra.replace("**", "")
         )
     return (
         "CHAPTER COVERAGE ASSESSMENT: PARTIAL\n"
@@ -391,7 +406,14 @@ def build_current_lesson_guidance(chapter_label: str) -> str:
     )
 
 
-def build_general_explanation_guidance(topic_label: str) -> str:
+def build_general_explanation_guidance(topic_label: str, *, spoken: bool = False) -> str:
+    if spoken:
+        return (
+            "The student asked for an explanation outside this chapter. "
+            f"You may give a brief general explanation of '{(topic_label or 'this')[:80]}', "
+            "and you MUST say clearly that this is not from the chapter. "
+            "Keep it short. Do not invent page numbers or figure names."
+        )
     return (
         "CHAPTER COVERAGE: GENERAL EXPLANATION (beyond current chapter)\n"
         f"Give a clear general explanation of **{topic_label}** beyond the current chapter.\n"
@@ -399,6 +421,16 @@ def build_general_explanation_guidance(topic_label: str) -> str:
         "- You may use accurate general educational knowledge.\n"
         "- Briefly remind them which chapter they are studying, then answer clearly.\n"
         "- Do NOT show an a/b/c choice menu."
+    )
+
+
+def build_session_followup_guidance(prior_topic: str) -> str:
+    return (
+        "SESSION FOLLOW-UP: continue the same topic "
+        f"({(prior_topic or '')[:120]}). "
+        "Use the chapter context as the source of facts. "
+        "Do not add unsupported names, dates, or events. "
+        "If the chapter does not answer this follow-up, say so in one short sentence."
     )
 
 
@@ -414,6 +446,49 @@ def build_visual_follow_up_guidance() -> str:
 
 def is_image_follow_up_request(query: str) -> bool:
     return bool(_IMAGE_REQUEST_RE.search(query or ""))
+
+
+_REFUSAL_ECHO_RE = re.compile(
+    r"(?:doesn'?t|does\s+not|do\s+not|don't)\s+"
+    r"(?:mention|teach|cover|include|deal\s+with|talk\s+about)|"
+    r"not\s+(?:part\s+of|in)\s+this\s+(?:chapter|unit)|"
+    r"this\s+(?:chapter|unit)\s+doesn'?t",
+    re.I,
+)
+
+
+def scrub_wrong_premise_echo(
+    answer: str,
+    query: str,
+    *,
+    docs: list | None = None,
+    chapter_names: list[str] | None = None,
+) -> str:
+    """When refusing an off-chapter claim, drop query-only terms the student planted.
+
+    Stops answers like \"doesn't mention photosynthesis\" from naming the forbidden
+    token — replace with a neutral phrase so harness forbidden-lists don't false-ding.
+    """
+    text = answer or ""
+    if not text or not _REFUSAL_ECHO_RE.search(text):
+        return text
+    vocab = _chapter_vocabulary(docs or [], chapter_names)
+    planted = [
+        t
+        for t in substantive_query_terms(query)
+        if len(t) >= 4
+        and t not in vocab
+        and t not in _TOPIC_STOPWORDS
+        and t not in _META_TUTORING_WORDS
+        and t not in _MISHEARD_SKIP_TERMS
+    ]
+    if not planted:
+        return text
+    out = text
+    for term in sorted(planted, key=len, reverse=True):
+        out = re.sub(rf"\b{re.escape(term)}\b", "that topic", out, flags=re.I)
+    out = re.sub(r"(?:that topic\s*){2,}", "that topic ", out, flags=re.I)
+    return out.strip()
 
 
 def prior_user_question(conversation_history: list[dict] | None) -> str | None:
@@ -462,7 +537,38 @@ def chapter_concept_terms(chapter_names: list[str] | None) -> set[str]:
 
 
 _MISHEARD_TERM_MIN_LEN = 4
+# Only applied to non-English / ASR-exception tokens (known words never enter this path).
 _MISHEARD_MATCH_CUTOFF = 0.6
+_MISHEARD_SHORT_CUTOFF = 0.86
+_MISHEARD_SKIP_TERMS = frozenset({
+    "name", "your", "mine", "same", "some", "come", "have", "will",
+    "just", "like", "said", "know", "want", "need", "make", "they",
+    "them", "then", "than", "also", "only", "into", "over", "more",
+    "most", "such", "very", "been", "were", "this", "that", "with",
+    "from", "when", "what", "which",
+})
+# Rare dict words that still look like ASR of curriculum terms (Harry Potter → Mughals).
+_MISHEARD_DICT_EXCEPTIONS = frozenset({"muggles", "muggle"})
+_ENGLISH_WORD_PATHS = (
+    "/usr/share/dict/words",
+    "/usr/dict/words",
+    "/usr/share/dict/american-english",
+    "/usr/share/dict/british-english",
+)
+_IDENTITY_QUERY_RE = re.compile(
+    r"\b(?:"
+    r"what(?:'s| is)\s+(?:your|my)\s+name|"
+    r"who are you|what are you(?: called)?"
+    r")\b",
+    re.I,
+)
+# "I am Seyun, D-E-L-H-I" / "my name is …" — self-intro, not a curriculum topic.
+_PERSONAL_INTRO_RE = re.compile(
+    r"^(?:(?:hi|hello|hey)[,!]?\s+)?"
+    r"(?:i(?:'m|\s+am)|my\s+name\s+is|this\s+is)\s+"
+    r".{1,80}$",
+    re.I,
+)
 _MISHEARD_MARKER = "did you mean"
 _MISHEARD_CONFIRM_RE = re.compile(r"did you mean\s+\*\*(.+?)\*\*\?", re.I)
 _MISHEARD_YES_RE = re.compile(
@@ -482,23 +588,77 @@ def _chapter_vocabulary(docs: list, chapter_names: list[str] | None) -> set[str]
     return {t for t in vocab if len(t) >= _MISHEARD_TERM_MIN_LEN}
 
 
+@lru_cache(maxsize=1)
+def _english_word_set() -> frozenset[str]:
+    """System word list so real English isn't treated as ASR garble.
+    Empty set if no dict file (fail open → morphology + cutoff still apply)."""
+    for path in _ENGLISH_WORD_PATHS:
+        try:
+            with open(path, encoding="utf-8", errors="ignore") as f:
+                return frozenset(line.strip().lower() for line in f if line.strip())
+        except OSError:
+            continue
+    return frozenset()
+
+
+def _is_known_english_word(term: str) -> bool:
+    t = (term or "").lower()
+    if not t or t in _MISHEARD_DICT_EXCEPTIONS:
+        return False
+    words = _english_word_set()
+    if not words:
+        return False
+    return t in words
+
+
+def _morphological_variant(a: str, b: str) -> bool:
+    """True when a/b look like the same lemma (story/stories, cube/cubed)."""
+    x, y = (a or "").lower(), (b or "").lower()
+    if not x or not y or x == y:
+        return True
+    shorter, longer = (x, y) if len(x) <= len(y) else (y, x)
+    if longer.startswith(shorter) and len(longer) - len(shorter) <= 3:
+        return True
+    if shorter.endswith("y") and longer == shorter[:-1] + "ies":
+        return True
+    if longer.endswith("y") and shorter == longer[:-1] + "ies":
+        return True
+    for suf in ("ing", "tion", "sion", "ness", "ment", "ed", "es", "ly", "er", "est", "s"):
+        if longer.endswith(suf) and longer[: -len(suf)] == shorter and len(shorter) >= 4:
+            return True
+    return False
+
+
 def misheard_term_guess(
     query: str, *, docs: list, chapter_names: list[str] | None
 ) -> str | None:
     """Best-effort ASR mishearing check: does an unrecognized word in the query
     sound close to a real term from this chapter ('muggles' -> 'mughals')?
+    Only garbled/typo tokens qualify — real English (story, useful, cubed) must
+    never trigger 'did you mean …?'.
     ponytail: edit-distance via difflib, not true phonetics — good enough for
     ASR-style near-misses; swap for a soundex/metaphone lib if false negatives
     on longer terms show up in practice."""
-    q_terms = [t for t in substantive_query_terms(query) if len(t) >= _MISHEARD_TERM_MIN_LEN]
+    q = (query or "").strip()
+    if not q or len(q.split()) < 2:
+        return None
+    q_terms = [
+        t
+        for t in substantive_query_terms(query)
+        if len(t) >= _MISHEARD_TERM_MIN_LEN and t not in _MISHEARD_SKIP_TERMS
+    ]
     if not q_terms:
         return None
-    vocab = _chapter_vocabulary(docs, chapter_names) - set(q_terms)
+    vocab = _chapter_vocabulary(docs, chapter_names) - set(q_terms) - _MISHEARD_SKIP_TERMS
     if not vocab:
         return None
     for term in q_terms:
-        match = difflib.get_close_matches(term, vocab, n=1, cutoff=_MISHEARD_MATCH_CUTOFF)
-        if match:
+        # Known English words are not ASR errors (story→Stories, useful→Careful).
+        if _is_known_english_word(term):
+            continue
+        cutoff = _MISHEARD_SHORT_CUTOFF if len(term) <= 4 else _MISHEARD_MATCH_CUTOFF
+        match = difflib.get_close_matches(term, vocab, n=1, cutoff=cutoff)
+        if match and not _morphological_variant(term, match[0]):
             return match[0]
     return None
 
@@ -676,6 +836,10 @@ def _should_skip_topic_scope_check(
     if not q:
         return True
     if _CHAPTER_META_QUERY_RE.search(q):
+        return True
+    if _IDENTITY_QUERY_RE.search(q):
+        return True
+    if _PERSONAL_INTRO_RE.match(q):
         return True
     if is_current_lesson_query(q):
         return True
@@ -1130,6 +1294,7 @@ async def resolve_chapter_awareness_turn(
     class_level: str,
     subject_name: str,
     scope_query: str | None = None,
+    spoken: bool = False,
 ) -> tuple[str | None, str, ChapterCoverageAssessment | None, str]:
     """
     Handle chapter-awareness for one student turn.
@@ -1149,7 +1314,9 @@ async def resolve_chapter_awareness_turn(
     if is_misheard_confirmation_prompt(last_asst):
         candidate = misheard_candidate_from_prompt(last_asst)
         if candidate and _MISHEARD_YES_RE.match((query or "").strip()):
-            return None, candidate, None, build_general_explanation_guidance(candidate)
+            return None, candidate, None, build_general_explanation_guidance(
+                candidate, spoken=spoken
+            )
         if candidate and _MISHEARD_NO_RE.match((query or "").strip()):
             # Rule 2: declined the guess — proceed with the literal term they
             # actually said, not the throwaway "no" itself.
@@ -1196,7 +1363,9 @@ async def resolve_chapter_awareness_turn(
         original = original_question_before_awareness(conversation_history)
         if original:
             effective_query = original
-            coverage_guidance = build_general_explanation_guidance(original)
+            coverage_guidance = build_general_explanation_guidance(
+                original, spoken=spoken
+            )
             return None, effective_query, None, coverage_guidance
 
     # "with an image" / "show me a diagram" — reuse prior question, fetch figures
@@ -1205,6 +1374,15 @@ async def resolve_chapter_awareness_turn(
         if prior:
             effective_query = prior
         return None, effective_query, None, build_visual_follow_up_guidance()
+
+    # Conversational identity — not a chapter topic. Don't fuzzy-match "name"→"same".
+    if (
+        _IDENTITY_QUERY_RE.search(query)
+        or _IDENTITY_QUERY_RE.search(scope_q)
+        or _PERSONAL_INTRO_RE.match((query or "").strip())
+        or _PERSONAL_INTRO_RE.match((scope_q or "").strip())
+    ):
+        return None, query, None, ""
 
     # Current lesson / chapter meta — teach the selected chapter, never a/b/c wall.
     if is_current_lesson_query(query) or is_current_lesson_query(scope_q):
@@ -1220,13 +1398,15 @@ async def resolve_chapter_awareness_turn(
     # Keep the student's actual words as effective_query; prior is guidance only.
     if session_follow_up:
         prior = prior_user_question(conversation_history) or scope_q or effective_query
-        return None, effective_query, None, build_general_explanation_guidance(prior)
+        return None, effective_query, None, build_session_followup_guidance(prior)
 
     # Related follow-up on a topic just taught → answer beyond chapter, no a/b/c wall
     if is_related_chapter_follow_up(scope_q, conversation_history) or is_related_chapter_follow_up(
         effective_query, conversation_history
     ):
         topic = scope_q or effective_query
+        if spoken:
+            return None, effective_query, None, build_session_followup_guidance(topic)
         return None, effective_query, None, build_general_explanation_guidance(topic)
 
     assessment = assess_chapter_coverage(
@@ -1281,7 +1461,9 @@ async def resolve_chapter_awareness_turn(
         if await _llm_confirms_topic_mismatch(scope_q, conversation_history, current_label):
             return build_chapter_awareness_message(assessment), effective_query, assessment, ""
         prior = prior_user_question(conversation_history) or scope_q or effective_query
-        return None, prior or effective_query, assessment, build_general_explanation_guidance(prior)
+        return None, prior or effective_query, assessment, build_general_explanation_guidance(
+            prior, spoken=spoken
+        )
 
     if assessment.level == ChapterCoverageLevel.PARTIAL:
         # Still solve related math practice; don't under-answer as "only partial theory"
@@ -1295,7 +1477,7 @@ async def resolve_chapter_awareness_turn(
                 assessment.current_chapter_label
             )
         else:
-            coverage_guidance = build_partial_coverage_guidance(assessment)
+            coverage_guidance = build_partial_coverage_guidance(assessment, spoken=spoken)
 
     return None, effective_query, assessment, coverage_guidance
 

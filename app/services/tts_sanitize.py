@@ -138,6 +138,8 @@ def _normalize_whitespace_and_punctuation(text: str) -> str:
     text = re.sub(r"\.{2,}(?!\.)", ".", text)
     # Streaming LLM chunks often flush lone markdown symbols — drop them
     text = re.sub(r"[*#_`\\$]+", " ", text)
+    # Inline HR leftovers after newline collapse (Nest speakable / mid-chunk)
+    text = re.sub(r"(?:^|\s)-{3,}(?=\s|$)", " ", text)
     # Remove isolated bracket-only fragments from JSON/templates
     text = re.sub(r"\s*[\[\]{}]\s*", " ", text)
     text = re.sub(r"\s+", " ", text)

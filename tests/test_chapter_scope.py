@@ -294,6 +294,16 @@ def test_scope_choice_general():
     assert detect_chapter_scope_choice("general explanation", history) == ChapterScopeChoice.GENERAL
     assert detect_chapter_scope_choice("I'll go with option B", history) == ChapterScopeChoice.SWITCH
     assert detect_chapter_scope_choice("I choose option c please", history) == ChapterScopeChoice.GENERAL
+    assert detect_chapter_scope_choice("Stay in the chapter.", history) == ChapterScopeChoice.STAY
+    assert detect_chapter_scope_choice("stay in chapter", history) == ChapterScopeChoice.STAY
+
+
+def test_personal_intro_skips_chapter_wall():
+    from app.services.chapter_scope import _PERSONAL_INTRO_RE
+
+    assert _PERSONAL_INTRO_RE.match("I am Seyun, D-E-L-H-I.")
+    assert _PERSONAL_INTRO_RE.match("My name is Suneel")
+    assert not _PERSONAL_INTRO_RE.match("What are natural resources in India?")
 
 
 @patch("app.services.chapter_scope._best_other_chapter")
@@ -315,7 +325,29 @@ def test_pedagogical_quiz_skips_scope(mock_other):
     assert assessment.level == ChapterCoverageLevel.FULL
 
 
-def test_misheard_term_guess_finds_chapter_word():
+def test_scrub_wrong_premise_echo_drops_planted_terms():
+    from app.services.chapter_scope import scrub_wrong_premise_echo
+
+    ch1_id = "11111111-1111-1111-1111-111111111111"
+    docs = [_doc("Tenali Ramakrishna used wit and wisdom in the king's court.", ch1_id)]
+    names = ["Unit 1 - Wit and Wisdom"]
+    out = scrub_wrong_premise_echo(
+        "The chapter Wit and Wisdom doesn't mention who invented photosynthesis — "
+        "it focuses on clever problem-solving.",
+        "who invented photosynthesis in Wit and Wisdom?",
+        docs=docs,
+        chapter_names=names,
+    )
+    assert "photosynthesis" not in out.lower()
+    assert "wit" in out.lower() or "wisdom" in out.lower() or "that topic" in out.lower()
+
+
+def test_scrub_wrong_premise_leaves_normal_answers():
+    from app.services.chapter_scope import scrub_wrong_premise_echo
+
+    text = "Tenali used wit to calm the king."
+    assert scrub_wrong_premise_echo(text, "who is tenali?", docs=[], chapter_names=[]) == text
+
     from app.services.chapter_scope import misheard_term_guess
 
     ch1_id = "11111111-1111-1111-1111-111111111111"
@@ -323,6 +355,68 @@ def test_misheard_term_guess_finds_chapter_word():
     assert misheard_term_guess("tell me about the muggles", docs=docs, chapter_names=[]) == "mughal"
     # No plausible near-miss → no guess.
     assert misheard_term_guess("what is photosynthesis", docs=docs, chapter_names=[]) is None
+
+
+def test_misheard_skips_real_english_words():
+    """Clear teaching questions must never early-exit on story→Stories / useful→Careful."""
+    from app.services.chapter_scope import misheard_term_guess
+
+    ch1_id = "11111111-1111-1111-1111-111111111111"
+    docs = [
+        _doc(
+            "The stories show careful observation. Curiosity is useful. "
+            "What is 8 cubed? The cube of a number. Exercise helps health.",
+            ch1_id,
+        )
+    ]
+    assert misheard_term_guess("can you tell the main story briefly?", docs=docs, chapter_names=[]) is None
+    assert misheard_term_guess("how is curiosity useful?", docs=docs, chapter_names=[]) is None
+    assert misheard_term_guess("what is 8 cubed?", docs=docs, chapter_names=[]) is None
+    assert misheard_term_guess("how does exercise help?", docs=docs, chapter_names=[]) is None
+    # True typo / ASR garble still matches.
+    assert misheard_term_guess("tell me about the muggles", docs=docs, chapter_names=[]) is None
+    docs2 = [_doc("Babur founded the Mughal empire.", ch1_id)]
+    assert misheard_term_guess("tell me about the muggles", docs=docs2, chapter_names=[]) == "mughal"
+
+
+def test_misheard_term_does_not_map_name_to_same():
+    from app.services.chapter_scope import misheard_term_guess
+
+    ch1_id = "11111111-1111-1111-1111-111111111111"
+    docs = [_doc("The same rulers held land on the political map.", ch1_id)]
+    assert misheard_term_guess("What is your name?", docs=docs, chapter_names=[]) is None
+    assert misheard_term_guess("What is my name?", docs=docs, chapter_names=[]) is None
+    assert misheard_term_guess("I said name, what is your name?", docs=docs, chapter_names=[]) is None
+
+
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_identity_question_skips_misheard_and_chapter_wall(mock_other):
+    mock_other.return_value = ("", 0, 0)
+    ch1_id = "11111111-1111-1111-1111-111111111111"
+    names = ["Chapter 2 - Reshaping India's Political Map"]
+    docs = [_doc("The same rulers held land on the political map.", ch1_id)]
+
+    early, q, _a, _g = asyncio.run(resolve_chapter_awareness_turn(
+        "What is your name?",
+        docs=docs,
+        conversation_history=None,
+        collection_name="CBSE_CLASS_8_Social",
+        chapter_ids=[ch1_id],
+        chapter_names=names,
+        board="CBSE",
+        class_level="CLASS_8",
+        subject_name="Social",
+        spoken=True,
+    ))
+    assert early is None
+    assert q == "What is your name?"
+
+
+def test_misheard_term_skips_single_word_noise():
+    from app.services.chapter_scope import misheard_term_guess
+
+    assert misheard_term_guess("coins", docs=[], chapter_names=[]) is None
+    assert misheard_term_guess("bell", docs=[], chapter_names=[]) is None
 
 
 @patch("app.services.chapter_scope._best_other_chapter")
