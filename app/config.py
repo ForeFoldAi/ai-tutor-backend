@@ -35,42 +35,58 @@ LLM_CHAT_MODEL = _env_first("LLM_CHAT_MODEL")
 LLM_VOICE_MODEL = _env_first("LLM_VOICE_MODEL")
 LLM_LESSON_MODEL = _env_first("LLM_LESSON_MODEL")
 LLM_ASSISTANT_MODEL = _env_first("LLM_ASSISTANT_MODEL")
+# Vision must NOT fall back to a text-only chat model (e.g. ministral-8b) — that
+# silently "can't read" clear homework photos. Default is Pixtral (Mistral vision).
+LLM_VISION_MODEL = _env_first(
+    "LLM_VISION_MODEL",
+    "IMAGE_VISION_MODEL",
+    default="pixtral-12b-2409",
+)
 
 # Optional per-feature API key / base URL (empty → LLM_API_KEY / LLM_BASE_URL).
 LLM_CHAT_API_KEY = _env_first("LLM_CHAT_API_KEY") or None
 LLM_VOICE_API_KEY = _env_first("LLM_VOICE_API_KEY") or None
 LLM_LESSON_API_KEY = _env_first("LLM_LESSON_API_KEY") or None
 LLM_ASSISTANT_API_KEY = _env_first("LLM_ASSISTANT_API_KEY") or None
+LLM_VISION_API_KEY = _env_first("LLM_VISION_API_KEY") or None
 
 LLM_CHAT_BASE_URL = _env_first("LLM_CHAT_BASE_URL")
 LLM_VOICE_BASE_URL = _env_first("LLM_VOICE_BASE_URL")
 LLM_LESSON_BASE_URL = _env_first("LLM_LESSON_BASE_URL")
 LLM_ASSISTANT_BASE_URL = _env_first("LLM_ASSISTANT_BASE_URL")
+LLM_VISION_BASE_URL = _env_first("LLM_VISION_BASE_URL")
 
 _LLM_FEATURE_MODELS = {
     "chat": LLM_CHAT_MODEL,
     "voice": LLM_VOICE_MODEL,
     "lesson": LLM_LESSON_MODEL,
     "assistant": LLM_ASSISTANT_MODEL,
+    "vision": LLM_VISION_MODEL,
 }
 _LLM_FEATURE_KEYS = {
     "chat": LLM_CHAT_API_KEY,
     "voice": LLM_VOICE_API_KEY,
     "lesson": LLM_LESSON_API_KEY,
     "assistant": LLM_ASSISTANT_API_KEY,
+    "vision": LLM_VISION_API_KEY,
 }
 _LLM_FEATURE_BASE_URLS = {
     "chat": LLM_CHAT_BASE_URL,
     "voice": LLM_VOICE_BASE_URL,
     "lesson": LLM_LESSON_BASE_URL,
     "assistant": LLM_ASSISTANT_BASE_URL,
+    "vision": LLM_VISION_BASE_URL,
 }
 
 
 def llm_model_for(feature: str = "chat") -> str:
-    """Resolve model for a feature; falls back to LLM_MODEL."""
+    """Resolve model for a feature; falls back to LLM_MODEL (vision has its own default)."""
     override = _LLM_FEATURE_MODELS.get(feature) or ""
-    return override or LLM_MODEL
+    if override:
+        return override
+    if feature == "vision":
+        return LLM_VISION_MODEL or "pixtral-12b-2409"
+    return LLM_MODEL
 
 
 def llm_api_key_for(feature: str = "chat") -> str | None:
@@ -426,6 +442,50 @@ PDF_EXTRACTION_ENABLE_TABLE_VLM = os.environ.get(
     "PDF_EXTRACTION_ENABLE_TABLE_VLM",
     os.environ.get("PDF_EXTRACT_ENABLE_TABLE_VLM", "false"),
 ).lower() in ("1", "true", "yes")
+
+# ---------------------------------------------------------------------------
+# Student chat image understanding (homework / textbook photos)
+# ---------------------------------------------------------------------------
+
+IMAGE_VISION_PROVIDER = os.environ.get("IMAGE_VISION_PROVIDER", "openai_compatible").strip() or "openai_compatible"
+IMAGE_MAX_SIZE_MB = float(os.environ.get("IMAGE_MAX_SIZE_MB", os.environ.get("MAX_TUTOR_IMAGE_SIZE_MB", "8")))
+IMAGE_MAX_WIDTH = int(os.environ.get("IMAGE_MAX_WIDTH", os.environ.get("MAX_TUTOR_IMAGE_WIDTH", "4096")))
+IMAGE_MAX_HEIGHT = int(os.environ.get("IMAGE_MAX_HEIGHT", os.environ.get("MAX_TUTOR_IMAGE_HEIGHT", "4096")))
+IMAGE_ALLOWED_MIME = tuple(
+    m.strip().lower()
+    for m in os.environ.get(
+        "IMAGE_ALLOWED_MIME",
+        "image/jpeg,image/jpg,image/png,image/webp",
+    ).split(",")
+    if m.strip()
+)
+IMAGE_ANALYSIS_TIMEOUT = float(os.environ.get("IMAGE_ANALYSIS_TIMEOUT", "45"))
+IMAGE_CACHE_ENABLED = os.environ.get("IMAGE_CACHE_ENABLED", "true").lower() in ("1", "true", "yes")
+IMAGE_CACHE_TTL = int(os.environ.get("IMAGE_CACHE_TTL", "3600"))
+IMAGE_MAX_IMAGES_PER_REQUEST = int(os.environ.get("IMAGE_MAX_IMAGES_PER_REQUEST", "1"))
+IMAGE_TEMP_TTL_SEC = int(os.environ.get("IMAGE_TEMP_TTL_SEC", "600"))
+IMAGE_ANALYSIS_VERSION = os.environ.get("IMAGE_ANALYSIS_VERSION", "1")
+IMAGE_TEMP_DIR = os.environ.get(
+    "IMAGE_TEMP_DIR",
+    os.path.join(PROJECT_ROOT, "uploads", "_tutor_user_images"),
+)
+# Pixtral retries for transient failures (timeout, 429, 5xx, malformed JSON). Total calls = 1 + this.
+VISION_MAX_RETRIES = max(0, int(os.environ.get("VISION_MAX_RETRIES", "1")))
+
+# Local Tesseract OCR before vision. Thresholds are routing heuristics, not correctness claims.
+TESSERACT_ENABLED = os.environ.get("TESSERACT_ENABLED", "true").lower() in ("1", "true", "yes")
+TESSERACT_CMD = os.environ.get("TESSERACT_CMD", "").strip()
+TESSERACT_LANG = os.environ.get("TESSERACT_LANG", "").strip() or OCR_LANG
+TESSERACT_MIN_CONFIDENCE = float(os.environ.get("TESSERACT_MIN_CONFIDENCE", "0.85"))
+TESSERACT_MIN_TEXT_COVERAGE = float(os.environ.get("TESSERACT_MIN_TEXT_COVERAGE", "0.60"))
+TESSERACT_MIN_WORDS = int(os.environ.get("TESSERACT_MIN_WORDS", "3"))
+# Max share of words below 0.6 confidence for OCR-only answers (clean pages ≈0–0.02, garbled photos ≥0.08).
+TESSERACT_MAX_LOW_CONF_RATIO = float(os.environ.get("TESSERACT_MAX_LOW_CONF_RATIO", "0.05"))
+TESSERACT_TIMEOUT_SEC = float(os.environ.get("TESSERACT_TIMEOUT_SEC", "10"))
+# Concurrent tesseract processes per worker; extra requests skip OCR and go to vision.
+TESSERACT_MAX_CONCURRENCY = max(
+    1, int(os.environ.get("TESSERACT_MAX_CONCURRENCY", "") or max(1, (os.cpu_count() or 2) // 2))
+)
 
 # ---------------------------------------------------------------------------
 # Conversation memory (long follow-up sessions)

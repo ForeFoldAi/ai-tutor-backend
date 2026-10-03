@@ -44,6 +44,7 @@ from app.modules.events.middleware import DomainEventMiddleware
 from app.modules.learning_intelligence.router import internal_router as lia_internal_router
 from app.modules.learning_intelligence.router import tutor_router as lia_tutor_router
 from app.modules.notifications.router import router as notifications_router
+from app.modules.image_understanding.router import router as tutor_images_router
 
 app = FastAPI()
 
@@ -104,6 +105,7 @@ app.include_router(events_ws_router)
 app.include_router(lia_internal_router)
 app.include_router(lia_tutor_router)
 app.include_router(notifications_router)
+app.include_router(tutor_images_router)
 
 
 @app.on_event("startup")
@@ -290,6 +292,7 @@ def ai_models_health():
         llm_base_url_for,
         llm_model_for,
     )
+    from app.modules.image_understanding.ocr.service import ocr_status
     from app.services.image_service.multimodal_encoder import clip_model_available, current_model_name
     from app.services.vector_service import is_embedding_model_loaded
     from app.services.voice_whisper_stt import whisper_available
@@ -341,6 +344,11 @@ def ai_models_health():
                 "clip_loaded": clip_ok,
                 "hf_token_set": bool(HF_TOKEN),
             },
+            "image_understanding": {
+                "vision_model": llm_model_for("vision"),
+                "vision_api_key_configured": bool(llm_api_key_for("vision")),
+                "ocr": ocr_status(),
+            },
             "voice_tts": {
                 "provider": "edge-tts",
                 "voice": "en-IN-NeerjaNeural",
@@ -372,7 +380,7 @@ class ConversationTurn(BaseModel):
 
 
 class ChapterChatRequest(BaseModel):
-    query: str
+    query: str = ""
     board: str
     class_level: str
     subject_name: str
@@ -383,6 +391,7 @@ class ChapterChatRequest(BaseModel):
     images_only: bool = False
     agent_mode: str | None = None  # ask | practice | explain
     voice_mode: bool = False
+    image_ids: list[str] | None = None
     # Voice session state (NestJS → FastAPI)
     tutor_state: str | None = None
     explained_points: list[str] | None = None
@@ -502,31 +511,42 @@ async def chapter_chat(
 ):
     """Chapter-aware chat: retrieve from the subject's ChromaDB collection,
     optionally filtered to the selected chapter IDs."""
+    if not (req.query or "").strip() and not (req.image_ids or []):
+        raise HTTPException(status_code=400, detail="Please type a question or attach an image.")
     collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
     logger.debug(
         "[CHAT] collection=%r chapter_ids=%s query=%r",
-        collection, req.chapter_ids, req.query[:80],
+        collection, req.chapter_ids, (req.query or "")[:80],
     )
     history = (
         [{"role": t.role, "content": t.content} for t in req.conversation_history]
         if req.conversation_history
         else None
     )
-    answer, related_images, math_lesson, science_experiment = await chapter_aware_qa(
-        req.query,
-        collection_name=collection,
-        chapter_ids=req.chapter_ids,
-        class_level=req.class_level,
-        board=req.board,
-        subject_name=req.subject_name,
-        chapter=req.chapter or "",
-        chapter_names=req.chapter_names,
-        conversation_history=history,
-        student_name=_current_user.full_name,
-        student_key=str(_current_user.id),
-        images_only=req.images_only,
-        agent_mode=req.agent_mode,
-    )
+    try:
+        answer, related_images, math_lesson, science_experiment = await chapter_aware_qa(
+            req.query or "",
+            collection_name=collection,
+            chapter_ids=req.chapter_ids,
+            class_level=req.class_level,
+            board=req.board,
+            subject_name=req.subject_name,
+            chapter=req.chapter or "",
+            chapter_names=req.chapter_names,
+            conversation_history=history,
+            student_name=_current_user.full_name,
+            student_key=str(_current_user.id),
+            images_only=req.images_only,
+            agent_mode=req.agent_mode,
+            image_ids=req.image_ids,
+            student_user_id=int(_current_user.id),
+        )
+    except Exception as exc:
+        from app.modules.image_understanding.errors import ImageUnderstandingError
+
+        if isinstance(exc, ImageUnderstandingError):
+            raise HTTPException(status_code=400, detail=exc.user_message) from None
+        raise
     return {
         "answer": answer,
         "related_images": related_images,
@@ -553,8 +573,11 @@ async def chapter_chat_stream(
     collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
     logger.debug(
         "[STREAM] collection=%r chapter_ids=%s query=%r",
-        collection, req.chapter_ids, req.query[:80],
+        collection, req.chapter_ids, (req.query or "")[:80],
     )
+
+    if not (req.query or "").strip() and not (req.image_ids or []):
+        raise HTTPException(status_code=400, detail="Please type a question or attach an image.")
 
     async def ndjson_generator():
         pending: list[bytes] = []
@@ -601,6 +624,11 @@ async def chapter_chat_stream(
                 ).encode()
             )
 
+        async def emit_status(payload: dict) -> None:
+            pending.append(
+                (json.dumps(payload, ensure_ascii=False, default=str) + "\n").encode()
+            )
+
         history = (
             [{"role": t.role, "content": t.content} for t in req.conversation_history]
             if req.conversation_history
@@ -609,7 +637,7 @@ async def chapter_chat_stream(
         voice_meta: dict = {}
         try:
             async for token in chapter_aware_qa_stream(
-                req.query,
+                req.query or "",
                 collection_name=collection,
                 chapter_ids=req.chapter_ids,
                 class_level=req.class_level,
@@ -621,6 +649,7 @@ async def chapter_chat_stream(
                 emit_clean_answer=emit_clean,
                 emit_math_lesson=emit_lesson,
                 emit_science_experiment=emit_experiment,
+                emit_status=emit_status,
                 conversation_history=history,
                 student_name=_current_user.full_name,
                 student_key=str(_current_user.id),
@@ -636,6 +665,8 @@ async def chapter_chat_stream(
                 filler_phrase_played=req.filler_phrase_played,
                 affect_trajectory=req.affect_trajectory,
                 voice_metadata_out=voice_meta,
+                image_ids=req.image_ids,
+                student_user_id=int(_current_user.id),
             ):
                 while pending:
                     yield pending.pop(0)
@@ -661,12 +692,22 @@ async def chapter_chat_stream(
                 )
             yield (json.dumps(done_payload, ensure_ascii=False, default=str) + "\n").encode()
         except Exception as exc:
+            from app.modules.image_understanding.errors import ImageUnderstandingError
+
             logger.exception("[STREAM] chapter chat failed: %s", exc)
             while pending:
                 yield pending.pop(0)
-            yield (
-                json.dumps({"type": "token", "content": CHAT_ANSWER_FAILED}, ensure_ascii=False) + "\n"
-            ).encode()
+            if isinstance(exc, ImageUnderstandingError):
+                yield (
+                    json.dumps({"type": "error", "content": exc.user_message}, ensure_ascii=False) + "\n"
+                ).encode()
+                yield (
+                    json.dumps({"type": "token", "content": exc.user_message}, ensure_ascii=False) + "\n"
+                ).encode()
+            else:
+                yield (
+                    json.dumps({"type": "token", "content": CHAT_ANSWER_FAILED}, ensure_ascii=False) + "\n"
+                ).encode()
             yield (json.dumps({"type": "done"}, ensure_ascii=False) + "\n").encode()
 
     return StreamingResponse(

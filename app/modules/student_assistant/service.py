@@ -573,6 +573,8 @@ def _build_messages(
     detected: str,
     textbook: str,
     conversation_memory: str = "",
+    image_understanding_block: str = "",
+    math_prompt_block: str = "",
 ) -> list[dict[str, str]]:
     mode = normalize_agent_mode(agent_mode)
     template = _MODE_PROMPTS[mode]
@@ -589,25 +591,27 @@ def _build_messages(
             "Do not invent textbook content. Tell the student to use Ask AI Tutor "
             "for general or out-of-book questions."
         )
-    messages: list[dict[str, str]] = [
-        {
-            "role": "system",
-            "content": template.format(
-                student_name=_first_name(student_name),
-                context=context,
-                detected=detected,
-                textbook=textbook_block,
-            )
-            + (f"\n\n{conversation_memory}" if conversation_memory.strip() else ""),
-        }
-    ]
+    system = template.format(
+        student_name=_first_name(student_name),
+        context=context,
+        detected=detected,
+        textbook=textbook_block,
+    )
+    if conversation_memory.strip():
+        system = system + f"\n\n{conversation_memory}"
+    if image_understanding_block.strip():
+        system = system + f"\n\n{image_understanding_block.strip()}"
+    if math_prompt_block.strip():
+        system = system + f"\n\n{math_prompt_block.strip()}"
+    messages: list[dict[str, str]] = [{"role": "system", "content": system}]
     if conversation_history:
         for turn in conversation_history[-8:]:
             role = (turn.get("role") or "").strip()
             content = (turn.get("content") or "").strip()
             if role in ("user", "assistant") and content:
                 messages.append({"role": role, "content": content})
-    messages.append({"role": "user", "content": query.strip()})
+    user_q = (query or "").strip() or "Please help me with the attached image."
+    messages.append({"role": "user", "content": user_q})
     return messages
 
 
@@ -655,17 +659,47 @@ async def chat(
     query: str,
     conversation_history: list[dict[str, str]] | None = None,
     agent_mode: str = "free",
+    image_ids: list[str] | None = None,
 ) -> tuple[str, list[str]]:
     mode = normalize_agent_mode(agent_mode)
     context = build_student_context(db, user)
+    image_block = ""
+    math_block = ""
+    retrieval_query = query
+    image_unclear = False
+    if image_ids:
+        from app.modules.image_understanding.service import understand as understand_images
+
+        class_level = ""
+        try:
+            overview = learning_service.get_overview(db, user)
+            class_level = str(getattr(overview, "class_level", "") or "")
+        except Exception:
+            pass
+        bundle = await understand_images(
+            image_ids,
+            query,
+            user_id=int(user.id),
+            class_level=class_level,
+        )
+        if bundle:
+            image_unclear = bundle.result.status == "unclear"
+            image_block = bundle.tutor_prompt_block
+            math_block = bundle.math_prompt_block
+            if bundle.retrieval_query:
+                retrieval_query = bundle.retrieval_query
+            if not (query or "").strip():
+                query = bundle.retrieval_query or "Please help me with the attached image."
+
     conv, recent_hist, mem = _resolve_turn_context(query, conversation_history)
-    scope = detect_learning_scope(
-        db, user, query, recent_hist, agent_mode=mode
+    # Unreadable image: the tutor must ask for a clearer photo, so don't fetch unrelated textbook text.
+    scope = {} if image_unclear else detect_learning_scope(
+        db, user, retrieval_query or query, recent_hist, agent_mode=mode
     )
     textbook = (
         _textbook_snippets(
             scope,
-            query,
+            retrieval_query or query,
             agent_mode=mode,
             conversation_history=recent_hist,
         )
@@ -681,6 +715,8 @@ async def chat(
         detected=_format_detected(scope),
         textbook=textbook,
         conversation_memory=format_memory_for_prompt(mem),
+        image_understanding_block=image_block,
+        math_prompt_block=math_block,
     )
     answer = (await _call_mistral_async(messages, max_tokens=ASSISTANT_MAX_TOKENS, feature="assistant") or "").strip()
     if _looks_incomplete(answer):
@@ -704,17 +740,52 @@ async def chat_stream(
     query: str,
     conversation_history: list[dict[str, str]] | None = None,
     agent_mode: str = "free",
+    image_ids: list[str] | None = None,
 ) -> AsyncIterator[str]:
     mode = normalize_agent_mode(agent_mode)
     context = build_student_context(db, user)
+    image_block = ""
+    math_block = ""
+    retrieval_query = query
+    image_unclear = False
+    if image_ids:
+        yield "\0STATUS:image_processing"
+        from app.modules.image_understanding.service import understand as understand_images
+
+        class_level = ""
+        try:
+            overview = learning_service.get_overview(db, user)
+            class_level = str(getattr(overview, "class_level", "") or "")
+        except Exception:
+            pass
+        bundle = await understand_images(
+            image_ids,
+            query,
+            user_id=int(user.id),
+            class_level=class_level,
+        )
+        if bundle:
+            image_unclear = bundle.result.status == "unclear"
+            image_block = bundle.tutor_prompt_block
+            math_block = bundle.math_prompt_block
+            if bundle.retrieval_query:
+                retrieval_query = bundle.retrieval_query
+            if not (query or "").strip():
+                query = bundle.retrieval_query or "Please help me with the attached image."
+            yield (
+                "\0STATUS:image_understood:"
+                f"{bundle.result.image_type}:{bundle.intent}:{bundle.result.confidence}"
+            )
+
     conv, recent_hist, mem = _resolve_turn_context(query, conversation_history)
-    scope = detect_learning_scope(
-        db, user, query, recent_hist, agent_mode=mode
+    # Unreadable image: the tutor must ask for a clearer photo, so don't fetch unrelated textbook text.
+    scope = {} if image_unclear else detect_learning_scope(
+        db, user, retrieval_query or query, recent_hist, agent_mode=mode
     )
     textbook = (
         _textbook_snippets(
             scope,
-            query,
+            retrieval_query or query,
             agent_mode=mode,
             conversation_history=recent_hist,
         )
@@ -730,6 +801,8 @@ async def chat_stream(
         detected=_format_detected(scope),
         textbook=textbook,
         conversation_memory=format_memory_for_prompt(mem),
+        image_understanding_block=image_block,
+        math_prompt_block=math_block,
     )
     parts: list[str] = []
     async for token in _stream_mistral_async(

@@ -31,7 +31,8 @@ _RETRY_STATUSES = frozenset({429, 503})
 # Longer gaps — short retries were burning the same Mistral free-tier budget.
 _RETRY_WAITS_SEC = (2.0, 5.0, 15.0)
 # Side-car features must not amplify 429 storms (chat answer is primary).
-_NO_RETRY_FEATURES = frozenset({"image_select", "voice_affect"})
+# "vision" retries are owned by image_understanding/vision.py (VISION_MAX_RETRIES) to avoid nesting.
+_NO_RETRY_FEATURES = frozenset({"image_select", "voice_affect", "vision"})
 # Serialize all LLM traffic on this process (chat + image_select share one key).
 _LLM_MIN_INTERVAL_SEC = float(os.environ.get("LLM_MIN_INTERVAL_SEC", "0.75"))
 _gate = asyncio.Lock()
@@ -60,7 +61,7 @@ def ensure_llm_config(feature: str = "chat") -> None:
 
 
 def _payload(
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     *,
     feature: str,
     max_tokens: int | None,
@@ -151,12 +152,13 @@ def _mark_sync_ok(*, cooldown: float = 0.0) -> None:
 
 
 async def complete(
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     *,
     feature: str = "chat",
     max_tokens: int | None = None,
     empty_fallback: str = "",
     temperature: float | None = None,
+    timeout: float | None = None,
 ) -> str:
     ensure_llm_config(feature)
     body = _payload(messages, feature=feature, max_tokens=max_tokens, temperature=temperature)
@@ -167,10 +169,11 @@ async def complete(
         llm_base_url_for(feature),
         body["max_tokens"],
     )
+    client_timeout = 90.0 if timeout is None else float(timeout)
 
     async with _gate:
         await _pace_async()
-        async with httpx.AsyncClient(timeout=90.0) as client:
+        async with httpx.AsyncClient(timeout=client_timeout) as client:
             last: httpx.Response | None = None
             attempts = _max_attempts(feature)
             for attempt in range(attempts):
@@ -202,7 +205,7 @@ async def complete(
 
 
 async def stream(
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     *,
     feature: str = "chat",
     max_tokens: int | None = None,
@@ -274,7 +277,7 @@ async def stream(
 
 
 def complete_sync(
-    messages: list[dict[str, str]],
+    messages: list[dict[str, Any]],
     *,
     feature: str = "lesson",
     max_tokens: int | None = None,
@@ -325,11 +328,20 @@ def _self_check() -> None:
         assert llm_model_for(feat) == LLM_MODEL, f"default override leak for {feat}"
         assert llm_base_url_for(feat) == LLM_BASE_URL, f"default base leak for {feat}"
         assert llm_api_key_for(feat) == LLM_API_KEY, f"default key leak for {feat}"
+    # Vision uses a dedicated default — must not silently reuse a text-only chat model.
+    assert llm_model_for("vision"), "vision model missing"
     assert _retry_wait_sec(httpx.Response(429, headers={"Retry-After": "3"}), 0) == 3.0
     assert _max_attempts("image_select") == 1
     assert _max_attempts("chat") == len(_RETRY_WAITS_SEC) + 1
     assert "Concept" in strip_emojis("🌱 Concept 💡 tip ✅")
     assert "🌱" not in strip_emojis("🌱 Concept") and "💡" not in strip_emojis("💡 tip")
+    # Multimodal payload shape accepted
+    body = _payload(
+        [{"role": "user", "content": [{"type": "text", "text": "hi"}]}],
+        feature="vision",
+        max_tokens=10,
+    )
+    assert isinstance(body["messages"][0]["content"], list)
 
 
 _self_check()

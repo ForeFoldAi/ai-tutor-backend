@@ -227,3 +227,40 @@ def test_title_match_chapter_number_beats_sibling_chapter():
     q = _norm("explain me social chapter 2")
     assert _title_match_score(q, "Chapter 2 - Reshaping India's Political Map") >= 8
     assert _title_match_score(q, "Chapter 1 - Natural Resources and Their Use") < 8
+
+
+def _run_image_turn(status: str):
+    import asyncio
+
+    import app.modules.image_understanding.service as iu
+    import app.modules.student_assistant.service as sa
+    from app.modules.image_understanding.schemas import ImageUnderstandingResult, UnderstandingBundle
+
+    bundle = UnderstandingBundle(
+        result=ImageUnderstandingResult(status=status, content_summary="water cycle"),
+        intent="answer",
+        retrieval_query="water cycle",
+        tutor_prompt_block="IMAGE",
+    )
+
+    async def fake_understand(*_a, **_k):
+        return bundle
+
+    async def fake_llm(*_a, **_k):
+        return "ok"
+
+    scope_calls, rag_calls = MagicMock(return_value={"chapter_id": "1", "subject_name": "Science"}), MagicMock(return_value="")
+    with patch.object(iu, "understand", fake_understand), \
+         patch.object(sa, "build_student_context", return_value=""), \
+         patch.object(sa, "detect_learning_scope", scope_calls), \
+         patch.object(sa, "_textbook_snippets", rag_calls), \
+         patch.object(sa, "_call_mistral_async", fake_llm), \
+         patch.object(sa, "mode_suggested_prompts", return_value=[]), \
+         patch.object(sa.learning_service, "get_overview", return_value=SimpleNamespace(class_level="7")):
+        asyncio.run(sa.chat(MagicMock(), SimpleNamespace(id=1, full_name="A"), query="answer this", image_ids=["ab"]))
+    return scope_calls.call_count, rag_calls.call_count
+
+
+def test_unclear_image_skips_textbook_search():
+    assert _run_image_turn("unclear") == (0, 0)
+    assert _run_image_turn("ok") == (1, 1)

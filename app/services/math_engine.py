@@ -11,14 +11,16 @@ import re
 from dataclasses import dataclass, field
 from typing import Callable
 
-from sympy import Eq, Rational, integer_nthroot, simplify, solve, sympify, symbols
+from sympy import Eq, Rational, integer_nthroot, latex, simplify, solve, sympify, symbols
 from sympy.parsing.sympy_parser import (
+    convert_xor,
     parse_expr,
     standard_transformations,
     implicit_multiplication_application,
 )
 
-_TRANSFORMATIONS = standard_transformations + (implicit_multiplication_application,)
+# convert_xor: school "x^2" means power, not Python XOR.
+_TRANSFORMATIONS = standard_transformations + (implicit_multiplication_application, convert_xor)
 
 _X = symbols("x")
 _Y = symbols("y")
@@ -184,33 +186,33 @@ def _try_linear_equation(query: str, class_band: str) -> MathEngineResult | None
     if not eq_part:
         return None
     expr = eq_part.group(1).strip().rstrip(".")
-    expr = re.sub(r"^(?:solve|find)\s+(?:for\s+[a-zA-Z]\s*[:,-]?\s*)?", "", expr, flags=re.I).strip()
-    expr = expr.replace("×", "*").replace("÷", "/")
+    expr = re.sub(r"^(?:solve|find)\b\s*[:,-]?\s*(?:for\s+[a-zA-Z]\s*[:,-]?\s*)?", "", expr, flags=re.I).strip()
+    expr = expr.replace("×", "*").replace("÷", "/").replace("²", "^2").replace("³", "^3")
     expr = re.sub(r"(\d)([a-zA-Z])", r"\1*\2", expr)
     var_char = re.search(r"([a-zA-Z])", expr)
     if not var_char:
         return None
-    var = symbols(var_char.group(1))
+    name = var_char.group(1)
+    var = symbols(name, real=True)
     try:
         left, right = expr.split("=", 1)
-        equation = Eq(
-            parse_expr(left.strip(), transformations=_TRANSFORMATIONS),
-            parse_expr(right.strip(), transformations=_TRANSFORMATIONS),
-        )
-        solutions = solve(equation, var)
+        lhs = parse_expr(left.strip(), transformations=_TRANSFORMATIONS).subs(symbols(name), var)
+        rhs = parse_expr(right.strip(), transformations=_TRANSFORMATIONS).subs(symbols(name), var)
+        # real=True: school level — no complex roots (x^2 + 1 = 0 falls through to the tutor).
+        solutions = sorted((simplify(s) for s in solve(Eq(lhs, rhs), var)), key=lambda s: float(s))
         if not solutions:
             return None
-        sol = simplify(solutions[0])
+        degree = (lhs - rhs).as_poly(var).degree() if (lhs - rhs).is_polynomial(var) else 0
     except Exception:
         return None
 
+    sol = " or ".join(f"{var} = {s}" for s in solutions)
     formula_words = f"Solve the equation for {var}"
     formula_latex = f"$$ {left.strip()} = {right.strip()} $$"
-    sol_display = latex_number(float(sol)) if sol.is_number else str(sol)
-    solution = [f"$$ {var} = {sol_display} $$"]
+    solution = [f"$$ {var} = {latex_number(int(s)) if s.is_integer else latex(s)} $$" for s in solutions]
     return MathEngineResult(
         solved=True,
-        kind="linear_equation",
+        kind="linear_equation" if degree <= 1 else "polynomial_equation",
         class_band=class_band,
         to_find=f"Find the value of {var}.",
         given=[expr],
@@ -219,8 +221,8 @@ def _try_linear_equation(query: str, class_band: str) -> MathEngineResult | None
         formula_latex=formula_latex,
         steps=[],
         solution_latex=solution,
-        final_answer=f"**{var} = {sol}**",
-        quick_check=f"Substitute {var} = {sol} back into the equation to verify both sides match.",
+        final_answer=f"**{sol}**",
+        quick_check=f"Substitute {sol} back into the equation to verify both sides match.",
     )
 
 

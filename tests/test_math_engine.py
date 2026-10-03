@@ -41,6 +41,13 @@ def test_linear_equation_spoken():
     assert "5" in result.final_answer
 
 
+def test_polynomial_equation_all_real_roots():
+    assert try_solve("x^2 = 49").final_answer == "**x = -7 or x = 7**"
+    assert try_solve("x² - 5x + 6 = 0").final_answer == "**x = 2 or x = 3**"
+    assert try_solve("Solve: 5y - 10 = 0").final_answer == "**y = 2**"
+    assert try_solve("x^2 + 1 = 0") is None  # no real roots: left to the tutor
+
+
 def test_percentage():
     result = try_solve("What is 20% of 500?", class_level="CLASS_7")
     assert result is not None

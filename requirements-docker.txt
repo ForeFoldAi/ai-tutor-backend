@@ -134,4 +134,6 @@ email-validator==2.3.0
 aiosmtplib==4.0.2
 python-docx==1.1.2
 Pillow==12.3.0
+# Wrapper only; the tesseract binary is built in the Dockerfile (5.5.3)
+pytesseract==0.3.13
 imagehash==4.3.1

@@ -119,6 +119,8 @@ async def chapter_aware_qa(
     student_key: str = "",
     images_only: bool = False,
     agent_mode: str | None = None,
+    image_ids: list[str] | None = None,
+    student_user_id: int | None = None,
 ) -> tuple[str, list[dict], dict | None, dict | None]:
     """
     Retrieve relevant chunks from ChromaDB and answer via Mistral (async).
@@ -152,8 +154,44 @@ async def chapter_aware_qa(
     _apply_agent_mode(conv, agent_mode)
     retrieval_query = conv.retrieval_query or query
 
-    if skip_retrieval:
+    image_block = ""
+    math_override = ""
+    prefer_image_over_rag = False
+    if image_ids and student_user_id is not None:
+        from app.modules.image_understanding.service import understand as understand_images
+        from app.modules.image_understanding.prompts import image_should_override_chapter_rag
+
+        bundle = await understand_images(
+            image_ids,
+            query,
+            user_id=int(student_user_id),
+            class_level=class_level,
+            subject_name=subject_name,
+            board=board,
+        )
+        if bundle:
+            image_block = bundle.tutor_prompt_block
+            math_override = bundle.math_prompt_block
+            prefer_image_over_rag = image_should_override_chapter_rag(bundle.result)
+            if bundle.retrieval_query:
+                retrieval_query = bundle.retrieval_query
+            if not (query or "").strip() and bundle.retrieval_query:
+                query = bundle.retrieval_query
+                conv = resolve_conversation_context(
+                    query,
+                    conversation_history=recent_hist,
+                    chapter=chapter,
+                    memory=session_mem,
+                )
+                _apply_agent_mode(conv, agent_mode)
+
+    if skip_retrieval or prefer_image_over_rag:
         docs, scope, section_instruction = [], HeadingScope(kind="general"), ""
+        if prefer_image_over_rag:
+            section_instruction = (
+                "STUDENT IMAGE TURN: Answer only from the uploaded image and the student's "
+                "question about it. Do not use unrelated chapter stories or characters."
+            )
     else:
         docs, scope, section_instruction = retrieve_for_tutor_query(
             retrieval_query,
@@ -163,7 +201,7 @@ async def chapter_aware_qa(
         )
 
     # Topics-left questions: answer from coverage store (no LLM needed).
-    if student_key and student_key.isdigit() and chapter_ids and not skip_retrieval:
+    if student_key and student_key.isdigit() and chapter_ids and not skip_retrieval and not prefer_image_over_rag:
         try:
             from app.core.database import SessionLocal
             from app.modules.student_learning.topic_progress import try_topics_left_reply
@@ -211,7 +249,7 @@ async def chapter_aware_qa(
         heading_scope_kind=scope.kind,
         subject_name=subject_name,
     )
-    if skip_retrieval:
+    if skip_retrieval or prefer_image_over_rag:
         img_allowed = False
     if images_only:
         related: list[dict] = []
@@ -236,7 +274,7 @@ async def chapter_aware_qa(
             except Exception as exc:
                 logger.warning("Image-only retrieval failed: %s", exc)
         return "", related, None, None
-    if not docs and not coverage_guidance and not skip_retrieval:
+    if not docs and not coverage_guidance and not skip_retrieval and not image_block:
         return ANSWER_NOT_IN_CHAPTER, [], None, None
 
     learner_snapshot, understanding_scores = await _mentor_profile_for_turn(
@@ -323,6 +361,8 @@ async def chapter_aware_qa(
         student_key=student_key,
         chapter_ids=chapter_ids,
         dialogue_act=dialogue_act_resolved,
+        image_understanding_block=image_block,
+        math_engine_override=math_override,
     )
     if messages is None:
         answer = _best_chunk_fallback(effective_query, docs)
@@ -522,6 +562,9 @@ async def chapter_aware_qa_stream(
     filler_phrase_played: str | None = None,
     affect_trajectory: list[str] | None = None,
     voice_metadata_out: dict | None = None,
+    image_ids: list[str] | None = None,
+    student_user_id: int | None = None,
+    emit_status: Callable[[dict], Awaitable[None]] | None = None,
 ) -> AsyncIterator[str]:
     """
     Streaming version of chapter_aware_qa.
@@ -546,7 +589,7 @@ async def chapter_aware_qa_stream(
             is_incomplete_voice_utterance,
         )
 
-        if is_incomplete_voice_utterance(query):
+        if is_incomplete_voice_utterance(query) and not image_ids:
             if emit_related_images:
                 await emit_related_images([])
             yield INCOMPLETE_UTTERANCE_REPLY
@@ -614,13 +657,61 @@ async def chapter_aware_qa_stream(
     )
     _apply_agent_mode(conv, agent_mode)
     retrieval_query = conv.retrieval_query or query
+
+    image_block = ""
+    math_override = ""
+    prefer_image_over_rag = False
+    if image_ids and student_user_id is not None:
+        if emit_status:
+            await emit_status({"type": "image_processing"})
+        from app.modules.image_understanding.service import understand as understand_images
+        from app.modules.image_understanding.prompts import image_should_override_chapter_rag
+
+        bundle = await understand_images(
+            image_ids,
+            query,
+            user_id=int(student_user_id),
+            class_level=class_level,
+            subject_name=subject_name,
+            board=board,
+        )
+        if bundle:
+            image_block = bundle.tutor_prompt_block
+            math_override = bundle.math_prompt_block
+            prefer_image_over_rag = image_should_override_chapter_rag(bundle.result)
+            if bundle.retrieval_query:
+                retrieval_query = bundle.retrieval_query
+            if not (query or "").strip() and bundle.retrieval_query:
+                query = bundle.retrieval_query
+                conv = resolve_conversation_context(
+                    query,
+                    conversation_history=recent_hist,
+                    chapter=chapter,
+                    memory=session_mem,
+                )
+                _apply_agent_mode(conv, agent_mode)
+            if emit_status:
+                await emit_status(
+                    {
+                        "type": "image_understood",
+                        "image_type": bundle.result.image_type,
+                        "intent": bundle.intent,
+                        "confidence": bundle.result.confidence,
+                    }
+                )
+
     if voice_mode:
         context_budget = voice_context_budget(context_budget, retrieval_query)
 
     from app.services.section_heading import HeadingScope
 
-    if skip_retrieval:
+    if skip_retrieval or prefer_image_over_rag:
         docs, scope, section_instruction = [], HeadingScope(kind="general"), ""
+        if prefer_image_over_rag:
+            section_instruction = (
+                "STUDENT IMAGE TURN: Answer only from the uploaded image and the student's "
+                "question about it. Do not use unrelated chapter stories or characters."
+            )
         if pipeline_timing is not None:
             pipeline_timing.mark_rag_done()
     elif voice_mode:
@@ -643,7 +734,7 @@ async def chapter_aware_qa_stream(
             k=retrieval_k,
         )
 
-    if student_key and student_key.isdigit() and chapter_ids and not skip_retrieval:
+    if student_key and student_key.isdigit() and chapter_ids and not skip_retrieval and not prefer_image_over_rag:
         try:
             from app.core.database import SessionLocal
             from app.modules.student_learning.topic_progress import try_topics_left_reply
@@ -710,12 +801,12 @@ async def chapter_aware_qa_stream(
         subject_name=subject_name,
         voice_mode=voice_mode,
     )
-    if skip_retrieval:
+    if skip_retrieval or prefer_image_over_rag:
         img_allowed = False
         if emit_related_images:
             await emit_related_images([])
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
-    if not docs and not coverage_guidance and not skip_retrieval:
+    if not docs and not coverage_guidance and not skip_retrieval and not image_block:
         if emit_related_images:
             await emit_related_images([])
         yield ANSWER_NOT_IN_CHAPTER
@@ -857,6 +948,10 @@ async def chapter_aware_qa_stream(
             dialogue_act=dialogue_act_resolved,
             filler_phrase_played=filler_phrase_played,
         )
+        if image_block:
+            messages[0]["content"] = messages[0]["content"] + "\n\n" + image_block
+        if math_override:
+            messages[0]["content"] = messages[0]["content"] + "\n\n" + math_override
         if coverage_guidance:
             messages[0]["content"] = messages[0]["content"] + "\n\n" + coverage_guidance
         rapport = voice_ctx.get("rapport_hint") or ""
@@ -919,6 +1014,8 @@ async def chapter_aware_qa_stream(
             student_key=student_key,
             chapter_ids=chapter_ids,
             dialogue_act=dialogue_act_resolved,
+            image_understanding_block=image_block,
+            math_engine_override=math_override,
         )
 
     if messages is None:

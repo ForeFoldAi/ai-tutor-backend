@@ -1057,6 +1057,8 @@ def _build_chat_messages(
     student_key: str = "",
     chapter_ids: list[str] | None = None,
     dialogue_act: str | None = None,
+    image_understanding_block: str = "",
+    math_engine_override: str = "",
 ) -> list[dict[str, str]]:
     from app.services.section_heading import HeadingScope
 
@@ -1413,6 +1415,13 @@ def _build_chat_messages(
         system = system + "\n\n" + agent_addendum
     if lia_addendum:
         system = system + "\n\n" + lia_addendum
+    if (image_understanding_block or "").strip():
+        system = (
+            system
+            + "\n\nSTUDENT IMAGE RULE (mandatory): The student uploaded an image this turn. "
+            "Answer that image (and their message about it). Never substitute an unrelated "
+            "chapter story, character, or textbook T/F list for the image content."
+        )
     from app.services.conversation_memory import format_memory_for_prompt
 
     memory_block = format_memory_for_prompt(conversation_memory)
@@ -1422,7 +1431,7 @@ def _build_chat_messages(
     if section_instruction.strip():
         section_block = f"\n\nTEXTBOOK SCOPE:\n{section_instruction.strip()}\n"
 
-    math_block = _prepare_math_engine_block(
+    math_block = math_engine_override.strip() or _prepare_math_engine_block(
         q,
         subject_name=subject_name,
         class_level=class_level,
@@ -1432,6 +1441,10 @@ def _build_chat_messages(
     if math_block:
         math_section = f"\n\n{math_block}\n"
 
+    image_section = ""
+    if (image_understanding_block or "").strip():
+        image_section = f"\n\n{image_understanding_block.strip()}\n"
+
     user = _USER_PROMPT_TEMPLATE.format(
         context=context or "(No chapter text retrieved — use accurate general knowledge.)",
         question=query,
@@ -1439,6 +1452,8 @@ def _build_chat_messages(
     )
     if math_section:
         user = math_section + user
+    if image_section:
+        user = image_section + user
     if section_block:
         user = section_block + user
 
