@@ -1,0 +1,70 @@
+name: Deploy
+
+on:
+  pull_request:
+    branches: [server]
+  push:
+    branches: [server]
+
+env:
+  IMAGE: ghcr.io/forefoldai/ai-tutor-backend
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      # These two tests only import app.core; full requirements.txt pulls llama.cpp / pyautogui and breaks CI.
+      - run: pip install pytest pydantic python-dotenv
+      - run: pytest tests/test_production_checks.py -q --tb=short
+        env:
+          PYTHONPATH: .
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/server'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Require Coolify secrets
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+        run: |
+          test -n "$COOLIFY_URL" || { echo "Missing secret COOLIFY_URL"; exit 1; }
+          test -n "$COOLIFY_TOKEN" || { echo "Missing secret COOLIFY_TOKEN"; exit 1; }
+          test -n "$COOLIFY_APP_UUID" || { echo "Missing secret COOLIFY_APP_UUID"; exit 1; }
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:sha-${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Trigger Coolify
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_APP_UUID: ${{ secrets.COOLIFY_APP_UUID }}
+        run: |
+          curl -fsS -X GET \
+            "${COOLIFY_URL}/api/v1/deploy?uuid=${COOLIFY_APP_UUID}&force=false" \
+            -H "Authorization: Bearer ${COOLIFY_TOKEN}"
