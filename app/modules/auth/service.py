@@ -3,7 +3,8 @@ from typing import Any
 import secrets
 
 from fastapi import Request, status
-from sqlalchemy import func, select, update
+from sqlalchemy import case, func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
@@ -34,6 +35,7 @@ from app.modules.auth.public_ids import (
     require_user_by_account_id,
     resolve_school_uuid,
     to_school_admin_brief,
+    to_school_detail,
 )
 from app.modules.auth.schemas import (
     AdminCreateUserRequest,
@@ -47,11 +49,14 @@ from app.modules.auth.schemas import (
     UpdateStudentRequest,
     UpdateTutorRequest,
     UserSettingsUpdateRequest,
+    SchoolTokenUsage,
+    TokenTelemetryResponse,
+    UserTokenUsage,
 )
 from app.modules.auth.security import create_refresh_session
 from app.modules.schools.models import School
 from app.modules.sessions.models import SessionToken
-from app.modules.users.models import User, UserSettings
+from app.modules.users.models import LlmUsage, User, UserSettings
 
 settings = get_settings()
 
@@ -275,6 +280,7 @@ def create_school_admin(
     *,
     branch: str | None = None,
     school_id: int | None = None,
+    phone: str | None = None,
 ) -> User:
     _validate_admin_create(actor, Role.SCHOOL_ADMIN)
 
@@ -291,7 +297,15 @@ def create_school_admin(
                 "school_name is required when school_id is not provided.",
                 status.HTTP_400_BAD_REQUEST,
             )
-        school = School(name=school_name, branch=branch, board=board, is_active=True)
+        # The admin's contact doubles as the school's until the school admin edits it in Settings.
+        school = School(
+            name=school_name,
+            branch=branch,
+            board=board,
+            email=payload.email.lower(),
+            phone=phone,
+            is_active=True,
+        )
         db.add(school)
         db.flush()
         target_school_id = school.id
@@ -304,6 +318,7 @@ def create_school_admin(
         is_active=True,
         is_verified=False,
         school_id=target_school_id,
+        phone=phone,
         created_by=actor.id,
     )
     db.add(user)
@@ -466,9 +481,20 @@ def _schools_to_summaries(db: Session, schools: list[School]) -> list[SchoolSumm
         if u.school_id:
             admins_by_school.setdefault(u.school_id, []).append(u)
 
+    from app.modules.school_admin.classes.models import SchoolClass
+
+    class_counts = dict(
+        db.execute(
+            select(SchoolClass.school_id, func.count(SchoolClass.id))
+            .where(SchoolClass.school_id.in_(school_ids))
+            .group_by(SchoolClass.school_id)
+        ).all()
+    )
+
     out: list[SchoolSummaryResponse] = []
     for s in schools:
         c = counts.get(s.id, {})
+        detail = to_school_detail(s)
         out.append(
             SchoolSummaryResponse(
                 id=s.id,
@@ -479,6 +505,14 @@ def _schools_to_summaries(db: Session, schools: list[School]) -> list[SchoolSumm
                 school_admins=[to_school_admin_brief(a) for a in admins_by_school.get(s.id, [])],
                 tutor_count=c.get(Role.TUTOR.value, 0),
                 student_count=c.get(Role.STUDENT.value, 0),
+                class_count=int(class_counts.get(s.id, 0)),
+                email=s.email,
+                phone=s.phone,
+                website=s.website,
+                address=s.address,
+                grades_offered=detail.grades_offered,
+                student_strength=detail.student_strength,
+                curricula=detail.curricula,
             )
         )
     return out
@@ -522,6 +556,19 @@ def update_school(db: Session, actor: User, school_id: int, payload: SchoolUpdat
         school.website = data["website"]
     if "address" in data:
         school.address = data["address"]
+    if any(k in data for k in ("grades_offered", "student_strength", "curricula")):
+        from app.modules.auth.signup.enums import CurriculumEnum, SchoolGradeRangeEnum, StudentStrengthEnum, parse_enum
+
+        if "grades_offered" in data:
+            v = data["grades_offered"]
+            school.grades_offered = parse_enum(SchoolGradeRangeEnum, v, "grades_offered") if v else None
+        if "student_strength" in data:
+            v = data["student_strength"]
+            school.student_strength = parse_enum(StudentStrengthEnum, v, "student_strength") if v else None
+        if data.get("curricula") is not None:
+            school.curricula = [
+                parse_enum(CurriculumEnum, c, "curriculum") for c in data["curricula"] if str(c).strip()
+            ] or None
     db.flush()
     return _schools_to_summaries(db, [school])[0]
 
@@ -540,6 +587,120 @@ def set_user_status(db: Session, actor: User, user_id: int, is_active: bool) -> 
     user.is_active = is_active
     user.updated_at = datetime.now(UTC)
     return user
+
+
+def admin_update_user(db: Session, actor: User, user_id: int, data: dict[str, Any]) -> User:
+    user = require_user_by_account_id(db, user_id)
+    _assert_actor_manages_user(actor, user)
+    if not data:
+        raise AuthException("No fields to update.", status.HTTP_400_BAD_REQUEST)
+
+    if "school_id" in data:
+        if actor.role != Role.MASTER_ADMIN:
+            raise AuthException("Only master admins can move users between schools.", status.HTTP_403_FORBIDDEN)
+        user.school_id = resolve_school_uuid(db, data["school_id"])
+    if data.get("full_name"):
+        user.full_name = data["full_name"].strip()
+    if data.get("email"):
+        user.email = str(data["email"]).lower()
+    if "phone" in data:
+        user.phone = data["phone"]
+    if data.get("new_password"):
+        user.password_hash = hash_password(data["new_password"])
+        db.execute(update(SessionToken).where(SessionToken.user_id == user.id).values(revoked=True))
+
+    user.updated_at = datetime.now(UTC)
+    db.flush()
+    return user
+
+
+def admin_delete_user(db: Session, actor: User, user_id: int) -> None:
+    user = require_user_by_account_id(db, user_id)
+    if user.id == actor.id:
+        raise AuthException("You cannot delete your own account.", status.HTTP_400_BAD_REQUEST)
+    _assert_actor_manages_user(actor, user)
+    try:
+        db.delete(user)
+        db.flush()
+    except IntegrityError as exc:
+        db.rollback()
+        raise AuthException(
+            "This user still owns records (classes, assignments, …). Suspend the account instead.",
+            status.HTTP_409_CONFLICT,
+        ) from exc
+
+
+def _student_learning_context(db: Session, actor: User, user_id: int):
+    from app.modules.student_learning.enrollment import (
+        _is_individual_student,
+        list_enrolled_subjects,
+        resolve_student_school_class,
+    )
+
+    user = require_user_by_account_id(db, user_id)
+    _assert_actor_manages_user(actor, user)
+    if user.role != Role.STUDENT:
+        raise AuthException("Not a student account.", status.HTTP_400_BAD_REQUEST)
+    school_class = None if _is_individual_student(user) else resolve_student_school_class(db, user)
+    subjects, _ = list_enrolled_subjects(db, user)
+    return user, school_class, subjects
+
+
+def admin_student_learning(db: Session, actor: User, user_id: int) -> dict[str, Any]:
+    from app.modules.catalog.publisher_books import books_for
+    from app.modules.student_learning.enrollment import _is_individual_student, _norm, class_book_choices, student_book_choices
+
+    user, school_class, subjects = _student_learning_context(db, actor, user_id)
+    class_books = class_book_choices(db, school_class) if school_class else {}
+    effective = student_book_choices(db, user, school_class)
+    own = user.publisher_choices or {}
+    out = []
+    for s in subjects:
+        key = _norm(s.subject_name)
+        books = [b for b in books_for(db, s.board, s.class_level, s.subject_name) if b.is_default is False]
+        out.append(
+            {
+                "subject_name": s.subject_name,
+                "chapters": [{"id": c.id, "chapter": c.chapter or c.file_name} for c in s.chapters],
+                "publisher_id": effective.get(key),
+                "class_publisher_id": class_books.get(key),
+                "override": own.get(key),
+                "options": [{"id": b.id, "publisher": b.publisher or b.title} for b in books],
+            }
+        )
+    if school_class:
+        source, label = "class", f"{school_class.grade}-{school_class.section} ({school_class.curriculum})"
+    else:
+        source, label = ("individual" if _is_individual_student(user) else "none"), None
+    return {"source": source, "class_label": label, "subjects": out}
+
+
+def admin_set_student_publisher(db: Session, actor: User, user_id: int, subject: str, textbook_id: int | None) -> None:
+    from app.modules.catalog.publisher_books import books_for
+    from app.modules.student_learning.enrollment import _norm
+
+    if actor.role != Role.MASTER_ADMIN:
+        raise AuthException("Only master admins can assign publishers.", status.HTTP_403_FORBIDDEN)
+    user, _, subjects = _student_learning_context(db, actor, user_id)
+    key = _norm(subject)
+    match = next((s for s in subjects if _norm(s.subject_name) == key), None)
+    if match is None:
+        raise AuthException("Student is not enrolled in this subject.", status.HTTP_400_BAD_REQUEST)
+    if textbook_id:
+        ok = any(
+            b.id == textbook_id and b.is_default is False
+            for b in books_for(db, match.board, match.class_level, match.subject_name)
+        )
+        if not ok:
+            raise AuthException("Publisher does not belong to this board/class/subject.", status.HTTP_400_BAD_REQUEST)
+    choices = dict(user.publisher_choices or {})
+    if textbook_id is None:
+        choices.pop(key, None)
+    else:
+        choices[key] = textbook_id
+    user.publisher_choices = choices or None
+    user.updated_at = datetime.now(UTC)
+    db.flush()
 
 
 def update_tutor(db: Session, actor: User, user_id: int, payload: UpdateTutorRequest) -> User:
@@ -1002,3 +1163,129 @@ def reset_user_settings(db: Session, user: User) -> UserSettings:
         db.delete(existing)
         db.flush()
     return get_or_create_user_settings(db, user)
+
+
+def get_token_telemetry(db: Session, actor: User, timeframe: str = "month") -> TokenTelemetryResponse:
+    users = list_users(db, actor)
+    schools = list(db.scalars(select(School).order_by(School.name.asc())))
+    if actor.role == Role.SCHOOL_ADMIN and actor.school_id is not None:
+        schools = [s for s in schools if s.id == actor.school_id]
+
+    school_stats: dict[int, dict[str, int]] = {
+        s.id: {
+            "total": 0,
+            "prompt": 0,
+            "completion": 0,
+            "day": 0,
+            "week": 0,
+            "month": 0,
+            "user_count": 0,
+        }
+        for s in schools
+    }
+
+    user_usage_list: list[UserTokenUsage] = []
+    total_platform_tokens = 0
+    total_platform_prompt = 0
+    total_platform_completion = 0
+
+    # Rolling windows (last 24h / 7d / 30d), from real rows in llm_usage.
+    now = datetime.now(UTC)
+    since = {"day": now - timedelta(days=1), "week": now - timedelta(days=7), "month": now - timedelta(days=30)}
+    tf_since = None if timeframe == "all" else since.get(timeframe, since["month"])
+
+    def _sum(col, start):
+        expr = col if start is None else case((LlmUsage.created_at >= start, col), else_=0)
+        return func.coalesce(func.sum(expr), 0)
+
+    both = LlmUsage.prompt_tokens + LlmUsage.completion_tokens
+    usage_rows = {
+        r[0]: r[1:]
+        for r in db.execute(
+            select(
+                LlmUsage.user_id,
+                _sum(both, since["day"]),
+                _sum(both, since["week"]),
+                _sum(both, since["month"]),
+                _sum(LlmUsage.prompt_tokens, tf_since),
+                _sum(LlmUsage.completion_tokens, tf_since),
+            )
+            .where(LlmUsage.user_id.in_([u.id for u in users]))
+            .group_by(LlmUsage.user_id)
+        ).all()
+    }
+
+    for u in users:
+        day_t, week_t, month_t, u_prompt, u_completion = (int(x) for x in usage_rows.get(u.id, (0, 0, 0, 0, 0)))
+        active_tokens = u_prompt + u_completion
+
+        total_platform_tokens += active_tokens
+        total_platform_prompt += u_prompt
+        total_platform_completion += u_completion
+
+        user_usage = UserTokenUsage(
+            user_id=u.id,
+            full_name=u.full_name or "User",
+            email=u.email,
+            role=u.role.value if hasattr(u.role, "value") else str(u.role),
+            school_id=u.school_id,
+            total_tokens=active_tokens,
+            prompt_tokens=u_prompt,
+            completion_tokens=u_completion,
+            tokens_day=day_t,
+            tokens_week=week_t,
+            tokens_month=month_t,
+        )
+        user_usage_list.append(user_usage)
+
+        if u.school_id and u.school_id in school_stats:
+            st = school_stats[u.school_id]
+            st["total"] += active_tokens
+            st["prompt"] += u_prompt
+            st["completion"] += u_completion
+            st["day"] += day_t
+            st["week"] += week_t
+            st["month"] += month_t
+            st["user_count"] += 1
+
+    school_usage_list: list[SchoolTokenUsage] = []
+    for s in schools:
+        st = school_stats[s.id]
+        quota = 1_000_000
+        used_pct = round((st["month"] / quota) * 100, 2)
+        school_usage_list.append(
+            SchoolTokenUsage(
+                school_id=s.id,
+                school_name=s.name,
+                branch=s.branch,
+                board=s.board,
+                user_count=st["user_count"],
+                total_tokens=st["total"],
+                prompt_tokens=st["prompt"],
+                completion_tokens=st["completion"],
+                tokens_day=st["day"],
+                tokens_week=st["week"],
+                tokens_month=st["month"],
+                quota_limit=quota,
+                quota_used_percent=used_pct,
+            )
+        )
+
+    if actor.role == Role.MASTER_ADMIN:
+        # Platform total also counts guest voice sessions and background jobs (user_id NULL).
+        p, c = db.execute(
+            select(_sum(LlmUsage.prompt_tokens, tf_since), _sum(LlmUsage.completion_tokens, tf_since))
+            .where(LlmUsage.user_id.is_(None))
+        ).one()
+        total_platform_prompt += int(p)
+        total_platform_completion += int(c)
+        total_platform_tokens += int(p) + int(c)
+
+    return TokenTelemetryResponse(
+        timeframe=timeframe,
+        total_platform_tokens=total_platform_tokens,
+        total_prompt_tokens=total_platform_prompt,
+        total_completion_tokens=total_platform_completion,
+        school_usage=school_usage_list,
+        user_usage=user_usage_list,
+    )

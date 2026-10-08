@@ -1016,6 +1016,28 @@ def _subject_upload_labels(board: str, class_level: str, subject_name: str) -> d
     return labels
 
 
+def _same_book_only(per_upload: dict[str, list], selected_set: set[str]) -> dict[str, list]:
+    """Drop chapters from other publishers' books than the selected chapters' book."""
+    ids = [int(u) for u in (*per_upload, *selected_set) if str(u).isdigit()]
+    if not per_upload or not ids:
+        return per_upload
+    try:
+        from app.core.database import SessionLocal
+        from app.modules.catalog.publisher_books import publisher_book_of
+
+        with SessionLocal() as db:
+            book_of = publisher_book_of(db, ids)
+    except Exception as exc:
+        logger.warning("Publisher book lookup failed; not filtering other-chapter hint: %s", exc)
+        return per_upload
+    selected_books = {book_of.get(int(s)) for s in selected_set if str(s).isdigit()}
+    return {
+        uid: docs
+        for uid, docs in per_upload.items()
+        if str(uid).isdigit() and book_of.get(int(uid)) in selected_books
+    }
+
+
 def _best_other_chapter(
     terms: set[str],
     *,
@@ -1039,6 +1061,7 @@ def _best_other_chapter(
         if not uid or uid in selected_set:
             continue
         per_upload.setdefault(uid, []).append(doc)
+    per_upload = _same_book_only(per_upload, selected_set)
 
     best_id = ""
     best_hits = 0

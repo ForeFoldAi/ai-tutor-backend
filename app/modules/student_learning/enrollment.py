@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import re
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.modules.auth.constants import Role
-from app.modules.catalog.models import BoardEnum, ClassEnum, SyllabusSubject, TextbookUpload
+from app.modules.catalog.models import BoardEnum, ClassEnum, SyllabusSubject, Textbook, TextbookUpload
+from app.modules.catalog.publisher_books import filter_uploads_for_book, publisher_book_of
 from app.modules.catalog.schemas import StudentChapterResponse, StudentSubjectResponse
 from app.modules.school_admin.classes.models import SchoolClass, SchoolClassSubject, SchoolSubject
 from app.modules.users.models import User
@@ -45,12 +48,31 @@ def _parse_board(raw: str | None) -> BoardEnum | None:
     return aliases.get(s.lower())
 
 
+def _chapter_sort_key(tb: TextbookUpload) -> tuple[int, str, int, str]:
+    f = tb.file_name or ""
+    c = tb.chapter or ""
+    m = re.search(r"(?:chapter|unit|ch)\s*[-_.]?\s*(\d+)(?:[.\s_-]*([a-zA-Z]))?\b", f, re.I)
+    if not m:
+        m = re.search(r"(?:chapter|unit|ch)\s*[-_.]?\s*(\d+)(?:[.\s_-]+([a-zA-Z])\b(?![a-z]))?", c, re.I)
+    if m:
+        num = int(m.group(1))
+        sub = (m.group(2) or "").upper()
+        if not sub:
+            rm = re.search(r"(?:reading|part|section)\s+([a-zA-Z])\b", c, re.I)
+            if rm:
+                sub = rm.group(1).upper()
+        is_raw_pdf = 1 if f.lower().endswith(".pdf") else 0
+        return (num, sub, is_raw_pdf, c)
+    return (9999, "", 1, c)
+
+
 def _subjects_from_catalog(
     db: Session,
     *,
     board: BoardEnum,
     class_level: ClassEnum,
     subject_names: list[str],
+    book_by_subject: dict[str, int] | None = None,
 ) -> list[StudentSubjectResponse]:
     allowed = {_norm(n) for n in subject_names}
     if not allowed:
@@ -78,6 +100,12 @@ def _subjects_from_catalog(
         if key not in allowed:
             continue
         tb_by_subject.setdefault(key, []).append(tb)
+
+    book_of = publisher_book_of(db, (tb.id for rows in tb_by_subject.values() for tb in rows))
+    chosen = book_by_subject or {}
+    for k in tb_by_subject:
+        tb_by_subject[k] = filter_uploads_for_book(tb_by_subject[k], book_of, chosen.get(k))
+        tb_by_subject[k].sort(key=_chapter_sort_key)
 
     result: list[StudentSubjectResponse] = []
     seen: set[str] = set()
@@ -212,6 +240,31 @@ def enrolled_subject_names(db: Session, school_class: SchoolClass) -> list[str]:
     return sorted(names, key=lambda n: n.lower())
 
 
+def class_book_choices(db: Session, school_class: SchoolClass) -> dict[str, int]:
+    """Normalised subject name -> non-default textbook id chosen for this class."""
+    rows = db.execute(
+        select(SchoolSubject.name, Textbook.id)
+        .join(SchoolClassSubject, SchoolClassSubject.subject_id == SchoolSubject.id)
+        .join(Textbook, Textbook.id == SchoolClassSubject.textbook_id)
+        .where(SchoolClassSubject.school_class_id == school_class.id, Textbook.is_default.is_(False))
+    )
+    return {_norm(name): int(tid) for name, tid in rows}
+
+
+def student_book_choices(db: Session, user: User, school_class: SchoolClass | None) -> dict[str, int]:
+    """Class picks, overridden per subject by user.publisher_choices (0 = default pool; deleted books ignored)."""
+    books = class_book_choices(db, school_class) if school_class is not None else {}
+    own = {k: int(v) for k, v in (user.publisher_choices or {}).items() if v is not None}
+    ids = [v for v in own.values() if v]
+    valid = set(db.scalars(select(Textbook.id).where(Textbook.id.in_(ids), Textbook.is_default.is_(False)))) if ids else set()
+    for subject, book_id in own.items():
+        if book_id == 0:
+            books.pop(subject, None)
+        elif book_id in valid:
+            books[subject] = book_id
+    return books
+
+
 def _is_individual_student(user: User) -> bool:
     # Individual student signup: no school scope, no tutor owner scope.
     return user.school_id is None and user.created_by is None
@@ -270,21 +323,32 @@ def individual_board_and_class(
     return _parse_board(board_raw), _parse_class_level(grade_raw)
 
 
+def _with_books(key: str, normed: list[str], books: dict[str, int] | None) -> str:
+    # Only appended when a publisher book is chosen, so existing keys (and student progress) stay unchanged.
+    picked = [f"{n}={books[n]}" for n in normed if books and n in books]
+    return f"{key}|books:{','.join(picked)}" if picked else key
+
+
 def individual_scope_key(
     user: User,
     board: BoardEnum,
     class_level: ClassEnum,
     subject_names: list[str],
+    books: dict[str, int] | None = None,
 ) -> str:
-    names = ",".join(sorted(_norm(n) for n in subject_names))
-    return f"ind:{user.id}:{board.value}:{class_level.value}:{names}"
+    normed = sorted(_norm(n) for n in subject_names)
+    return _with_books(f"ind:{user.id}:{board.value}:{class_level.value}:{','.join(normed)}", normed, books)
 
 
-def compute_scope_key(school_class: SchoolClass | None, subject_names: list[str]) -> str:
+def compute_scope_key(
+    school_class: SchoolClass | None,
+    subject_names: list[str],
+    books: dict[str, int] | None = None,
+) -> str:
     if school_class is None:
         return "none:"
-    names = ",".join(sorted(_norm(n) for n in subject_names))
-    return f"{school_class.id}:{names}"
+    normed = sorted(_norm(n) for n in subject_names)
+    return _with_books(f"{school_class.id}:{','.join(normed)}", normed, books)
 
 
 def individual_learning_scope(
@@ -295,7 +359,8 @@ def individual_learning_scope(
     board, class_level = individual_board_and_class(db, user)
     if not subject_names or not board or not class_level:
         return [], "none:"
-    return subject_names, individual_scope_key(user, board, class_level, subject_names)
+    books = student_book_choices(db, user, None)
+    return subject_names, individual_scope_key(user, board, class_level, subject_names, books)
 
 
 def list_enrolled_subjects(
@@ -321,13 +386,15 @@ def list_enrolled_subjects(
         if not board or not class_level:
             return [], "none:"
 
-        scope_key = individual_scope_key(user, board, class_level, subject_names)
+        books = student_book_choices(db, user, None)
+        scope_key = individual_scope_key(user, board, class_level, subject_names, books)
         return (
             _subjects_from_catalog(
                 db,
                 board=board,
                 class_level=class_level,
                 subject_names=subject_names,
+                book_by_subject=books,
             ),
             scope_key,
         )
@@ -340,7 +407,8 @@ def list_enrolled_subjects(
     subject_names = effective_subject_names(
         db, user=user, school_class=school_class, mapped_names=mapped_names
     )
-    scope_key = compute_scope_key(school_class, subject_names)
+    books = student_book_choices(db, user, school_class)
+    scope_key = compute_scope_key(school_class, subject_names, books)
     if not subject_names:
         return [], scope_key
 
@@ -360,6 +428,7 @@ def list_enrolled_subjects(
             board=board,
             class_level=class_level,
             subject_names=subject_names,
+            book_by_subject=books,
         ),
         scope_key,
     )

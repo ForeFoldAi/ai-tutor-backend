@@ -10,6 +10,9 @@ from app.modules.auth.constants import Role
 from app.modules.auth.dependencies import get_current_user, require_roles
 from app.modules.auth.schemas import (
     AdminCreateUserRequest,
+    AdminUserUpdateRequest,
+    StudentLearningResponse,
+    StudentPublisherRequest,
     ForgotPasswordLookupRequest,
     ForgotPasswordLookupResponse,
     ForgotPasswordAccount,
@@ -29,11 +32,17 @@ from app.modules.auth.schemas import (
     UserStatusPatchRequest,
     VerifyResetOtpRequest,
     VerifyResetOtpResponse,
+    TokenTelemetryResponse,
 )
 from app.modules.auth.public_ids import to_user_response, to_user_settings_response, heal_tutor_teaching_curriculum
 from app.modules.auth.service import (
+    admin_delete_user,
+    admin_set_student_publisher,
+    admin_student_learning,
+    admin_update_user,
     create_school_admin,
     delete_school,
+    get_token_telemetry,
     issue_password_reset_otp,
     lookup_forgot_password_accounts,
     list_schools_with_stats,
@@ -66,8 +75,9 @@ class CreateSchoolAdminRequest(AdminCreateUserRequest):
     school_name: str | None = Field(default=None, max_length=255)
     branch: str | None = Field(default=None, max_length=255)
     board: str | None = Field(default=None, max_length=100)
+    phone: str | None = Field(default=None, max_length=50)
 
-    @field_validator("branch", "board", mode="before")
+    @field_validator("branch", "board", "phone", mode="before")
     @classmethod
     def _empty_optional_str(cls, v: str | None) -> str | None:
         if v is None:
@@ -261,6 +271,7 @@ def create_school_admin_route(
         payload.board,
         branch=payload.branch,
         school_id=payload.school_id,
+        phone=payload.phone,
     )
     db.commit()
     db.refresh(user)
@@ -319,3 +330,57 @@ def patch_user_status(
     db.commit()
     db.refresh(user)
     return to_user_response(db, user)
+
+
+@router.patch("/admin/users/{user_id}", response_model=UserResponse)
+def patch_user(
+    user_id: int,
+    payload: AdminUserUpdateRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
+):
+    user = admin_update_user(db, current_user, user_id, payload.model_dump(exclude_unset=True))
+    db.commit()
+    db.refresh(user)
+    return to_user_response(db, user)
+
+
+@router.delete("/admin/users/{user_id}", response_model=MessageResponse)
+def delete_user(
+    user_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
+):
+    admin_delete_user(db, current_user, user_id)
+    db.commit()
+    return MessageResponse(message="User deleted.")
+
+
+@router.get("/admin/users/{user_id}/learning", response_model=StudentLearningResponse)
+def get_student_learning(
+    user_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
+):
+    return admin_student_learning(db, current_user, user_id)
+
+
+@router.put("/admin/users/{user_id}/publisher", response_model=StudentLearningResponse)
+def put_student_publisher(
+    user_id: int,
+    payload: StudentPublisherRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+):
+    admin_set_student_publisher(db, current_user, user_id, payload.subject, payload.textbook_id)
+    db.commit()
+    return admin_student_learning(db, current_user, user_id)
+
+
+@router.get("/admin/telemetry/tokens", response_model=TokenTelemetryResponse)
+def admin_token_telemetry(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_roles(Role.SCHOOL_ADMIN, Role.MASTER_ADMIN))],
+    timeframe: str = "month",
+):
+    return get_token_telemetry(db, current_user, timeframe=timeframe)

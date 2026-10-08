@@ -82,6 +82,9 @@ class Settings(BaseModel):
         "yes",
     )
 
+    vector_backend: str = os.environ.get("VECTOR_BACKEND", "qdrant")
+    storage_backend: str = os.environ.get("STORAGE_BACKEND", "s3")
+
 
 @lru_cache
 def get_settings() -> Settings:

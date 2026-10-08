@@ -24,6 +24,7 @@ from app.modules.auth.dependencies import get_current_user
 from app.modules.users.models import User
 from app.modules.auth.bootstrap import seed_test_users_if_missing
 from app.modules.catalog.router import router as catalog_router, student_router as student_catalog_router
+from app.modules.catalog.textbook_router import router as textbook_catalog_router
 from app.modules.teacher.lesson_planner.router import router as lesson_planner_router
 from app.modules.teacher.lesson_planner.metrics_router import metrics_router as lesson_planner_metrics_router
 from app.modules.teacher.lesson_planner.ws import lesson_planner_ws_router
@@ -41,6 +42,7 @@ from app.modules.live_sessions.router import student_router as live_sessions_stu
 from app.modules.search.router import router as search_router
 from app.modules.events.ws import events_ws_router
 from app.modules.events.middleware import DomainEventMiddleware
+from app.services.token_usage import UsageUserMiddleware
 from app.modules.learning_intelligence.router import internal_router as lia_internal_router
 from app.modules.learning_intelligence.router import tutor_router as lia_tutor_router
 from app.modules.notifications.router import router as notifications_router
@@ -79,12 +81,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(DomainEventMiddleware)
+app.add_middleware(UsageUserMiddleware)
 
 app.include_router(voice_router)
 app.include_router(ws_router)      # WebSocket: /ws/voice
 app.include_router(auth_router)
 app.include_router(signup_router)
 app.include_router(catalog_router)
+app.include_router(textbook_catalog_router)
 app.include_router(student_catalog_router)
 app.include_router(lesson_planner_router)
 app.include_router(lesson_planner_metrics_router)

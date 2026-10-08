@@ -17,6 +17,7 @@ from app.modules.school_admin.classes.schemas import (
     ClassResponse,
     ClassSubjectMappingSaveRequest,
     ClassSubjectMappingsResponse,
+    ClassTextbookOptionsResponse,
     ClassUpdateRequest,
     SubjectBulkCreateRequest,
     SubjectBulkCreateResponse,
@@ -28,6 +29,7 @@ from app.modules.school_admin.classes.service import (
     bulk_create_classes,
     bulk_create_subjects,
     class_options,
+    class_textbook_options,
     delete_class,
     delete_subject,
     get_class_subject_mappings,
@@ -147,6 +149,15 @@ def classes_bulk_create_route(
     result = bulk_create_classes(db, current_user, payload.classes, school_id=school_id)
     db.commit()
     return result
+
+
+@router.get("/{class_id}/textbooks", response_model=ClassTextbookOptionsResponse)
+def class_textbook_options_route(
+    class_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: SchoolStaffUser,
+):
+    return class_textbook_options(db, current_user, class_id)
 
 
 @router.put("/{class_id}/subjects", response_model=ClassSubjectMappingsResponse)

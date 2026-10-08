@@ -40,14 +40,17 @@ def get_current_user(
 def get_current_user_bearer_or_query(
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     db: Annotated[Session, Depends(get_db)],
-    access_token: str | None = Query(None, description="Optional JWT for <img src> loads"),
+    access_token: str | None = Query(None, description="Optional JWT for <img src> or <iframe src> loads"),
+    token: str | None = Query(None, description="Alias for access_token"),
 ) -> User:
-    """Same as get_current_user but allows passing the access JWT as *access_token* (e.g. image tags)."""
+    """Same as get_current_user but allows passing the access JWT as *access_token* or *token*."""
     raw: str | None = None
     if credentials and credentials.credentials:
         raw = credentials.credentials
     elif access_token:
         raw = access_token
+    elif token:
+        raw = token
     if not raw:
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
     try:

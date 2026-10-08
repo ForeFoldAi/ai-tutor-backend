@@ -16,6 +16,13 @@ def main() -> None:
     assert compute_scope_key(None, []) == "none:"
     assert compute_scope_key(_FakeClass(12), ["Math", "Science"]) == "12:math,science"
     assert compute_scope_key(_FakeClass(12), ["Science", "Math"]) == "12:math,science"
+    assert compute_scope_key(_FakeClass(12), ["Math"], {"math": 7}) == "12:math|books:math=7"
+    from app.modules.catalog.models import BoardEnum, ClassEnum
+    from app.modules.student_learning.enrollment import individual_scope_key
+
+    u, b, c = SimpleNamespace(id=3), BoardEnum.CBSE, ClassEnum("CLASS_8")
+    assert individual_scope_key(u, b, c, ["Math"]) == "ind:3:CBSE:CLASS_8:math"  # unchanged without picks
+    assert individual_scope_key(u, b, c, ["Math"], {"math": 7}) == "ind:3:CBSE:CLASS_8:math|books:math=7"
     completed, total = 2, 5
     progress = int(round((completed / total) * 100)) if total else 0
     assert progress == 40

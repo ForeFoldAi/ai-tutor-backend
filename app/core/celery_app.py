@@ -28,6 +28,12 @@ settings = get_settings()
 _worker_pool = os.environ.get("CELERY_WORKER_POOL") or ("solo" if sys.platform == "darwin" else "prefork")
 
 from app.modules.learning_intelligence.constants import QUEUE_LIA
+from app.services.catalog_pipeline.constants import (
+    QUEUE_CATALOG,
+    TASK_ANALYZE_TEXTBOOK,
+    TASK_PROCESS_CHAPTERS,
+    TASK_PROCESS_UPLOAD,
+)
 
 QUEUE_MAIL = "mail"
 
@@ -39,12 +45,14 @@ celery_app = Celery(
         "app.services.lesson_planner.workers.tasks",
         "app.services.mail.tasks",
         "app.services.learning_intelligence.workers.tasks",
+        "app.services.catalog_pipeline.tasks",
     ],
 )
 
 celery_app.conf.update(
     worker_pool=_worker_pool,
     worker_concurrency=1 if _worker_pool == "solo" else int(os.environ.get("CELERY_WORKER_CONCURRENCY", "2")),
+    worker_max_tasks_per_child=int(os.environ.get("CELERY_WORKER_MAX_TASKS_PER_CHILD", "5")),
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
@@ -61,6 +69,7 @@ celery_app.conf.update(
         QUEUE_REGENERATE: {"exchange": QUEUE_REGENERATE, "routing_key": QUEUE_REGENERATE},
         QUEUE_MAIL: {"exchange": QUEUE_MAIL, "routing_key": QUEUE_MAIL},
         QUEUE_LIA: {"exchange": QUEUE_LIA, "routing_key": QUEUE_LIA},
+        QUEUE_CATALOG: {"exchange": QUEUE_CATALOG, "routing_key": QUEUE_CATALOG},
     },
     task_routes={
         "lesson_planner.generate": {"queue": QUEUE_GENERATE},
@@ -74,6 +83,9 @@ celery_app.conf.update(
         "lia.monthly_summaries": {"queue": QUEUE_LIA},
         "lia.run_prediction": {"queue": QUEUE_LIA},
         "lia.seed_concept_graph": {"queue": QUEUE_LIA},
+        TASK_PROCESS_UPLOAD: {"queue": QUEUE_CATALOG},
+        TASK_ANALYZE_TEXTBOOK: {"queue": QUEUE_CATALOG},
+        TASK_PROCESS_CHAPTERS: {"queue": QUEUE_CATALOG},
     },
     beat_schedule={
         "mail-session-reminders": {

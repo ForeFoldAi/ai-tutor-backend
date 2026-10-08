@@ -88,6 +88,13 @@ class SchoolClassSubject(Base):
         nullable=False,
         index=True,
     )
+    # Publisher book for this class+subject; NULL = default book.
+    textbook_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("textbooks.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     subject: Mapped[SchoolSubject] = relationship("SchoolSubject")

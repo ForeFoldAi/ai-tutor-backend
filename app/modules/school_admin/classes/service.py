@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.modules.auth.constants import Role
 from app.modules.auth.exceptions import AuthException
+from app.modules.catalog.models import BoardEnum, ClassEnum
+from app.modules.catalog.publisher_books import books_for
 from app.modules.school_admin.classes.constants import (
     DEFAULT_PAGE_LIMIT,
     MAX_BULK_IMPORT,
@@ -24,6 +26,8 @@ from app.modules.school_admin.classes.schemas import (
     ClassResponse,
     ClassSubjectMappingSaveRequest,
     ClassSubjectMappingsResponse,
+    ClassTextbookOption,
+    ClassTextbookOptionsResponse,
     ClassUpdateRequest,
     PaginationMeta,
     SubjectBulkCreateResponse,
@@ -458,6 +462,7 @@ def bulk_create_classes(
             )
             db.add(school_class)
             db.flush()
+            _attach_syllabus_subjects(db, scope, school_class)
             created.append(_class_response(school_class))
         except Exception as exc:
             errors.append(BulkRowError(row=index, field="grade", message=str(exc)))
@@ -485,11 +490,112 @@ def get_class_subject_mappings(
     )
 
     mappings: dict[str, dict[str, bool]] = {}
+    textbooks: dict[str, dict[str, int]] = {}
     for school_class in classes:
         key = f"{school_class.seq}:{school_class.curriculum}"
         mappings[key] = {str(link.subject.seq): True for link in school_class.subject_links}
+        books = {str(link.subject.seq): link.textbook_id for link in school_class.subject_links if link.textbook_id}
+        if books:
+            textbooks[key] = books
 
-    return ClassSubjectMappingsResponse(mappings=mappings)
+    return ClassSubjectMappingsResponse(mappings=mappings, textbooks=textbooks)
+
+
+def _class_board_level(school_class: SchoolClass) -> tuple[BoardEnum | None, ClassEnum | None]:
+    from app.modules.student_learning.enrollment import _parse_board, _parse_class_level
+
+    return _parse_board(school_class.curriculum), _parse_class_level(school_class.grade)
+
+
+def subject_code_for(name: str, taken: set[str]) -> str:
+    base = "".join(ch for ch in name.upper() if ch.isalnum())[:4] or "SUBJ"
+    code, n = base, 1
+    while code in taken:
+        n += 1
+        code = f"{base}{n}"
+    return code
+
+
+def _attach_syllabus_subjects(db: Session, scope: ClassScope, school_class: SchoolClass) -> None:
+    """New class gets the master-admin syllabus subjects for its board+grade (created in this scope if missing)."""
+    from app.modules.catalog.models import SyllabusSubject
+
+    board, level = _class_board_level(school_class)
+    if not board or not level:
+        return
+    names = list(
+        db.scalars(
+            select(SyllabusSubject.subject_name)
+            .where(SyllabusSubject.board == board, SyllabusSubject.class_level == level)
+            .order_by(SyllabusSubject.subject_name)
+        )
+    )
+    if not names:
+        return
+    existing = {s.name.strip().lower(): s for s in db.scalars(select(SchoolSubject).where(scope.subject_filter()))}
+    taken = {s.code.upper() for s in existing.values()}
+    for name in names:
+        key = name.strip().lower()
+        subject = existing.get(key)
+        if subject is None:
+            code = subject_code_for(name, taken)
+            taken.add(code)
+            subject = SchoolSubject(
+                school_id=scope.school_id,
+                owner_user_id=scope.owner_user_id,
+                seq=_next_subject_seq(db, scope),
+                name=name.strip(),
+                code=code,
+                is_active=True,
+            )
+            db.add(subject)
+            db.flush()
+            existing[key] = subject
+        db.add(SchoolClassSubject(school_class_id=school_class.id, subject_id=subject.id))
+    db.flush()
+
+
+def _validated_book(
+    db: Session,
+    school_class: SchoolClass,
+    subject: SchoolSubject,
+    textbook_id: int | None,
+) -> int | None:
+    """Return the non-default textbook id to store, or None for the default book."""
+    if textbook_id is None:
+        return None
+    board, level = _class_board_level(school_class)
+    allowed = {tb.id: tb for tb in books_for(db, board, level, subject.name)} if board and level else {}
+    tb = allowed.get(textbook_id)
+    if tb is None:
+        raise AuthException(
+            f"Textbook is not available for {subject.name} in this class.",
+            status.HTTP_400_BAD_REQUEST,
+        )
+    return None if tb.is_default else tb.id
+
+
+def class_textbook_options(db: Session, actor: User, class_seq: int) -> ClassTextbookOptionsResponse:
+    assert_can_manage_classes(actor)
+    scope = resolve_class_scope(actor)
+    school_class = _class_by_seq(db, scope, class_seq)
+    if not school_class:
+        raise AuthException("Class not found.", status.HTTP_404_NOT_FOUND)
+    assert_actor_manages_class(actor, school_class)
+
+    board, level = _class_board_level(school_class)
+    if not board or not level:
+        return ClassTextbookOptionsResponse(options={})
+    subjects = db.scalars(select(SchoolSubject).where(scope.subject_filter(), SchoolSubject.is_active.is_(True)))
+    options: dict[str, list[ClassTextbookOption]] = {}
+    for subject in subjects:
+        books = books_for(db, board, level, subject.name)
+        if books:
+            options[str(subject.seq)] = [
+                ClassTextbookOption(id=tb.id, title=tb.title, publisher=tb.publisher, is_default=tb.is_default)
+                for tb in books
+            ]
+    return ClassTextbookOptionsResponse(options=options)
 
 
 def save_class_subject_mapping(
@@ -505,14 +611,25 @@ def save_class_subject_mapping(
         raise AuthException("Class not found.", status.HTTP_404_NOT_FOUND)
     assert_actor_manages_class(actor, school_class)
 
-    valid_subject_ids: set[int] = set()
+    old_books: dict[int, int | None] = dict(
+        db.execute(
+            select(SchoolClassSubject.subject_id, SchoolClassSubject.textbook_id).where(
+                SchoolClassSubject.school_class_id == school_class.id
+            )
+        ).all()
+    )
+    book_for: dict[int, int | None] = {}
     for subject_seq in payload.subject_ids:
         subject = _subject_by_seq(db, scope, subject_seq)
         if not subject:
             raise AuthException("Invalid subject for this school.", status.HTTP_400_BAD_REQUEST)
-        valid_subject_ids.add(subject.id)
+        if payload.textbooks is not None and subject_seq in payload.textbooks:
+            book_for[subject.id] = _validated_book(db, school_class, subject, payload.textbooks[subject_seq])
+        else:
+            book_for[subject.id] = old_books.get(subject.id)
 
     from app.modules.student_learning.enrollment import (
+        class_book_choices,
         compute_scope_key,
         enrolled_subject_names,
         students_on_school_class,
@@ -521,16 +638,17 @@ def save_class_subject_mapping(
     from app.modules.student_learning.service import reset_student_learning
 
     old_names = enrolled_subject_names(db, school_class)
-    old_scope = compute_scope_key(school_class, old_names)
+    old_scope = compute_scope_key(school_class, old_names, class_book_choices(db, school_class))
 
     db.execute(delete(SchoolClassSubject).where(SchoolClassSubject.school_class_id == school_class.id))
-    for subject_id in valid_subject_ids:
-        db.add(SchoolClassSubject(school_class_id=school_class.id, subject_id=subject_id))
+    for subject_id, textbook_id in book_for.items():
+        db.add(SchoolClassSubject(school_class_id=school_class.id, subject_id=subject_id, textbook_id=textbook_id))
     school_class.updated_at = datetime.now(UTC)
     db.flush()
+    db.expire(school_class, ["subject_links"])
 
     new_names = enrolled_subject_names(db, school_class)
-    new_scope = compute_scope_key(school_class, new_names)
+    new_scope = compute_scope_key(school_class, new_names, class_book_choices(db, school_class))
     if new_scope != old_scope:
         for student in students_on_school_class(db, school_class):
             streak = db.scalar(

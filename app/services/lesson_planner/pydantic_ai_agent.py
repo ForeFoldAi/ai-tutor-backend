@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from app.config import llm_api_key_for, llm_base_url_for, llm_model_for
 from app.services.lesson_planner.llm import generate_artifact_json
 from app.services.lesson_planner.observability.tracing import trace_span
+from app.services.token_usage import current_user_id, record_usage
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,13 @@ async def _run_pydantic_agent(
         system_prompt=system_prompt,
     )
     result = await agent.run(user_prompt)
+    try:
+        u = result.usage()
+        prompt = getattr(u, "input_tokens", None) or getattr(u, "request_tokens", 0) or 0
+        completion = getattr(u, "output_tokens", None) or getattr(u, "response_tokens", 0) or 0
+        record_usage(current_user_id.get(), "lesson", model_name, int(prompt), int(completion))
+    except Exception:
+        logger.exception("pydantic-ai usage capture failed")
     if hasattr(result, "output"):
         out = result.output
         return out.model_dump() if isinstance(out, BaseModel) else dict(out)

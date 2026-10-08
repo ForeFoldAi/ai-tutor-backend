@@ -8,7 +8,7 @@ There is **no** student LLM token metering in this codebase today.
 | Feature | Redis | Celery | Notes |
 |---------|-------|--------|-------|
 | Auth / JWT | No | No | Postgres sessions |
-| Catalog upload / embed | No | No | API `BackgroundTasks` |
+| Catalog upload / embed | **Optional (Recommended)** | **Optional (Recommended)** | Dual-mode: Celery `catalog-ingest` if Redis present; fallback to `BackgroundTasks` |
 | Tutor chat / stream / voice answers | No | No | Always hits LLM |
 | Student chat history | No | No | Postgres `student_tutor_chats` |
 | LIA live (events, twin, guidance) | No | No | Sync Postgres; fail-open |
@@ -19,7 +19,7 @@ There is **no** student LLM token metering in this codebase today.
 
 **Minimal Coolify (students + tutor + live LIA):** API + Postgres (+ optional S3/Qdrant). No Redis/Celery required.
 
-**Full product (teachers + mail):** add Redis + dedicated Celery workers.
+**Full product (teachers + mail + bulk PDF worker):** add Redis + dedicated Celery workers.
 
 ## Coolify env
 
@@ -32,11 +32,11 @@ Do **not** set any tutor answer cache flag (removed).
 
 ## Worker commands
 
-Lesson (required for lesson planner):
+Lesson & Catalog Ingestion (recommended for production):
 
 ```bash
 celery -A app.core.celery_app.celery_app worker \
-  -Q lesson-generate,lesson-export,lesson-autosave,lesson-regenerate \
+  -Q lesson-generate,lesson-export,lesson-autosave,lesson-regenerate,catalog-ingest \
   --concurrency=2 --loglevel=info
 ```
 

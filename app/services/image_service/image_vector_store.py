@@ -59,6 +59,35 @@ def delete_image_vectors_for_upload(collection_name: str, upload_id: str) -> Non
         pass
 
 
+def delete_single_image_vector(collection_name: str, image_id: str) -> None:
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        try:
+            from app.services.vector_backend.qdrant_common import get_qdrant_client
+            from app.services.vector_backend.qdrant_image import image_point_id
+            from qdrant_client.http import models as qm
+
+            client = get_qdrant_client()
+            client.delete(
+                collection_name=collection_name,
+                points_selector=qm.PointIdsList(points=[image_point_id(str(image_id))]),
+            )
+            logger.debug("Deleted image vector %s in %s", image_id, collection_name)
+        except Exception:
+            pass
+        return
+
+    _sanitize_chroma_env()
+    try:
+        client = _get_client()
+        coll = client.get_collection(collection_name)
+        coll.delete(ids=[str(image_id)])
+        logger.debug("Deleted image vector %s in %s", image_id, collection_name)
+    except Exception:
+        pass
+
+
 def upsert_image_vectors(
     collection_name: str,
     *,

@@ -24,8 +24,20 @@ from app.config import (
     llm_base_url_for,
     llm_model_for,
 )
+from app.services.token_usage import current_user_id, record_usage, usage_from
 
 logger = logging.getLogger(__name__)
+
+
+def _track(feature: str, model: str, payload: dict[str, Any], *, in_loop: bool) -> None:
+    usage = usage_from(payload)
+    if not usage:
+        return
+    args = (current_user_id.get(), feature, model, *usage)
+    if in_loop:
+        asyncio.get_running_loop().run_in_executor(None, record_usage, *args)
+    else:
+        record_usage(*args)
 
 _RETRY_STATUSES = frozenset({429, 503})
 # Longer gaps — short retries were burning the same Mistral free-tier budget.
@@ -184,7 +196,9 @@ async def complete(
                 if resp.status_code not in _RETRY_STATUSES:
                     resp.raise_for_status()
                     _mark_async_ok()
-                    text = _content_from_response(resp.json())
+                    data = resp.json()
+                    _track(feature, body["model"], data, in_loop=True)
+                    text = _content_from_response(data)
                     logger.debug("LLM response length=%d chars", len(text))
                     return text or empty_fallback
                 wait = _retry_wait_sec(resp, attempt)
@@ -263,6 +277,9 @@ async def stream(
                         break
                     try:
                         chunk = json.loads(data)
+                        # ponytail: Mistral/Groq send usage on the last chunk by default; OpenAI would need
+                        # stream_options.include_usage. Streams cut short by an interrupt record nothing.
+                        _track(feature, body["model"], chunk, in_loop=True)
                         delta = chunk["choices"][0]["delta"].get("content", "")
                         if delta:
                             cleaned = strip_emojis(delta)
@@ -304,7 +321,9 @@ def complete_sync(
                 if resp.status_code not in _RETRY_STATUSES:
                     resp.raise_for_status()
                     _mark_sync_ok()
-                    return _content_from_response(resp.json())
+                    data = resp.json()
+                    _track(feature, body["model"], data, in_loop=False)
+                    return _content_from_response(data)
                 wait = _retry_wait_sec(resp, attempt)
                 if attempt + 1 >= attempts:
                     _mark_sync_ok(cooldown=wait)

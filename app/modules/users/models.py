@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, Identity, String
+from sqlalchemy import BigInteger, Boolean, DateTime, Enum, ForeignKey, Identity, Integer, String
 from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -32,6 +32,8 @@ class User(Base):
     excluded_student_ids: Mapped[list[int] | None] = mapped_column(JSON, nullable=True)
     # Parked subjects/classes when teacher is deactivated (restored on activate)
     assignment_snapshot: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Student: {normalised subject: textbook id}, overrides the class pick; 0 = force default pool
+    publisher_choices: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     # Login credentials lifecycle (school-admin Credentials tab)
     credentials_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     credentials_shared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -46,6 +48,25 @@ class User(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         onupdate=lambda: datetime.now(UTC),
+    )
+
+
+class LlmUsage(Base):
+    """One row per LLM call, from the provider's reported `usage` block."""
+
+    __tablename__ = "llm_usage"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    # NULL = guest / background job (no signed-in caller)
+    user_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    feature: Mapped[str] = mapped_column(String(40), nullable=False)
+    model: Mapped[str] = mapped_column(String(120), nullable=False)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False, index=True
     )
 
 

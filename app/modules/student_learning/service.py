@@ -13,6 +13,7 @@ from app.modules.auth.exceptions import AuthException
 from app.modules.catalog.models import TextbookUpload
 from app.modules.student_learning.enrollment import (
     compute_scope_key,
+    student_book_choices,
     individual_learning_scope,
     list_enrolled_subjects,
     resolve_student_school_class,
@@ -131,7 +132,7 @@ def ensure_scope_or_reset(db: Session, user: User) -> str:
             names = effective_subject_names(
                 db, user=user, school_class=school_class, mapped_names=mapped_names
             )
-            scope_key = compute_scope_key(school_class, names)
+            scope_key = compute_scope_key(school_class, names, student_book_choices(db, user, school_class))
 
     streak = db.scalar(select(StudentLearningStreak).where(StudentLearningStreak.user_id == user.id))
     if streak is None:

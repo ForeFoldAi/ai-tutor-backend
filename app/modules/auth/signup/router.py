@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -16,6 +16,7 @@ from app.modules.auth.signup.schemas import (
     TutorSignupRequest,
 )
 from app.modules.auth.signup.service import (
+    signup_catalog,
     signup_school,
     signup_student,
     signup_success_message,
@@ -28,6 +29,19 @@ router = APIRouter(prefix="/auth/signup", tags=["signup"])
 @router.get("/options", response_model=SignupOptionsResponse)
 def signup_options_route():
     return SignupOptionsResponse(**signup_options_payload())
+
+
+@router.get("/catalog")
+def signup_catalog_route(
+    curriculum: Annotated[str, Query(min_length=1, max_length=50)],
+    grade: Annotated[str, Query(min_length=1, max_length=20)],
+    db: Annotated[Session, Depends(get_db)],
+):
+    """Subjects + publishers available for a curriculum and grade (public, read-only)."""
+    try:
+        return signup_catalog(db, curriculum, grade)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(exc)) from exc
 
 
 def _commit_signup(db: Session, user, login_user_id: str) -> SignupResponse:

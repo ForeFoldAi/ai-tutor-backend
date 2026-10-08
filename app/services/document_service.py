@@ -161,6 +161,15 @@ def process_document(
 
     if ext == ".pdf":
         raw_docs = _load_pdf(file_path)
+        # Sanitize text to remove cross-page watermarks, boilerplate, and margin page numbers
+        try:
+            from app.services.textbook_structure.text_cleaner import DocumentTextCleaner
+            for d in raw_docs:
+                if d.page_content:
+                    cleaned_content, _ = DocumentTextCleaner.clean_text(d.page_content)
+                    d.page_content = cleaned_content
+        except Exception:
+            pass
     elif ext in (".docx", ".doc"):
         raw_docs = _load_docx(file_path)
     else:

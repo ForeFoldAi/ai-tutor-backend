@@ -214,6 +214,44 @@ class UserStatusPatchRequest(BaseModel):
     is_active: bool
 
 
+class AdminUserUpdateRequest(BaseModel):
+    full_name: str | None = Field(default=None, min_length=2, max_length=255)
+    email: EmailStr | None = None
+    phone: str | None = Field(default=None, max_length=50)
+    school_id: int | None = None
+    new_password: str | None = Field(default=None, min_length=8, max_length=128)
+
+
+class StudentPublisherOption(BaseModel):
+    id: int
+    publisher: str
+
+
+class StudentChapterBrief(BaseModel):
+    id: int
+    chapter: str | None = None
+
+
+class StudentSubjectLearning(BaseModel):
+    subject_name: str
+    chapters: list[StudentChapterBrief]
+    publisher_id: int | None  # effective book; None = default pool
+    class_publisher_id: int | None
+    override: int | None  # student's own pick; 0 = forced default, None = follows class
+    options: list[StudentPublisherOption]
+
+
+class StudentLearningResponse(BaseModel):
+    source: str  # "class" | "individual" | "none"
+    class_label: str | None = None
+    subjects: list[StudentSubjectLearning]
+
+
+class StudentPublisherRequest(BaseModel):
+    subject: str = Field(min_length=1, max_length=120)
+    textbook_id: int | None = None  # None = follow class, 0 = default, id = publisher book
+
+
 class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -265,6 +303,14 @@ class SchoolSummaryResponse(BaseModel):
     school_admins: list[SchoolAdminBrief]
     tutor_count: int
     student_count: int
+    class_count: int = 0
+    email: str | None = None
+    phone: str | None = None
+    website: str | None = None
+    address: str | None = None
+    grades_offered: str | None = None
+    student_strength: str | None = None
+    curricula: list[str] = Field(default_factory=list)
 
 
 class SchoolUpdateRequest(BaseModel):
@@ -275,8 +321,11 @@ class SchoolUpdateRequest(BaseModel):
     phone: str | None = Field(default=None, max_length=50)
     website: str | None = Field(default=None, max_length=500)
     address: str | None = Field(default=None, max_length=500)
+    grades_offered: str | None = Field(default=None, max_length=100)
+    student_strength: str | None = Field(default=None, max_length=100)
+    curricula: list[str] | None = None
 
-    @field_validator("branch", "board", "phone", "website", "address", mode="before")
+    @field_validator("branch", "board", "phone", "website", "address", "grades_offered", "student_strength", mode="before")
     @classmethod
     def _blank_optional(cls, v: str | None) -> str | None:
         if v is None:
@@ -427,3 +476,42 @@ class UserSettingsUpdateRequest(BaseModel):
                 "Username can only use letters, numbers, hyphens (-), and underscores (_)."
             )
         return v
+
+
+class UserTokenUsage(BaseModel):
+    user_id: int
+    full_name: str
+    email: str
+    role: str
+    school_id: int | None = None
+    total_tokens: int
+    prompt_tokens: int
+    completion_tokens: int
+    tokens_day: int
+    tokens_week: int
+    tokens_month: int
+
+
+class SchoolTokenUsage(BaseModel):
+    school_id: int
+    school_name: str
+    branch: str | None = None
+    board: str | None = None
+    user_count: int
+    total_tokens: int
+    prompt_tokens: int
+    completion_tokens: int
+    tokens_day: int
+    tokens_week: int
+    tokens_month: int
+    quota_limit: int = 1_000_000
+    quota_used_percent: float
+
+
+class TokenTelemetryResponse(BaseModel):
+    timeframe: str
+    total_platform_tokens: int
+    total_prompt_tokens: int
+    total_completion_tokens: int
+    school_usage: list[SchoolTokenUsage]
+    user_usage: list[UserTokenUsage]

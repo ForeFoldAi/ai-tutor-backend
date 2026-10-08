@@ -147,7 +147,23 @@ class ClassBulkCreateResponse(BaseModel):
 
 class ClassSubjectMappingSaveRequest(BaseModel):
     subject_ids: list[int] = Field(default_factory=list)
+    # subject seq -> textbook id (null = default book). Omitted -> keep existing book choices.
+    textbooks: dict[int, int | None] | None = None
 
 
 class ClassSubjectMappingsResponse(BaseModel):
     mappings: dict[str, dict[str, bool]]
+    # Same class key -> subject seq -> chosen textbook id (only non-default choices listed).
+    textbooks: dict[str, dict[str, int]] = Field(default_factory=dict)
+
+
+class ClassTextbookOption(BaseModel):
+    id: int
+    title: str
+    publisher: str | None = None
+    is_default: bool
+
+
+class ClassTextbookOptionsResponse(BaseModel):
+    # subject seq -> books master has uploaded for this class's board/grade/subject
+    options: dict[str, list[ClassTextbookOption]]
