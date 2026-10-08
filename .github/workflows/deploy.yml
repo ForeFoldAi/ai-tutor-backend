@@ -22,9 +22,6 @@ jobs:
       - run: pytest tests/test_production_checks.py -q --tb=short
         env:
           PYTHONPATH: .
-          ENVIRONMENT: development
-          JWT_SECRET_KEY: ci-only-not-for-production-use-32ch
-          REDIS_URL: redis://localhost:6379/0
 
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/server'

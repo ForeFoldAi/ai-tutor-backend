@@ -36,7 +36,9 @@ class Settings(BaseModel):
         return _normalize_database_url(v)
     redis_url: str = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 
-    jwt_secret_key: str = os.environ.get("JWT_SECRET_KEY", "change-me-in-production")
+    jwt_secret_key: str = Field(
+        default_factory=lambda: os.environ.get("JWT_SECRET_KEY", "change-me-in-production")
+    )
     jwt_algorithm: str = os.environ.get("JWT_ALGORITHM", "HS256")
     access_token_exp_minutes: int = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
     refresh_token_exp_days: int = int(os.environ.get("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
