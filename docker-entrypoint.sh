@@ -42,6 +42,12 @@ else
   echo "Skipping database migrations (RUN_MIGRATIONS!=1)"
 fi
 
+# Lets one image run as the Celery worker on hosts without a command override (e.g. Coolify Docker Image apps).
+if [ -n "${START_COMMAND:-}" ]; then
+  echo "Starting: ${START_COMMAND}"
+  exec sh -c "${START_COMMAND}"
+fi
+
 echo "Starting API..."
 # Railway (and most PaaS) inject PORT; local/Docker Compose default to 8000.
 exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" "$@"
