@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.student_messages import (
     ACCOUNT_INACTIVE,
+    ACCOUNT_PENDING_APPROVAL,
     CURRENT_PASSWORD_REQUIRED,
     INVALID_LOGIN,
     INVALID_RESET_OTP,
@@ -129,6 +130,8 @@ def _validate_admin_create(actor: User, target_role: Role) -> None:
 def _ensure_active(user: User) -> None:
     if not user.is_active:
         raise AuthException(ACCOUNT_INACTIVE, status.HTTP_403_FORBIDDEN)
+    if user.approved_at is None:
+        raise AuthException(ACCOUNT_PENDING_APPROVAL, status.HTTP_403_FORBIDDEN)
 
 
 def signup_student(db: Session, payload: StudentSignupRequest) -> User:
@@ -587,6 +590,15 @@ def set_user_status(db: Session, actor: User, user_id: int, is_active: bool) -> 
     user.is_active = is_active
     user.updated_at = datetime.now(UTC)
     return user
+
+
+def approve_user(db: Session, user_id: int) -> tuple[User, bool]:
+    """Returns (user, newly_approved) so the caller only mails on the first approval."""
+    user = require_user_by_account_id(db, user_id)
+    if user.approved_at is not None:
+        return user, False
+    user.approved_at = datetime.now(UTC)
+    return user, True
 
 
 def admin_update_user(db: Session, actor: User, user_id: int, data: dict[str, Any]) -> User:

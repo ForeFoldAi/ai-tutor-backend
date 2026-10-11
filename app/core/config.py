@@ -60,6 +60,9 @@ class Settings(BaseModel):
         "yes",
     )
 
+    # Receives "new signup awaiting approval" mails; empty = skip
+    admin_notify_email: str = os.environ.get("ADMIN_NOTIFY_EMAIL", "")
+
     password_otp_expire_minutes: int = int(os.environ.get("PASSWORD_OTP_EXPIRE_MINUTES", "10"))
     password_otp_length: int = int(os.environ.get("PASSWORD_OTP_LENGTH", "6"))
     password_otp_max_attempts: int = int(os.environ.get("PASSWORD_OTP_MAX_ATTEMPTS", "5"))

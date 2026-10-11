@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from app.services.mail.messages import (
+    build_account_approved_message,
     build_assignment_reminder_message,
     build_credentials_message,
     build_password_otp_message,
     build_session_reminder_message,
+    build_signup_pending_admin_message,
 )
 
 
@@ -37,6 +39,22 @@ def main() -> None:
     otp = build_password_otp_message(full_name="Anita Verma", otp="482913", expire_minutes=10)
     _assert_msg("password_otp", otp.subject, otp.text_body, otp.html_body)
     assert "482913" in otp.text_body
+
+    pend = build_signup_pending_admin_message(
+        full_name="Anita Verma",
+        username="anita.verma",
+        email="anita@example.com",
+        phone=None,
+        role_label="School Admin",
+        school_name="Sunrise Public School",
+    )
+    _assert_msg("signup_pending_admin", pend.subject, pend.text_body, pend.html_body)
+    assert "anita@example.com" in pend.text_body
+    assert "Sunrise Public School" in pend.html_body
+
+    appr = build_account_approved_message(full_name="Anita Verma")
+    _assert_msg("account_approved", appr.subject, appr.text_body, appr.html_body)
+    assert "approved" in appr.subject
 
     asgn = build_assignment_reminder_message(
         student_name="Anita Verma",

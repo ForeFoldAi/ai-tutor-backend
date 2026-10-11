@@ -9,10 +9,12 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.modules.users.models import UserSettings
 from app.services.mail.messages import (
+    build_account_approved_message,
     build_assignment_reminder_message,
     build_credentials_message,
     build_password_otp_message,
     build_session_reminder_message,
+    build_signup_pending_admin_message,
 )
 from app.services.mail.smtp import send_message
 
@@ -61,6 +63,35 @@ def send_password_otp_email(
         text_body=msg.text_body,
         html_body=msg.html_body,
     )
+
+
+def send_signup_pending_admin_email(
+    *,
+    full_name: str,
+    username: str,
+    email: str,
+    phone: str | None,
+    role_label: str,
+    school_name: str | None = None,
+) -> bool:
+    to = get_settings().admin_notify_email
+    if not to:
+        logger.info("ADMIN_NOTIFY_EMAIL unset; skip signup notice for %s", username)
+        return True
+    msg = build_signup_pending_admin_message(
+        full_name=full_name,
+        username=username,
+        email=email,
+        phone=phone,
+        role_label=role_label,
+        school_name=school_name,
+    )
+    return send_message(to=to, subject=msg.subject, text_body=msg.text_body, html_body=msg.html_body)
+
+
+def send_account_approved_email(*, to: str, full_name: str) -> bool:
+    msg = build_account_approved_message(full_name=full_name)
+    return send_message(to=to, subject=msg.subject, text_body=msg.text_body, html_body=msg.html_body)
 
 
 def _notify_ok(db: Session, user_id: int, *, assignment: bool = False, session: bool = False) -> bool:

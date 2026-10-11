@@ -11,7 +11,7 @@ from app.modules.search.constants import (
     ENTITY_TEACHERS,
     ROLE_GLOBAL_ENTITIES,
 )
-from app.modules.search.service import _hit, _href_for, _items_to_hits
+from app.modules.search.service import _filter_text, _hit, _href_for, _items_to_hits
 
 
 class _Actor:
@@ -50,6 +50,28 @@ def main() -> None:
     assert len(hits) == 1
     assert hits[0].title == "Ada Lovelace"
     assert hits[0].href == "/students"
+
+    for hay, q in [
+        ("Learn Mastro", "LearnMastro"),
+        ("Learn Mastro", "lern mastro"),
+        ("Learn Mastro", "learn masto"),
+        ("AI Tutor", "AI tuter"),
+        ("Mathematics", "mathamatics"),
+        ("Mathematics", "mathamat"),  # typo while still typing
+        ("Mathematics · Chapter 3", "maths"),
+        ("Physics", "pyhsics"),  # transposition
+        ("Écoles du Monde", "ecoles"),
+        ("Light, Shadows & Reflections", "light shadows reflections"),
+    ]:
+        assert _filter_text(hay, q), (hay, q)
+    for hay, q in [
+        ("Mathematics", "cat"),
+        ("bat", "cat"),  # short words never fuzz
+        ("Science", "history"),
+        ("Mathematics", ""),
+        ("Mathematics", "mathematics zoology"),  # every word must match
+    ]:
+        assert not _filter_text(hay, q), (hay, q)
     print("search self-check ok")
 
 

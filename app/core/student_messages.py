@@ -43,6 +43,8 @@ LOGIN_USE_USERNAME = (
 ACCOUNT_INACTIVE = (
     "Your account is paused. Please ask your teacher or school admin for help."
 )
+# Frontend matches on this exact text to show the waiting page; keep in sync with login.tsx.
+ACCOUNT_PENDING_APPROVAL = "Your account is awaiting admin approval."
 NOT_SIGNED_IN = "Your session ended. Please sign in again."
 EMAIL_ALREADY_USED = (
     "This email is already in use. Try signing in or use a different email."
