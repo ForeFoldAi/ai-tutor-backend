@@ -246,6 +246,7 @@ def to_user_response(db: Session, user: User) -> "UserResponse":
         role=user.role,
         is_active=user.is_active,
         is_verified=user.is_verified,
+        approved_at=user.approved_at,
         school_id=user.school_id,
         phone=user.phone,
         designation=signup_profile.designation if signup_profile else None,

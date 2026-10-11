@@ -1,6 +1,6 @@
 from typing import Annotated, Self
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, status
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sqlalchemy.orm import Session
 
@@ -40,6 +40,7 @@ from app.modules.auth.service import (
     admin_set_student_publisher,
     admin_student_learning,
     admin_update_user,
+    approve_user,
     create_school_admin,
     delete_school,
     get_token_telemetry,
@@ -61,7 +62,7 @@ from app.modules.auth.service import (
     verify_email_token,
     verify_password_reset_otp,
 )
-from app.services.mail import send_password_otp_email
+from app.services.mail import send_account_approved_email, send_password_otp_email
 from app.modules.users.models import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -329,6 +330,21 @@ def patch_user_status(
     user = set_user_status(db, current_user, user_id, payload.is_active)
     db.commit()
     db.refresh(user)
+    return to_user_response(db, user)
+
+
+@router.post("/admin/users/{user_id}/approve", response_model=UserResponse)
+def approve_user_route(
+    user_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    background: BackgroundTasks,
+    current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+):
+    user, newly_approved = approve_user(db, user_id)
+    db.commit()
+    db.refresh(user)
+    if newly_approved:
+        background.add_task(send_account_approved_email, to=user.email, full_name=user.full_name)
     return to_user_response(db, user)
 
 

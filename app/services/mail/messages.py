@@ -58,6 +58,41 @@ def build_password_otp_message(*, full_name: str, otp: str, expire_minutes: int)
     )
 
 
+def build_signup_pending_admin_message(
+    *,
+    full_name: str,
+    username: str,
+    email: str,
+    phone: str | None,
+    role_label: str,
+    school_name: str | None = None,
+) -> BuiltMessage:
+    ctx = _with_app(
+        {
+            "full_name": full_name,
+            "username": username,
+            "email": email,
+            "phone": phone or "",
+            "role_label": role_label,
+            "school_name": school_name or "",
+        }
+    )
+    return BuiltMessage(
+        subject=f"New {role_label} signup awaiting approval: {full_name}",
+        text_body=render_template("signup_pending_admin.txt", ctx),
+        html_body=render_template("signup_pending_admin.html", ctx),
+    )
+
+
+def build_account_approved_message(*, full_name: str) -> BuiltMessage:
+    ctx = _with_app({"full_name": full_name})
+    return BuiltMessage(
+        subject=f"Your {ctx['app_name']} account is approved",
+        text_body=render_template("account_approved.txt", ctx),
+        html_body=render_template("account_approved.html", ctx),
+    )
+
+
 def build_assignment_reminder_message(
     *,
     student_name: str,

@@ -38,6 +38,10 @@ class User(Base):
     credentials_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     credentials_shared_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     credential_delivery_status: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    # NULL = public signup awaiting master-admin approval (login blocked)
+    approved_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, default=lambda: datetime.now(UTC)
+    )
     created_by: Mapped[int | None] = mapped_column(
         BigInteger,
         ForeignKey("users.id", ondelete="SET NULL"),

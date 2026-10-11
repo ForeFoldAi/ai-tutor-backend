@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from fastapi import status
+from sqlalchemy import null
 from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
@@ -117,6 +118,7 @@ def signup_student(db: Session, payload: StudentSignupRequest) -> User:
         teaching_board=curricula[0].value,
         teaching_classes=[{"grade": grade.value, "sections": ["A"]}],
         publisher_choices=publisher_choices or None,
+        approved_at=null(),  # plain None gets replaced by the column's approve-now default
     )
     db.add(user)
     db.flush()
@@ -150,6 +152,7 @@ def signup_tutor(db: Session, payload: TutorSignupRequest) -> User:
         is_verified=False,
         phone=payload.mobile,
         teaching_subjects=[e.value if hasattr(e, "value") else str(e) for e in subjects],
+        approved_at=null(),  # plain None gets replaced by the column's approve-now default
     )
     db.add(user)
     db.flush()
@@ -202,6 +205,7 @@ def signup_school(db: Session, payload: SchoolSignupRequest) -> User:
         is_verified=False,
         school_id=school.id,
         phone=payload.mobile,
+        approved_at=null(),  # plain None gets replaced by the column's approve-now default
     )
     db.add(user)
     db.flush()

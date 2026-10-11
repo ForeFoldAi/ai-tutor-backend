@@ -270,6 +270,7 @@ class UserResponse(BaseModel):
     role: Role
     is_active: bool
     is_verified: bool
+    approved_at: datetime | None = None
     school_id: int | None
     phone: str | None = None
     designation: str | None = None

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+import unicodedata
 from typing import Any
 from urllib.parse import urlencode
 
@@ -111,8 +113,55 @@ def _model_dump(item: Any) -> dict[str, Any]:
     return dict(item)
 
 
+def _norm(text: str) -> str:
+    """Casefold, strip accents, turn punctuation into spaces, collapse whitespace."""
+    decomposed = unicodedata.normalize("NFKD", text)
+    stripped = "".join(c for c in decomposed if not unicodedata.combining(c))
+    return " ".join(re.sub(r"[\W_]+", " ", stripped.casefold()).split())
+
+
+def _max_typos(token_len: int) -> int:
+    # Short tokens never fuzz ("cat" must not match "bat").
+    return 0 if token_len <= 3 else 1 if token_len <= 6 else 2
+
+
+def _within_typos(a: str, b: str, k: int) -> bool:
+    """Optimal-string-alignment (Damerau-Levenshtein) distance <= k, with early exit."""
+    if abs(len(a) - len(b)) > k:
+        return False
+    prev2: list[int] = []
+    prev = list(range(len(b) + 1))
+    for i in range(1, len(a) + 1):
+        cur = [i] + [0] * len(b)
+        for j in range(1, len(b) + 1):
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] != b[j - 1]))
+            if i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                cur[j] = min(cur[j], prev2[j - 2] + 1)
+        if min(cur) > k:
+            return False
+        prev2, prev = prev, cur
+    return prev[-1] <= k
+
+
 def _filter_text(haystack: str, q: str) -> bool:
-    return q.lower() in haystack.lower()
+    """Exact substring first, then every query word must prefix- or typo-match some haystack word."""
+    hay, query = _norm(haystack), _norm(q)
+    if not query:
+        return False
+    if query in hay or query.replace(" ", "") in hay.replace(" ", ""):
+        return True
+    words = hay.split()
+
+    def token_matches(token: str) -> bool:
+        k = _max_typos(len(token))
+        return any(
+            w.startswith(token)
+            or (k and (_within_typos(token, w, k) or _within_typos(token, w[: len(token)], k)))
+            for w in words
+        )
+
+    # ponytail: boolean match, results keep their existing order; score + sort if exact hits get crowded out.
+    return all(token_matches(t) for t in query.split()[:8])
 
 
 def _search_students_items(db: Session, actor: User, q: str, *, limit: int) -> tuple[list[Any], int]:

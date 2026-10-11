@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.security import decode_token
-from app.core.student_messages import ACCOUNT_INACTIVE, NOT_SIGNED_IN
+from app.core.student_messages import ACCOUNT_INACTIVE, ACCOUNT_PENDING_APPROVAL, NOT_SIGNED_IN
 from app.modules.auth.constants import Role
 from app.modules.auth.exceptions import AuthException
 from app.modules.users.models import User
@@ -74,6 +74,8 @@ def require_active_user(
 ) -> User:
     if not current_user.is_active:
         raise AuthException(ACCOUNT_INACTIVE, status.HTTP_403_FORBIDDEN)
+    if current_user.approved_at is None:
+        raise AuthException(ACCOUNT_PENDING_APPROVAL, status.HTTP_403_FORBIDDEN)
     return current_user
 
 
