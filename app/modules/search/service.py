@@ -95,10 +95,12 @@ def _lesson_href(
         "subject": subject_name,
         "subjectId": str(subject_id),
         "chapters": str(chapter_id),
+        "step": "3",
+        "from": "dashboard",
     }
     if chapter_name:
         params["chapterNames"] = chapter_name
-    return f"/ai-tutor?{urlencode(params)}"
+    return f"/ai-learning-studio/subject/{subject_id}?{urlencode(params)}"
 
 
 def _hit(entity: str, id_: str | int, title: str, subtitle: str | None, href: str) -> SearchHit:

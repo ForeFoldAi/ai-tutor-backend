@@ -55,8 +55,16 @@ class SyllabusSubject(Base):
     board: Mapped[BoardEnum] = mapped_column(Enum(BoardEnum, name="board_enum"), nullable=False, index=True)
     class_level: Mapped[ClassEnum] = mapped_column(Enum(ClassEnum, name="class_enum"), nullable=False, index=True)
     subject_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
+
+    @property
+    def image_url(self) -> str | None:
+        if not self.image_path:
+            return None
+        # Content-hashed key in ?v= busts browser caches on re-upload.
+        return f"/auth/catalog/subject-images/{self.id}?v={self.image_path.rsplit('/', 1)[-1]}"
 
 
 class ContentTypeEnum(StrEnum):

@@ -24,6 +24,7 @@ def build_student_dashboard(db: Session, user: User) -> StudentDashboardResponse
         StudentDashboardSubject(
             id=s.id,
             subject_name=s.subject_name,
+            image_url=s.image_url,
             board=s.board,
             class_level=s.class_level,
             progress=s.progress,

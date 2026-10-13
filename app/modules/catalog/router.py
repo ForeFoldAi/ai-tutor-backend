@@ -169,6 +169,71 @@ def update_syllabus(
     return SyllabusSubjectResponse.model_validate(row)
 
 
+SUBJECT_IMAGE_MAX_BYTES = 5 * 1024 * 1024
+
+
+def _delete_subject_image(image_path: str | None) -> None:
+    if not image_path:
+        return
+    from app.services.image_service.storage_backend import get_storage_backend
+
+    try:
+        get_storage_backend().delete(image_path)
+    except Exception as exc:
+        logger.warning("Could not delete subject image %s: %s", image_path, exc)
+
+
+@router.put("/syllabus/{syllabus_id}/image", response_model=SyllabusSubjectResponse)
+async def upload_syllabus_image(
+    syllabus_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+    file: UploadFile = File(...),
+):
+    """Upload or replace the subject cover image (stored in S3 when STORAGE_BACKEND=s3)."""
+    import hashlib
+    from io import BytesIO
+
+    from PIL import Image
+
+    from app.services.image_service.storage_backend import get_storage_backend
+
+    row = db.get(SyllabusSubject, syllabus_id)
+    if not row:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Syllabus entry not found.")
+
+    raw = await file.read(SUBJECT_IMAGE_MAX_BYTES + 1)
+    if len(raw) > SUBJECT_IMAGE_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Image must be 5 MB or smaller.")
+    # Re-encode so only real pixel data (no scripts/metadata) ever reaches storage.
+    try:
+        img = Image.open(BytesIO(raw))
+        img.verify()
+        img = Image.open(BytesIO(raw))
+        img.thumbnail((1024, 1024))
+        out = BytesIO()
+        if img.mode in ("RGBA", "LA", "P"):
+            img.save(out, format="PNG", optimize=True)
+            ext = ".png"
+        else:
+            img.convert("RGB").save(out, format="JPEG", quality=88)
+            ext = ".jpg"
+        data = out.getvalue()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Upload a valid image file (PNG, JPG, WEBP…).")
+
+    key = f"subject_images/{row.id}/{hashlib.sha256(data).hexdigest()[:16]}{ext}"
+    await asyncio.to_thread(get_storage_backend().save, key, data)
+
+    old = row.image_path
+    row.image_path = key
+    db.commit()
+    db.refresh(row)
+    if old and old != key:
+        await asyncio.to_thread(_delete_subject_image, old)
+    return SyllabusSubjectResponse.model_validate(row)
+
+
 @router.delete("/syllabus/{syllabus_id}", response_model=MessageResponse)
 def delete_syllabus(
     syllabus_id: int,
@@ -178,8 +243,10 @@ def delete_syllabus(
     row = db.get(SyllabusSubject, syllabus_id)
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Syllabus entry not found.")
+    image_path = row.image_path
     db.delete(row)
     db.commit()
+    _delete_subject_image(image_path)
     return MessageResponse(message="Syllabus entry deleted.")
 
 
@@ -1227,6 +1294,23 @@ async def crop_textbook_image(
 student_router = APIRouter(prefix="/auth/catalog", tags=["student-catalog"])
 
 
+@student_router.get("/subject-images/{syllabus_id}")
+def get_subject_image(
+    syllabus_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(get_current_user_bearer_or_query)],
+):
+    from app.services.image_service.storage_backend import get_storage_backend
+
+    row = db.get(SyllabusSubject, syllabus_id)
+    data = get_storage_backend().get_bytes(row.image_path) if row and row.image_path else None
+    if not data:
+        raise HTTPException(status_code=404, detail=IMAGE_NOT_AVAILABLE)
+    media_type = "image/png" if row.image_path.endswith(".png") else "image/jpeg"
+    # Key is content-hashed and the URL carries ?v=<key>, so caching is safe.
+    return Response(content=data, media_type=media_type, headers={"Cache-Control": "private, max-age=86400"})
+
+
 @student_router.get("/textbook-images/{upload_id}/{file_path:path}")
 def get_textbook_image_file(
     upload_id: int,
@@ -1419,6 +1503,7 @@ def list_my_subjects(
                 board=subj.board,
                 class_level=subj.class_level,
                 subject_name=subj.subject_name,
+                image_url=subj.image_url,
                 chapters=chapters,
             )
         )
