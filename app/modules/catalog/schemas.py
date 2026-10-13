@@ -52,6 +52,7 @@ class SyllabusSubjectResponse(BaseModel):
     board: BoardEnum
     class_level: ClassEnum
     subject_name: str
+    image_url: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -154,6 +155,7 @@ class StudentSubjectResponse(BaseModel):
     board: BoardEnum
     class_level: ClassEnum
     subject_name: str
+    image_url: str | None = None
     chapters: list[StudentChapterResponse] = []
 
 

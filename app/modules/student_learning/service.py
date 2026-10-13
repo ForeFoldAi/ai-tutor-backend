@@ -626,6 +626,7 @@ def get_overview(db: Session, user: User) -> LearningOverviewResponse:
                 board=subj.board,
                 class_level=subj.class_level,
                 subject_name=subj.subject_name,
+                image_url=subj.image_url,
                 chapters=chapters_out,
                 completed_chapters=completed,
                 total_chapters=total,

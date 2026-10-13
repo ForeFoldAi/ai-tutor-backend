@@ -30,6 +30,7 @@ class LearningSubjectOut(BaseModel):
     board: BoardEnum
     class_level: ClassEnum
     subject_name: str
+    image_url: str | None = None
     chapters: list[LearningChapterOut] = []
     completed_chapters: int = 0
     total_chapters: int = 0

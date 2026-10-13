@@ -20,6 +20,7 @@ class StudentDashboardStats(BaseModel):
 class StudentDashboardSubject(BaseModel):
     id: int
     subject_name: str
+    image_url: str | None = None
     board: BoardEnum
     class_level: ClassEnum
     progress: int = 0

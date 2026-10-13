@@ -122,6 +122,7 @@ def _subjects_from_catalog(
                 board=board,
                 class_level=class_level,
                 subject_name=subj.subject_name,
+                image_url=subj.image_url,
                 chapters=chapters,
             )
         )
