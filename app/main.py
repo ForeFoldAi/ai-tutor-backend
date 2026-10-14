@@ -1,29 +1,411 @@
+import json
+import logging
 import os
 import re
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from typing import Annotated
+
+logger = logging.getLogger(__name__)
+
+from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from app.services.pdf_service import process_pdf
+from app.services.document_service import process_document
 from app.services.vector_service import create_vector_store, load_vector_store
-from app.services.chat_service import get_qa_chain
+from app.config import RETRIEVAL_K
+from app.services.chat_service import chapter_aware_qa, chapter_aware_qa_stream, get_qa_chain
+from app.core.student_messages import ANSWER_NOT_IN_CHAPTER, CHAT_ANSWER_FAILED, PDF_ONLY
+from app.services.query_match import document_page, keyword_match_score
 from app.voice_api import router as voice_router
+from app.voice_ws import ws_router
+from app.modules.auth.router import router as auth_router
+from app.modules.auth.signup.router import router as signup_router
+from app.modules.auth.dependencies import get_current_user
+from app.modules.users.models import User
+from app.modules.auth.bootstrap import seed_test_users_if_missing
+from app.modules.catalog.router import router as catalog_router, student_router as student_catalog_router
+from app.modules.catalog.textbook_router import router as textbook_catalog_router
+from app.modules.teacher.lesson_planner.router import router as lesson_planner_router
+from app.modules.teacher.lesson_planner.metrics_router import metrics_router as lesson_planner_metrics_router
+from app.modules.teacher.lesson_planner.ws import lesson_planner_ws_router
+from app.modules.teacher.students.router import router as tutor_students_router
+from app.modules.teacher.assignments.router import router as tutor_assignments_router
+from app.modules.teacher.assignments.student_router import router as student_assignments_router
+from app.modules.school_admin.router import router as school_admin_router
+from app.modules.student_learning.router import router as student_learning_router
+from app.modules.student_dashboard.router import router as student_dashboard_router
+from app.modules.teacher.dashboard.router import router as tutor_dashboard_router
+from app.modules.teacher.progress_analytics.router import router as tutor_progress_analytics_router
+from app.modules.student_assistant.router import router as student_assistant_router
+from app.modules.live_sessions.router import tutor_router as live_sessions_tutor_router
+from app.modules.live_sessions.router import student_router as live_sessions_student_router
+from app.modules.search.router import router as search_router
+from app.modules.events.ws import events_ws_router
+from app.modules.events.middleware import DomainEventMiddleware
+from app.services.token_usage import UsageUserMiddleware
+from app.modules.learning_intelligence.router import internal_router as lia_internal_router
+from app.modules.learning_intelligence.router import tutor_router as lia_tutor_router
+from app.modules.notifications.router import router as notifications_router
+from app.modules.image_understanding.router import router as tutor_images_router
 
 app = FastAPI()
 
 vectorstore = None
 
+
+@app.get("/health")
+def health() -> dict[str, str]:
+    """Lightweight liveness probe for Railway/Docker (no model loading)."""
+    return {"status": "ok"}
+
+
+# Browsers reject Allow-Origin: * when credentials are on — list frontends explicitly.
+_DEFAULT_ORIGINS = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173"
+_raw_origins = os.environ.get("ALLOWED_ORIGINS", _DEFAULT_ORIGINS).strip()
+_ALLOWED_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip() and o.strip() != "*"]
+if "*" in _raw_origins and not _ALLOWED_ORIGINS:
+    logger.warning(
+        "ALLOWED_ORIGINS=* is ignored with credentials — set explicit frontend URLs in production"
+    )
+_ALLOW_ORIGIN_REGEX = os.environ.get(
+    "ALLOWED_ORIGIN_REGEX",
+    r"https?://(localhost|127\.0\.0\.1)(:\d+)?|https?://.*\.ngrok(-free)?\.(app|io|dev)",
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # dev convenience; tighten in production
+    allow_origins=_ALLOWED_ORIGINS,
+    allow_origin_regex=_ALLOW_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(DomainEventMiddleware)
+app.add_middleware(UsageUserMiddleware)
 
 app.include_router(voice_router)
+app.include_router(ws_router)      # WebSocket: /ws/voice
+app.include_router(auth_router)
+app.include_router(signup_router)
+app.include_router(catalog_router)
+app.include_router(textbook_catalog_router)
+app.include_router(student_catalog_router)
+app.include_router(lesson_planner_router)
+app.include_router(lesson_planner_metrics_router)
+app.include_router(lesson_planner_ws_router)
+app.include_router(tutor_students_router)
+app.include_router(tutor_assignments_router)
+app.include_router(student_assignments_router)
+app.include_router(school_admin_router)
+app.include_router(student_learning_router)
+app.include_router(student_dashboard_router)
+app.include_router(tutor_dashboard_router)
+app.include_router(tutor_progress_analytics_router)
+app.include_router(student_assistant_router)
+app.include_router(live_sessions_tutor_router)
+app.include_router(live_sessions_student_router)
+app.include_router(search_router)
+app.include_router(events_ws_router)
+app.include_router(lia_internal_router)
+app.include_router(lia_tutor_router)
+app.include_router(notifications_router)
+app.include_router(tutor_images_router)
+
+
+@app.on_event("startup")
+def _startup() -> None:
+    from app.core.production_checks import validate_production_settings
+
+    validate_production_settings()
+    seed_test_users_if_missing()
+    try:
+        from app.core.celery_autostart import start_celery_sidecar
+
+        start_celery_sidecar()
+    except Exception as exc:
+        logger.warning("CELERY_AUTOSTART skipped (non-fatal): %s", exc)
+    import threading
+
+    def _warm_tts():
+        try:
+            # ponytail: pin voice without network probe — asyncio.run(resolve_voice())
+            # leaves edge-tts aiohttp sessions → "Event loop is closed" / Unclosed client session.
+            from app.services import edge_tts_service as ets
+
+            ets._resolved_voice = ets.PRIMARY_VOICE
+            logger.info("Edge TTS voice ready: %s", ets.PRIMARY_VOICE)
+        except Exception as exc:
+            logger.warning("TTS pre-warm failed (non-fatal): %s", exc)
+
+    def _warm_multimodal():
+        from app.config import USE_MULTIMODAL_IMAGE_RETRIEVAL, WARM_MULTIMODAL_ON_STARTUP
+
+        if not USE_MULTIMODAL_IMAGE_RETRIEVAL or not WARM_MULTIMODAL_ON_STARTUP:
+            return
+        try:
+            from app.services.image_service.multimodal_encoder import clip_model_available
+
+            if clip_model_available():
+                logger.info("CLIP multimodal model pre-warmed and ready")
+            else:
+                logger.warning(
+                    "CLIP multimodal not available — image search uses keyword fallback. "
+                    "Set HF_TOKEN in .env and restart."
+                )
+        except Exception as exc:
+            logger.warning("CLIP pre-warm failed (non-fatal): %s", exc)
+
+    def _warm_embeddings():
+        try:
+            from app.services.voice_performance import warm_embeddings_sync
+
+            if warm_embeddings_sync():
+                logger.info("BGE embeddings pre-warmed for voice RAG")
+        except Exception as exc:
+            logger.warning("Embedding pre-warm failed (non-fatal): %s", exc)
+
+    def _warm_voice_protection():
+        try:
+            from app.services.voice_protection_preload import warm_voice_protection_models
+
+            warm_voice_protection_models()
+        except Exception as exc:
+            logger.warning("Voice protection preload failed (non-fatal): %s", exc)
+
+    threading.Thread(target=_warm_tts, daemon=True).start()
+    threading.Thread(target=_warm_embeddings, daemon=True).start()
+    threading.Thread(target=_warm_multimodal, daemon=True).start()
+    threading.Thread(target=_warm_voice_protection, daemon=True).start()
+
+    def _seed_lia_concept_graph():
+        import os
+
+        if os.environ.get("LIA_ENABLED", "true").lower() not in ("1", "true", "yes"):
+            return
+        if os.environ.get("LIA_SEED_CONCEPT_GRAPH", "true").lower() not in ("1", "true", "yes"):
+            return
+        try:
+            from app.core.database import SessionLocal
+            from app.services.learning_intelligence.algorithms.concept_graph import seed_concept_graph
+
+            db = SessionLocal()
+            try:
+                result = seed_concept_graph(db)
+                db.commit()
+                logger.info("LIA concept graph seeded: %s", result)
+            finally:
+                db.close()
+        except Exception as exc:
+            logger.warning("LIA concept graph seed failed (non-fatal): %s", exc)
+
+    threading.Thread(target=_seed_lia_concept_graph, daemon=True).start()
+
+
+@app.on_event("shutdown")
+def _shutdown() -> None:
+    try:
+        from app.core.celery_autostart import stop_celery_sidecar
+
+        stop_celery_sidecar()
+    except Exception as exc:
+        logger.warning("CELERY_AUTOSTART stop failed (non-fatal): %s", exc)
+
+
+@app.get("/health/voice")
+def voice_health():
+    """Voice stack readiness: VAD, noise, TTS, speaker, preload, queues."""
+    from app.config import (
+        NOISE_SUPPRESSION_ENABLED,
+        NOISE_SUPPRESSION_PROVIDER,
+        SPEAKER_VERIFICATION_ENABLED,
+        VAD_ENABLED,
+        VOICE_PROTECTION_ENABLED,
+        VOICE_SESSION_PROFILE,
+        VOICE_SESSION_REDIS,
+        VOICE_SPEECH_QUEUE_MAXSIZE,
+        VOICE_TTS_PREFETCH,
+        VOICE_TTS_PREFETCH_DEPTH,
+        VOICE_WHISPER_ENABLED,
+    )
+    from app.services.edge_tts_service import PRIMARY_VOICE
+    from app.services.voice_noise_suppress import noise_status
+    from app.services.voice_protection_metrics import snapshot
+    from app.services.voice_protection_preload import preload_status
+    from app.services.voice_speaker import speaker_status
+    from app.services.voice_vad import vad_status
+    from app.services.voice_whisper_stt import whisper_available
+    from app.services.voice_session_profile import _backend_name as session_voice_backend
+
+    preload = preload_status()
+    vad = vad_status()
+    noise = noise_status()
+    speaker = speaker_status()
+    ready = bool(
+        (not VAD_ENABLED or vad.get("available"))
+        and (not NOISE_SUPPRESSION_ENABLED or True)
+        and (not SPEAKER_VERIFICATION_ENABLED or speaker.get("backend"))
+        and (not VOICE_WHISPER_ENABLED or whisper_available())
+    )
+    return {
+        "ok": ready,
+        "protection_enabled": VOICE_PROTECTION_ENABLED,
+        "vad": vad,
+        "noise": noise,
+        "noise_provider": NOISE_SUPPRESSION_PROVIDER,
+        "speaker": speaker,
+        "tts": {
+            "provider": "edge-tts",
+            "voice": PRIMARY_VOICE,
+            "prefetch": VOICE_TTS_PREFETCH,
+            "prefetch_depth": VOICE_TTS_PREFETCH_DEPTH,
+            "speech_queue_maxsize": VOICE_SPEECH_QUEUE_MAXSIZE,
+        },
+        "stt": {
+            "browser": True,
+            "whisper_enabled": VOICE_WHISPER_ENABLED,
+            "whisper_available": whisper_available(),
+        },
+        "session_voice": {
+            "enabled": VOICE_SESSION_PROFILE,
+            "redis_enabled": VOICE_SESSION_REDIS,
+            "backend": session_voice_backend(),
+        },
+        "models_loaded": preload,
+        "metrics": snapshot(),
+        "queue_health": {
+            "speech_queue_maxsize": VOICE_SPEECH_QUEUE_MAXSIZE,
+            "tts_queue_depth": snapshot().get("tts_queue_depth", 0),
+        },
+    }
+
+
+@app.get("/health/ai-models")
+def ai_models_health():
+    """
+    Which AI models are configured for this deployment (text chat, RAG, images, voice).
+    """
+    from app.config import (
+        HF_TOKEN,
+        LLM_BASE_URL,
+        LLM_MODEL,
+        MISTRAL_API_KEY,
+        MISTRAL_MODEL,
+        MULTIMODAL_IMAGE_MODEL,
+        USE_MULTIMODAL_IMAGE_RETRIEVAL,
+        llm_api_key_for,
+        llm_base_url_for,
+        llm_model_for,
+    )
+    from app.modules.image_understanding.ocr.service import ocr_status
+    from app.services.image_service.multimodal_encoder import clip_model_available, current_model_name
+    from app.services.vector_service import is_embedding_model_loaded
+    from app.services.voice_whisper_stt import whisper_available
+
+    clip_ok = False
+    if USE_MULTIMODAL_IMAGE_RETRIEVAL:
+        try:
+            clip_ok = clip_model_available()
+        except Exception:
+            clip_ok = False
+
+    provider = "mistral_api" if "mistral.ai" in LLM_BASE_URL else "openai_compatible"
+
+    return {
+        "models": {
+            "text_chat": {
+                "provider": provider,
+                "model": MISTRAL_MODEL,
+                "configured": bool(MISTRAL_API_KEY),
+                "base_url": LLM_BASE_URL,
+                "default_model": LLM_MODEL,
+                "models_by_feature": {
+                    "chat": llm_model_for("chat"),
+                    "voice": llm_model_for("voice"),
+                    "lesson": llm_model_for("lesson"),
+                    "assistant": llm_model_for("assistant"),
+                },
+                "base_url_by_feature": {
+                    "chat": llm_base_url_for("chat"),
+                    "voice": llm_base_url_for("voice"),
+                    "lesson": llm_base_url_for("lesson"),
+                    "assistant": llm_base_url_for("assistant"),
+                },
+                "api_key_configured_by_feature": {
+                    "chat": bool(llm_api_key_for("chat")),
+                    "voice": bool(llm_api_key_for("voice")),
+                    "lesson": bool(llm_api_key_for("lesson")),
+                    "assistant": bool(llm_api_key_for("assistant")),
+                },
+            },
+            "text_rag_embeddings": {
+                "model": "BAAI/bge-base-en-v1.5",
+                "loaded": is_embedding_model_loaded(),
+            },
+            "image_retrieval": {
+                "mode": "clip_chroma" if (USE_MULTIMODAL_IMAGE_RETRIEVAL and clip_ok) else "keyword_heuristic",
+                "enabled": USE_MULTIMODAL_IMAGE_RETRIEVAL,
+                "clip_model": current_model_name() if clip_ok else MULTIMODAL_IMAGE_MODEL,
+                "clip_loaded": clip_ok,
+                "hf_token_set": bool(HF_TOKEN),
+            },
+            "image_understanding": {
+                "vision_model": llm_model_for("vision"),
+                "vision_api_key_configured": bool(llm_api_key_for("vision")),
+                "ocr": ocr_status(),
+            },
+            "voice_tts": {
+                "provider": "edge-tts",
+                "voice": "en-IN-NeerjaNeural",
+                "fallback_voice": "en-IN-PrabhatNeural",
+                "format": "audio/mpeg",
+            },
+            "voice_stt": {
+                "provider": "browser_webspeech",
+                "server_whisper": whisper_available(),
+                "postprocess": True,
+            },
+            "voice_protection": {
+                "enabled": True,
+                "vad": "silero",
+                "speaker": "ecapa_or_mfcc",
+                "noise": "spectral_gate",
+            },
+        }
+    }
+
 
 class ChatRequest(BaseModel):
     query: str
+
+
+class ConversationTurn(BaseModel):
+    role: str
+    content: str
+
+
+class ChapterChatRequest(BaseModel):
+    query: str = ""
+    board: str
+    class_level: str
+    subject_name: str
+    chapter_ids: list[str] | None = None
+    chapter: str | None = None
+    chapter_names: list[str] | None = None
+    conversation_history: list[ConversationTurn] | None = None
+    images_only: bool = False
+    agent_mode: str | None = None  # ask | practice | explain
+    voice_mode: bool = False
+    image_ids: list[str] | None = None
+    # Voice session state (NestJS → FastAPI)
+    tutor_state: str | None = None
+    explained_points: list[str] | None = None
+    quiz_pending: bool = False
+    quiz_question: str | None = None
+    quiz_attempts: int = 0
+    nest_intent: str | None = None  # simplify | example | quiz | none
+    dialogue_act: str | None = None  # closing | ack | intro — skip chapter RAG
+    filler_phrase_played: str | None = None
+    affect_trajectory: list[str] | None = None
 
 
 def _fallback_answer_from_docs(query: str):
@@ -33,35 +415,56 @@ def _fallback_answer_from_docs(query: str):
     """
     global vectorstore
     if vectorstore is None:
-        return "The answer is not found in the document."
+        return ANSWER_NOT_IN_CHAPTER
 
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": RETRIEVAL_K})
     docs = retriever.invoke(query)
     if not docs:
-        return "The answer is not found in the document."
+        return ANSWER_NOT_IN_CHAPTER
 
-    q_terms = set(re.findall(r"\w+", query.lower()))
     best_text = ""
     best_score = -1
+    best_page = 10**9
     for d in docs:
         text = (d.page_content or "").strip()
         if not text:
             continue
-        lower = text.lower()
-        score = sum(1 for t in q_terms if t in lower)
-        if score > best_score:
+        score = keyword_match_score(query, text)
+        pg = document_page(d)
+        if score > best_score or (score == best_score and pg < best_page):
             best_score = score
+            best_page = pg
             best_text = text
 
     if not best_text:
-        return "The answer is not found in the document."
+        return ANSWER_NOT_IN_CHAPTER
 
-    # Return first 2 sentences max to keep concise.
     parts = re.split(r"(?<=[.?!])\s+", best_text)
     snippet = " ".join(parts[:2]).strip()
     if not snippet:
         snippet = best_text[:500].strip()
     return snippet
+
+
+async def tutor_qa_answer_for_query(query: str) -> tuple[str, str | None]:
+    """
+    Same logic as ``POST /chat`` for producing the answer string.
+
+    Returns ``(answer, retrieval_warning)``. ``retrieval_warning`` is set when
+    Mistral is unavailable (missing API key) and the retrieval-only fallback was used.
+    """
+    global vectorstore
+    if vectorstore is None:
+        vectorstore = load_vector_store()
+
+    try:
+        qa_chain = get_qa_chain(vectorstore)
+        text = (qa_chain.run(query) or "").strip()
+        return text, None
+    except FileNotFoundError as e:
+        text = (_fallback_answer_from_docs(query) or "").strip()
+        return text, str(e)
+
 
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -69,17 +472,16 @@ async def upload_pdf(file: UploadFile = File(...)):
 
     filename = file.filename or "document.pdf"
     if not filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Only PDF files are supported.")
+        raise HTTPException(status_code=400, detail=PDF_ONLY)
 
     file_path = f"temp_{file.filename}"
     with open(file_path, "wb") as f:
         f.write(await file.read())
 
     try:
-        docs = process_pdf(file_path)
+        docs = process_document(file_path)
         vectorstore = create_vector_store(docs)
     except Exception as e:
-        # Most common issue: invalid/corrupt PDF content.
         raise HTTPException(status_code=400, detail=f"Failed to process PDF: {e}")
     finally:
         try:
@@ -96,20 +498,305 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 @app.post("/chat")
 async def chat(req: ChatRequest):
-    global vectorstore
-
-    if not vectorstore:
-        vectorstore = load_vector_store()
-
-    try:
-        qa_chain = get_qa_chain(vectorstore)
-        response = qa_chain.run(req.query)
-    except FileNotFoundError as e:
-        response = _fallback_answer_from_docs(req.query)
+    response, warning = await tutor_qa_answer_for_query(req.query)
+    if warning is not None:
         return {
             "answer": response,
             "mode": "retrieval_fallback",
-            "warning": str(e),
+            "warning": warning,
         }
-
     return {"answer": response}
+
+
+@app.post("/auth/chat")
+async def chapter_chat(
+    req: ChapterChatRequest,
+    _current_user: Annotated[User, Depends(get_current_user)],
+):
+    """Chapter-aware chat: retrieve from the subject's ChromaDB collection,
+    optionally filtered to the selected chapter IDs."""
+    if not (req.query or "").strip() and not (req.image_ids or []):
+        raise HTTPException(status_code=400, detail="Please type a question or attach an image.")
+    collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
+    logger.debug(
+        "[CHAT] collection=%r chapter_ids=%s query=%r",
+        collection, req.chapter_ids, (req.query or "")[:80],
+    )
+    history = (
+        [{"role": t.role, "content": t.content} for t in req.conversation_history]
+        if req.conversation_history
+        else None
+    )
+    try:
+        answer, related_images, math_lesson, science_experiment = await chapter_aware_qa(
+            req.query or "",
+            collection_name=collection,
+            chapter_ids=req.chapter_ids,
+            class_level=req.class_level,
+            board=req.board,
+            subject_name=req.subject_name,
+            chapter=req.chapter or "",
+            chapter_names=req.chapter_names,
+            conversation_history=history,
+            student_name=_current_user.full_name,
+            student_key=str(_current_user.id),
+            images_only=req.images_only,
+            agent_mode=req.agent_mode,
+            image_ids=req.image_ids,
+            student_user_id=int(_current_user.id),
+        )
+    except Exception as exc:
+        from app.modules.image_understanding.errors import ImageUnderstandingError
+
+        if isinstance(exc, ImageUnderstandingError):
+            raise HTTPException(status_code=400, detail=exc.user_message) from None
+        raise
+    return {
+        "answer": answer,
+        "related_images": related_images,
+        "math_lesson": math_lesson,
+        "science_experiment": science_experiment,
+    }
+
+
+@app.post("/auth/chat/stream")
+async def chapter_chat_stream(
+    req: ChapterChatRequest,
+    _current_user: Annotated[User, Depends(get_current_user)],
+):
+    """
+    Streaming chapter chat (NDJSON).
+
+    Each line is a JSON object:
+      {"type":"token","content":"..."}
+      {"type":"related_images","images":[...]}  (may appear mid-answer)
+      {"type":"math_lesson","lesson":{...},"clean_answer":"..."}  (after answer completes)
+      {"type":"science_experiment","experiment":{...},"clean_answer":"..."}  (science subjects)
+      {"type":"done"}
+    """
+    collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
+    logger.debug(
+        "[STREAM] collection=%r chapter_ids=%s query=%r",
+        collection, req.chapter_ids, (req.query or "")[:80],
+    )
+
+    if not (req.query or "").strip() and not (req.image_ids or []):
+        raise HTTPException(status_code=400, detail="Please type a question or attach an image.")
+
+    async def ndjson_generator():
+        pending: list[bytes] = []
+
+        async def emit_imgs(imgs: list[dict]) -> None:
+            pending.append(
+                (json.dumps({"type": "related_images", "images": imgs}, ensure_ascii=False, default=str) + "\n").encode()
+            )
+
+        async def emit_clean(clean: str) -> None:
+            pending.append(
+                (json.dumps({"type": "clean_answer", "content": clean}, ensure_ascii=False) + "\n").encode()
+            )
+
+        async def emit_lesson(lesson: dict | None, clean_answer: str) -> None:
+            if not lesson:
+                return
+            pending.append(
+                (
+                    json.dumps(
+                        {"type": "math_lesson", "lesson": lesson, "clean_answer": clean_answer},
+                        ensure_ascii=False,
+                        default=str,
+                    )
+                    + "\n"
+                ).encode()
+            )
+
+        async def emit_experiment(experiment: dict | None, clean_answer: str) -> None:
+            if not experiment:
+                return
+            pending.append(
+                (
+                    json.dumps(
+                        {
+                            "type": "science_experiment",
+                            "experiment": experiment,
+                            "clean_answer": clean_answer,
+                        },
+                        ensure_ascii=False,
+                        default=str,
+                    )
+                    + "\n"
+                ).encode()
+            )
+
+        async def emit_status(payload: dict) -> None:
+            pending.append(
+                (json.dumps(payload, ensure_ascii=False, default=str) + "\n").encode()
+            )
+
+        history = (
+            [{"role": t.role, "content": t.content} for t in req.conversation_history]
+            if req.conversation_history
+            else None
+        )
+        voice_meta: dict = {}
+        try:
+            async for token in chapter_aware_qa_stream(
+                req.query or "",
+                collection_name=collection,
+                chapter_ids=req.chapter_ids,
+                class_level=req.class_level,
+                board=req.board,
+                subject_name=req.subject_name,
+                chapter=req.chapter or "",
+                chapter_names=req.chapter_names,
+                emit_related_images=emit_imgs,
+                emit_clean_answer=emit_clean,
+                emit_math_lesson=emit_lesson,
+                emit_science_experiment=emit_experiment,
+                emit_status=emit_status,
+                conversation_history=history,
+                student_name=_current_user.full_name,
+                student_key=str(_current_user.id),
+                agent_mode=req.agent_mode,
+                voice_mode=req.voice_mode,
+                tutor_state=req.tutor_state or "TEACHING",
+                explained_points=req.explained_points,
+                quiz_pending=req.quiz_pending,
+                quiz_question=req.quiz_question or "",
+                quiz_attempts=req.quiz_attempts,
+                nest_intent=req.nest_intent,
+                dialogue_act=req.dialogue_act,
+                filler_phrase_played=req.filler_phrase_played,
+                affect_trajectory=req.affect_trajectory,
+                voice_metadata_out=voice_meta,
+                image_ids=req.image_ids,
+                student_user_id=int(_current_user.id),
+            ):
+                while pending:
+                    yield pending.pop(0)
+                yield (json.dumps({"type": "token", "content": token}, ensure_ascii=False) + "\n").encode()
+
+            while pending:
+                yield pending.pop(0)
+            done_payload: dict = {"type": "done"}
+            if req.voice_mode and voice_meta:
+                done_payload.update(
+                    {
+                        k: voice_meta[k]
+                        for k in (
+                            "tutor_state",
+                            "explained_points",
+                            "affect_summary",
+                            "affect_hint",
+                            "affect_primary",
+                            "affect_trajectory",
+                        )
+                        if k in voice_meta
+                    }
+                )
+            yield (json.dumps(done_payload, ensure_ascii=False, default=str) + "\n").encode()
+        except Exception as exc:
+            from app.modules.image_understanding.errors import ImageUnderstandingError
+
+            logger.exception("[STREAM] chapter chat failed: %s", exc)
+            while pending:
+                yield pending.pop(0)
+            if isinstance(exc, ImageUnderstandingError):
+                yield (
+                    json.dumps({"type": "error", "content": exc.user_message}, ensure_ascii=False) + "\n"
+                ).encode()
+                yield (
+                    json.dumps({"type": "token", "content": exc.user_message}, ensure_ascii=False) + "\n"
+                ).encode()
+            else:
+                yield (
+                    json.dumps({"type": "token", "content": CHAT_ANSWER_FAILED}, ensure_ascii=False) + "\n"
+                ).encode()
+            yield (json.dumps({"type": "done"}, ensure_ascii=False) + "\n").encode()
+
+    return StreamingResponse(
+        ndjson_generator(),
+        media_type="application/x-ndjson",
+        headers={"Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Debug: pedagogy figure-rank inspector
+# ---------------------------------------------------------------------------
+
+class FigureRankDebugRequest(BaseModel):
+    query: str
+    chapter_ids: list[str]
+    chapter_names: list[str] | None = None
+    chapter: str | None = None
+    # Optional: supply board/class_level/subject_name to enable RAG doc retrieval
+    board: str | None = None
+    class_level: str | None = None
+    subject_name: str | None = None
+    top_n: int = 12
+
+
+@app.post("/auth/debug/figure-rank", dependencies=[Depends(get_current_user)])
+async def debug_figure_rank(req: FigureRankDebugRequest):
+    """
+    Developer endpoint: returns per-figure pedagogy score breakdowns.
+
+    Useful for inspecting why a specific query returned unexpected images.
+    Accepts optional board/class_level/subject_name to enable RAG retrieval
+    (adds section-overlap scores); otherwise figures are ranked on caption
+    BGE + concept overlap + page proximity only.
+
+    Response schema:
+      {
+        "query": "...",
+        "intent": { "topic_phrases": [...], "preferred_types": [...], ... },
+        "figures": [
+          { "file_name": ..., "caption": ..., "image_type": ..., "page": ...,
+            "scores": { "caption": 42.1, "section": 30.0, ... },
+            "final": 55.3, "url": ... },
+          ...
+        ]
+      }
+    """
+    from app.services.image_service.textbook_image_retrieval import debug_rank_figures
+    from app.services.image_service.image_intent_extractor import extract_image_intent
+    from app.services.vector_service import retrieve_from_collection
+
+    docs: list = []
+    if req.board and req.class_level and req.subject_name:
+        collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
+        try:
+            docs = retrieve_from_collection(
+                req.query,
+                collection_name=collection,
+                chapter_ids=req.chapter_ids,
+                k=5,
+            ) or []
+        except Exception as exc:
+            logger.warning("debug_figure_rank: RAG retrieval failed: %s", exc)
+
+    intent = extract_image_intent(req.query, docs)
+    figures = debug_rank_figures(
+        req.chapter_ids,
+        req.chapter_names or [],
+        req.chapter or "",
+        req.query,
+        docs,
+        top_n=req.top_n,
+    )
+
+    return {
+        "query": req.query,
+        "rag_docs_used": len(docs),
+        "intent": {
+            "core_concept": intent.core_concept,
+            "required_terms": intent.required_terms,
+            "concept_tokens": sorted(intent.concept_tokens),
+            "preferred_types": intent.preferred_types,
+            "excluded_types": intent.excluded_types,
+            "rag_section_tokens": sorted(intent.rag_section_tokens),
+            "query_type": intent.query_type,
+        },
+        "figures": figures,
+    }

@@ -1,0 +1,16 @@
+# Minimal UniMERNet config for formula recognition (ai-tutor-backend)
+
+model:
+  arch: unimernet
+  model_type: unimernet
+  pretrained: ""
+  model_config:
+    model_name: ""
+  tokenizer_config:
+    path: ""
+
+datasets:
+  formula_rec_eval:
+    vis_processor:
+      eval:
+        name: "formula_image_eval"

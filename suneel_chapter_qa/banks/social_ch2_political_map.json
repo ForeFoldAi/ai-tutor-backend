@@ -1,0 +1,286 @@
+{
+  "slug": "social_ch2_political_map",
+  "subject": "Social",
+  "chapter_id": "33",
+  "chapter": "Chapter 2 - Reshaping India\u2019s Political Map",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "So2-01",
+      "query": "what is a political map anyway?",
+      "label": "normal",
+      "expect_keywords": [
+        "political",
+        "map"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-02",
+      "query": "how is it different from a physical map?",
+      "label": "normal",
+      "expect_keywords": [
+        "political",
+        "physical",
+        "map"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-03",
+      "query": "who were the mughals in this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "mughal"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-04",
+      "query": "can you show the political map figure?",
+      "label": "diagram",
+      "expect_keywords": [
+        "map",
+        "figure",
+        "political"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-05",
+      "query": "how did india's political map get reshaped?",
+      "label": "normal",
+      "expect_keywords": [
+        "map",
+        "political",
+        "india"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-06",
+      "query": "what kingdoms or powers are discussed?",
+      "label": "normal",
+      "expect_keywords": [
+        "kingdom",
+        "mughal",
+        "power",
+        "empire"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-07",
+      "query": "why do maps change over time?",
+      "label": "normal",
+      "expect_keywords": [
+        "map",
+        "change"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-08",
+      "query": "quiz me on political map with one question",
+      "label": "normal",
+      "expect_keywords": [
+        "map",
+        "political",
+        "?"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-09",
+      "query": "what is an empire in this context?",
+      "label": "normal",
+      "expect_keywords": [
+        "empire",
+        "mughal"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-10",
+      "query": "any famous rulers named here?",
+      "label": "normal",
+      "expect_keywords": [
+        "ruler",
+        "mughal",
+        "akbar",
+        "aurangzeb",
+        "babur"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-11",
+      "query": "what regions changed hands?",
+      "label": "normal",
+      "expect_keywords": [
+        "region",
+        "map",
+        "territory"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-12",
+      "query": "why is this chapter called reshaping?",
+      "label": "normal",
+      "expect_keywords": [
+        "reshap",
+        "map"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-13",
+      "query": "how do historians use maps?",
+      "label": "normal",
+      "expect_keywords": [
+        "map",
+        "histor"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-14",
+      "query": "give two important takeaways",
+      "label": "normal",
+      "expect_keywords": [
+        "map",
+        "political"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-15",
+      "query": "explain like im new to history maps",
+      "label": "normal",
+      "expect_keywords": [
+        "map",
+        "political"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-16",
+      "query": "what is politcal map of india in this chaptre?",
+      "label": "typo",
+      "expect_keywords": [
+        "political",
+        "map"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-17",
+      "query": "did mughals invent the steam engine here?",
+      "label": "wrong",
+      "expect_keywords": [
+        "mughal",
+        "map",
+        "not"
+      ],
+      "forbidden": [
+        "steam"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-18",
+      "query": "is this chapter about perfect squares?",
+      "label": "wrong",
+      "expect_keywords": [
+        "map",
+        "political",
+        "not"
+      ],
+      "forbidden": [
+        "square"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-19",
+      "query": "show another map related image if you can",
+      "label": "diagram",
+      "expect_keywords": [
+        "map",
+        "figure",
+        "image"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So2-20",
+      "query": "who were the mughuls on the map?",
+      "label": "typo",
+      "expect_keywords": [
+        "mughal",
+        "map"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    }
+  ]
+}

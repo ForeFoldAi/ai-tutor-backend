@@ -1,0 +1,729 @@
+{
+  "generated_at": "2026-09-10 13:32:45 +0530",
+  "ranking": [
+    {
+      "slug": "math_ch1_square_cube",
+      "chapter": "Chapter-1 : A SQUARE AND A CUBE",
+      "subject": "Mathematics",
+      "tutor_avg": 9.33,
+      "voice_avg": 9.33,
+      "combined_avg": 9.33
+    },
+    {
+      "slug": "math_ch2_power_play",
+      "chapter": "Chapter-2 : POWER PLAY",
+      "subject": "Mathematics",
+      "tutor_avg": 8.13,
+      "voice_avg": 8.13,
+      "combined_avg": 8.13
+    },
+    {
+      "slug": "science_ch1_investigative",
+      "chapter": "Chapter 1 - Exploring the Investigative World of Science",
+      "subject": "Science",
+      "tutor_avg": 6.23,
+      "voice_avg": 8.0,
+      "combined_avg": 7.12
+    },
+    {
+      "slug": "science_ch3_health",
+      "chapter": "Chapter 3 - Health: The Ultimate Treasure",
+      "subject": "Science",
+      "tutor_avg": 5.07,
+      "voice_avg": 6.53,
+      "combined_avg": 5.8
+    }
+  ],
+  "chapters": {
+    "math_ch1_square_cube": {
+      "meta": {
+        "slug": "math_ch1_square_cube",
+        "subject": "Mathematics",
+        "chapter": "Chapter-1 : A SQUARE AND A CUBE",
+        "chapter_id": "38"
+      },
+      "nest_probe": {
+        "ok": true,
+        "health": {
+          "status": "ok",
+          "voice": "ws-pcm",
+          "instanceId": "Maniths-MacBook-Air.local:37569",
+          "draining": false,
+          "liveSessions": 0,
+          "redis": "up"
+        },
+        "session_id": "ae84ab48-1dff-4b72-aa54-a963ec0db7ea",
+        "query_ok": true,
+        "note": "REST ok only; scored via voice_mode stream"
+      },
+      "tutor_avg": 9.33,
+      "voice_avg": 9.33,
+      "combined_avg": 9.33,
+      "tutor": [
+        {
+          "id": "M1-03",
+          "query": "can you show how cube numbers work with an example?",
+          "label": "interactive",
+          "channel": "tutor",
+          "answer_clip": "Let\u2019s imagine a cube like a Rubik\u2019s Cube or a dice\u2014it\u2019s a 3D shape where all sides are equal, and it\u2019s made up of smaller cubes inside. For example, if you have a big cube with each side measuring **3 cm**, how many tiny 1 cm cubes fit inside it?  The textbook explains that a cube\u2019s volume is calculated by multiplying its side length by itself thr\u2026",
+          "error": null,
+          "ms": 15096,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 9.2,
+            "presence": 9.5,
+            "type_affinity": 9.5,
+            "controls": 9.0,
+            "answer": 8.2,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "mensuration-cube",
+            "bugs": [],
+            "note": ""
+          }
+        },
+        {
+          "id": "M1-19",
+          "query": "explain with steps how to check if 81 is a perfect square",
+          "label": "interactive",
+          "channel": "tutor",
+          "answer_clip": "**To Find** How to determine if the number **81** is a perfect square using the method explained in the textbook.  ---  **Given Information** - The number to check: **81** - Definition: A perfect square is a number that can be expressed as the square of an integer (e.g., 16 = 4\u00b2). - From the textbook, we know that prime factorization can help iden\u2026",
+          "error": null,
+          "ms": 18173,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 9.4,
+            "presence": 9.5,
+            "type_affinity": 9.5,
+            "controls": 8.0,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "factor-tree",
+            "bugs": [],
+            "note": ""
+          }
+        },
+        {
+          "id": "M1-04",
+          "query": "is 36 a perfect square? why?",
+          "label": "normal",
+          "channel": "tutor",
+          "answer_clip": "**To Find** We need to determine whether 36 is a perfect square and explain why.  **Given Information** - Number = 36  **Concept Behind It** According to the chapter, a perfect square is a number that can be expressed as the square of an integer. For example, 16 is a perfect square because it equals $4^2$. The chapter also explains that prime fact\u2026",
+          "error": null,
+          "ms": 13679,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 9.4,
+            "presence": 9.5,
+            "type_affinity": 9.5,
+            "controls": 8.0,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "factor-tree",
+            "bugs": [],
+            "note": ""
+          }
+        }
+      ],
+      "voice": [
+        {
+          "id": "M1-03",
+          "query": "can you show how cube numbers work with an example?",
+          "label": "interactive",
+          "channel": "voice",
+          "answer_clip": "Alright, let\u2019s see cube numbers together.  A cube number is when you multiply a number by itself *three times*. Like, 3 \u00d7 3 \u00d7 3 = 27. So, 27 is a cube number.  Let\u2019s try another one. What\u2019s 2 \u00d7 2 \u00d7 2? That\u2019s 8. So, 8 is also a cube number.  See how it works? Just multiply the same number three times.",
+          "error": null,
+          "ms": 4821,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 9.2,
+            "presence": 9.5,
+            "type_affinity": 9.5,
+            "controls": 9.0,
+            "answer": 8.2,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "mensuration-cube",
+            "bugs": [],
+            "note": ""
+          }
+        },
+        {
+          "id": "M1-19",
+          "query": "explain with steps how to check if 81 is a perfect square",
+          "label": "interactive",
+          "channel": "voice",
+          "answer_clip": "Okay, let\u2019s check if 81 is a perfect square.  First, let\u2019s see if we can find a number that, when multiplied by itself, gives 81. We know 9 \u00d7 9 = 81, so 81 is a perfect square.  But the chapter also shows another way\u2014using prime factors. Let\u2019s try that method too.  Break 81 into its prime factors. 81 = 3 \u00d7 3 \u00d7 3 \u00d7 3.  Now, can we split these into \u2026",
+          "error": null,
+          "ms": 10957,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 9.4,
+            "presence": 9.5,
+            "type_affinity": 9.5,
+            "controls": 8.0,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "factor-tree",
+            "bugs": [],
+            "note": ""
+          }
+        },
+        {
+          "id": "M1-04",
+          "query": "is 36 a perfect square? why?",
+          "label": "normal",
+          "channel": "voice",
+          "answer_clip": "Let\u2019s check 36 step by step.  First, what\u2019s a perfect square? It\u2019s a number that\u2019s the square of an integer. Like 16 is a perfect square because 4 \u00d7 4 = 16.  Now, take 36. Can we find an integer that, when multiplied by itself, gives 36? Let\u2019s try 6: 6 \u00d7 6 = 36. Yes!  So, 36 is a perfect square because 6\u00b2 = 36.  You can also think of it this way: \u2026",
+          "error": null,
+          "ms": 6251,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 9.4,
+            "presence": 9.5,
+            "type_affinity": 9.5,
+            "controls": 8.0,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "factor-tree",
+            "bugs": [],
+            "note": ""
+          }
+        }
+      ]
+    },
+    "math_ch2_power_play": {
+      "meta": {
+        "slug": "math_ch2_power_play",
+        "subject": "Mathematics",
+        "chapter": "Chapter-2 : POWER PLAY",
+        "chapter_id": "39"
+      },
+      "nest_probe": {
+        "ok": true,
+        "health": {
+          "status": "ok",
+          "voice": "ws-pcm",
+          "instanceId": "Maniths-MacBook-Air.local:37569",
+          "draining": false,
+          "liveSessions": 0,
+          "redis": "up"
+        },
+        "session_id": "e59979f4-5a17-4967-b7e0-649a01f7b65c",
+        "query_ok": true,
+        "note": "REST ok only; scored via voice_mode stream"
+      },
+      "tutor_avg": 8.13,
+      "voice_avg": 8.13,
+      "combined_avg": 8.13,
+      "tutor": [
+        {
+          "id": "M2-02",
+          "query": "ok explain 2 to the power 5 slowly",
+          "label": "interactive",
+          "channel": "tutor",
+          "answer_clip": "Hi Suneel!  Let\u2019s break down **2 to the power 5** (written as **2\u2075**) step by step\u2014it\u2019s like asking, *\"How many times do we multiply 2 by itself 5 times?\"*  Imagine you have **5 identical boxes**, each with **2 apples**. To find the *total* apples, you\u2019d multiply: **2 \u00d7 2 \u00d7 2 \u00d7 2 \u00d7 2** (because there are 5 boxes). This is exactly **2\u2075**.  Now, let\u2026",
+          "error": null,
+          "ms": 8495,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 8.5,
+            "presence": 9.5,
+            "type_affinity": 6.5,
+            "controls": 6.5,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "linear-graph",
+            "bugs": [
+              "type mismatch-ish: linear-graph"
+            ],
+            "note": ""
+          }
+        },
+        {
+          "id": "M2-11",
+          "query": "explain 3^4 with expanded form",
+          "label": "interactive",
+          "channel": "tutor",
+          "answer_clip": "Let\u2019s break down **3\u2074** in a simple way. The small number **4** (called the *exponent*) tells us how many times the base (**3**) is multiplied by itself. So, **3\u2074** means **3 \u00d7 3 \u00d7 3 \u00d7 3**. This is called the *expanded form*\u2014it shows the multiplication step-by-step. If you write it out, you get **3 \u00d7 3 = 9**, then **9 \u00d7 3 = 27**, and finally **27 \u2026",
+          "error": null,
+          "ms": 12015,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 7.7,
+            "presence": 9.5,
+            "type_affinity": 6.5,
+            "controls": 6.5,
+            "answer": 9.4,
+            "expect": 6.7,
+            "panel_kind": "math_lesson",
+            "viz_type": "linear-graph",
+            "bugs": [
+              "type mismatch-ish: linear-graph"
+            ],
+            "note": ""
+          }
+        },
+        {
+          "id": "M2-01",
+          "query": "what does power play mean? is it about exponents?",
+          "label": "normal",
+          "channel": "tutor",
+          "answer_clip": "**\"Power Play\" in this chapter is all about understanding how numbers grow when they are multiplied by themselves repeatedly\u2014this is called *exponential growth*. Imagine folding a piece of paper: every time you fold it, its thickness doubles. After just a few folds, the paper becomes incredibly thick! The chapter shows how this rapid increase happ\u2026",
+          "error": null,
+          "ms": 15982,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 8.2,
+            "presence": 9.5,
+            "type_affinity": 6.5,
+            "controls": 5.5,
+            "answer": 9.4,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "statistics-lab",
+            "bugs": [
+              "type mismatch-ish: statistics-lab"
+            ],
+            "note": ""
+          }
+        }
+      ],
+      "voice": [
+        {
+          "id": "M2-02",
+          "query": "ok explain 2 to the power 5 slowly",
+          "label": "interactive",
+          "channel": "voice",
+          "answer_clip": "Okay, let\u2019s break it down slowly.  2 to the power 5 means 2 multiplied by itself 5 times. So, 2 \u00d7 2 \u00d7 2 \u00d7 2 \u00d7 2.  First, 2 \u00d7 2 is 4. Then, 4 \u00d7 2 is 8. Next, 8 \u00d7 2 is 16. Finally, 16 \u00d7 2 is 32.  So, 2 to the power 5 is 32. Got it?",
+          "error": null,
+          "ms": 7540,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 8.5,
+            "presence": 9.5,
+            "type_affinity": 6.5,
+            "controls": 6.5,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "linear-graph",
+            "bugs": [
+              "type mismatch-ish: linear-graph"
+            ],
+            "note": ""
+          }
+        },
+        {
+          "id": "M2-11",
+          "query": "explain 3^4 with expanded form",
+          "label": "interactive",
+          "channel": "voice",
+          "answer_clip": "Okay, so **3^4** means 3 multiplied by itself 4 times.  First, write it out fully: **3 \u00d7 3 \u00d7 3 \u00d7 3**  Now, multiply step by step: - First two 3s: **3 \u00d7 3 = 9** - Next 3: **9 \u00d7 3 = 27** - Last 3: **27 \u00d7 3 = 81**  So, **3^4 = 81** in expanded form.  The \"expanded form\" just means writing it out as repeated multiplication. Got it?",
+          "error": null,
+          "ms": 8271,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 7.7,
+            "presence": 9.5,
+            "type_affinity": 6.5,
+            "controls": 6.5,
+            "answer": 9.4,
+            "expect": 6.7,
+            "panel_kind": "math_lesson",
+            "viz_type": "linear-graph",
+            "bugs": [
+              "type mismatch-ish: linear-graph"
+            ],
+            "note": ""
+          }
+        },
+        {
+          "id": "M2-01",
+          "query": "what does power play mean? is it about exponents?",
+          "label": "normal",
+          "channel": "voice",
+          "answer_clip": "Oh, great question! In this chapter, \"power play\" isn\u2019t about exponents directly\u2014 it\u2019s about how something *grows super fast* when it doubles again and again.  See this paper folding? Each fold makes it *twice* as thick. After 1 fold: double. After 2 folds: double *again*\u2014that\u2019s 4 times thicker! After 3 folds: 8 times thicker. That\u2019s *exponential \u2026",
+          "error": null,
+          "ms": 6808,
+          "has_math_lesson": true,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 8.2,
+            "presence": 9.5,
+            "type_affinity": 6.5,
+            "controls": 5.5,
+            "answer": 9.4,
+            "expect": 10.0,
+            "panel_kind": "math_lesson",
+            "viz_type": "statistics-lab",
+            "bugs": [
+              "type mismatch-ish: statistics-lab"
+            ],
+            "note": ""
+          }
+        }
+      ]
+    },
+    "science_ch1_investigative": {
+      "meta": {
+        "slug": "science_ch1_investigative",
+        "subject": "Science",
+        "chapter": "Chapter 1 - Exploring the Investigative World of Science",
+        "chapter_id": "35"
+      },
+      "nest_probe": {
+        "ok": true,
+        "health": {
+          "status": "ok",
+          "voice": "ws-pcm",
+          "instanceId": "Maniths-MacBook-Air.local:37569",
+          "draining": false,
+          "liveSessions": 0,
+          "redis": "up"
+        },
+        "session_id": "06822cf5-e6ce-4c54-9a16-9669737819bf",
+        "query_ok": true,
+        "note": "REST ok only; scored via voice_mode stream"
+      },
+      "tutor_avg": 6.23,
+      "voice_avg": 8.0,
+      "combined_avg": 7.12,
+      "tutor": [
+        {
+          "id": "S1-05",
+          "query": "how does an experiment help us learn?",
+          "label": "interactive",
+          "channel": "tutor",
+          "answer_clip": "**Topic** How experiments help us learn in science.  **In Simple Words** An experiment is like a detective\u2019s investigation\u2014it helps us find answers by testing ideas in a controlled way. Instead of guessing, we observe, record, and analyze what happens when we change one thing at a time. This way, we don\u2019t just learn facts; we learn *how* to discov\u2026",
+          "error": null,
+          "ms": 30079,
+          "has_math_lesson": false,
+          "has_science_experiment": true,
+          "scores": {
+            "overall": 9.7,
+            "presence": 9.5,
+            "type_affinity": 9.5,
+            "controls": 10.0,
+            "answer": 9.4,
+            "expect": 10.0,
+            "panel_kind": "science_experiment",
+            "viz_type": "concept-explorer",
+            "bugs": [],
+            "note": ""
+          }
+        },
+        {
+          "id": "S1-13",
+          "query": "steps of investigating something \u2014 list them",
+          "label": "interactive",
+          "channel": "tutor",
+          "answer_clip": "**Topic** The Steps of Investigating Something in Science A systematic way to ask questions, test ideas, and discover answers by observing and experimenting.  **In Simple Words** Investigating in science is like solving a puzzle. You start with a question, plan how to test it, do the experiment carefully, record what happens, and then figure out w\u2026",
+          "error": null,
+          "ms": 24155,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 5.2,
+            "presence": 2.0,
+            "type_affinity": 2.0,
+            "controls": 2.0,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [
+              "science_experiment missing"
+            ],
+            "note": ""
+          }
+        },
+        {
+          "id": "S1-01",
+          "query": "what is this chapter exploring the investigative world of science about?",
+          "label": "normal",
+          "channel": "tutor",
+          "answer_clip": "This chapter helps you become a scientist by teaching how to explore questions like a detective. The textbook shows that science isn\u2019t just about facts\u2014it\u2019s about asking *why* things happen, testing ideas with experiments, and learning from observations. For example, it uses the simple question *\"Why is one side of a puri thinner than the other?\"*\u2026",
+          "error": null,
+          "ms": 16537,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 3.8,
+            "presence": 2.0,
+            "type_affinity": 2.0,
+            "controls": 2.0,
+            "answer": 8.2,
+            "expect": 5.0,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [
+              "science_experiment missing"
+            ],
+            "note": ""
+          }
+        }
+      ],
+      "voice": [
+        {
+          "id": "S1-05",
+          "query": "how does an experiment help us learn?",
+          "label": "interactive",
+          "channel": "voice",
+          "answer_clip": "Experiments help us learn by turning questions into answers. When you ask *why does dough rise?* or *why is one side of a puri thinner?*, you don\u2019t just guess\u2014you test it.  You change one thing at a time\u2014like oil temperature or dough thickness\u2014and watch what happens. That\u2019s how you see patterns. If the puri puffs more in hotter oil, you\u2019ve found a\u2026",
+          "error": null,
+          "ms": 5884,
+          "has_math_lesson": false,
+          "has_science_experiment": true,
+          "scores": {
+            "overall": 9.7,
+            "presence": 9.5,
+            "type_affinity": 9.5,
+            "controls": 10.0,
+            "answer": 9.4,
+            "expect": 10.0,
+            "panel_kind": "science_experiment",
+            "viz_type": "concept-explorer",
+            "bugs": [],
+            "note": ""
+          }
+        },
+        {
+          "id": "S1-13",
+          "query": "steps of investigating something \u2014 list them",
+          "label": "interactive",
+          "channel": "voice",
+          "answer_clip": "Right, let\u2019s break it down simply.  First, you **observe** carefully\u2014like watching a puri puff. Then, you **ask questions**\u2014why does it puff? What makes it rise?  Next, you **plan** your investigation\u2014how will you test it? Use the same dough, same heat, same everything.  After that, you **do the experiment**\u2014drop the puri, watch it puff. Take note\u2026",
+          "error": null,
+          "ms": 8329,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 7.2,
+            "presence": 6.0,
+            "type_affinity": 5.0,
+            "controls": 5.0,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [],
+            "note": "N/A panel (voice spoken)"
+          }
+        },
+        {
+          "id": "S1-01",
+          "query": "what is this chapter exploring the investigative world of science about?",
+          "label": "normal",
+          "channel": "voice",
+          "answer_clip": "This chapter is all about **how science works**\u2014not just memorizing facts.  It starts with a big idea: science isn\u2019t just about knowing things. It\u2019s about **asking questions**\u2014like why puris have thin sides or why the Moon changes shape. Then, it teaches how to **investigate those questions**\u2014by observing, experimenting, and thinking carefully.  Y\u2026",
+          "error": null,
+          "ms": 9712,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 7.1,
+            "presence": 6.0,
+            "type_affinity": 5.0,
+            "controls": 5.0,
+            "answer": 9.4,
+            "expect": 10.0,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [],
+            "note": "N/A panel (voice spoken)"
+          }
+        }
+      ]
+    },
+    "science_ch3_health": {
+      "meta": {
+        "slug": "science_ch3_health",
+        "subject": "Science",
+        "chapter": "Chapter 3 - Health: The Ultimate Treasure",
+        "chapter_id": "37"
+      },
+      "nest_probe": {
+        "ok": true,
+        "health": {
+          "status": "ok",
+          "voice": "ws-pcm",
+          "instanceId": "Maniths-MacBook-Air.local:37569",
+          "draining": false,
+          "liveSessions": 0,
+          "redis": "up"
+        },
+        "session_id": "0ee18b22-dcff-4288-ba99-ad97c85bfd8b",
+        "query_ok": true,
+        "note": "REST ok only; scored via voice_mode stream"
+      },
+      "tutor_avg": 5.07,
+      "voice_avg": 6.53,
+      "combined_avg": 5.8,
+      "tutor": [
+        {
+          "id": "S3-03",
+          "query": "how does disease spread? explain like steps",
+          "label": "interactive",
+          "channel": "tutor",
+          "answer_clip": "**Topic** How diseases spread \u2014 Step-by-step process of transmission  **In Simple Words** Diseases spread when tiny harmful germs (called *pathogens*) move from one person, animal, or place to another. This can happen through air, touch, food, water, or even insects like mosquitoes. Understanding these steps helps us protect ourselves and others. \u2026",
+          "error": null,
+          "ms": 16714,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 5.2,
+            "presence": 2.0,
+            "type_affinity": 2.0,
+            "controls": 2.0,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [
+              "science_experiment missing"
+            ],
+            "note": ""
+          }
+        },
+        {
+          "id": "S3-19",
+          "query": "explain how germs enter the body simply",
+          "label": "interactive",
+          "channel": "tutor",
+          "answer_clip": "Germs enter our body through simple, everyday ways. The chapter explains that tiny disease-causing germs can slip in when we breathe air filled with them (like when someone coughs nearby), eat contaminated food, or drink unclean water. They can also enter through tiny cuts or bites, especially from infected animals or insects like mosquitoes. Even\u2026",
+          "error": null,
+          "ms": 11205,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 5.2,
+            "presence": 2.0,
+            "type_affinity": 2.0,
+            "controls": 2.0,
+            "answer": 10.0,
+            "expect": 10.0,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [
+              "science_experiment missing"
+            ],
+            "note": ""
+          }
+        },
+        {
+          "id": "S3-01",
+          "query": "why do they call health the ultimate treasure?",
+          "label": "normal",
+          "channel": "tutor",
+          "answer_clip": "Health is called the *ultimate treasure* because it\u2019s the most valuable thing we have\u2014far beyond money or possessions. The chapter explains that health means feeling physically strong, staying mentally balanced, and enjoying good relationships. Without health, even the best opportunities feel useless. For example, a person might have everything bu\u2026",
+          "error": null,
+          "ms": 12734,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 4.8,
+            "presence": 2.0,
+            "type_affinity": 2.0,
+            "controls": 2.0,
+            "answer": 8.2,
+            "expect": 10.0,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [
+              "science_experiment missing"
+            ],
+            "note": ""
+          }
+        }
+      ],
+      "voice": [
+        {
+          "id": "S3-03",
+          "query": "how does disease spread? explain like steps",
+          "label": "interactive",
+          "channel": "voice",
+          "answer_clip": "Got it! Let\u2019s break it down simply\u2014diseases spread in easy ways.  First, pathogens (tiny germs) jump from one person to another. They can travel **through the air**\u2014like when someone coughs or sneezes. Or they hide in **contaminated food or water**.  Sometimes, bugs like **mosquitoes or houseflies** carry them. These bugs are called *vectors*\u2014they\u2026",
+          "error": null,
+          "ms": 8453,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 6.4,
+            "presence": 6.0,
+            "type_affinity": 5.0,
+            "controls": 5.0,
+            "answer": 9.4,
+            "expect": 6.7,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [],
+            "note": "N/A panel (voice spoken)"
+          }
+        },
+        {
+          "id": "S3-19",
+          "query": "explain how germs enter the body simply",
+          "label": "interactive",
+          "channel": "voice",
+          "answer_clip": "Got it! Let\u2019s keep it simple.  Germs enter our body in a few easy ways. First, when we breathe in air\u2014like when someone coughs or sneezes nearby. Second, through food or water that\u2019s not clean. Third, by touching things an infected person has used\u2014like a doorknob or towel. Fourth, bugs like mosquitoes or flies can carry germs too.  The chapter eve\u2026",
+          "error": null,
+          "ms": 10610,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 6.4,
+            "presence": 6.0,
+            "type_affinity": 5.0,
+            "controls": 5.0,
+            "answer": 9.4,
+            "expect": 6.7,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [],
+            "note": "N/A panel (voice spoken)"
+          }
+        },
+        {
+          "id": "S3-01",
+          "query": "why do they call health the ultimate treasure?",
+          "label": "normal",
+          "channel": "voice",
+          "answer_clip": "Health isn\u2019t just about not getting sick\u2014it\u2019s so much more. The chapter says health means feeling good *physically*, staying happy *mentally*, and having strong *social* connections.  Think of it like a treasure chest. If you only keep gold coins (good health), but ignore the jewels (happiness, friendships), you\u2019re missing the real wealth. A healt\u2026",
+          "error": null,
+          "ms": 7020,
+          "has_math_lesson": false,
+          "has_science_experiment": false,
+          "scores": {
+            "overall": 6.8,
+            "presence": 6.0,
+            "type_affinity": 5.0,
+            "controls": 5.0,
+            "answer": 8.2,
+            "expect": 10.0,
+            "panel_kind": null,
+            "viz_type": null,
+            "bugs": [],
+            "note": "N/A panel (voice spoken)"
+          }
+        }
+      ]
+    }
+  }
+}

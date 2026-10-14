@@ -1,0 +1,278 @@
+{
+  "slug": "science_ch1_investigative",
+  "subject": "Science",
+  "chapter_id": "35",
+  "chapter": "Chapter 1 - Exploring the Investigative World of Science",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "S1-01",
+      "query": "what is this chapter exploring the investigative world of science about?",
+      "label": "normal",
+      "expect_keywords": [
+        "science",
+        "investigat"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-02",
+      "query": "why do scientists investigate things?",
+      "label": "normal",
+      "expect_keywords": [
+        "investigat",
+        "science"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-03",
+      "query": "what is observation in science?",
+      "label": "normal",
+      "expect_keywords": [
+        "observation",
+        "science"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-04",
+      "query": "what is a hypothesis in simple words?",
+      "label": "normal",
+      "expect_keywords": [
+        "hypothesis"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-05",
+      "query": "how does an experiment help us learn?",
+      "label": "interactive",
+      "expect_keywords": [
+        "experiment",
+        "science"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-06",
+      "query": "can you show a diagram or figure from this science chapter?",
+      "label": "diagram",
+      "expect_keywords": [
+        "figure",
+        "diagram",
+        "image"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-07",
+      "query": "what skills do young scientists need?",
+      "label": "normal",
+      "expect_keywords": [
+        "skill",
+        "science",
+        "curious"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-08",
+      "query": "quiz me one question on scientific investigation",
+      "label": "normal",
+      "expect_keywords": [
+        "science",
+        "?",
+        "investigat"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-09",
+      "query": "what is the difference between guessing and investigating?",
+      "label": "normal",
+      "expect_keywords": [
+        "investigat",
+        "guess"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-10",
+      "query": "give a real life example of investigation around me",
+      "label": "normal",
+      "expect_keywords": [
+        "investigat",
+        "example"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-11",
+      "query": "why ask questions in science?",
+      "label": "normal",
+      "expect_keywords": [
+        "question",
+        "science"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-12",
+      "query": "what is data or evidence in this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "data",
+        "evidence",
+        "science"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-13",
+      "query": "steps of investigating something \u2014 list them",
+      "label": "interactive",
+      "expect_keywords": [
+        "step",
+        "observ",
+        "experiment"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-14",
+      "query": "how is curiosity useful?",
+      "label": "normal",
+      "expect_keywords": [
+        "curious",
+        "science"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-15",
+      "query": "what should i write as notes from this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "science",
+        "investigat"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-16",
+      "query": "explain fotosyntesis from this chapter pls",
+      "label": "typo",
+      "expect_keywords": [
+        "chapter",
+        "science",
+        "not",
+        "investigat"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-17",
+      "query": "does this chapter say the earth is flat?",
+      "label": "wrong",
+      "expect_keywords": [
+        "science",
+        "not",
+        "investigat"
+      ],
+      "forbidden": [
+        "flat"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "S1-18",
+      "query": "is health the only topic here?",
+      "label": "wrong",
+      "expect_keywords": [
+        "investigat",
+        "science"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-19",
+      "query": "i'm lost \u2014 restart with what investigasion means",
+      "label": "typo",
+      "expect_keywords": [
+        "investigat"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    },
+    {
+      "id": "S1-20",
+      "query": "short summary of the investigative world chapter",
+      "label": "normal",
+      "expect_keywords": [
+        "science",
+        "investigat"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": true
+    }
+  ]
+}

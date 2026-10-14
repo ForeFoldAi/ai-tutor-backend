@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Assignment reminder — {{ app_name }}{% endblock %}
+{% block body %}
+<p>Hi {{ student_name }},</p>
+<p>Reminder: your assignment <strong>{{ title }}</strong> is due soon.</p>
+<p>
+  <strong>Deadline:</strong> {{ deadline }}
+  {% if subject %}<br /><strong>Subject:</strong> {{ subject }}{% endif %}
+  {% if teacher_name %}<br /><strong>Teacher:</strong> {{ teacher_name }}{% endif %}
+</p>
+<p>Open {{ app_name }} to review and submit.</p>
+{% endblock %}
