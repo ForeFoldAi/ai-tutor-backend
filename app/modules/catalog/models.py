@@ -47,6 +47,22 @@ class BoardDefinition(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
 
+class SubjectImage(Base):
+    """Shared pool of subject cover images; subjects pick one via SyllabusSubject.image_id."""
+
+    __tablename__ = "subject_images"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    image_path: Mapped[str] = mapped_column(String(500), nullable=False)
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
+
+
+def subject_image_url(image_id: int | None) -> str | None:
+    # Pool images are never overwritten, so the id alone is a safe cache key.
+    return f"/auth/catalog/subject-images/{image_id}" if image_id else None
+
+
 class SyllabusSubject(Base):
     __tablename__ = "syllabus_subjects"
     __table_args__ = (UniqueConstraint("board", "class_level", "subject_name", name="uq_syllabus_subject"),)
@@ -55,16 +71,13 @@ class SyllabusSubject(Base):
     board: Mapped[BoardEnum] = mapped_column(Enum(BoardEnum, name="board_enum"), nullable=False, index=True)
     class_level: Mapped[ClassEnum] = mapped_column(Enum(ClassEnum, name="class_enum"), nullable=False, index=True)
     subject_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    image_id: Mapped[int | None] = mapped_column(BigInteger, ForeignKey("subject_images.id"), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
     @property
     def image_url(self) -> str | None:
-        if not self.image_path:
-            return None
-        # Content-hashed key in ?v= busts browser caches on re-upload.
-        return f"/auth/catalog/subject-images/{self.id}?v={self.image_path.rsplit('/', 1)[-1]}"
+        return subject_image_url(self.image_id)
 
 
 class ContentTypeEnum(StrEnum):

@@ -20,8 +20,10 @@ from app.modules.catalog.models import (
     BoardEnum,
     ClassEnum,
     ProcessingStatusEnum,
+    SubjectImage,
     SyllabusSubject,
     Textbook,
+    subject_image_url,
     TextbookChapter,
     TextbookImage,
     TextbookUpload,
@@ -35,6 +37,9 @@ from app.modules.catalog.schemas import (
     ProcessResponse,
     StudentChapterResponse,
     StudentSubjectResponse,
+    SubjectImageResponse,
+    SubjectImageSkipped,
+    SubjectImageUploadResponse,
     SyllabusBulkCreateRequest,
     SyllabusSubjectResponse,
     SyllabusUpdateRequest,
@@ -155,8 +160,15 @@ def update_syllabus(
     row = db.get(SyllabusSubject, syllabus_id)
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Syllabus entry not found.")
-    for key, value in payload.model_dump(exclude_unset=True, exclude_none=True).items():
-        setattr(row, key, value)
+    fields = payload.model_dump(exclude_unset=True)
+    image_id = fields.pop("image_id", ...)
+    for key, value in fields.items():
+        if value is not None:
+            setattr(row, key, value)
+    if image_id is not ...:
+        if image_id is not None and not db.get(SubjectImage, image_id):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject image not found.")
+        row.image_id = image_id
     try:
         db.commit()
     except IntegrityError:
@@ -172,40 +184,14 @@ def update_syllabus(
 SUBJECT_IMAGE_MAX_BYTES = 5 * 1024 * 1024
 
 
-def _delete_subject_image(image_path: str | None) -> None:
-    if not image_path:
-        return
-    from app.services.image_service.storage_backend import get_storage_backend
-
-    try:
-        get_storage_backend().delete(image_path)
-    except Exception as exc:
-        logger.warning("Could not delete subject image %s: %s", image_path, exc)
-
-
-@router.put("/syllabus/{syllabus_id}/image", response_model=SyllabusSubjectResponse)
-async def upload_syllabus_image(
-    syllabus_id: int,
-    db: Annotated[Session, Depends(get_db)],
-    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
-    file: UploadFile = File(...),
-):
-    """Upload or replace the subject cover image (stored in S3 when STORAGE_BACKEND=s3)."""
-    import hashlib
+def _encode_subject_image(raw: bytes) -> tuple[bytes, str]:
+    """Validate and re-encode so only real pixel data (no scripts/metadata) reaches storage."""
     from io import BytesIO
 
     from PIL import Image
 
-    from app.services.image_service.storage_backend import get_storage_backend
-
-    row = db.get(SyllabusSubject, syllabus_id)
-    if not row:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Syllabus entry not found.")
-
-    raw = await file.read(SUBJECT_IMAGE_MAX_BYTES + 1)
     if len(raw) > SUBJECT_IMAGE_MAX_BYTES:
-        raise HTTPException(status_code=413, detail="Image must be 5 MB or smaller.")
-    # Re-encode so only real pixel data (no scripts/metadata) ever reaches storage.
+        raise ValueError("Image must be 5 MB or smaller.")
     try:
         img = Image.open(BytesIO(raw))
         img.verify()
@@ -214,24 +200,97 @@ async def upload_syllabus_image(
         out = BytesIO()
         if img.mode in ("RGBA", "LA", "P"):
             img.save(out, format="PNG", optimize=True)
-            ext = ".png"
-        else:
-            img.convert("RGB").save(out, format="JPEG", quality=88)
-            ext = ".jpg"
-        data = out.getvalue()
-    except Exception:
-        raise HTTPException(status_code=400, detail="Upload a valid image file (PNG, JPG, WEBP…).")
+            return out.getvalue(), ".png"
+        img.convert("RGB").save(out, format="JPEG", quality=88)
+        return out.getvalue(), ".jpg"
+    except Exception as exc:
+        raise ValueError("Not a valid image file (PNG, JPG, WEBP…).") from exc
 
-    key = f"subject_images/{row.id}/{hashlib.sha256(data).hexdigest()[:16]}{ext}"
-    await asyncio.to_thread(get_storage_backend().save, key, data)
 
-    old = row.image_path
-    row.image_path = key
+def _subject_label(s: SyllabusSubject) -> str:
+    return f"{s.board.value} {s.class_level.value.replace('CLASS_', 'Class ')} {s.subject_name}"
+
+
+def _subject_image_out(im: SubjectImage, used_by: list[str]) -> SubjectImageResponse:
+    return SubjectImageResponse(
+        id=im.id,
+        file_name=im.file_name,
+        image_url=subject_image_url(im.id),
+        created_at=im.created_at,
+        used_by=used_by,
+    )
+
+
+@router.get("/subject-images", response_model=list[SubjectImageResponse])
+def list_subject_images(
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+):
+    images = list(db.scalars(select(SubjectImage).order_by(SubjectImage.created_at.desc(), SubjectImage.id.desc())))
+    used: dict[int, list[str]] = {}
+    for s in db.scalars(select(SyllabusSubject).where(SyllabusSubject.image_id.is_not(None))):
+        used.setdefault(s.image_id, []).append(_subject_label(s))
+    return [_subject_image_out(im, used.get(im.id, [])) for im in images]
+
+
+@router.post("/subject-images", response_model=SubjectImageUploadResponse, status_code=status.HTTP_201_CREATED)
+async def upload_subject_images(
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+    files: list[UploadFile] = File(...),
+):
+    """Bulk-upload images to the subject image pool (stored in S3 when STORAGE_BACKEND=s3)."""
+    import hashlib
+
+    from app.services.image_service.storage_backend import get_storage_backend
+
+    created: list[SubjectImage] = []
+    skipped: list[SubjectImageSkipped] = []
+    for f in files:
+        name = os.path.basename(f.filename or "image")[:255] or "image"
+        try:
+            data, ext = _encode_subject_image(await f.read(SUBJECT_IMAGE_MAX_BYTES + 1))
+        except ValueError as exc:
+            skipped.append(SubjectImageSkipped(file_name=name, reason=str(exc)))
+            continue
+        key = f"subject_images/pool/{hashlib.sha256(data).hexdigest()[:16]}{ext}"
+        await asyncio.to_thread(get_storage_backend().save, key, data)
+        im = SubjectImage(image_path=key, file_name=name)
+        db.add(im)
+        created.append(im)
     db.commit()
-    db.refresh(row)
-    if old and old != key:
-        await asyncio.to_thread(_delete_subject_image, old)
-    return SyllabusSubjectResponse.model_validate(row)
+    for im in created:
+        db.refresh(im)
+    return SubjectImageUploadResponse(created=[_subject_image_out(im, []) for im in created], skipped=skipped)
+
+
+@router.delete("/subject-images/{image_id}", response_model=MessageResponse)
+def delete_subject_image(
+    image_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+):
+    from app.services.image_service.storage_backend import get_storage_backend
+
+    im = db.get(SubjectImage, image_id)
+    if not im:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject image not found.")
+    users = list(db.scalars(select(SyllabusSubject).where(SyllabusSubject.image_id == image_id)))
+    if users:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Used by: " + ", ".join(_subject_label(s) for s in users),
+        )
+    path = im.image_path
+    db.delete(im)
+    db.commit()
+    # Same bytes re-uploaded share one content-hashed key; keep the object while another row points at it.
+    if not db.scalar(select(SubjectImage.id).where(SubjectImage.image_path == path).limit(1)):
+        try:
+            get_storage_backend().delete(path)
+        except Exception as exc:
+            logger.warning("Could not delete subject image %s: %s", path, exc)
+    return MessageResponse(message="Image deleted.")
 
 
 @router.delete("/syllabus/{syllabus_id}", response_model=MessageResponse)
@@ -243,10 +302,8 @@ def delete_syllabus(
     row = db.get(SyllabusSubject, syllabus_id)
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Syllabus entry not found.")
-    image_path = row.image_path
     db.delete(row)
     db.commit()
-    _delete_subject_image(image_path)
     return MessageResponse(message="Syllabus entry deleted.")
 
 
@@ -1294,20 +1351,20 @@ async def crop_textbook_image(
 student_router = APIRouter(prefix="/auth/catalog", tags=["student-catalog"])
 
 
-@student_router.get("/subject-images/{syllabus_id}")
+@student_router.get("/subject-images/{image_id}")
 def get_subject_image(
-    syllabus_id: int,
+    image_id: int,
     db: Annotated[Session, Depends(get_db)],
     _current_user: Annotated[User, Depends(get_current_user_bearer_or_query)],
 ):
     from app.services.image_service.storage_backend import get_storage_backend
 
-    row = db.get(SyllabusSubject, syllabus_id)
-    data = get_storage_backend().get_bytes(row.image_path) if row and row.image_path else None
+    row = db.get(SubjectImage, image_id)
+    data = get_storage_backend().get_bytes(row.image_path) if row else None
     if not data:
         raise HTTPException(status_code=404, detail=IMAGE_NOT_AVAILABLE)
     media_type = "image/png" if row.image_path.endswith(".png") else "image/jpeg"
-    # Key is content-hashed and the URL carries ?v=<key>, so caching is safe.
+    # Pool images are immutable per id, so caching is safe.
     return Response(content=data, media_type=media_type, headers={"Cache-Control": "private, max-age=86400"})
 
 

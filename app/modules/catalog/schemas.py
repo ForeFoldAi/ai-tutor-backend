@@ -40,6 +40,8 @@ class SyllabusUpdateRequest(BaseModel):
     board: BoardEnum | None = None
     class_level: ClassEnum | None = None
     subject_name: str | None = Field(default=None, min_length=1, max_length=120)
+    # Explicit null clears the cover; omitted leaves it unchanged.
+    image_id: int | None = None
 
     @field_validator("subject_name", mode="before")
     @classmethod
@@ -52,10 +54,29 @@ class SyllabusSubjectResponse(BaseModel):
     board: BoardEnum
     class_level: ClassEnum
     subject_name: str
+    image_id: int | None = None
     image_url: str | None = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class SubjectImageResponse(BaseModel):
+    id: int
+    file_name: str
+    image_url: str
+    created_at: datetime
+    used_by: list[str] = []
+
+
+class SubjectImageSkipped(BaseModel):
+    file_name: str
+    reason: str
+
+
+class SubjectImageUploadResponse(BaseModel):
+    created: list[SubjectImageResponse]
+    skipped: list[SubjectImageSkipped] = []
 
 
 class TextbookUploadCreateRequest(BaseModel):
