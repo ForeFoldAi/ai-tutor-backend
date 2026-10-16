@@ -27,7 +27,6 @@ from app.services.tts_provider import (
     FALLBACK_VOICE,
     PRIMARY_VOICE,
     iter_tts_mp3,
-    synthesize_mp3,
     voice_for_gender,
 )
 from app.services.tts_sanitize import sanitize_chunk_for_tts
@@ -452,15 +451,21 @@ async def voice_tts_pcm(
     """
     Text -> raw mono PCM16 @16kHz, for the Nest RTC voice server.
 
-    Exists because Kokoro (the RTC stack's local TTS) has no Indian English
-    voice, and Edge's read-aloud endpoint refuses every raw-PCM output format —
-    it only emits MP3/Opus. Decoding here reuses the maintained edge-tts client
+    Exists because Edge's read-aloud endpoint refuses every raw-PCM output
+    format — it only emits MP3/Opus. Decoding here reuses the maintained edge-tts client
     and PyAV instead of hand-rolling the Edge protocol and an MP3 decoder in
     Node. 16kHz mono matches the RTC pipeline's wire format exactly.
+
+    Always Edge, always an explicit en-IN voice: the tts_provider switch would
+    hand this to ElevenLabs whenever ELEVENLABS_API_KEY is set, and a None voice
+    lets edge's probe pick the other gender — either way the student hears a
+    different voice mid-session.
     """
-    voice = voice_for_gender(req.gender, req.voice)
+    from app.services import edge_tts_service as edge
+
+    voice = edge.voice_for_gender(req.gender, req.voice) or edge.PRIMARY_VOICE
     try:
-        mp3 = await synthesize_mp3(req.text, voice=voice)
+        mp3 = await edge.synthesize_mp3(req.text, voice=voice)
     except Exception:
         logger.exception("edge tts synthesis failed")
         raise HTTPException(status_code=502, detail="tts_failed")
@@ -474,7 +479,7 @@ async def voice_tts_pcm(
     return Response(
         content=pcm,
         media_type="application/octet-stream",
-        headers={"X-Sample-Rate": "16000", "X-Voice": voice or PRIMARY_VOICE},
+        headers={"X-Sample-Rate": "16000", "X-Voice": voice},
     )
 
 
@@ -620,6 +625,7 @@ async def _handle_voice_transcribe(
     reject_if_similar_to: str = "",
     voice_session_id: str = "",
     is_barge: bool = False,
+    prompt: str = "",
 ) -> dict[str, str | float | bool]:
     from app.services.voice_session_profile import bootstrap_session_voice
     from app.services.voice_whisper_stt import transcribe_audio_bytes, whisper_available
@@ -640,6 +646,7 @@ async def _handle_voice_transcribe(
             language=language or "en",
             subject_name=subject_name,
             reject_if_similar_to=reject_if_similar_to,
+            prompt=prompt,
         )
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
@@ -679,14 +686,19 @@ async def _handle_voice_transcribe(
 
 @router.post("/auth/voice-transcribe")
 async def auth_voice_transcribe(
+    _authorized: Annotated[None, Depends(authorize_voice_tts)],
     audio: UploadFile = File(...),
     subject_name: str = Form(default=""),
     language: str = Form(default="en"),
     reject_if_similar_to: str = Form(default=""),
     voice_session_id: str = Form(default=""),
     is_barge: bool = Form(default=False),
+    prompt: str = Form(default=""),
 ):
-    """Transcribe a short microphone clip (WebM/Opus) with Whisper — better math accuracy."""
+    """Transcribe a short clip (browser WebM/Opus or Nest WAV) with faster-whisper.
+
+    Student JWT or the Nest server's X-Voice-Token — Whisper is CPU-heavy, so it is never open.
+    """
     return await _handle_voice_transcribe(
         audio,
         subject_name=subject_name,
@@ -694,26 +706,7 @@ async def auth_voice_transcribe(
         reject_if_similar_to=reject_if_similar_to,
         voice_session_id=voice_session_id,
         is_barge=is_barge,
-    )
-
-
-@router.post("/voice-transcribe")
-async def general_voice_transcribe(
-    audio: UploadFile = File(...),
-    subject_name: str = Form(default=""),
-    language: str = Form(default="en"),
-    reject_if_similar_to: str = Form(default=""),
-    voice_session_id: str = Form(default=""),
-    is_barge: bool = Form(default=False),
-):
-    """Unauthenticated Whisper transcribe (same as /auth/voice-transcribe)."""
-    return await _handle_voice_transcribe(
-        audio,
-        subject_name=subject_name,
-        language=language,
-        reject_if_similar_to=reject_if_similar_to,
-        voice_session_id=voice_session_id,
-        is_barge=is_barge,
+        prompt=prompt,
     )
 
 

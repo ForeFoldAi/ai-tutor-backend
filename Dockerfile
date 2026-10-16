@@ -75,6 +75,10 @@ RUN pip install --upgrade pip \
 # Bake Silero VAD into the image so production cold-start does not need torch.hub network.
 RUN python -c "import torch; torch.hub.load('snakers4/silero-vad', model='silero_vad', trust_repo=True, onnx=False)"
 
+# Bake the voice STT model (must match WHISPER_MODEL) so the first student turn never downloads it.
+ARG WHISPER_MODEL=base.en
+RUN python -c "from faster_whisper import download_model; download_model('${WHISPER_MODEL}')"
+
 COPY . .
 RUN chmod +x docker-entrypoint.sh
 

@@ -41,8 +41,10 @@ def test_voice_word_limit_never_exceeds_what_the_context_supports():
     rich = " ".join(["word"] * 400)
     assert voice_word_limit(query="Tell me about the chapter", context=rich) >= 110
 
-    # Unknown context (callers that do not pass it) keeps the old behaviour.
-    assert voice_word_limit(query="what is a map") >= 110
+    # Unknown context (callers that do not pass it) gets the normal spoken cap.
+    from app.config import VOICE_PROMPT_MAX_WORDS
+
+    assert voice_word_limit(query="what is a map") == VOICE_PROMPT_MAX_WORDS
 
 
 def test_voice_turn_type_guidance_greeting():

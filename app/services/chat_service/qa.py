@@ -1109,6 +1109,9 @@ async def chapter_aware_qa_stream(
     img_task: asyncio.Task[list[dict]] | None = None
     early_img_task: asyncio.Task[list[dict]] | None = None
     emit_early_task: asyncio.Task[None] | None = None
+    # Voice selects against the finished answer like chat: matching the retrieved page instead
+    # attached that page's figure to every turn, even small talk. Late figures still stick —
+    # the client attaches them to their own turn's line.
     if chapter_ids and img_allowed and not ENABLE_LLM_IMAGE_SELECT:
         early_img_task = asyncio.create_task(
             asyncio.to_thread(
