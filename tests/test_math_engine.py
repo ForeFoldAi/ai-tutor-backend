@@ -172,3 +172,17 @@ def test_cube_root_not_mensuration():
     assert result is not None
     assert result.kind == "cube_root"
     assert "2" in result.final_answer
+
+
+def test_spoken_square_any_subject_voice_block():
+    from app.services.chat_service import _prepare_math_engine_block
+
+    for q in ("What is square of 549?", "549 square", "549 raised to the power 2", "23 into 47"):
+        assert try_solve(q, class_level="CLASS_8") is not None, q
+    block = _prepare_math_engine_block("what is square of 549", subject_name="Science", class_level="", context="", voice=True)
+    assert "3,01,401" in block and "**" not in block
+    # Word problems stay Maths-only.
+    assert _prepare_math_engine_block(
+        "If you travel 200 km every day, can you reach the Moon in 5 years?",
+        subject_name="Science", class_level="", context="3,84,400 km",
+    ) == ""
