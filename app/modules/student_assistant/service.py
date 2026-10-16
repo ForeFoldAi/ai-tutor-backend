@@ -12,7 +12,11 @@ from app.modules.student_learning import service as learning_service
 from app.modules.users.models import User
 from app.config import ASSISTANT_MAX_TOKENS
 from app.services.chapter_scope import extract_mentioned_chapter_numbers
-from app.services.chat_service import _call_mistral_async, _stream_mistral_async
+from app.services.chat_service import (
+    _call_mistral_async,
+    _prepare_math_engine_block,
+    _stream_mistral_async,
+)
 from app.services.conversation_context import resolve_conversation_context
 from app.services.conversation_memory import format_memory_for_prompt, prepare_conversation_inputs
 
@@ -740,6 +744,9 @@ async def chat(
         if scope
         else ""
     )
+    math_block = math_block or _prepare_math_engine_block(
+        query, subject_name=scope.get("subject_name", ""), class_level="", context=textbook
+    )
     messages = _build_messages(
         context=context,
         student_name=user.full_name,
@@ -825,6 +832,9 @@ async def chat_stream(
         )
         if scope
         else ""
+    )
+    math_block = math_block or _prepare_math_engine_block(
+        query, subject_name=scope.get("subject_name", ""), class_level="", context=textbook
     )
     messages = _build_messages(
         context=context,

@@ -1014,26 +1014,44 @@ PROMPT = PromptTemplate(
 )
 
 
+# Pure calculations are maths in any subject ("15% of 240" in Science, "square of 549" in Quick Start).
+# Word-problem solvers stay Maths-only: they pull numbers from chapter context and could misfire.
+_ANY_SUBJECT_MATH_KINDS = frozenset(
+    {
+        "arithmetic",
+        "percentage",
+        "fraction_simplify",
+        "linear_equation",
+        "square_power",
+        "cube_power",
+        "square_root",
+        "cube_root",
+        "perfect_square",
+        "perfect_cube",
+    }
+)
+
+
 def _prepare_math_engine_block(
     query: str,
     *,
     subject_name: str,
     class_level: str,
     context: str,
+    voice: bool = False,
 ) -> str:
     """SymPy-verified steps for mathematics — injected into the user prompt."""
-    if not _is_mathematics_subject(subject_name):
-        return ""
+    is_math = _is_mathematics_subject(subject_name)
     try:
         from app.services.math_engine import try_solve
 
-        result = try_solve(query, class_level=class_level, chapter_context=context)
+        result = try_solve(query, class_level=class_level, chapter_context=context if is_math else "")
     except Exception as exc:
         logger.warning("math_engine try_solve failed: %s", exc)
         return ""
-    if not result:
+    if not result or (not is_math and result.kind not in _ANY_SUBJECT_MATH_KINDS):
         return ""
-    return result.to_prompt_block()
+    return result.to_voice_block() if voice else result.to_prompt_block()
 
 
 def _build_chat_messages(

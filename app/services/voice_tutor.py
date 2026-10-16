@@ -612,6 +612,7 @@ def _build_voice_messages(
             subject_name=subject_name,
             class_level=class_level,
             context=context,
+            voice=True,
         )
     if math_block:
         user = math_block + "\n\n" + user

@@ -85,6 +85,23 @@ class MathEngineResult:
             lines.extend(step.latex_lines)
         return "\n".join(lines)
 
+    def to_voice_block(self) -> str:
+        """Spoken-lesson variant: the verified answer without LaTeX/markdown layout to read aloud."""
+        if not self.solved:
+            return ""
+        plain = lambda s: re.sub(r"\*\*|\$\$?", "", s or "").strip()  # noqa: E731
+        return "\n".join(
+            [
+                "MATH ENGINE (SymPy-verified — mandatory):",
+                f"Task: {plain(self.to_find)}",
+                f"Correct final answer: {plain(self.final_answer)}",
+                f"Check: {plain(self.quick_check)}",
+                "Say exactly this final answer. Never calculate or say a different result.",
+                "Explain the idea in 2–3 short spoken sentences — do not read out long working.",
+                "Any number you mention must agree with the final answer above.",
+            ]
+        )
+
 
 def _class_band(class_level: str) -> str:
     m = re.search(r"(\d+)", class_level or "")
@@ -113,7 +130,13 @@ def _normalize_spoken_math(query: str) -> str:
     q = re.sub(r"\bplus\b", "+", q, flags=re.I)
     q = re.sub(r"\bminus\b", "-", q, flags=re.I)
     q = re.sub(r"\btimes\b", "*", q, flags=re.I)
-    q = re.sub(r"\bto\s+the\s+power\s+of\b", "^", q, flags=re.I)
+    q = re.sub(r"(?:\braised\s+)?\bto\s+the\s+power\s+(?:of\s+)?", "^", q, flags=re.I)
+    q = re.sub(r"\braised\s+to\b", "^", q, flags=re.I)
+    # Indian classroom English: "23 into 47" and "23 x 47" mean multiply.
+    q = re.sub(rf"{_INDIAN_NUM}\s+(?:into|x|X)\s+(?={_INDIAN_NUM})", r"\1 * ", q)
+    # "square of 549" / "the cube of 12" / "549 square" → the "549 squared" form the solvers parse.
+    q = re.sub(rf"\b(?:the\s+)?(square|cube)\s+of\s+{_INDIAN_NUM}", r"\2 \1d", q, flags=re.I)
+    q = re.sub(rf"{_INDIAN_NUM}\s+(square|cube)\b(?!\s+roots?)", r"\1 \2d", q, flags=re.I)
     return re.sub(r"\s+", " ", q).strip()
 
 
@@ -304,14 +327,12 @@ def _try_fraction_simplify(query: str, class_band: str) -> MathEngineResult | No
 
 def _try_arithmetic(query: str, class_band: str) -> MathEngineResult | None:
     m = re.search(
-        rf"(?:what\s+is|calculate|evaluate|find)\s+(.+?)(?:\?|$)",
-        query,
-        re.I,
-    )
+        r"(?:what\s+is|what'?s|calculate|evaluate|find)\s+(.+?)(?:\?|$)", query, re.I
+    ) or re.fullmatch(r"\s*(.+?)\s*\??\s*", query)
     if not m:
         return None
     expr_raw = m.group(1).strip()
-    if not re.search(r"[\+\-\×\÷*/]", expr_raw):
+    if not re.search(r"[\+\-\×\÷*/^]", expr_raw):
         return None
     if re.search(r"[a-zA-Z]", expr_raw):
         return None
