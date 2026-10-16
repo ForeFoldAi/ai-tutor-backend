@@ -13,7 +13,14 @@ import tempfile
 import threading
 from typing import Any
 
-from app.config import VOICE_WHISPER_ENABLED, WHISPER_COMPUTE_TYPE, WHISPER_DEVICE, WHISPER_MODEL
+from app.config import (
+    VOICE_WHISPER_ENABLED,
+    WHISPER_COMPUTE_TYPE,
+    WHISPER_CPU_THREADS,
+    WHISPER_DEVICE,
+    WHISPER_MAX_CONCURRENCY,
+    WHISPER_MODEL,
+)
 from app.services.voice_stt_postprocess import (
     is_meaningful_voice_transcript,
     postprocess_voice_transcript,
@@ -27,6 +34,7 @@ _SAMPLE_RATE = 16_000
 _model: Any = None
 _model_error: str | None = None
 _model_lock = threading.Lock()
+_stt_slots = threading.BoundedSemaphore(max(1, WHISPER_MAX_CONCURRENCY))
 
 
 def whisper_available() -> bool:
@@ -81,6 +89,7 @@ def _get_model() -> Any:
                 WHISPER_MODEL,
                 device=WHISPER_DEVICE,
                 compute_type=WHISPER_COMPUTE_TYPE,
+                cpu_threads=WHISPER_CPU_THREADS,
             )
             logger.info("Whisper model ready: %s", WHISPER_MODEL)
             return _model
@@ -90,13 +99,26 @@ def _get_model() -> Any:
             raise RuntimeError(_model_error) from exc
 
 
-def _math_initial_prompt(subject_name: str) -> str:
-    if "math" not in (subject_name or "").lower():
-        return ""
-    return (
-        "School mathematics tutoring. Numbers, equations, fractions, algebra, geometry, "
-        "x squared, divided by, equals, step one, step two."
-    )
+def warm_whisper() -> None:
+    """Load the model at startup so the first student turn doesn't pay for it."""
+    if whisper_available():
+        _get_model()
+
+
+def _initial_prompt(subject_name: str, prompt: str = "") -> str:
+    """Bias decoding toward the lesson's vocabulary (e.g. "joint family", not "your own family")."""
+    parts = ["A school student speaking English to a tutor about their textbook lesson."]
+    if "math" in (subject_name or "").lower():
+        parts.append(
+            "Numbers, equations, fractions, algebra, geometry, "
+            "x squared, divided by, equals, step one, step two."
+        )
+    elif subject_name:
+        parts.append(f"Subject: {subject_name.strip()[:60]}.")
+    if prompt.strip():
+        # Keep the tail: Nest puts the tutor's last question there, and Whisper weights the end most.
+        parts.append(prompt.strip()[-300:])
+    return " ".join(parts)
 
 
 def _decode_webm_to_pcm(audio_bytes: bytes):
@@ -142,16 +164,18 @@ def _audio_suffix(audio_bytes: bytes) -> str:
         return ".mp4"
     if audio_bytes.startswith(b"OggS"):
         return ".ogg"
+    if audio_bytes.startswith(b"RIFF"):
+        return ".wav"
     return ".webm"
 
 
-def _run_whisper(model: Any, audio: Any, *, language: str, subject_name: str):
+def _run_whisper(model: Any, audio: Any, *, language: str, subject_name: str, prompt: str, vad_filter: bool):
     return model.transcribe(
         audio,
         language=language or "en",
         beam_size=1,
         best_of=1,
-        vad_filter=True,
+        vad_filter=vad_filter,
         vad_parameters={
             "min_silence_duration_ms": 450,
             "speech_pad_ms": 350,
@@ -161,7 +185,7 @@ def _run_whisper(model: Any, audio: Any, *, language: str, subject_name: str):
         log_prob_threshold=-1.2,
         no_speech_threshold=0.5,
         condition_on_previous_text=False,
-        initial_prompt=_math_initial_prompt(subject_name),
+        initial_prompt=_initial_prompt(subject_name, prompt),
     )
 
 
@@ -171,13 +195,21 @@ def _transcribe_sync(
     language: str,
     subject_name: str,
     reject_if_similar_to: str = "",
+    prompt: str = "",
 ) -> dict[str, str | float | bool]:
     if len(audio_bytes) < 256:
         return {"transcript": "", "confidence": 0.0, "rejected": False}
     model = _get_model()
-    transcribe_kwargs = {"language": language or "en", "subject_name": subject_name}
+    suffix = _audio_suffix(audio_bytes)
+    transcribe_kwargs = {
+        "language": language or "en",
+        "subject_name": subject_name,
+        "prompt": prompt,
+        # WAV comes from the Nest voice server, already segmented by its Silero VAD.
+        "vad_filter": suffix != ".wav",
+    }
     segments = None
-    with tempfile.NamedTemporaryFile(suffix=_audio_suffix(audio_bytes), delete=True) as tmp:
+    with _stt_slots, tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
         tmp.write(audio_bytes)
         tmp.flush()
         try:
@@ -221,12 +253,14 @@ async def transcribe_audio_bytes(
     language: str = "en",
     subject_name: str = "",
     reject_if_similar_to: str = "",
+    prompt: str = "",
 ) -> dict[str, str | float | bool]:
-    """Transcribe uploaded audio (WebM/Opus from browser MediaRecorder)."""
+    """Transcribe uploaded audio (browser WebM/Opus, or WAV from the Nest voice server)."""
     return await asyncio.to_thread(
         _transcribe_sync,
         audio_bytes,
         language=language,
         subject_name=subject_name,
         reject_if_similar_to=reject_if_similar_to,
+        prompt=prompt,
     )

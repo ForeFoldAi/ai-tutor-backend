@@ -11,10 +11,7 @@ from app.modules.student_assistant.context import build_student_context, build_s
 from app.modules.student_learning import service as learning_service
 from app.modules.users.models import User
 from app.config import ASSISTANT_MAX_TOKENS
-from app.services.chapter_scope import (
-    chapter_number_from_name,
-    extract_mentioned_chapter_numbers,
-)
+from app.services.chapter_scope import extract_mentioned_chapter_numbers
 from app.services.chat_service import _call_mistral_async, _stream_mistral_async
 from app.services.conversation_context import resolve_conversation_context
 from app.services.conversation_memory import format_memory_for_prompt, prepare_conversation_inputs
@@ -311,7 +308,19 @@ def _resolve_turn_context(
     return conv, recent_hist, mem
 
 
-def _title_match_score(q: str, title: str) -> int:
+# Not "unit": NCERT units group several chapters, so "Unit 2" is not "chapter 2".
+_TITLE_NUM_RE = re.compile(r"\b(?:chapter|lesson)\s*(\d+)", re.I)
+# NCERT file codes: hepr103.pdf = class h, English p·r book 1, chapter 03.
+_NCERT_CODE_RE = re.compile(r"(?:^|[^a-z])[a-z]{4}\d(\d{2})\.pdf$", re.I)
+
+
+def _title_number(title: str, file_name: str = "") -> int | None:
+    """Chapter number from 'Chapter 2 - …', else from the NCERT file code."""
+    m = _TITLE_NUM_RE.search(title or "") or _NCERT_CODE_RE.search(file_name or "")
+    return int(m.group(1)) if m else None
+
+
+def _title_match_score(q: str, title: str, file_name: str = "") -> int:
     """Score how well a normalized query matches a subject/chapter title."""
     label = _norm(title)
     if not label or not q:
@@ -320,11 +329,17 @@ def _title_match_score(q: str, title: str) -> int:
         return 8
     score = sum(2 for token in _scope_tokens(label) if _token_in(token, q))
     # "chapter 2" is an explicit pick — same weight as a full title hit
-    q_nums = extract_mentioned_chapter_numbers(q)
-    t_num = chapter_number_from_name(title)
-    if t_num is not None and t_num in q_nums:
+    t_num = _title_number(title, file_name)
+    if t_num is not None and t_num in extract_mentioned_chapter_numbers(q):
         score += 8
     return score
+
+
+def _named_subjects(subjects, q: str) -> list:
+    """Subjects the query names outright ("chapter 1 in english"); all subjects when none is named."""
+    padded = f" {q} "
+    named = [s for s in subjects if _norm(s.subject_name) and f" {_norm(s.subject_name)} " in padded]
+    return named or list(subjects)
 
 
 def _scope_dict(subject, chapter, score: int) -> dict:
@@ -350,7 +365,7 @@ def _best_learning_match(overview, q: str) -> tuple[int, object | None, object |
     best_chapter = None
     best_score = 0
 
-    for subj in overview.subjects:
+    for subj in _named_subjects(overview.subjects, q):
         subj_name = _norm(subj.subject_name)
         score = 0
         if subj_name and subj_name in q:
@@ -358,7 +373,11 @@ def _best_learning_match(overview, q: str) -> tuple[int, object | None, object |
         score += sum(1 for token in _scope_tokens(subj_name) if _token_in(token, q))
         for ch in subj.chapters:
             label = ch.chapter or ch.file_name or ""
-            ch_score = score + _title_match_score(q, label)
+            title_score = _title_match_score(q, label, ch.file_name or "")
+            # Naming only the subject must not lock onto whichever chapter sorts first.
+            if title_score == 0:
+                continue
+            ch_score = score + title_score
             if ch_score > best_score:
                 best_score = ch_score
                 best_subject = subj
@@ -406,7 +425,7 @@ def _scope_from_enrolled_content(overview, q: str) -> dict:
     best_subj = None
     best_ch = None
 
-    for subj in overview.subjects:
+    for subj in _named_subjects(overview.subjects, q):
         if not subj.chapters:
             continue
         board = getattr(subj.board, "value", str(subj.board))
@@ -428,7 +447,7 @@ def _scope_from_enrolled_content(overview, q: str) -> dict:
                 continue
             text = getattr(doc, "page_content", None) or str(doc) or ""
             score = keyword_match_score(q, text)
-            score += _title_match_score(q, ch.chapter or ch.file_name or "")
+            score += _title_match_score(q, ch.chapter or ch.file_name or "", ch.file_name or "")
             if score > best_score:
                 best_score = score
                 best_subj = subj
@@ -475,17 +494,29 @@ def detect_learning_scope(
                 and cur_ch.id != hist_ch.id
                 and (
                     cur_score >= hist_score + 2
-                    or _title_match_score(q_cur, cur_label) >= 8
+                    or _title_match_score(q_cur, cur_label, cur_ch.file_name or "") >= 8
                 )
             )
             if explicit_switch:
                 return _scope_dict(cur_subj, cur_ch, cur_score)
-            return _scope_dict(hist_subj, hist_ch, hist_score)
+            named_now = _named_subjects(overview.subjects, q_cur)
+            if len(named_now) < len(overview.subjects) and hist_subj not in named_now:
+                # They named another subject ("now chapter 1 in english") — leave the old chapter.
+                q_full = q_cur
+                full_score, full_subj, full_ch = cur_score, cur_subj, cur_ch
+            else:
+                return _scope_dict(hist_subj, hist_ch, hist_score)
 
     scoped = _scope_dict(full_subj, full_ch, full_score)
     # Ask / Practice / Explain: if title match missed (any subject), fall back to
     # content search across enrolled textbooks so section headings still resolve.
-    if mode in _TEXTBOOK_MODES and not scoped.get("chapter_id"):
+    # A "chapter N" that matched nothing stays unresolved: guessing another chapter
+    # is how "chapter 1 in english" got answered from Science.
+    if (
+        mode in _TEXTBOOK_MODES
+        and not scoped.get("chapter_id")
+        and not extract_mentioned_chapter_numbers(q_full)
+    ):
         content_scope = _scope_from_enrolled_content(overview, q_full)
         if content_scope.get("chapter_id"):
             return content_scope
@@ -588,7 +619,10 @@ def _build_messages(
     else:
         textbook_block = (
             "TEXTBOOK CONTEXT:\n- None retrieved for this turn. "
-            "Do not invent textbook content. Tell the student to use Ask AI Tutor "
+            "Do not invent textbook content, and never answer from a different subject. "
+            "If DETECTED SCOPE names a subject but no chapter, say you couldn't find that "
+            "chapter in their book for that subject and list its chapter titles from STUDENT CONTEXT "
+            "so they can pick one. Otherwise tell the student to use Ask AI Tutor "
             "for general or out-of-book questions."
         )
     system = template.format(
@@ -885,4 +919,27 @@ if __name__ == "__main__":
         [{"role": "user", "content": "What is important to know about Unit 1 - Wit and Wisdom?"}],
     )
     assert "wit" in q2 and "wisdom" in q2
+    # "chapter 1 in english" must stay in English even though only Science titles say "Chapter 1".
+    from types import SimpleNamespace as NS
+
+    sci1 = NS(id=1, chapter="Chapter 1: Exploring the Investigative World of Science", file_name="hecu101.pdf")
+    eng_a = NS(id=2, chapter="A Tale of Two Birds", file_name="hepr101.pdf")
+    eng_b = NS(id=3, chapter="The Wit that Won Hearts", file_name="hepr103.pdf")
+    eng_untagged = NS(id=4, chapter="Somebody's Mother", file_name="x.pdf")
+    ov = NS(
+        subjects=[
+            NS(subject_name="Science", chapters=[sci1]),
+            NS(subject_name="English", chapters=[eng_b, eng_a, eng_untagged]),
+        ]
+    )
+    _, subj, ch = _best_learning_match(ov, _norm("any way explain chapter 1 in english"))
+    assert subj.subject_name == "English" and ch is eng_a, (subj, ch)
+    _, subj, ch = _best_learning_match(ov, _norm("explain chapter 1"))
+    assert ch in (sci1, eng_a)
+    # Subject named, no chapter matched → subject only, never the alphabetically-first chapter.
+    _, subj, ch = _best_learning_match(ov, _norm("explain chapter 7 in english"))
+    assert subj.subject_name == "English" and ch is None
+    assert _title_number("Unit 2 - Values and Dispositions", "unit2.pdf") is None
+    assert _title_number("Somebody's Mother", "9eaddd2923_hepr103.pdf") == 3
+    assert _title_number("Somebody's Mother", "notes.pdf") is None
     print("student_assistant service self-check ok")

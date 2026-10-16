@@ -21,7 +21,6 @@ from app.modules.auth.signup.validators import (
 )
 from app.modules.school_admin.classes.models import SchoolClass, SchoolSubject
 from app.modules.notifications.service import notify_users
-from app.modules.student_learning.enrollment import enrolled_subject_names
 from app.modules.school_admin.teachers.constants import DEFAULT_PAGE_LIMIT, MAX_BULK_IMPORT, MAX_PAGE_LIMIT, PAGE_SIZE_OPTIONS
 from app.modules.school_admin.teachers.schemas import (
     BulkRowError,
@@ -139,6 +138,8 @@ def _subjects_for_class(
     school_class = _resolve_school_class(db, tutor, item, section=section)
     if school_class is None:
         return ", ".join(teacher_subjects)
+    from app.modules.student_learning.enrollment import enrolled_subject_names
+
     mapped = enrolled_subject_names(db, school_class)
     if not mapped:
         return ", ".join(teacher_subjects)

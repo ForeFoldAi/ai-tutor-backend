@@ -172,7 +172,16 @@ def _startup() -> None:
         except Exception as exc:
             logger.warning("Voice protection preload failed (non-fatal): %s", exc)
 
+    def _warm_whisper():
+        try:
+            from app.services.voice_whisper_stt import warm_whisper
+
+            warm_whisper()
+        except Exception as exc:
+            logger.warning("Whisper pre-warm failed (non-fatal): %s", exc)
+
     threading.Thread(target=_warm_tts, daemon=True).start()
+    threading.Thread(target=_warm_whisper, daemon=True).start()
     threading.Thread(target=_warm_embeddings, daemon=True).start()
     threading.Thread(target=_warm_multimodal, daemon=True).start()
     threading.Thread(target=_warm_voice_protection, daemon=True).start()

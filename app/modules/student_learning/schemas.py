@@ -113,6 +113,7 @@ class SessionStartRequest(BaseModel):
     chapter_name: str | None = Field(default=None, max_length=150)
     mode: Literal["ai_tutor", "ai_voice"] = "ai_tutor"
     agent_mode: Literal["ask", "practice", "explain", "free"] | None = None
+    topic: str | None = Field(default=None, max_length=200)
 
 
 class SessionStartResponse(BaseModel):

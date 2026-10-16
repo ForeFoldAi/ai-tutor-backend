@@ -208,6 +208,24 @@ def start_session(db: Session, user: User, payload: SessionStartRequest) -> Sess
             chapter_name=chapter_name,
             scope_key=scope_key,
         )
+        if payload.topic and payload.topic.strip():
+            # ponytail: link recommended topic to chapter progress immediately on launch
+            from app.modules.student_learning.topic_progress import mark_query_topics_covered
+
+            board = getattr(tb.board, "value", None) or str(tb.board or "")
+            class_level = getattr(tb.class_level, "value", None) or str(tb.class_level or "")
+            mark_query_topics_covered(
+                db,
+                user_id=user.id,
+                chapter_id=payload.chapter_id,
+                query=payload.topic.strip(),
+                subject_name=payload.subject_name.strip(),
+                chapter_name=chapter_name,
+                scope_key=scope_key,
+                board=board,
+                class_level=class_level,
+                scope_title=payload.topic.strip(),
+            )
 
     session = StudentStudySession(
         user_id=user.id,
@@ -471,7 +489,7 @@ def _build_recommended_topics(
     *,
     limit: int = 4,
 ) -> list[RecommendedTopicOut]:
-    """Suggest topics/chapters from progress — remaining headings, then next chapters."""
+    """Suggest topics/chapters from progress — balanced across subjects, rotating uncovered topics."""
     from app.modules.student_learning.topic_progress import list_chapter_topics
 
     recs: list[RecommendedTopicOut] = []
@@ -502,8 +520,10 @@ def _build_recommended_topics(
         )
         return len(recs) >= limit
 
-    # 1) Remaining topics inside in-progress chapters (real headings when available)
+    # ponytail: collect subject candidates and round-robin interleave so 1 subject doesn't starve the others
+    subject_queues: list[list[tuple[str, str, LearningSubjectOut, LearningChapterOut]]] = []
     for subject in subjects_out:
+        queue: list[tuple[str, str, LearningSubjectOut, LearningChapterOut]] = []
         for chapter in subject.chapters:
             if chapter.status != "in_progress":
                 continue
@@ -520,42 +540,55 @@ def _build_recommended_topics(
             except Exception:
                 topics = []
             remaining = [t for t in topics if t.get("key") not in covered]
-            for topic in remaining[:2]:
-                title = str(topic.get("title") or "").strip()
-                if not title:
-                    continue
-                if _add(
-                    title=title,
-                    reason=f"Next in {chapter.chapter or subject.subject_name}",
-                    subject=subject,
-                    chapter=chapter,
-                ):
-                    return recs
-            # Fallback: the chapter itself
+            if remaining:
+                offset = (len(covered)) % len(remaining) if covered else 0
+                rotated = remaining[offset:] + remaining[:offset]
+                for topic in rotated[:2]:
+                    title = str(topic.get("title") or "").strip()
+                    if title:
+                        queue.append(
+                            (
+                                title,
+                                f"Next in {chapter.chapter or subject.subject_name}",
+                                subject,
+                                chapter,
+                            )
+                        )
             chapter_title = (chapter.chapter or chapter.file_name or "").strip()
-            if chapter_title and _add(
-                title=chapter_title,
-                reason="Continue where you left off",
-                subject=subject,
-                chapter=chapter,
-            ):
-                return recs
+            if chapter_title:
+                queue.append(
+                    (chapter_title, "Continue where you left off", subject, chapter)
+                )
 
-    # 2) Next not-started chapters
-    for subject in subjects_out:
         for chapter in subject.chapters:
             if chapter.status != "not_started":
                 continue
             chapter_title = (chapter.chapter or chapter.file_name or "").strip()
-            if not chapter_title:
-                continue
-            if _add(
-                title=chapter_title,
-                reason=f"Start next in {subject.subject_name}",
-                subject=subject,
-                chapter=chapter,
-            ):
-                return recs
+            if chapter_title:
+                queue.append(
+                    (
+                        chapter_title,
+                        f"Start next in {subject.subject_name}",
+                        subject,
+                        chapter,
+                    )
+                )
+
+        if queue:
+            subject_queues.append(queue)
+
+    while subject_queues and len(recs) < limit:
+        exhausted_indices: list[int] = []
+        for i, q in enumerate(subject_queues):
+            while q:
+                title, reason, subj, chap = q.pop(0)
+                if _add(title=title, reason=reason, subject=subj, chapter=chap):
+                    return recs
+                break
+            if not q:
+                exhausted_indices.append(i)
+        for i in reversed(exhausted_indices):
+            subject_queues.pop(i)
 
     return recs
 

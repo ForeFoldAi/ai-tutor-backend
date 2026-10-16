@@ -153,9 +153,15 @@ VOICE_WHISPER_ENABLED = os.environ.get("VOICE_WHISPER_ENABLED", "true").lower() 
     "true",
     "yes",
 )
-WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "base")
+# distil-small.en: ~5x faster than small.en on CPU at similar accuracy, far better than tiny/base.
+# base.en: ~0.5 s/turn and correct on the en-IN test set. distil-small.en/small.en were ~3x slower
+# for no accuracy gain there — the encoder always runs a padded 30 s window and dominates CPU cost.
+WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "base.en")
 WHISPER_DEVICE = os.environ.get("WHISPER_DEVICE", "cpu")
 WHISPER_COMPUTE_TYPE = os.environ.get("WHISPER_COMPUTE_TYPE", "int8")
+WHISPER_CPU_THREADS = int(os.environ.get("WHISPER_CPU_THREADS", "2"))
+# Concurrent transcriptions; beyond this requests queue instead of thrashing the CPU.
+WHISPER_MAX_CONCURRENCY = int(os.environ.get("WHISPER_MAX_CONCURRENCY", "2"))
 
 # ---------------------------------------------------------------------------
 # Voice protection (barge-in / false-interrupt hardening)
@@ -221,8 +227,9 @@ VOICE_CONTEXT_CHAR_BUDGET = int(os.environ.get("VOICE_CONTEXT_CHAR_BUDGET", "600
 VOICE_MAX_TOKENS = int(os.environ.get("VOICE_MAX_TOKENS", "400"))
 VOICE_EARLY_IMAGE_MIN_CHARS = int(os.environ.get("VOICE_EARLY_IMAGE_MIN_CHARS", "40"))
 # Spoken-turn word caps injected into voice prompts (not hard token limits)
-VOICE_PROMPT_MAX_WORDS = int(os.environ.get("VOICE_PROMPT_MAX_WORDS", "110"))
-VOICE_PROMPT_EXPAND_WORDS = int(os.environ.get("VOICE_PROMPT_EXPAND_WORDS", "160"))
+# 110 words is ~40 s of speech with stacked questions; a listener can answer one thing at a time.
+VOICE_PROMPT_MAX_WORDS = int(os.environ.get("VOICE_PROMPT_MAX_WORDS", "70"))
+VOICE_PROMPT_EXPAND_WORDS = int(os.environ.get("VOICE_PROMPT_EXPAND_WORDS", "120"))
 # Phase 6 — cold-start overlap + HTTP fallback TTS prefetch
 VOICE_EMBEDDING_WARMUP = os.environ.get("VOICE_EMBEDDING_WARMUP", "true").lower() in (
     "1",
