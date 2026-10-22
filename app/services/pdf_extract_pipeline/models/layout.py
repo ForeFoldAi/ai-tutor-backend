@@ -12,6 +12,8 @@ from app.services.pdf_extract_pipeline.types import LayoutElement, bbox_to_poly
 
 logger = logging.getLogger(__name__)
 
+HF_WEIGHTS = "doclayout_yolo_docstructbench_imgsz1024.pt"
+
 LAYOUT_ID_TO_NAMES = {
     0: "title",
     1: "plain text",
@@ -47,7 +49,10 @@ class LayoutDetector:
                 self._model = YOLOv10(model_path)
                 logger.info("Loaded DocLayout-YOLO from %s", model_path)
             else:
-                self._model = YOLOv10.from_pretrained(hf_pretrained)
+                # YOLOv10.from_pretrained is broken in doclayout-yolo 0.0.3 (looks for yolov10n.pt).
+                from huggingface_hub import hf_hub_download
+
+                self._model = YOLOv10(hf_hub_download(hf_pretrained, HF_WEIGHTS))
                 logger.info("Loaded DocLayout-YOLO from HuggingFace %s", hf_pretrained)
         except Exception as exc:
             logger.warning("DocLayout-YOLO unavailable (%s); trying ultralytics YOLO", exc)

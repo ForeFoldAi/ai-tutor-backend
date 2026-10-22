@@ -35,6 +35,8 @@ class Settings(BaseModel):
     def normalize_database_url(cls, v: str) -> str:
         return _normalize_database_url(v)
     redis_url: str = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+    # Run catalog-ingest jobs in this process instead of the shared Celery queue (local dev).
+    catalog_inline: bool = os.environ.get("CATALOG_INLINE", "false").lower() in ("1", "true", "yes")
 
     jwt_secret_key: str = Field(
         default_factory=lambda: os.environ.get("JWT_SECRET_KEY", "change-me-in-production")

@@ -745,7 +745,11 @@ async def chat(
         else ""
     )
     math_block = math_block or _prepare_math_engine_block(
-        query, subject_name=scope.get("subject_name", ""), class_level="", context=textbook
+        query,
+        subject_name=scope.get("subject_name", ""),
+        class_level="",
+        context=textbook,
+        conversation_history=recent_hist,
     )
     messages = _build_messages(
         context=context,
@@ -834,7 +838,11 @@ async def chat_stream(
         else ""
     )
     math_block = math_block or _prepare_math_engine_block(
-        query, subject_name=scope.get("subject_name", ""), class_level="", context=textbook
+        query,
+        subject_name=scope.get("subject_name", ""),
+        class_level="",
+        context=textbook,
+        conversation_history=recent_hist,
     )
     messages = _build_messages(
         context=context,

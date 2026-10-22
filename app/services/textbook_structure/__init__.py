@@ -20,41 +20,87 @@ from app.services.textbook_structure.toc_detector import TocEntry, UniversalTocD
 logger = logging.getLogger(__name__)
 
 
+_FILENAME_BOOKMARK = re.compile(r"\.pdf$|^\d+\s*[_-]|^(unit|lesson|chapter)[-_ ]?\d+$", re.I)
+_PAGE_FURNITURE = re.compile(r"telangana|scert|government|gift for students", re.I)
+
+
+def _page_heading(page: fitz.Page) -> str | None:
+    """Largest-font text on the page (the chapter title on a chapter's first page).
+
+    Consecutive lines in that font size are joined, so titles wrapped over two lines stay whole.
+    """
+    lines: list[tuple[float, str]] = []
+    for block in page.get_text("dict").get("blocks", []):
+        for line in block.get("lines", []):
+            text = " ".join(s["text"] for s in line["spans"]).strip()
+            size = max((s["size"] for s in line["spans"]), default=0)
+            if 1 <= len(text) <= 80 and not _PAGE_FURNITURE.search(text):
+                lines.append((size, text))
+    sizes = [sz for sz, t in lines if re.search(r"[A-Za-z]{3}", t)]
+    if not sizes:
+        return None
+    top = max(sizes)
+    parts: list[str] = []
+    for sz, text in lines:
+        if abs(sz - top) <= 0.5:
+            parts.append(text)
+        elif parts:
+            break
+    title = re.sub(r"\s+", " ", " ".join(parts)).strip()
+    return title[:120] or None
+
+
+def _clean_filename_title(title: str) -> str:
+    """'03_Varsham_Yechhata nundi vastundi 2022 - Final - EM.pdf' -> 'Varsham Yechhata nundi vastundi'."""
+    t = re.sub(r"\.pdf$", "", title, flags=re.I)
+    t = re.sub(r"^\d+\s*[_\-]+\s*", "", t)
+    t = re.sub(r"(\s*[-_]?\s*(20\d\d|final|em|tm|v\d+))+\s*$", "", t, flags=re.I)
+    return t.replace("_", " ").strip(" -") or title
+
+
 def parse_pdf_outline(doc: fitz.Document) -> list[TocEntry]:
-    """Extract chapters from digital PDF outline / bookmarks (doc.get_toc())."""
+    """Extract chapters from digital PDF outline / bookmarks (doc.get_toc()).
+
+    Merged PDFs carry one top-level bookmark per source file ('01_Mana Aaharam-EM.pdf') plus
+    nested copies that all point at page 1; only level-1 entries are used, front-matter files are
+    skipped, and file-name titles are replaced by the heading printed on the start page.
+    """
     entries = []
-    toc = doc.get_toc() or []
-    for item in toc:
-        if len(item) < 3:
+    last_page = 0
+    for item in doc.get_toc() or []:
+        if len(item) < 3 or item[0] != 1:
             continue
-        lvl, title, p1 = item[0], str(item[1]).strip(), int(item[2])
-        if p1 <= 0 or p1 > len(doc):
+        raw, p1 = str(item[1]).strip(), int(item[2])
+        if p1 <= 0 or p1 > len(doc) or p1 < last_page:
+            continue  # out of range or broken link (e.g. points back to page 1)
+        last_page = p1
+        if re.search(r"preface|contents|cover|copyright|prelim|initial\s*pages", raw, re.I):
             continue
-        if lvl <= 2:
-            # Check for non-chapter bookmarks
-            if any(kw in title.lower() for kw in ["preface", "contents", "cover", "copyright", "prelim"]):
-                continue
 
-            m = re.match(r"^(?:(?:Chapter|Unit|Lesson|अध्याय)\s*)?(\d+|[IVXLCDM]+|[A-Z])[\.:\s\-]+(.*)$", title, re.I)
-            if m:
-                ch_num = m.group(1)
-                ch_title = m.group(2).strip()
-            else:
-                ch_num = str(len(entries) + 1)
-                ch_title = title
+        from_file = bool(_FILENAME_BOOKMARK.search(raw))
+        title = (_page_heading(doc[p1 - 1]) or _clean_filename_title(raw)) if from_file else raw
+        num = re.search(r"(\d+)", raw) if from_file else None
+        m = None if from_file else re.match(
+            r"^(?:(?:Chapter|Unit|Lesson|अध्याय)\s*)?(\d+|[IVXLCDM]+|[A-Z])[\.:\s\-]+(.*)$", title, re.I
+        )
+        if m:
+            ch_num, title = m.group(1), m.group(2).strip() or title
+        else:
+            ch_num = num.group(1).lstrip("0") or "0" if num else str(len(entries) + 1)
 
-            entries.append(
-                TocEntry(
-                    chapter_number=ch_num,
-                    chapter_title=ch_title or title,
-                    hierarchy_level="chapter",
-                    printed_start_page=max(0, p1 - 1),
-                    printed_end_page=None,
-                    source_toc_page=0,
-                    confidence=0.95,
-                    detection_method="pdf_bookmark",
-                )
+        entries.append(
+            TocEntry(
+                chapter_number=ch_num,
+                chapter_title=title,
+                hierarchy_level="appendix" if re.search(r"appendi|glossary|answers", title, re.I) else "chapter",
+                printed_start_page=max(0, p1 - 1),
+                printed_end_page=None,
+                source_toc_page=0,
+                # File-name bookmarks are a guess; keep them below the review threshold.
+                confidence=0.75 if from_file else 0.95,
+                detection_method="pdf_bookmark",
             )
+        )
     return entries
 
 

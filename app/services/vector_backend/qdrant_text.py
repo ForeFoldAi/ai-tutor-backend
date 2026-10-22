@@ -9,6 +9,7 @@ from langchain_core.documents import Document
 
 from app.services.vector_backend.qdrant_common import (
     TEXT_VECTOR_SIZE,
+    _is_not_found,
     deterministic_text_point_id,
     ensure_collection,
     get_qdrant_client,
@@ -260,7 +261,10 @@ def delete_docs(collection_name: str, *, where_filter: dict | None = None) -> No
                     client.delete_collection(collection_name)
                 except Exception:
                     pass
-    except Exception:
+    except Exception as exc:
+        if _is_not_found(exc):
+            logger.debug("Qdrant collection '%s' does not exist yet; nothing to delete", collection_name)
+            return
         logger.exception("Failed to delete Qdrant docs from '%s'", collection_name)
 
 

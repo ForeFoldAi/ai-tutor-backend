@@ -29,6 +29,9 @@ def handle_textbook_chapters(textbook_id: int) -> dict[str, Any]:
         if not tb:
             logger.warning("Textbook %s not found; skipping chapter processing", textbook_id)
             return {"status": "skipped", "reason": "not_found"}
+        if tb.status not in (TextbookStatusEnum.CONFIRMED, TextbookStatusEnum.PROCESSING):
+            logger.info("Textbook %s is %s (stopped?); skipping chapter processing", textbook_id, tb.status)
+            return {"status": "skipped", "reason": "stopped"}
 
         tb.status = TextbookStatusEnum.PROCESSING
         db.commit()
@@ -52,6 +55,17 @@ def handle_textbook_chapters(textbook_id: int) -> dict[str, Any]:
         failed_count = 0
 
         for ch in chapters:
+            # ponytail: cooperative stop — the admin "Stop" flips the textbook to FAILED and we
+            # exit before the next chapter; the chapter already running finishes first.
+            db.refresh(tb)
+            if tb.status != TextbookStatusEnum.PROCESSING:
+                logger.info("Textbook %s processing stopped by admin", textbook_id)
+                all_ok = False
+                break
+            db.refresh(ch)
+            if ch.status == ChapterStatusEnum.COMPLETED:
+                completed_count += 1
+                continue
             try:
                 logger.info("Processing chapter %s (Ch #%s: %s) for textbook %s", ch.id, ch.chapter_number, ch.chapter_title, textbook_id)
                 process_textbook_chapter_background(ch.id)

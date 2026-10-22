@@ -75,7 +75,7 @@ _AFFIRM = re.compile(
     re.I,
 )
 _QUIZ_INTENT = re.compile(
-    r"\b(quiz\s+me|test\s+me|ask\s+me\s+questions?|\d+\s+questions?)\b",
+    r"\b(quiz|test\s+me|take\s+a\s+test|give\s+me\s+a\s+test|ask\s+me\s+questions?|\d+\s+questions?)\b",
     re.I,
 )
 _CLOSING = re.compile(
@@ -363,6 +363,44 @@ def classify_reply_intent(student_text: str, *, quiz_pending: bool) -> ReplyInte
     return ReplyIntent.NEW_QUESTION
 
 
+_OFFER = re.compile(
+    r"^(?:(?:so|okay|ok|now|great|alright)[,!]?\s+)?(?:want|do\s+you\s+want|would\s+you\s+like|"
+    r"shall\s+(?:i|we)|should\s+(?:i|we)|can\s+i|may\s+i|ready|any\s+(?:other\s+|more\s+)?questions?|"
+    r"does\s+(?:that|this)\s+make\s+sense|got\s+it|right|okay|ok|isn'?t\s+it|na)\b",
+    re.I,
+)
+
+
+def pending_question(reply: str) -> str:
+    """The check question a tutor reply leaves open, or "".
+
+    Looks at the last two sentences — replies often end on "Just guess!" after
+    the question. Offers ("Want me to show you?") are not check questions.
+    Keep in sync with pendingQuestion() in Voice/backend/src/modules/tutor/reply-intent.ts.
+    """
+    sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", reply or "") if s.strip()][-2:]
+    for s in reversed(sentences):
+        if "?" in s and not _OFFER.match(s):
+            return s
+    return ""
+
+
+def check_question_answer(question: str, *, class_level: str = "") -> str:
+    """SymPy answer to a math check question, or "" when it can't be verified.
+
+    Only the asked clause is solved: "If 2^3 = 8, what would 2^4 be?" must give
+    16, and solving the whole sentence picks up the given "2^3" instead.
+    """
+    from app.services.math_engine import try_solve
+
+    asked = re.split(r"[,;:]", question or "")[-1].strip()
+    try:
+        result = try_solve(asked, class_level=class_level) if asked else None
+    except Exception:
+        return ""
+    return result.final_answer.replace("*", "").strip() if result else ""
+
+
 def update_quiz_state(
     *,
     quiz_pending: bool,
@@ -382,11 +420,11 @@ def update_quiz_state(
             if attempts >= 2:
                 return False, 0  # forced reveal happened this turn — resolved
             return True, attempts
-        if not reply.endswith("?"):
+        if not pending_question(reply):
             return False, 0  # assistant moved on — treat as resolved
         return True, quiz_attempts  # still probing the same question
     # No quiz was pending — did this turn's reply pose a new one?
-    return (True, 0) if reply.endswith("?") else (False, 0)
+    return (True, 0) if pending_question(reply) else (False, 0)
 
 
 _UNDERSTANDING_LLM_TIMEOUT_SEC = 6.0
@@ -613,6 +651,7 @@ def _build_voice_messages(
             class_level=class_level,
             context=context,
             voice=True,
+            conversation_history=history,
         )
     if math_block:
         user = math_block + "\n\n" + user

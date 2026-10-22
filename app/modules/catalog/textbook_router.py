@@ -23,7 +23,7 @@ from app.modules.catalog.models import (
     TextbookChapter,
     TextbookStatusEnum,
 )
-from app.modules.catalog.router import _local_path_for_upload, _save_upload_file
+from app.modules.catalog.router import STORAGE_PROGRESS, _local_path_for_upload, _save_upload_file
 from app.modules.catalog.publisher_books import MANUAL_UPLOAD
 from app.modules.catalog.schemas import (
     PublisherCreateRequest,
@@ -58,6 +58,18 @@ def _process_textbook_all_chapters_background(textbook_id: int) -> None:
     handle_textbook_chapters(textbook_id)
 
 
+MAX_TEXTBOOK_BYTES = 500 * 1024 * 1024
+
+
+@router.get("/upload-progress/{progress_id}")
+def get_storage_progress(
+    progress_id: str,
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+):
+    """Percent of an in-flight textbook PDF pushed to storage; null when unknown or finished."""
+    return {"percent": STORAGE_PROGRESS.get(progress_id)}
+
+
 @router.post("/upload", response_model=TextbookSummaryResponse, status_code=status.HTTP_201_CREATED)
 async def upload_full_textbook(
     background_tasks: BackgroundTasks,
@@ -71,6 +83,7 @@ async def upload_full_textbook(
     publisher: str = Form(""),
     is_default: bool = Form(True),
     textbook_id: int | None = Form(None),
+    progress_id: str | None = Form(None),
 ):
     """Upload a complete textbook PDF for automatic chapter detection and segmentation.
 
@@ -82,6 +95,8 @@ async def upload_full_textbook(
             status_code=400,
             detail=f"Full textbook automatic segmentation requires a PDF document. Received '{ext}'",
         )
+    if (file.size or 0) > MAX_TEXTBOOK_BYTES:
+        raise HTTPException(status_code=413, detail="Textbook PDF must be 500 MB or smaller.")
 
     shell: Textbook | None = None
     if textbook_id is not None:
@@ -94,7 +109,7 @@ async def upload_full_textbook(
                 detail="This publisher already has a complete book. Delete it first or add a new publisher.",
             )
 
-    file_path = await _save_upload_file(file, board, class_name, subject)
+    file_path = await _save_upload_file(file, board, class_name, subject, progress_id=(progress_id or "")[:64] or None)
     display_title = title.strip() or os.path.splitext(file.filename or "Textbook")[0]
 
     if shell is not None:
@@ -518,7 +533,12 @@ def retry_textbook_processing(
         dispatch_textbook_chapters,
     )
 
-    if tb.status in (TextbookStatusEnum.FAILED, TextbookStatusEnum.UPLOADED):
+    # FAILED after confirmation means chapter indexing failed; re-analysing would discard the confirmed structure.
+    confirmed = any(
+        ch.textbook_upload_id or ch.status not in (ChapterStatusEnum.DETECTED, ChapterStatusEnum.CONFIRMED)
+        for ch in tb.chapters
+    )
+    if tb.status == TextbookStatusEnum.UPLOADED or (tb.status == TextbookStatusEnum.FAILED and not confirmed):
         # Re-run detection
         tb.status = TextbookStatusEnum.ANALYZING
         db.commit()
@@ -526,8 +546,58 @@ def retry_textbook_processing(
         return MessageResponse(message=f"Retrying structure analysis for '{tb.title}'.")
 
     # Retry failed or un-embedded chapters
+    tb.status = TextbookStatusEnum.CONFIRMED
+    db.commit()
     dispatch_textbook_chapters(tb.id, background_tasks)
     return MessageResponse(message=f"Retrying chapter indexing for '{tb.title}'.")
+
+
+@router.post("/{textbook_id}/stop", response_model=MessageResponse)
+def stop_textbook_processing(
+    textbook_id: int,
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+):
+    """Stop chapter indexing; the worker exits before its next chapter. Retry resumes the rest."""
+    tb = db.get(Textbook, textbook_id)
+    if not tb:
+        raise HTTPException(status_code=404, detail="Textbook not found.")
+    if tb.status not in (TextbookStatusEnum.CONFIRMED, TextbookStatusEnum.PROCESSING):
+        raise HTTPException(status_code=409, detail="This textbook is not being processed.")
+    for ch in tb.chapters:
+        if ch.status in (ChapterStatusEnum.QUEUED, ChapterStatusEnum.CONFIRMED):
+            ch.status = ChapterStatusEnum.FAILED
+            ch.error_message = "Stopped by admin"
+    tb.status = TextbookStatusEnum.FAILED
+    db.commit()
+    return MessageResponse(message=f"Stopping '{tb.title}' after the current chapter finishes.")
+
+
+@router.post("/{textbook_id}/reanalyze", response_model=MessageResponse)
+def reanalyze_textbook(
+    textbook_id: int,
+    background_tasks: BackgroundTasks,
+    db: Annotated[Session, Depends(get_db)],
+    _current_user: Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))],
+):
+    """Re-run chapter detection, replacing the detected (not yet indexed) structure."""
+    tb = db.get(Textbook, textbook_id)
+    if not tb:
+        raise HTTPException(status_code=404, detail="Textbook not found.")
+    if tb.status in (TextbookStatusEnum.ANALYZING, TextbookStatusEnum.CONFIRMED, TextbookStatusEnum.PROCESSING):
+        raise HTTPException(status_code=409, detail="Textbook is busy; stop processing first.")
+    # Analysis deletes chapter rows; indexed ones would leave orphan uploads and vectors.
+    if any(ch.textbook_upload_id for ch in tb.chapters):
+        raise HTTPException(
+            status_code=409,
+            detail="Some chapters are already indexed. Delete the textbook and upload it again to re-analyze.",
+        )
+    from app.services.catalog_pipeline import dispatch_textbook_analysis
+
+    tb.status = TextbookStatusEnum.ANALYZING
+    db.commit()
+    dispatch_textbook_analysis(tb.id, background_tasks)
+    return MessageResponse(message=f"Re-analyzing '{tb.title}'.")
 
 
 @router.get("/{textbook_id}/status")

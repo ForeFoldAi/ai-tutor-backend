@@ -351,7 +351,15 @@ def create_textbook_upload(
 # Uploads go through document storage backend (local or S3/MinIO).
 
 
-async def _save_upload_file(file: UploadFile, board: str, class_level: str, subject: str) -> str:
+# progress_id -> percent of bytes pushed to storage.
+# ponytail: per-process dict; with several API workers the poll may hit a different one and
+# see nothing (the UI then just waits). Move to Redis if that matters.
+STORAGE_PROGRESS: dict[str, int] = {}
+
+
+async def _save_upload_file(
+    file: UploadFile, board: str, class_level: str, subject: str, progress_id: str | None = None
+) -> str:
     """
     Save an uploaded file without blocking the event loop.
 
@@ -360,8 +368,19 @@ async def _save_upload_file(file: UploadFile, board: str, class_level: str, subj
     ``materialize_textbook_file``.
     """
     import hashlib
+    import threading
 
     content = await file.read()
+    on_progress = None
+    if progress_id:
+        STORAGE_PROGRESS[progress_id] = 0
+        sent = [0]
+        lock = threading.Lock()
+
+        def on_progress(n: int) -> None:
+            with lock:  # boto3 calls this from its upload threads
+                sent[0] += n
+                STORAGE_PROGRESS[progress_id] = min(100, sent[0] * 100 // max(1, len(content)))
     digest = hashlib.sha256(content).hexdigest()[:10]
     raw_name = file.filename or "document"
     # Keep basename only; avoid path injection.
@@ -372,9 +391,12 @@ async def _save_upload_file(file: UploadFile, board: str, class_level: str, subj
     def _store() -> None:
         from app.services.image_service.storage_backend import get_document_storage_backend
 
-        get_document_storage_backend().save(key, content)
+        get_document_storage_backend().save(key, content, on_progress=on_progress)
 
-    await asyncio.to_thread(_store)
+    try:
+        await asyncio.to_thread(_store)
+    finally:
+        STORAGE_PROGRESS.pop(progress_id or "", None)
     return key
 
 
