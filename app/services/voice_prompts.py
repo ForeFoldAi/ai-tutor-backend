@@ -574,7 +574,10 @@ _NEST_INTENT_GUIDANCE = {
         "The student wants an example — use one from the chapter context if present. "
         "Do not invent an unsupported story."
     ),
-    "quiz": "The student wants to be quizzed — ask ONE short oral question from the chapter.",
+    "quiz": (
+        "Ask ONE short oral question about something you already explained in this conversation — "
+        "nothing new, no figure or map the student can't see."
+    ),
     "repeat": "The student wants you to repeat — say it again more simply, same topic, same facts.",
 }
 

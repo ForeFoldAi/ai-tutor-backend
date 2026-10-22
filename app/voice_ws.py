@@ -357,6 +357,7 @@ async def _stream_answer(
         classify_understanding_llm,
         evaluate_student_response,
         next_tutor_state,
+        pending_question,
         topic_key,
         update_quiz_state,
     )
@@ -614,7 +615,7 @@ async def _stream_answer(
         assistant_reply=full_answer,
     )
     if session.quiz_pending and not was_pending:
-        session.quiz_question = full_answer.strip()
+        session.quiz_question = pending_question(full_answer)
     elif not session.quiz_pending:
         session.quiz_question = ""
 

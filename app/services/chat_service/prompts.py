@@ -1032,6 +1032,34 @@ _ANY_SUBJECT_MATH_KINDS = frozenset(
 )
 
 
+_MATH_FOLLOWUP = re.compile(
+    r"^\s*(?:and|what\s+about|how\s+about|why|how|next|same|now|then|ok(?:ay)?|so)\b", re.I
+)
+_FOLLOWUP_NUM = re.compile(r"\d+(?:\.\d+)?")
+
+
+def _math_followup_query(query: str, history: list[dict] | None, solve) -> str:
+    """Rebuild a short follow-up ("and 13?", "why?") from the last solvable student question.
+
+    ponytail: the number swap is positional — follow-ups that change the
+    operation rather than the numbers ("now the square of it") fall back to the LLM.
+    """
+    if not history or not _MATH_FOLLOWUP.match(query or "") or len(query.split()) > 8:
+        return ""
+    for turn in reversed(history):
+        if (turn.get("role") or "").lower() != "user":
+            continue
+        prev = (turn.get("content") or "").strip()
+        if not prev or prev == query.strip() or not solve(prev):
+            continue
+        new_nums = _FOLLOWUP_NUM.findall(query)
+        if not new_nums:
+            return prev  # "why?" / "next step" — keep the verified steps of the earlier problem
+        nums = iter(new_nums)
+        return _FOLLOWUP_NUM.sub(lambda m: next(nums, m.group()), prev)
+    return ""
+
+
 def _prepare_math_engine_block(
     query: str,
     *,
@@ -1039,13 +1067,20 @@ def _prepare_math_engine_block(
     class_level: str,
     context: str,
     voice: bool = False,
+    conversation_history: list[dict] | None = None,
 ) -> str:
     """SymPy-verified steps for mathematics — injected into the user prompt."""
     is_math = _is_mathematics_subject(subject_name)
     try:
         from app.services.math_engine import try_solve
 
-        result = try_solve(query, class_level=class_level, chapter_context=context if is_math else "")
+        def solve(q: str):
+            return try_solve(q, class_level=class_level, chapter_context=context if is_math else "")
+
+        result = solve(query)
+        if not result and is_math:
+            followup = _math_followup_query(query, conversation_history, solve)
+            result = solve(followup) if followup else None
     except Exception as exc:
         logger.warning("math_engine try_solve failed: %s", exc)
         return ""
@@ -1454,6 +1489,7 @@ def _build_chat_messages(
         subject_name=subject_name,
         class_level=class_level,
         context=context,
+        conversation_history=conversation_history,
     )
     math_section = ""
     if math_block:

@@ -699,6 +699,7 @@ async def chapter_chat_stream(
                             "affect_hint",
                             "affect_primary",
                             "affect_trajectory",
+                            "quiz_expected",
                         )
                         if k in voice_meta
                     }

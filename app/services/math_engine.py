@@ -117,9 +117,21 @@ def _class_band(class_level: str) -> str:
     return "11-12"
 
 
+_SUPERSCRIPT_DIGITS = str.maketrans("⁰¹²³⁴⁵⁶⁷⁸⁹", "0123456789")
+
+
 def _normalize_spoken_math(query: str) -> str:
     """Map spoken operators (STT / typed English) to symbols solvers expect."""
     q = query
+    # LLM replies write powers as superscripts: "2⁴" → "2^4".
+    q = re.sub(r"[⁰¹²³⁴-⁹]+", lambda m: "^" + m.group().translate(_SUPERSCRIPT_DIGITS), q)
+    # "what would 2^4 be" / "what does 7 x 8 equal" → "what is …".
+    q = re.sub(
+        r"\bwhat\s+(?:would|will|does|do)\s+(.+?)\s+(?:be|equal|make|come\s+to)\b",
+        r"what is \1",
+        q,
+        flags=re.I,
+    )
     # Multi-word first so "divided by" isn't left as "divided /".
     q = re.sub(r"\bmultiplied\s+by\b", "*", q, flags=re.I)
     q = re.sub(r"\bdivided\s+by\b", "/", q, flags=re.I)

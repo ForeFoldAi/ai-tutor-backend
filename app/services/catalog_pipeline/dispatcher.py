@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def _can_use_celery() -> bool:
     settings = get_settings()
-    return bool(settings.redis_url and str(settings.redis_url).strip())
+    return not settings.catalog_inline and bool(settings.redis_url and str(settings.redis_url).strip())
 
 
 def dispatch_upload_processing(upload_id: int, background_tasks: Any = None) -> None:

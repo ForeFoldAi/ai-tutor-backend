@@ -85,7 +85,7 @@ def profile_document(doc: fitz.Document) -> DocumentProfile:
         h = page.rect.height
         w = page.rect.width
         top_rect = fitz.Rect(0, 0, w, min(70, h * 0.12))
-        bot_rect = fitz.Rect(0, max(0, h - 75), w, h)
+        bot_rect = fitz.Rect(0, max(0, h - max(75, h * 0.12)), w, h)
 
         top_txt = page.get_text("text", clip=top_rect).strip()
         bot_txt = page.get_text("text", clip=bot_rect).strip()

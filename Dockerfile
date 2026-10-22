@@ -79,6 +79,9 @@ RUN python -c "import torch; torch.hub.load('snakers4/silero-vad', model='silero
 ARG WHISPER_MODEL=base.en
 RUN python -c "from faster_whisper import download_model; download_model('${WHISPER_MODEL}')"
 
+# Bake the layout weights (models/ and *.pt are dockerignored) so catalog-ingest works offline.
+RUN python -c "from huggingface_hub import hf_hub_download; hf_hub_download('juliozhao/DocLayout-YOLO-DocStructBench', 'doclayout_yolo_docstructbench_imgsz1024.pt')"
+
 COPY . .
 RUN chmod +x docker-entrypoint.sh
 

@@ -1351,6 +1351,13 @@ async def chapter_aware_qa_stream(
                     voice_metadata_out["affect_primary"] = aff.primary
                 if voice_ctx.get("affect_trajectory"):
                     voice_metadata_out["affect_trajectory"] = voice_ctx["affect_trajectory"]
+                if _is_mathematics_subject(subject_name):
+                    from app.services.voice_tutor import check_question_answer, pending_question
+
+                    asked = pending_question(answer_text)
+                    expected = check_question_answer(asked, class_level=class_level) if asked else ""
+                    if expected:
+                        voice_metadata_out["quiz_expected"] = expected
                 logger.info(
                     "voice_turn affect=%s tutor_state=%s source=%s",
                     getattr(aff, "primary", "neutral"),

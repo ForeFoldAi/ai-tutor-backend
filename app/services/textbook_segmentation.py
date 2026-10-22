@@ -548,6 +548,12 @@ def process_textbook_chapter_background(chapter_id: int) -> None:
             if ch:
                 ch.status = ChapterStatusEnum.FAILED
                 ch.error_message = str(exc)
+                # Left QUEUED, the admin pages treat the upload as in-progress and poll forever.
+                tu = db.get(TextbookUpload, ch.textbook_upload_id) if ch.textbook_upload_id else None
+                if tu:
+                    for field in ("ocr_status", "chunk_status", "embedding_status"):
+                        if getattr(tu, field) != ProcessingStatusEnum.EMBEDDED:
+                            setattr(tu, field, ProcessingStatusEnum.FAILED)
                 db.commit()
         except Exception:
             pass

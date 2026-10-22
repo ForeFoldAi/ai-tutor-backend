@@ -186,3 +186,35 @@ def test_spoken_square_any_subject_voice_block():
         "If you travel 200 km every day, can you reach the Moon in 5 years?",
         subject_name="Science", class_level="", context="3,84,400 km",
     ) == ""
+
+
+def test_superscript_power_question():
+    result = try_solve("what would 2⁴ be?")
+    assert result is not None and "16" in result.final_answer
+
+
+def test_check_question_answer_solves_the_asked_clause():
+    from app.services.voice_tutor import check_question_answer, pending_question
+
+    reply = "Want to try a quick check? If 2³ = 8, what would 2⁴ be? Just guess and I'll confirm!"
+    assert check_question_answer(pending_question(reply)) == "16"
+
+
+def test_math_followup_keeps_verified_numbers():
+    from app.services.chat_service import _prepare_math_engine_block
+
+    history = [
+        {"role": "user", "content": "what is the cube of 12"},
+        {"role": "assistant", "content": "12 cubed is 1,728."},
+    ]
+    block = _prepare_math_engine_block(
+        "and 13?", subject_name="Mathematics", class_level="CLASS_8", context="", conversation_history=history
+    )
+    assert "2,197" in block or "2197" in block
+    why = _prepare_math_engine_block(
+        "why?", subject_name="Mathematics", class_level="CLASS_8", context="", conversation_history=history
+    )
+    assert "1,728" in why or "1728" in why
+    assert _prepare_math_engine_block(
+        "and 13?", subject_name="Mathematics", class_level="CLASS_8", context=""
+    ) == ""

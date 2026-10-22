@@ -87,11 +87,11 @@ class PageOffsetCalibrator:
             # Define search rectangles based on profile preference or test both
             rects = []
             if profile.margin_page_number_position == "bottom":
-                rects.append(fitz.Rect(0, max(0, h - 75), w, h))
+                rects.append(fitz.Rect(0, max(0, h - max(75, h * 0.12)), w, h))
             elif profile.margin_page_number_position == "top":
                 rects.append(fitz.Rect(0, 0, w, min(70, h * 0.12)))
             else:
-                rects.extend([fitz.Rect(0, max(0, h - 75), w, h), fitz.Rect(0, 0, w, min(70, h * 0.12))])
+                rects.extend([fitz.Rect(0, max(0, h - max(75, h * 0.12)), w, h), fitz.Rect(0, 0, w, min(70, h * 0.12))])
 
             for rect in rects:
                 margin_txt = page.get_text("text", clip=rect).strip()

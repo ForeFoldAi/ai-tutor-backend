@@ -24,6 +24,16 @@ _TOC_KEYWORDS = [
 ]
 
 
+_MONTH_RE = re.compile(
+    r"^(january|february|march|april|may|june|july|august|september|october|november|december"
+    r"|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)[.,]?$",
+    re.IGNORECASE,
+)
+
+# Upper-case diagonal watermark words; mixed-case 'Telangana' in a title must survive.
+_WATERMARK_RE = re.compile(r"^(SCERT|TELANGANA)[,.]?$")
+
+
 @dataclass
 class TocEntry:
     chapter_number: str
@@ -48,10 +58,17 @@ class UniversalTocDetector:
 
         for pno in range(scan_limit):
             page = doc[pno]
-            text = page.get_text() or ""
-            first_lines = "\n".join(text.split("\n")[:10]).lower()
+            # Reading order: raw extraction order can put the heading after the table body.
+            lines = [ln for ln in (page.get_text(sort=True) or "").split("\n") if ln.strip()]
+            first_lines = "\n".join(lines[:10]).lower()
             if any(kw in first_lines for kw in _TOC_KEYWORDS):
                 toc_pages.append(pno)
+        # Later hits are body pages that mention 'contents' (e.g. an exercise on reading a TOC).
+        toc_pages = [p for p in toc_pages if p - toc_pages[0] <= 2]
+
+        if not toc_pages:
+            # Contents tables without any heading: accept a page that reads as one.
+            toc_pages = [pno for pno in range(scan_limit) if len(cls._parse_row_toc(doc[pno], pno)) >= 5]
 
         # Check for multi-page TOC continuation
         if toc_pages:
@@ -75,19 +92,158 @@ class UniversalTocDetector:
         if not toc_pages:
             return []
 
-        entries: list[TocEntry] = []
-        for pno in toc_pages:
-            page = doc[pno]
-            # Try tabular extraction first
-            tabular_entries = cls._parse_tabular_toc(page, pno)
-            if tabular_entries:
-                entries.extend(tabular_entries)
-            else:
-                # Fall back to line-based / dotted leader parsing
-                line_entries = cls._parse_line_toc(page, pno)
-                entries.extend(line_entries)
+        # Layouts differ per textbook, so every parser reads the contents pages and the
+        # result that best looks like a contents table (ordered pages, ranges) wins.
+        parsers = (cls._parse_reading_rows_toc, cls._parse_tabular_toc, cls._parse_line_toc, cls._parse_row_toc)
+        results = [[e for pno in toc_pages for e in parser(doc[pno], pno)] for parser in parsers]
+        return max(results, key=cls._toc_score)  # ties keep the earlier parser
 
-        return entries
+    @staticmethod
+    def _toc_score(entries: list[TocEntry]) -> int:
+        """Chapters/units whose start pages increase down the list, plus those with an end page."""
+        score, last = 0, -1
+        for e in entries:
+            if e.hierarchy_level not in ("chapter", "unit"):
+                continue
+            if e.printed_start_page > last:
+                score += 1
+                last = e.printed_start_page
+            if e.printed_end_page:
+                score += 1
+        return score
+
+    @staticmethod
+    def _visual_rows(page: fitz.Page) -> list[list[tuple]]:
+        """Words regrouped into visual rows (left to right); table cells often extract one per line."""
+        rows: list[list[tuple]] = []
+        for w in sorted(page.get_text("words"), key=lambda w: (w[3], w[0])):
+            if rows and abs(rows[-1][0][3] - w[3]) <= 3:
+                rows[-1].append(w)
+            else:
+                rows.append([w])
+        return [sorted(r, key=lambda w: w[0]) for r in rows]
+
+    @classmethod
+    def _parse_reading_rows_toc(cls, page: fitz.Page, pno: int) -> list[TocEntry]:
+        """Unit tables labelled by reading: '1. A. Reading <title>' / 'B. Reading (Poem) <title> <month> 4-18'.
+
+        Each numbered 'A' row starts a unit; B/C/... rows are its readings; the unit's page
+        range sits on any of its rows. Rows with a range before the first unit (e.g. a
+        readiness programme) become chapters, 'Appendix' rows become appendices.
+        """
+        units: list[dict[str, Any]] = []
+        extras: list[TocEntry] = []
+        pre_rows: list[tuple[list[tuple], tuple[int, int]]] = []
+        title_x: float | None = None
+
+        for row in cls._visual_rows(page):
+            words = [w for w in row if not _WATERMARK_RE.match(w[4])]
+            tokens = [w[4] for w in words]
+            i = 0
+            num = None
+            if tokens and re.fullmatch(r"\d{1,2}\.?", tokens[0]):
+                num, i = tokens[0].rstrip("."), 1
+            letter = poem = None
+            if i + 1 < len(tokens) and re.fullmatch(r"[A-E]\.?", tokens[i]) and re.fullmatch(r"Re\w*ding", tokens[i + 1], re.I):
+                letter, i = tokens[i][0], i + 2
+                if i < len(tokens) and tokens[i].lower() == "(poem)":
+                    poem, i = True, i + 1
+
+            rng = None
+            title: list[str] = []
+            for t in tokens[i:]:
+                m = re.fullmatch(r"(\d+)[-–—](\d+)", t)
+                if m:
+                    rng = (int(m.group(1)), int(m.group(2)))
+                elif not all(_MONTH_RE.match(p) for p in re.split(r"[/,\-–]", t) if p):
+                    title.append(t)
+
+            if letter and num and letter == "A":
+                if title_x is None and i < len(words):
+                    title_x = words[i][0]
+                units.append({"num": num, "readings": [], "range": None})
+            elif not letter:
+                if tokens and tokens[0].lower().startswith("appendi") and rng:
+                    extras.append(TocEntry("App", " ".join(title), "appendix", rng[0], rng[1], pno, confidence=0.92, detection_method="reading_rows_toc"))
+                elif not units and rng:
+                    pre_rows.append((words, rng))
+                continue
+            if not units or not title:
+                continue
+            units[-1]["readings"].append(f"{letter}. {' '.join(title)}" + (" (Poem)" if poem else ""))
+            if rng:
+                units[-1]["range"] = rng
+
+        units = [u for u in units if u["range"]]
+        if len(units) < 2:
+            return []
+
+        entries = []
+        for words, (sp, ep) in pre_rows:
+            title = " ".join(w[4] for w in words if w[2] > (title_x or 0) and not re.search(r"\d", w[4]) and not _MONTH_RE.match(w[4]))
+            if title:
+                entries.append(TocEntry("0", title, "chapter", sp, ep, pno, confidence=0.9, detection_method="reading_rows_toc"))
+        for u in units:
+            first = re.sub(r"^[A-E]\.\s*|\s*\(Poem\)$", "", u["readings"][0])
+            entries.append(TocEntry(
+                chapter_number=u["num"],
+                chapter_title=f"Unit {u['num']}: {first}",
+                hierarchy_level="unit",
+                printed_start_page=u["range"][0],
+                printed_end_page=u["range"][1],
+                source_toc_page=pno,
+                sub_readings=u["readings"],
+                confidence=0.95,
+                detection_method="reading_rows_toc",
+            ))
+        return entries + extras
+
+    @classmethod
+    def _parse_row_toc(cls, page: fitz.Page, pno: int) -> list[TocEntry]:
+        """Table TOCs whose cells extract one per line (e.g. 'No. | Chapter | Page | Periods | Month').
+
+        Words are regrouped into visual rows; a row is '<n>. <title words> <numeric cells...>'.
+        The title stops at the first numeric or month cell. Column order varies between books,
+        so the page column is whichever numeric position (first or last) increases down the table.
+        """
+        parsed: list[tuple[str, str, list[int]]] = []
+        for row in cls._visual_rows(page):
+            tokens = [w[4] for w in row]
+            num = re.fullmatch(r"(\d{1,2})\.?", tokens[0])
+            if not num or len(tokens) < 3:
+                continue
+            title_words: list[str] = []
+            numbers: list[int] = []
+            for t in tokens[1:]:
+                if re.fullmatch(r"\d+(?:[-–—]\d+)?", t):  # '12', '1-16'
+                    numbers.extend(int(x) for x in re.findall(r"\d+", t))
+                elif numbers or (title_words and _MONTH_RE.match(t)):
+                    continue  # month / trailing cells
+                else:
+                    title_words.append(t)
+            if title_words and numbers:
+                parsed.append((num.group(1), " ".join(title_words), numbers))
+
+        if len(parsed) < 2:
+            return []
+        for pos in (0, -1):
+            pages = [nums[pos] for _, _, nums in parsed]
+            # A real TOC lists pages in order; anything else is a stray numbered list or periods.
+            if all(a < b for a, b in zip(pages, pages[1:])):
+                return [
+                    TocEntry(
+                        chapter_number=n,
+                        chapter_title=title,
+                        hierarchy_level="chapter",
+                        printed_start_page=pg,
+                        printed_end_page=None,
+                        source_toc_page=pno,
+                        confidence=0.88,
+                        detection_method="row_toc",
+                    )
+                    for (n, title, _), pg in zip(parsed, pages)
+                ]
+        return []
 
     @classmethod
     def _parse_tabular_toc(cls, page: fitz.Page, pno: int) -> list[TocEntry]:
@@ -139,21 +295,28 @@ class UniversalTocDetector:
                 content_words = [w for w in row_words if 0.31 * w_page <= w[0] < 0.72 * w_page]
                 content_txt = " ".join(w[4] for w in sorted(content_words, key=lambda x: (x[1], x[0]))).strip()
 
-                # Extract sub-readings if present (e.g. A. The Tattered Blanket, B. My Mother)
+                theme = re.sub(rf"^{re.escape(ch_num)}[.)]?\s*", "", theme)
                 sub_readings = []
-                if content_txt:
-                    sub_parts = re.split(r"(?=[A-C]\.\s+)", content_txt)
-                    for sp in sub_parts:
+                if re.search(r"(?:^|\s)[A-C]\.\s+\S", content_txt):
+                    # Real readings are listed with markers (e.g. A. The Tattered Blanket, B. My Mother)
+                    for sp in re.split(r"(?=(?:^|\s)[A-C]\.\s+)", content_txt):
                         clean_sp = re.sub(r"\b(January|February|March|April|May|June|July|August|September|October|November|December)(?:-[A-Za-z]+)?\b", "", sp, flags=re.I).strip()
                         if clean_sp and len(clean_sp) > 3:
                             sub_readings.append(clean_sp)
+                else:
+                    # No markers: this column is just the title running long (plus the month column).
+                    tail = [t for t in content_txt.split() if not all(_MONTH_RE.match(p) for p in re.split(r"[/,\-]", t) if p)]
+                    theme = " ".join([theme, *tail]).strip()
 
-                title = f"Unit {ch_num}: {theme}" if theme else f"Unit {ch_num}"
+                if sub_readings:
+                    title = f"Unit {ch_num}: {theme}" if theme else f"Unit {ch_num}"
+                else:
+                    title = theme or f"Chapter {ch_num}"
                 entries.append(
                     TocEntry(
                         chapter_number=ch_num,
                         chapter_title=title,
-                        hierarchy_level="unit",
+                        hierarchy_level="unit" if sub_readings else "chapter",
                         printed_start_page=start_p,
                         printed_end_page=end_p,
                         source_toc_page=pno,

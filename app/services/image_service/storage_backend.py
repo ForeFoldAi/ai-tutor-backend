@@ -67,9 +67,9 @@ class StorageBackend(ABC):
     """Interface for image persistence backends."""
 
     @abstractmethod
-    def save(self, relative_path: str, data: bytes) -> tuple[str, str]:
+    def save(self, relative_path: str, data: bytes, on_progress=None) -> tuple[str, str]:
         """
-        Save *data* at *relative_path*.
+        Save *data* at *relative_path*. ``on_progress(bytes_sent)`` is called per chunk where supported.
 
         Returns (stored_path, content_hash) where stored_path == relative_path
         on success, or the path of an existing duplicate when deduplicated.
@@ -140,7 +140,7 @@ class LocalStorageBackend(StorageBackend):
     def _abs(self, relative_path: str) -> str:
         return os.path.join(self.root_dir, relative_path)
 
-    def save(self, relative_path: str, data: bytes) -> tuple[str, str]:
+    def save(self, relative_path: str, data: bytes, on_progress=None) -> tuple[str, str]:
         content_hash = self.compute_hash(data)
         abs_path = self._abs(relative_path)
         os.makedirs(os.path.dirname(abs_path), exist_ok=True)
@@ -274,7 +274,7 @@ class S3StorageBackend(StorageBackend):
     def _key(self, relative_path: str) -> str:
         return f"{self.prefix}/{relative_path}" if self.prefix else relative_path
 
-    def save(self, relative_path: str, data: bytes) -> tuple[str, str]:
+    def save(self, relative_path: str, data: bytes, on_progress=None) -> tuple[str, str]:
         content_hash = self.compute_hash(data)
         key = self._key(relative_path)
 
@@ -298,24 +298,27 @@ class S3StorageBackend(StorageBackend):
             content_type = (
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             )
-        try:
-            self._client.put_object(
-                Bucket=self.bucket,
-                Key=key,
-                Body=data,
-                ContentType=content_type,
-                Metadata={"content-hash": content_hash},
+        from boto3.s3.transfer import TransferConfig
+
+        # The proxy in front of our MinIO drops any single request after ~60s (HTTP 499), so
+        # large PDFs must go up as 8 MB multipart parts.
+        def _upload() -> None:
+            self._client.upload_fileobj(
+                BytesIO(data),
+                self.bucket,
+                key,
+                ExtraArgs={"ContentType": content_type, "Metadata": {"content-hash": content_hash}},
+                Config=TransferConfig(multipart_threshold=8 << 20, multipart_chunksize=8 << 20, max_concurrency=4),
+                Callback=on_progress,
             )
+
+        try:
+            _upload()
         except Exception as exc:
-            if _s3_error_code(exc) == "NoSuchBucket":
+            # upload_fileobj wraps the ClientError in S3UploadFailedError, so match on the message too.
+            if _s3_error_code(exc) == "NoSuchBucket" or "NoSuchBucket" in str(exc):
                 self._ensure_bucket()
-                self._client.put_object(
-                    Bucket=self.bucket,
-                    Key=key,
-                    Body=data,
-                    ContentType=content_type,
-                    Metadata={"content-hash": content_hash},
-                )
+                _upload()
             else:
                 raise
 
