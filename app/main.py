@@ -119,6 +119,14 @@ def _startup() -> None:
     validate_production_settings()
     seed_test_users_if_missing()
     try:
+        from app.services.catalog_pipeline.dispatcher import _can_use_celery
+        from app.services.catalog_pipeline.handlers.chapter_handler import fail_interrupted_jobs
+
+        if not _can_use_celery():  # this process runs catalog jobs, so any left "running" died with it
+            fail_interrupted_jobs(include_queued=True)
+    except Exception as exc:
+        logger.warning("Interrupted-job cleanup skipped (non-fatal): %s", exc)
+    try:
         from app.core.celery_autostart import start_celery_sidecar
 
         start_celery_sidecar()

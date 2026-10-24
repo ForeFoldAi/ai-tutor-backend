@@ -59,7 +59,7 @@ def _enrich_metadata(docs: list[Document], source: str, extra: dict | None = Non
 def _load_pdf(file_path: str) -> list[Document]:
     from app.services.pdf_extract_pipeline import get_cached_pipeline_result, pipeline_enabled
     from app.services.pdf_extract_pipeline.cache import set_cached_pipeline_result
-    from app.services.pdf_extract_pipeline.pipeline import PdfExtractionPipeline
+    from app.services.pdf_extract_pipeline.pipeline import get_pipeline
     from app.services.pdf_extract_pipeline.to_documents import pipeline_to_documents
 
     if pipeline_enabled():
@@ -67,7 +67,7 @@ def _load_pdf(file_path: str) -> list[Document]:
 
         pipeline = get_cached_pipeline_result(file_path)
         if pipeline is None:
-            pipeline = PdfExtractionPipeline().process_pdf(file_path)
+            pipeline = get_pipeline().process_pdf(file_path)
             set_cached_pipeline_result(file_path, pipeline)
         if not pipeline.pages:
             raise MlPipelineExtractionError(

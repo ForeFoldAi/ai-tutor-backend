@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Iterable
 from typing import Any
 
 import fitz
@@ -52,15 +53,14 @@ class AdaptiveHeadingDetector:
     )
 
     @classmethod
-    def scan_headings(cls, doc: fitz.Document, profile: DocumentProfile) -> list[dict[str, Any]]:
+    def scan_headings(cls, doc: fitz.Document, profile: DocumentProfile, pages: Iterable[int] | None = None) -> list[dict[str, Any]]:
         candidates = []
         base_sz = profile.baseline_font_size or 10.0
-        total_pages = len(doc)
 
-        for pno in range(total_pages):
+        for pno in pages if pages is not None else range(len(doc)):
             page = doc[pno]
             h = page.rect.height
-            d = page.get_text("dict")
+            d = page.get_text("dict", flags=fitz.TEXTFLAGS_TEXT)  # skip decoding images
             blocks = d.get("blocks", [])
 
             for b_idx, b in enumerate(blocks):

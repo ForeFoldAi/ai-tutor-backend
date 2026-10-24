@@ -14,10 +14,11 @@ Per-page flow:
 from __future__ import annotations
 
 import logging
+import threading
 import time
-from io import BytesIO
 from typing import Any
 
+import fitz
 from PIL import Image
 
 from app.services.image_service.formula_bbox import expand_formula_bbox
@@ -39,14 +40,14 @@ from app.services.pdf_extract_pipeline.types import (
     PageExtraction,
     PageInfo,
     PipelineResult,
-    poly_to_bbox,
 )
 
 logger = logging.getLogger(__name__)
 
 _OCR_REGION_TYPES = {"title", "plain text", "figure_caption", "table_caption", "table_footnote", "formula_caption"}
 _TABLE_TYPE = "table"
-_FORMULA_TYPES = {"inline", "isolated"}
+_MIN_TEXT_LAYER_CHARS = 20
+_RUN_LOCK = threading.Lock()
 
 
 def _crop_region(image: Image.Image, element: LayoutElement, padding: int = 25) -> tuple[Image.Image, list[int]]:
@@ -105,6 +106,11 @@ class PdfExtractionPipeline:
         *,
         max_pages: int | None = None,
     ) -> PipelineResult:
+        # ponytail: one chapter at a time per process bounds RAM; parallelism comes from more worker processes.
+        with _RUN_LOCK:
+            return self._process_pdf(pdf_path, max_pages=max_pages)
+
+    def _process_pdf(self, pdf_path: str, *, max_pages: int | None) -> PipelineResult:
         t0 = time.time()
         doc, images = load_pdf_pages(pdf_path, dpi=self.dpi, max_pages=max_pages)
         n_pages = len(images)
@@ -152,32 +158,23 @@ class PdfExtractionPipeline:
             image = page_ex.pil_image
             if image is None:
                 continue
-            layout_dicts = [d.to_dict() for d in page_ex.layout_dets]
-            mfd_on_page = [
-                {"bbox": list(poly_to_bbox(d.poly))}
-                for d in page_ex.layout_dets
-                if d.category_type in _FORMULA_TYPES
-            ]
-
-            if stage_enabled(self.config, "ocr") and self.ocr.available():
+            pdf_page = doc[page_ex.page_no]
+            regions = [d for d in page_ex.layout_dets if d.category_type in _OCR_REGION_TYPES]
+            if len((pdf_page.get_text() or "").strip()) >= _MIN_TEXT_LAYER_CHARS:
+                # Digital page: the text layer is exact and free; OCR is only for scanned pages.
+                scale = 72.0 / self.dpi
+                for det in regions:
+                    x0, y0, x1, y1 = det.bbox
+                    text = " ".join(pdf_page.get_textbox(fitz.Rect(x0 * scale, y0 * scale, x1 * scale, y1 * scale)).split())
+                    if text:
+                        page_ex.layout_dets.append(LayoutElement(category_type="text", poly=list(det.poly), score=1.0, text=text))
+            elif stage_enabled(self.config, "ocr") and self.ocr.available():
                 ocr_start = time.time()
-                for det in page_ex.layout_dets:
-                    if det.category_type not in _OCR_REGION_TYPES:
-                        continue
+                for det in regions:
                     crop, meta = _crop_region(image, det)
-                    paste_x, paste_y, xmin, ymin, xmax, ymax, _, _ = meta
-                    adjusted_mfd = []
-                    for mf in mfd_on_page:
-                        x0, y0, x1, y1 = mf["bbox"]
-                        ax0 = x0 - xmin + paste_x
-                        ay0 = y0 - ymin + paste_y
-                        ax1 = x1 - xmin + paste_x
-                        ay1 = y1 - ymin + paste_y
-                        if ax1 < 0 or ay1 < 0 or ax0 > crop.width or ay0 > crop.height:
-                            continue
-                        adjusted_mfd.append({"bbox": [ax0, ay0, ax1, ay1]})
+                    paste_x, paste_y, xmin, ymin, _, _, _, _ = meta
                     try:
-                        ocr_elems = self.ocr.ocr_region(crop, mfd_res=adjusted_mfd)
+                        ocr_elems = self.ocr.ocr_region(crop)
                         for elem in ocr_elems:
                             pts = elem.poly
                             mapped = []
@@ -189,7 +186,7 @@ class PdfExtractionPipeline:
                             elem.poly = mapped
                             page_ex.layout_dets.append(elem)
                     except Exception as exc:
-                        logger.debug("OCR region failed: %s", exc)
+                        logger.warning("OCR region failed page %d: %s", page_ex.page_no + 1, exc)
                 logger.debug("Page %d OCR %.2fs", page_ex.page_no + 1, time.time() - ocr_start)
 
             if stage_enabled(self.config, "table_vlm") and self.table_vlm.available():
@@ -237,6 +234,8 @@ class PdfExtractionPipeline:
 
         full_text = "\n\n".join(p.markdown for p in pages if p.markdown)
         doc.close()
+        for page_ex in pages:
+            page_ex.pil_image = None  # assets are already cropped; rasters would pin RAM via the result cache
         logger.info(
             "[ML-PIPELINE] %s pages=%d assets=%d elapsed=%.1fs",
             pdf_path,
@@ -247,5 +246,14 @@ class PdfExtractionPipeline:
         return PipelineResult(pages=pages, assets=assets, full_text=full_text)
 
 
+_PIPELINE: PdfExtractionPipeline | None = None
+_PIPELINE_LOCK = threading.Lock()
+
+
 def get_pipeline() -> PdfExtractionPipeline:
-    return PdfExtractionPipeline()
+    """Process-wide pipeline so layout/formula/OCR models load once, not once per chapter."""
+    global _PIPELINE
+    with _PIPELINE_LOCK:
+        if _PIPELINE is None:
+            _PIPELINE = PdfExtractionPipeline()
+        return _PIPELINE

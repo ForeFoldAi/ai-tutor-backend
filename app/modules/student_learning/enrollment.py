@@ -66,6 +66,15 @@ def _chapter_sort_key(tb: TextbookUpload) -> tuple[int, str, int, str]:
     return (9999, "", 1, c)
 
 
+# Signup offers a single 'Science'; boards split it into these syllabus subjects.
+_SCIENCE_FAMILY = re.compile(r"(general |physical |biological )?science|evs|environmental (studies|education|science)")
+
+
+def _wanted(name: str, allowed: set[str]) -> bool:
+    key = _norm(name)
+    return key in allowed or ("science" in allowed and bool(_SCIENCE_FAMILY.fullmatch(key)))
+
+
 def _subjects_from_catalog(
     db: Session,
     *,
@@ -85,7 +94,7 @@ def _subjects_from_catalog(
             .order_by(SyllabusSubject.subject_name)
         )
     )
-    subjects = [s for s in subjects if _norm(s.subject_name) in allowed]
+    subjects = [s for s in subjects if _wanted(s.subject_name, allowed)]
 
     textbooks = list(
         db.scalars(
@@ -97,7 +106,7 @@ def _subjects_from_catalog(
     tb_by_subject: dict[str, list[TextbookUpload]] = {}
     for tb in textbooks:
         key = _norm(tb.subject_name)
-        if key not in allowed:
+        if not _wanted(key, allowed):
             continue
         tb_by_subject.setdefault(key, []).append(tb)
 
@@ -112,6 +121,8 @@ def _subjects_from_catalog(
     for subj in subjects:
         key = _norm(subj.subject_name)
         seen.add(key)
+        if _SCIENCE_FAMILY.fullmatch(key):
+            seen.add("science")  # the signup pick is covered; don't also add an empty 'Science'
         chapters = [
             StudentChapterResponse(id=tb.id, chapter=tb.chapter, file_name=tb.file_name)
             for tb in tb_by_subject.get(key, [])

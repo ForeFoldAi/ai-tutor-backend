@@ -391,6 +391,23 @@ def get_textbook_structure(
     )
 
 
+def _job_running(tb: Textbook) -> bool:
+    """A chapter job is queued or running. A stuck one is cleared with Stop."""
+    return tb.status in (TextbookStatusEnum.CONFIRMED, TextbookStatusEnum.PROCESSING)
+
+
+def _dispatch_chapters(tb: Textbook, db: Session, background_tasks: BackgroundTasks) -> None:
+    from app.services.catalog_pipeline import dispatch_textbook_chapters
+    from app.services.catalog_pipeline.dispatcher import CatalogQueueUnavailable
+
+    try:
+        dispatch_textbook_chapters(tb.id, background_tasks)
+    except CatalogQueueUnavailable as exc:
+        tb.status = TextbookStatusEnum.FAILED
+        db.commit()
+        raise HTTPException(status_code=503, detail=f"{exc}. Check the catalog worker and Redis, then Retry.") from exc
+
+
 @router.put("/{textbook_id}/structure", response_model=TextbookStructureResponse)
 def update_textbook_structure(
     textbook_id: int,
@@ -403,8 +420,11 @@ def update_textbook_structure(
     if not tb:
         raise HTTPException(status_code=404, detail="Textbook not found.")
 
-    # Validate chapter page ranges
-    for idx, ch in enumerate(payload.chapters):
+    if _job_running(tb):
+        raise HTTPException(status_code=409, detail="Textbook is being processed; stop it before editing chapters.")
+
+    # Validate chapter and sub-reading page ranges
+    for ch in payload.chapters:
         if ch.start_pdf_page < 0 or ch.end_pdf_page < ch.start_pdf_page:
             raise HTTPException(
                 status_code=400,
@@ -415,63 +435,71 @@ def update_textbook_structure(
                 status_code=400,
                 detail=f"Chapter {ch.chapter_number} end page {ch.end_pdf_page} exceeds total pages ({tb.total_pages})",
             )
+        for sub in ch.sub_chapters:
+            if not ch.start_pdf_page <= sub.start_pdf_page <= sub.end_pdf_page <= ch.end_pdf_page:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Sub-reading '{sub.chapter_title}' pages {sub.start_pdf_page + 1}-{sub.end_pdf_page + 1} "
+                        f"must lie inside chapter {ch.chapter_number} ({ch.start_pdf_page + 1}-{ch.end_pdf_page + 1})"
+                    ),
+                )
 
-    # Delete existing non-fixed chapter rows
-    existing_chapters = list(
-        db.scalars(
+    existing = {
+        ec.id: ec
+        for ec in db.scalars(
             select(TextbookChapter).where(
                 TextbookChapter.textbook_id == textbook_id,
                 TextbookChapter.is_non_chapter_section == False,
             )
         )
-    )
-    for ec in existing_chapters:
-        db.delete(ec)
-    db.commit()
+    }
+    kept: set[int] = set()
 
-    # Re-insert updated chapters (with hierarchy)
-    for ch in payload.chapters:
-        flags_json = json.dumps(ch.confidence_flags) if ch.confidence_flags else "[]"
-        new_row = TextbookChapter(
+    def _save(item, parent_id: int | None, level: str, section_type: str) -> TextbookChapter:
+        row = existing.get(item.id) if item.id else None
+        # Indexed rows with unchanged pages are kept so confirming again doesn't reindex them.
+        if (
+            row is not None
+            and row.status == ChapterStatusEnum.COMPLETED
+            and row.textbook_upload_id
+            and (row.start_pdf_page, row.end_pdf_page) == (item.start_pdf_page, item.end_pdf_page)
+        ):
+            row.chapter_number = item.chapter_number
+            row.chapter_title = item.chapter_title.strip()
+            row.parent_id = parent_id
+            kept.add(row.id)
+            return row
+        row = TextbookChapter(
             textbook_id=tb.id,
-            chapter_number=ch.chapter_number,
-            chapter_title=ch.chapter_title.strip(),
-            hierarchy_level=ch.hierarchy_level or "chapter",
-            start_pdf_page=ch.start_pdf_page,
-            end_pdf_page=ch.end_pdf_page,
-            printed_start_page=ch.printed_start_page,
-            printed_end_page=ch.printed_end_page,
+            parent_id=parent_id,
+            chapter_number=item.chapter_number,
+            chapter_title=item.chapter_title.strip(),
+            hierarchy_level=item.hierarchy_level or level,
+            start_pdf_page=item.start_pdf_page,
+            end_pdf_page=item.end_pdf_page,
+            printed_start_page=item.printed_start_page,
+            printed_end_page=item.printed_end_page,
             is_non_chapter_section=False,
-            section_type="chapter",
+            section_type=section_type,
             detection_method="admin_manual",
             confidence_score=1.0,
-            confidence_flags=flags_json,
+            confidence_flags=json.dumps(item.confidence_flags) if item.confidence_flags else "[]",
             status=ChapterStatusEnum.CONFIRMED,
         )
-        db.add(new_row)
-        db.commit()
-        db.refresh(new_row)
+        db.add(row)
+        db.flush()
+        return row
 
+    for ch in payload.chapters:
+        parent = _save(ch, None, "chapter", "chapter")
         for sub in ch.sub_chapters:
-            sub_row = TextbookChapter(
-                textbook_id=tb.id,
-                parent_id=new_row.id,
-                chapter_number=sub.chapter_number,
-                chapter_title=sub.chapter_title.strip(),
-                hierarchy_level=sub.hierarchy_level or "reading",
-                start_pdf_page=sub.start_pdf_page,
-                end_pdf_page=sub.end_pdf_page,
-                printed_start_page=sub.printed_start_page,
-                printed_end_page=sub.printed_end_page,
-                is_non_chapter_section=False,
-                section_type="reading",
-                detection_method="admin_manual",
-                confidence_score=1.0,
-                confidence_flags="[]",
-                status=ChapterStatusEnum.CONFIRMED,
-            )
-            db.add(sub_row)
-        db.commit()
+            _save(sub, parent.id, "reading", "reading")
+
+    db.flush()  # persist re-parented kept rows before old parents cascade-delete their children
+    for ec_id, ec in existing.items():
+        if ec_id not in kept:
+            db.delete(ec)
 
     tb.status = TextbookStatusEnum.AWAITING_REVIEW
     db.commit()
@@ -501,15 +529,16 @@ def confirm_textbook_structure(
     )
     if not chapters:
         raise HTTPException(status_code=400, detail="Cannot confirm textbook with 0 chapters.")
+    if _job_running(tb):
+        raise HTTPException(status_code=409, detail="Textbook is already being processed.")
 
     for ch in chapters:
-        ch.status = ChapterStatusEnum.QUEUED
+        if ch.status != ChapterStatusEnum.COMPLETED:
+            ch.status = ChapterStatusEnum.QUEUED
     tb.status = TextbookStatusEnum.CONFIRMED
     db.commit()
 
-    from app.services.catalog_pipeline import dispatch_textbook_chapters
-
-    dispatch_textbook_chapters(tb.id, background_tasks)
+    _dispatch_chapters(tb, db, background_tasks)
 
     return MessageResponse(
         message=f"Textbook structure confirmed for '{tb.title}'. Processing {len(chapters)} chapter(s) in background."
@@ -527,11 +556,13 @@ def retry_textbook_processing(
     tb = db.get(Textbook, textbook_id)
     if not tb:
         raise HTTPException(status_code=404, detail="Textbook not found.")
+    if tb.status == TextbookStatusEnum.ANALYZING or _job_running(tb):
+        raise HTTPException(
+            status_code=409,
+            detail="Textbook is still being processed. Stop it first, then Retry.",
+        )
 
-    from app.services.catalog_pipeline import (
-        dispatch_textbook_analysis,
-        dispatch_textbook_chapters,
-    )
+    from app.services.catalog_pipeline import dispatch_textbook_analysis
 
     # FAILED after confirmation means chapter indexing failed; re-analysing would discard the confirmed structure.
     confirmed = any(
@@ -548,7 +579,7 @@ def retry_textbook_processing(
     # Retry failed or un-embedded chapters
     tb.status = TextbookStatusEnum.CONFIRMED
     db.commit()
-    dispatch_textbook_chapters(tb.id, background_tasks)
+    _dispatch_chapters(tb, db, background_tasks)
     return MessageResponse(message=f"Retrying chapter indexing for '{tb.title}'.")
 
 
@@ -564,8 +595,10 @@ def stop_textbook_processing(
         raise HTTPException(status_code=404, detail="Textbook not found.")
     if tb.status not in (TextbookStatusEnum.CONFIRMED, TextbookStatusEnum.PROCESSING):
         raise HTTPException(status_code=409, detail="This textbook is not being processed.")
+    # PROCESSING too: after a crash nothing else would ever clear it. A still-alive run sees the
+    # book's status/updated_at change and exits before its next chapter.
     for ch in tb.chapters:
-        if ch.status in (ChapterStatusEnum.QUEUED, ChapterStatusEnum.CONFIRMED):
+        if ch.status in (ChapterStatusEnum.QUEUED, ChapterStatusEnum.CONFIRMED, ChapterStatusEnum.PROCESSING):
             ch.status = ChapterStatusEnum.FAILED
             ch.error_message = "Stopped by admin"
     tb.status = TextbookStatusEnum.FAILED

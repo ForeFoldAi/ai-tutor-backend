@@ -15,13 +15,12 @@ from app.services.textbook_structure.hierarchy_resolver import HierarchyResolver
 from app.services.textbook_structure.offset_calibrator import PageOffsetCalibrator
 from app.services.textbook_structure.profiler import DocumentProfile, profile_document
 from app.services.textbook_structure.text_cleaner import DocumentTextCleaner, TextCleaningStats
-from app.services.textbook_structure.toc_detector import TocEntry, UniversalTocDetector
+from app.services.textbook_structure.toc_detector import BACK_MATTER_RE, TocEntry, UniversalTocDetector
 
 logger = logging.getLogger(__name__)
 
 
 _FILENAME_BOOKMARK = re.compile(r"\.pdf$|^\d+\s*[_-]|^(unit|lesson|chapter)[-_ ]?\d+$", re.I)
-_PAGE_FURNITURE = re.compile(r"telangana|scert|government|gift for students", re.I)
 
 
 def _page_heading(page: fitz.Page) -> str | None:
@@ -30,11 +29,16 @@ def _page_heading(page: fitz.Page) -> str | None:
     Consecutive lines in that font size are joined, so titles wrapped over two lines stay whole.
     """
     lines: list[tuple[float, str]] = []
-    for block in page.get_text("dict").get("blocks", []):
+    h = page.rect.height
+    for block in page.get_text("dict", flags=fitz.TEXTFLAGS_TEXT).get("blocks", []):
         for line in block.get("lines", []):
-            text = " ".join(s["text"] for s in line["spans"]).strip()
+            # Rotated lines are watermarks; the top/bottom margins hold running headers and footers.
+            if abs(line["dir"][1]) > 0.05 or line["bbox"][3] < 0.06 * h or line["bbox"][1] > 0.92 * h:
+                continue
+            # Spans carry their own spacing; joining with ' ' splits small caps ('W HAT IS').
+            text = "".join(s["text"] for s in line["spans"]).strip()
             size = max((s["size"] for s in line["spans"]), default=0)
-            if 1 <= len(text) <= 80 and not _PAGE_FURNITURE.search(text):
+            if 1 <= len(text) <= 80:
                 lines.append((size, text))
     sizes = [sz for sz, t in lines if re.search(r"[A-Za-z]{3}", t)]
     if not sizes:
@@ -78,7 +82,11 @@ def parse_pdf_outline(doc: fitz.Document) -> list[TocEntry]:
             continue
 
         from_file = bool(_FILENAME_BOOKMARK.search(raw))
-        title = (_page_heading(doc[p1 - 1]) or _clean_filename_title(raw)) if from_file else raw
+        heading = _page_heading(doc[p1 - 1]) if from_file else None
+        # A page whose title is a picture yields an exercise sentence instead; the file name is better then.
+        if heading and (len(heading.split()) > 10 or re.search(r"\s\d+\.\s", heading)):
+            heading = None
+        title = (heading or _clean_filename_title(raw)) if from_file else raw
         num = re.search(r"(\d+)", raw) if from_file else None
         m = None if from_file else re.match(
             r"^(?:(?:Chapter|Unit|Lesson|अध्याय)\s*)?(\d+|[IVXLCDM]+|[A-Z])[\.:\s\-]+(.*)$", title, re.I
@@ -92,7 +100,7 @@ def parse_pdf_outline(doc: fitz.Document) -> list[TocEntry]:
             TocEntry(
                 chapter_number=ch_num,
                 chapter_title=title,
-                hierarchy_level="appendix" if re.search(r"appendi|glossary|answers", title, re.I) else "chapter",
+                hierarchy_level="appendix" if BACK_MATTER_RE.match(title) else "chapter",
                 printed_start_page=max(0, p1 - 1),
                 printed_end_page=None,
                 source_toc_page=0,
@@ -129,12 +137,24 @@ def detect_textbook_structure(pdf_path: str) -> dict[str, Any]:
         # Signal 2: Printed Table of Contents
         toc_entries = UniversalTocDetector.parse_toc(doc)
 
-        # Signal 3: Body Heading Scanner
-        body_headings = AdaptiveHeadingDetector.scan_headings(doc, profile)
-
-        # Multi-evidence Offset Calibration
+        # Offset from printed margin page numbers first; scanning every page for headings is the
+        # slowest step (~25 ms/page), so it only runs when margins or the TOC can't answer.
         combined_toc_for_offset = [t.__dict__ for t in (toc_entries or bookmark_entries)]
-        offset_res = PageOffsetCalibrator.calibrate(doc, profile, combined_toc_for_offset, body_headings)
+        offset_res = PageOffsetCalibrator.calibrate(doc, profile, combined_toc_for_offset)
+        if offset_res.method != "margin_consensus" or not combined_toc_for_offset:
+            body_headings = AdaptiveHeadingDetector.scan_headings(doc, profile)
+            offset_res = PageOffsetCalibrator.calibrate(doc, profile, combined_toc_for_offset, body_headings)
+        else:
+            # Only units with readings need headings (to place each reading inside its unit).
+            unit_pages = sorted({
+                p
+                for e in toc_entries if e.sub_readings
+                for p in range(
+                    max(0, e.printed_start_page + offset_res.consensus_offset),
+                    min(total_pages, (e.printed_end_page or e.printed_start_page) + offset_res.consensus_offset + 1),
+                )
+            })
+            body_headings = AdaptiveHeadingDetector.scan_headings(doc, profile, unit_pages)
 
         # Combine TOC candidates (prefer printed TOC with ranges, augment with bookmarks)
         effective_toc: list[TocEntry] = []

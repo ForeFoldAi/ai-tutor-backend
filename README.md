@@ -70,8 +70,11 @@ Edit `.env` and set at minimum:
 cd ai-tutor-backend
 source .venv/bin/activate
 
-.venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+.venv/bin/uvicorn app.main:app --reload --reload-dir app --host 127.0.0.1 --port 8000
 ```
+
+`--reload-dir app` matters: without it, chapter PDFs and images written to `uploads/` during indexing
+restart the server mid-job.
 
 API base URL: `http://127.0.0.1:8000`
 
@@ -454,7 +457,7 @@ All commands assume you are in `ai-tutor-backend` and use the project `.venv`.
 source .venv/bin/activate
 
 # Run the API
-.venv/bin/uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+.venv/bin/uvicorn app.main:app --reload --reload-dir app --host 127.0.0.1 --port 8000
 
 # Run Celery (Lesson Planner) — second terminal; Redis must be up
 celery -A app.core.celery_app.celery_app worker \
