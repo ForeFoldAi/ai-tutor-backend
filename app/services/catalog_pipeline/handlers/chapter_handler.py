@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import logging
+import os
+from datetime import UTC, datetime
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.database import SessionLocal
 from app.modules.catalog.models import (
@@ -16,6 +18,38 @@ from app.modules.catalog.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def fail_interrupted_jobs(*, include_queued: bool) -> int:
+    """Mark jobs left running by a dead process as FAILED so Retry is offered.
+
+    Call only from the process that runs catalog jobs, at its startup, and only when
+    CATALOG_RECOVER_ON_STARTUP=true: any other process sharing the database (a second worker, a
+    developer laptop pointed at the same DB) would have its live jobs failed. include_queued also
+    fails CONFIRMED/ANALYZING books, whose in-memory BackgroundTasks died with the process; a
+    Celery worker must not, since those tasks are still in the queue.
+    """
+    if os.environ.get("CATALOG_RECOVER_ON_STARTUP", "false").lower() not in ("1", "true", "yes"):
+        return 0
+    book_states = [TextbookStatusEnum.PROCESSING]
+    if include_queued:
+        book_states += [TextbookStatusEnum.CONFIRMED, TextbookStatusEnum.ANALYZING]
+    db = SessionLocal()
+    try:
+        n = db.execute(
+            update(Textbook).where(Textbook.status.in_(book_states)).values(status=TextbookStatusEnum.FAILED)
+        ).rowcount
+        db.execute(
+            update(TextbookChapter)
+            .where(TextbookChapter.status == ChapterStatusEnum.PROCESSING)
+            .values(status=ChapterStatusEnum.FAILED, error_message="Interrupted by a server restart; use Retry.")
+        )
+        db.commit()
+        if n:
+            logger.warning("Marked %d interrupted textbook job(s) as FAILED", n)
+        return n
+    finally:
+        db.close()
 
 
 def handle_textbook_chapters(textbook_id: int) -> dict[str, Any]:
@@ -29,12 +63,19 @@ def handle_textbook_chapters(textbook_id: int) -> dict[str, Any]:
         if not tb:
             logger.warning("Textbook %s not found; skipping chapter processing", textbook_id)
             return {"status": "skipped", "reason": "not_found"}
-        if tb.status not in (TextbookStatusEnum.CONFIRMED, TextbookStatusEnum.PROCESSING):
-            logger.info("Textbook %s is %s (stopped?); skipping chapter processing", textbook_id, tb.status)
-            return {"status": "skipped", "reason": "stopped"}
-
-        tb.status = TextbookStatusEnum.PROCESSING
+        # Atomic claim: a duplicate dispatch (double click, redelivered task) finds the book already PROCESSING.
+        # updated_at doubles as this run's token: Stop or a newer claim changes it and this run exits.
+        run_token = datetime.now(UTC)
+        claimed = db.execute(
+            update(Textbook)
+            .where(Textbook.id == textbook_id, Textbook.status == TextbookStatusEnum.CONFIRMED)
+            .values(status=TextbookStatusEnum.PROCESSING, updated_at=run_token)
+        ).rowcount
         db.commit()
+        if not claimed:
+            logger.info("Textbook %s is %s (stopped or already running); skipping", textbook_id, tb.status)
+            return {"status": "skipped", "reason": "not_confirmed"}
+        db.refresh(tb)
 
         # Get all valid chapters that are not non-chapter sections
         chapters = list(
@@ -58,8 +99,8 @@ def handle_textbook_chapters(textbook_id: int) -> dict[str, Any]:
             # ponytail: cooperative stop — the admin "Stop" flips the textbook to FAILED and we
             # exit before the next chapter; the chapter already running finishes first.
             db.refresh(tb)
-            if tb.status != TextbookStatusEnum.PROCESSING:
-                logger.info("Textbook %s processing stopped by admin", textbook_id)
+            if tb.status != TextbookStatusEnum.PROCESSING or tb.updated_at != run_token:
+                logger.info("Textbook %s processing stopped by admin or taken over by a newer run", textbook_id)
                 all_ok = False
                 break
             db.refresh(ch)
@@ -80,7 +121,16 @@ def handle_textbook_chapters(textbook_id: int) -> dict[str, Any]:
                 all_ok = False
                 failed_count += 1
 
-        tb.status = TextbookStatusEnum.COMPLETED if all_ok else TextbookStatusEnum.FAILED
+        # Only the run that still owns the book writes the outcome (Stop already set FAILED).
+        db.execute(
+            update(Textbook)
+            .where(
+                Textbook.id == textbook_id,
+                Textbook.status == TextbookStatusEnum.PROCESSING,
+                Textbook.updated_at == run_token,
+            )
+            .values(status=TextbookStatusEnum.COMPLETED if all_ok else TextbookStatusEnum.FAILED)
+        )
         db.commit()
         logger.info(
             "Textbook %s chapter processing finished: %d completed, %d failed",

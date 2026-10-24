@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
+
+from celery.signals import worker_ready
 
 from app.core.celery_app import celery_app
 from app.services.catalog_pipeline.constants import (
@@ -15,7 +18,7 @@ from app.services.catalog_pipeline.constants import (
     TASK_PROCESS_CHAPTERS,
     TASK_PROCESS_UPLOAD,
 )
-from app.services.catalog_pipeline.handlers.chapter_handler import handle_textbook_chapters
+from app.services.catalog_pipeline.handlers.chapter_handler import fail_interrupted_jobs, handle_textbook_chapters
 from app.services.catalog_pipeline.handlers.structure_handler import handle_textbook_analysis
 from app.services.catalog_pipeline.handlers.upload_handler import handle_upload_processing
 
@@ -64,6 +67,17 @@ def analyze_textbook_task(self, textbook_id: int) -> dict[str, Any]:
         raise exc
 
 
+@worker_ready.connect
+def _fail_interrupted_catalog_jobs(sender=None, **_kwargs) -> None:
+    queues = {q.name for q in getattr(getattr(sender, "task_consumer", None), "queues", [])}
+    if QUEUE_CATALOG in queues:
+        fail_interrupted_jobs(include_queued=False)
+
+
+# A whole book runs in one task; the global 30-minute limit would kill big books mid-way.
+_BOOK_TIME_LIMIT = int(os.environ.get("CATALOG_BOOK_TIME_LIMIT", str(6 * 3600)))
+
+
 @celery_app.task(
     name=TASK_PROCESS_CHAPTERS,
     queue=QUEUE_CATALOG,
@@ -71,6 +85,8 @@ def analyze_textbook_task(self, textbook_id: int) -> dict[str, Any]:
     bind=True,
     max_retries=MAX_INGESTION_RETRIES,
     default_retry_delay=DEFAULT_RETRY_BACKOFF_SECONDS,
+    time_limit=_BOOK_TIME_LIMIT,
+    soft_time_limit=_BOOK_TIME_LIMIT - 60,
 )
 def process_chapters_task(self, textbook_id: int) -> dict[str, Any]:
     """Celery task: Process and embed all confirmed chapters for a textbook."""

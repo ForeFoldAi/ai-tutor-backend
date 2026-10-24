@@ -419,3 +419,13 @@ def test_15_negative_captions_and_exercises(tmp_path):
     assert len(res["chapters"]) == 1
     assert res["chapters"][0]["chapter_title"] == "Optics"
 
+
+
+@pytest.mark.skipif(not os.path.isdir("uploads"), reason="no uploads/ textbooks on this machine")
+def test_16_all_uploaded_textbooks_have_complete_chapters():
+    """Every uploaded textbook: no numbering gaps, no leaked table cells in titles, no fewer chapters than its chapters/ split."""
+    import subprocess
+    import sys
+
+    res = subprocess.run([sys.executable, "scripts/audit_chapter_extraction.py", "uploads"], capture_output=True, text=True)
+    assert res.returncode == 0, res.stdout[-4000:]

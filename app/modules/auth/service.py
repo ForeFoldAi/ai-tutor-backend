@@ -60,6 +60,7 @@ from app.modules.sessions.models import SessionToken
 from app.modules.users.models import LlmUsage, User, UserSettings
 
 settings = get_settings()
+REFRESH_REUSE_GRACE = timedelta(seconds=60)
 
 
 def _find_user_by_email(db: Session, email: str) -> User | None:
@@ -172,7 +173,8 @@ def refresh_access_token(db: Session, refresh_token: str) -> tuple[User, str, st
     session = _get_session_by_hash(db, refresh_hash)
     if not session:
         raise AuthException("Invalid refresh token.", status.HTTP_401_UNAUTHORIZED)
-    if session.revoked or session.expires_at <= datetime.now(UTC):
+    now = datetime.now(UTC)
+    if session.revoked or session.expires_at <= now:
         raise AuthException("Refresh token expired or revoked.", status.HTTP_401_UNAUTHORIZED)
 
     user = db.get(User, session.user_id)
@@ -180,8 +182,10 @@ def refresh_access_token(db: Session, refresh_token: str) -> tuple[User, str, st
         raise AuthException("User not found.", status.HTTP_401_UNAUTHORIZED)
     _ensure_active(user)
 
-    # rotate refresh token
-    session.revoked = True
+    # Rotate: the old token stays usable for a short grace window instead of dying instantly, so a
+    # second tab refreshing at the same time, or a response lost to a server restart, doesn't log
+    # the user out. Logout still revokes immediately.
+    session.expires_at = min(session.expires_at, now + REFRESH_REUSE_GRACE)
     new_refresh, new_session = create_refresh_session(
         db,
         user_id=user.id,

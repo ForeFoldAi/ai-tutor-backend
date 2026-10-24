@@ -94,6 +94,9 @@ services:
       VOICE_SESSION_REDIS: "true"
       VOICE_PROTECTION_PRELOAD: "true"
       CELERY_AUTOSTART: "false"
+      # Indexing runs only on catalog_worker; a heavy book must never block API requests.
+      CATALOG_INLINE: "false"
+    mem_limit: ${API_MEM_LIMIT:-6g}
     volumes:
       - uploads_data:/app/uploads
       - chroma_data:/app/chroma_db
@@ -106,6 +109,44 @@ services:
         condition: service_healthy
       minio:
         condition: service_started
+      qdrant:
+        condition: service_started
+
+  # Textbook analysis + "Confirm & Index" chapters. One book at a time; the child process exits after
+  # each task so model/raster memory is returned to the OS. If it is OOM-killed, only this restarts.
+  catalog_worker:
+    image: ${API_IMAGE:?Set API_IMAGE e.g. yourdockerhubuser/ai-tutor-backend:latest}
+    pull_policy: missing
+    restart: unless-stopped
+    env_file:
+      - ${ENV_FILE:?Set ENV_FILE to your .env path e.g. /home/you/ai-tutor.env}
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/ai_tutor
+      REDIS_URL: redis://redis:6379/0
+      CATALOG_INLINE: "false"
+      # This is the only process running catalog jobs on this DB, so a book left PROCESSING at its
+      # startup was interrupted (OOM/restart) and is marked FAILED for Retry.
+      CATALOG_RECOVER_ON_STARTUP: "true"
+      CELERY_AUTOSTART: "false"
+      PDF_EXTRACTION_PIPELINE_ENABLED: "true"
+      PDF_EXTRACTION_MODELS_DIR: /app/models
+      OCR_ENABLED: "true"
+      PDF_EXTRACTION_ENABLE_TABLE_VLM: "false"
+      WARM_MULTIMODAL_ON_STARTUP: "false"
+      START_COMMAND: celery -A app.core.celery_app worker -Q catalog-ingest --pool=prefork --concurrency=1 --max-tasks-per-child=1 --loglevel=INFO
+    mem_limit: ${CATALOG_WORKER_MEM_LIMIT:-6g}
+    healthcheck:
+      disable: true
+    volumes:
+      - uploads_data:/app/uploads
+      - chroma_data:/app/chroma_db
+      - models_data:/app/models
+      - hf_cache:/root/.cache/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       qdrant:
         condition: service_started
 

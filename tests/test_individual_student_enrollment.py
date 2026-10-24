@@ -36,3 +36,14 @@ def test_board_aliases_for_signup_curricula():
 def test_grade_to_class_level():
     assert _parse_class_level("9").value == "CLASS_9"
     assert _parse_class_level("Grade 9").value == "CLASS_9"
+
+
+def test_signup_science_covers_board_science_subjects():
+    from app.modules.student_learning.enrollment import _wanted
+
+    picked = {"science", "english"}
+    for name in ("EVS", "General Science", "Physical Science", "Biological Science", "Environmental Education", "ENGLISH"):
+        assert _wanted(name, picked), name
+    for name in ("Social Science", "Computer Science", "Mathematics"):
+        assert not _wanted(name, picked), name
+    assert not _wanted("Physical Science", {"english"})

@@ -32,13 +32,28 @@ Do **not** set any tutor answer cache flag (removed).
 
 ## Worker commands
 
-Lesson & Catalog Ingestion (recommended for production):
+Lessons:
 
 ```bash
 celery -A app.core.celery_app.celery_app worker \
-  -Q lesson-generate,lesson-export,lesson-autosave,lesson-regenerate,catalog-ingest \
+  -Q lesson-generate,lesson-export,lesson-autosave,lesson-regenerate \
   --concurrency=2 --loglevel=info
 ```
+
+Catalog ingestion (textbook analysis + "Confirm & Index") gets its **own** worker, one book at a time
+(`catalog_worker` in `deploy/docker-compose.yml`). Keep `CATALOG_INLINE=false` on the API so heavy
+PDF/ML work never runs inside the API process; in production a failed Celery dispatch returns 503
+instead of silently running inline.
+
+```bash
+CATALOG_RECOVER_ON_STARTUP=true celery -A app.core.celery_app worker -Q catalog-ingest \
+  --pool=prefork --concurrency=1 --max-tasks-per-child=1 --loglevel=info
+```
+
+`CATALOG_RECOVER_ON_STARTUP=true` marks books left PROCESSING by a crashed worker as FAILED so Retry
+appears. Set it only on the single process that runs catalog jobs for that database. Local development
+must use its own database and Redis (or DB index): a laptop pointed at the production DB/Redis with
+`CATALOG_INLINE=true` or `CELERY_AUTOSTART=true` processes, and can interfere with, production jobs.
 
 Mail + Beat (required for daily reminders):
 

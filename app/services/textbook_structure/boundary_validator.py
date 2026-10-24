@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any
 
 from app.services.textbook_structure.hierarchy_resolver import ResolvedChapterNode
@@ -129,5 +130,20 @@ class BoundaryValidator:
             if ch.confidence_score < 0.75:
                 needs_review = True
                 warnings.append(f"Low confidence ({ch.confidence_score:.2f}) for chapter '{ch.chapter_title}'.")
+
+        # 6. Holes in the numbering mean a contents row was not read; a chapter far longer than the
+        # rest has probably swallowed the next chapter or the back matter.
+        nums = {int(m.group()) for ch in main_chapters if (m := re.match(r"\d+", str(ch.chapter_number)))}
+        missing = sorted(set(range(min(nums), max(nums) + 1)) - nums) if nums else []
+        if missing:
+            warnings.append(f"Chapter number(s) {', '.join(map(str, missing))} missing; check the contents page.")
+            needs_review = True
+        spans = sorted(ch.end_pdf_page - ch.start_pdf_page + 1 for ch in main_chapters)
+        median = spans[len(spans) // 2] if spans else 0
+        for ch in main_chapters:
+            span = ch.end_pdf_page - ch.start_pdf_page + 1
+            if len(spans) >= 4 and span > max(2.5 * median, median + 10) and span <= 80:
+                warnings.append(f"Chapter '{ch.chapter_title}' spans {span} pages (typical {median}); check its end page.")
+                needs_review = True
 
         return main_chapters, non_chapter_sections, warnings, needs_review

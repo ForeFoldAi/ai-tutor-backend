@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import threading
 from typing import TYPE_CHECKING, Any
 
@@ -63,6 +64,10 @@ def dispatch_textbook_analysis(textbook_id: int, background_tasks: Any = None) -
         logger.info("Dispatched textbook analysis %s to local daemon thread", textbook_id)
 
 
+class CatalogQueueUnavailable(RuntimeError):
+    """Production indexing must run on the catalog worker; running it in the API process freezes the API."""
+
+
 def dispatch_textbook_chapters(textbook_id: int, background_tasks: Any = None) -> None:
     """Dispatches confirmed chapters processing to Celery if available, else BackgroundTasks."""
     if _can_use_celery():
@@ -73,6 +78,8 @@ def dispatch_textbook_chapters(textbook_id: int, background_tasks: Any = None) -
             logger.info("Dispatched textbook chapters %s to Celery [task_id=%s]", textbook_id, task.id)
             return
         except Exception as exc:
+            if os.environ.get("ENVIRONMENT", "").lower() == "production":
+                raise CatalogQueueUnavailable(f"Indexing queue unavailable: {exc}") from exc
             logger.warning("Failed to dispatch chapters for textbook %s to Celery (%s); falling back to background_tasks", textbook_id, exc)
 
     from app.services.catalog_pipeline.handlers.chapter_handler import handle_textbook_chapters

@@ -117,7 +117,7 @@ def profile_document(doc: fitz.Document) -> DocumentProfile:
                     full_page_blocks.append(clean_b)
 
         # Font size distribution
-        page_dict = page.get_text("dict")
+        page_dict = page.get_text("dict", flags=fitz.TEXTFLAGS_TEXT)
         for b in page_dict.get("blocks", []):
             for line in b.get("lines", []):
                 for span in line.get("spans", []):

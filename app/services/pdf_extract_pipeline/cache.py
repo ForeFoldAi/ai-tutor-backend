@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 import os
+from collections import OrderedDict
 from typing import Any
 
-_cache: dict[str, Any] = {}
+# ponytail: the text+layout pass and the image pass of one chapter share a result, so only the
+# most recent few are needed; anything larger just holds RAM across a whole book.
+_MAX_ENTRIES = 2
+_cache: OrderedDict[str, Any] = OrderedDict()
 
 
 def _cache_key(file_path: str) -> str | None:
@@ -29,6 +33,9 @@ def set_cached_pipeline_result(file_path: str, result: Any) -> None:
     key = _cache_key(file_path)
     if key:
         _cache[key] = result
+        _cache.move_to_end(key)
+        while len(_cache) > _MAX_ENTRIES:
+            _cache.popitem(last=False)
 
 
 def clear_pipeline_cache() -> None:

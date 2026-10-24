@@ -37,7 +37,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     WARM_MULTIMODAL_ON_STARTUP=false \
     CELERY_AUTOSTART=false \
     ENABLE_VISUAL_INTENT_DETECTION=true \
-    TESSDATA_PREFIX=/usr/local/share/tessdata
+    TESSDATA_PREFIX=/usr/local/share/tessdata \
+    MPLBACKEND=Agg \
+    MPLCONFIGDIR=/tmp/matplotlib
 
 # Native libs for psycopg2, PyMuPDF, OpenCV, PaddleOCR, Tesseract (liblept5), and torch.
 RUN apt-get update && apt-get install -y --no-install-recommends \

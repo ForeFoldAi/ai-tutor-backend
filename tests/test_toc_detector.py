@@ -146,3 +146,121 @@ def test_parse_toc_keeps_best_ordered_result(monkeypatch):
     monkeypatch.setattr(U, "_parse_line_toc", classmethod(lambda cls, p, n: [entry(1), entry(9), entry(20)]))
     monkeypatch.setattr(U, "_parse_row_toc", classmethod(lambda cls, p, n: [entry(1)]))
     assert [e.printed_start_page for e in U.parse_toc(doc, [0])] == [1, 9, 20]
+
+
+def test_theme_column_reading_units():
+    """SSC 10 English: 'N. Theme | A./B./C. reading | Month | Pages', themes and titles wrapping to a 2nd line."""
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((200, 80), "CONTENTS")
+    rows = [
+        ((54, "1. Personality"), (162, "A. Attitude is Altitude")),
+        ((162, "B. Every Success Story is Also a"), (368, "June"), (450, "1-32")),
+        ((70, "Development"),),
+        ((179, "Story of Great Failures"),),
+        ((162, "C. I Will Do it"),),
+        ((54, "2. Wit and"), (162, "A. The Dear Departed (Part-I)")),
+        ((162, "B. Or will the Dreamer Wake?"), (369, "July"), (443, "33-74")),
+        ((70, "Humour"),),
+        ((179, "(Poem)"),),
+        ((55, "Appendices"),),
+        ((55, "Texts for Listening"), (430, "75-80")),
+    ]
+    for i, cells in enumerate(rows):
+        for x, txt in cells:
+            page.insert_text((x, 120 + 18 * i), txt)
+    entries = UniversalTocDetector.parse_toc(doc)
+    assert [(e.chapter_title, e.printed_start_page, e.printed_end_page) for e in entries] == [
+        ("Unit 1: Personality Development", 1, 32),
+        ("Unit 2: Wit and Humour", 33, 74),
+        ("Texts for Listening", 75, 80),
+    ]
+    assert entries[0].sub_readings == ["A. Attitude is Altitude", "B. Every Success Story is Also a Story of Great Failures", "C. I Will Do it"]
+    assert entries[1].sub_readings[-1] == "B. Or will the Dreamer Wake? (Poem)"
+
+
+def test_glued_reading_labels_split_on_next_letter_only():
+    from app.services.textbook_structure.toc_detector import _split_glued_readings
+
+    assert _split_glued_readings(["A. C.V.Raman, the Pride", "B. It's Change (Poem) C.Reading Susruta"]) == [
+        "A. C.V.Raman, the Pride", "B. It's Change (Poem)", "C. Susruta",
+    ]
+
+
+def _drifting_table_doc() -> fitz.Document:
+    """Ruled 'No. | Name | Periods | Month | Page' table whose cells drift off one visual row.
+
+    Number below its title, page above its title, a two-line title, an unnumbered Part-B row,
+    and a page number glued to its title ('Annexure80') - all seen in SCERT books.
+    """
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((250, 100), "INDEX")
+    cells = [
+        (110, 150, "Cell - Structure and Functions"), (330, 150, "10"), (370, 150, "June"), (460, 150, "1"), (84, 165, "1"),
+        (330, 200, "11"), (370, 200, "July"), (460, 200, "24"), (110, 212, "Animal Tissues"), (84, 224, "2"),
+        (84, 260, "3."), (110, 260, "Classification of Elements- The"), (330, 272, "12"), (370, 272, "Sept"), (460, 272, "50"),
+        (110, 284, "Periodic Table"),
+        (110, 320, "Trade - Part-B"), (370, 320, "October"), (460, 320, "70"),
+        (84, 360, "4."), (110, 360, "Annexure80"),
+    ]
+    for x, y, txt in cells:
+        page.insert_text((x, y), txt)
+    return doc
+
+
+def test_record_table_with_drifting_cells():
+    entries = UniversalTocDetector._parse_record_toc(_drifting_table_doc()[0], 0)
+    assert [(e.chapter_number, e.chapter_title, e.printed_start_page) for e in entries] == [
+        ("1", "Cell - Structure and Functions", 1),
+        ("2", "Animal Tissues", 24),
+        ("3", "Classification of Elements- The Periodic Table", 50),
+        ("3B", "Trade - Part-B", 70),
+        ("4", "Annexure", 80),
+    ]
+    assert UniversalTocDetector.parse_toc(_drifting_table_doc())[-1].hierarchy_level == "appendix"
+
+
+def test_clean_title_drops_leaked_cells():
+    from app.services.textbook_structure.toc_detector import clean_title
+
+    assert clean_title("Our Earth 1-13") == (None, "Our Earth")
+    assert clean_title("Real Numbers 15") == (None, "Real Numbers")
+    assert clean_title("Sound Revision") == (None, "Sound")
+    assert clean_title("11A. National Movement") == ("11A", "National Movement")
+    assert clean_title("11August/September Diversity in Living Organisms") == (None, "Diversity in Living Organisms")
+    assert clean_title("Emerging Political Trends 1977 to 2000") == (None, "Emerging Political Trends 1977 to 2000")
+
+
+def test_rotated_watermark_is_not_a_word():
+    doc = fitz.open()
+    page = doc.new_page()
+    page.insert_text((100, 200), "Plant Tissues A")
+    page.insert_text((300, 400), "TELANGANA", fontsize=40, rotate=90)
+    assert [w[4] for w in UniversalTocDetector._page_words(page)] == ["Plant", "Tissues", "A"]
+
+
+def test_continuation_page_that_restarts_is_dropped(monkeypatch):
+    from app.services.textbook_structure.toc_detector import TocEntry
+
+    def entry(pg):
+        return TocEntry("1", "x", "chapter", pg, None, 0)
+
+    doc = fitz.open()
+    doc.new_page()
+    doc.new_page()
+    U = UniversalTocDetector
+    for name in ("_parse_reading_rows_toc", "_parse_tabular_toc", "_parse_line_toc", "_parse_row_toc"):
+        monkeypatch.setattr(U, name, classmethod(lambda cls, p, n: []))
+    # Page 1 is a chapter's first page whose table looks like a TOC.
+    monkeypatch.setattr(U, "_parse_record_toc", classmethod(lambda cls, p, n: [entry(1), entry(20), entry(40)] if n == 0 else [entry(10), entry(14)]))
+    assert [e.printed_start_page for e in U.parse_toc(doc, [0, 1])] == [1, 20, 40]
+
+
+def test_numbering_gap_needs_review():
+    from app.services.textbook_structure.boundary_validator import BoundaryValidator
+    from app.services.textbook_structure.hierarchy_resolver import ResolvedChapterNode
+
+    nodes = [ResolvedChapterNode(n, f"Ch {n}", "chapter", s, s + 9) for n, s in (("1", 0), ("2", 10), ("4", 20))]
+    _, _, warnings, needs_review = BoundaryValidator.validate_and_resolve(nodes, 40)
+    assert needs_review and any("3 missing" in w for w in warnings)

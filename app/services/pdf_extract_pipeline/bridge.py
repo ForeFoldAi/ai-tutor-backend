@@ -19,7 +19,7 @@ from app.services.image_service.pdf_extraction_types import (
     PairedFigure,
 )
 from app.services.image_service.textbook_image_display import normalize_image_blob
-from app.services.pdf_extract_pipeline.pipeline import PdfExtractionPipeline
+from app.services.pdf_extract_pipeline.pipeline import get_pipeline
 from app.services.pdf_extract_pipeline.types import ExtractedAsset, PersistableMlAsset, PipelineResult
 
 logger = logging.getLogger(__name__)
@@ -136,8 +136,7 @@ def extract_with_ml_pipeline(
     ml_result = get_cached_pipeline_result(pdf_path)
     if ml_result is None:
         try:
-            pipeline_runner = PdfExtractionPipeline()
-            ml_result = pipeline_runner.process_pdf(pdf_path, max_pages=max_pages)
+            ml_result = get_pipeline().process_pdf(pdf_path, max_pages=max_pages)
             set_cached_pipeline_result(pdf_path, ml_result)
         except Exception as exc:
             raise MlPipelineExtractionError(
