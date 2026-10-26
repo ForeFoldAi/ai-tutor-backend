@@ -79,19 +79,24 @@ jobs:
               -d "{\"uuid\":\"${uuid}\",\"force\":false}")
             dep=$(echo "$resp" | jq -r '.deployments[0].deployment_uuid // empty')
             test -n "$dep" || { echo "No deployment id from Coolify: $resp"; exit 1; }
-            # 60 x 15s = 15 min max per app
-            for i in $(seq 1 60); do
+            show_logs() {
+              curl -fsS "${COOLIFY_URL}/api/v1/deployments/${dep}" \
+                -H "Authorization: Bearer ${COOLIFY_TOKEN}" -H "Accept: application/json" \
+                | jq -r '.logs // "[]" | fromjson? // [] | .[-40:][] | .output' || true
+            }
+            # 120 x 15s = 30 min max per app: cold pulls of the multi-GB image plus the 300s health start-period
+            for i in $(seq 1 120); do
               status=$(curl -fsS "${COOLIFY_URL}/api/v1/deployments/${dep}" \
                 -H "Authorization: Bearer ${COOLIFY_TOKEN}" -H "Accept: application/json" \
                 | jq -r '.status')
-              echo "${name}: ${status}"
+              echo "${name}: ${status} ($((i * 15))s)"
               case "$status" in
                 finished) return 0 ;;
-                failed|cancelled*) echo "${name} deployment ${status} - check Coolify logs"; exit 1 ;;
+                failed|cancelled*) echo "${name} deployment ${status}:"; show_logs; exit 1 ;;
               esac
               sleep 15
             done
-            echo "${name} deployment timed out"; exit 1
+            echo "${name} deployment timed out; last Coolify log lines:"; show_logs; exit 1
           }
           deploy_and_wait API "$COOLIFY_APP_UUID"
           deploy_and_wait Worker "$COOLIFY_WORKER_UUID"

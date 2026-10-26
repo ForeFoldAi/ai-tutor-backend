@@ -119,6 +119,8 @@ class TextbookUploadResponse(BaseModel):
     ocr_status: ProcessingStatusEnum
     chunk_status: ProcessingStatusEnum
     embedding_status: ProcessingStatusEnum
+    processing_started_at: datetime | None = None
+    processing_finished_at: datetime | None = None
     # Book this chapter was split from (None = standalone chapter upload → default pool)
     textbook_id: int | None = None
 

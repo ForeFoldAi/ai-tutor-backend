@@ -118,6 +118,9 @@ class TextbookUpload(Base):
         nullable=False,
         default=ProcessingStatusEnum.QUEUED,
     )
+    # Set by the upload worker; both NULL = waiting in the queue (cleared again on requeue).
+    processing_started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    processing_finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False)
 
