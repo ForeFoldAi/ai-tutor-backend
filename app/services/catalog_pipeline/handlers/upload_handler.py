@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.database import SessionLocal
@@ -11,6 +13,10 @@ from app.modules.catalog.models import ProcessingStatusEnum, TextbookUpload
 from app.services.catalog_pipeline.constants import EMBEDDING_BATCH_SIZE
 
 logger = logging.getLogger(__name__)
+
+# ponytail: process-wide cap so a bulk upload can't take every pooled DB connection (and CPU) from API
+# requests; queued uploads wait their turn. Celery workers already run one task at a time.
+_SLOTS = threading.BoundedSemaphore(int(os.environ.get("CATALOG_UPLOAD_CONCURRENCY", "2")))
 
 
 def _local_path_for_upload(file_path: str | None) -> str:
@@ -20,11 +26,18 @@ def _local_path_for_upload(file_path: str | None) -> str:
 
 
 def handle_upload_processing(upload_id: int) -> dict[str, Any]:
+    with _SLOTS:
+        return _process_upload(upload_id)
+
+
+def _process_upload(upload_id: int) -> dict[str, Any]:
     """
     Process standalone upload: text extraction, chunking, batched vector indexing, and image extraction.
     Guarantees atomic status updates and clean database connection lifecycle.
     """
-    db = SessionLocal()
+    # Without expire_on_commit, reading row fields after a commit doesn't reload the row, so no pooled
+    # connection is held through the minutes of extraction and embedding between commits.
+    db = SessionLocal(expire_on_commit=False)
     try:
         row = db.get(TextbookUpload, upload_id)
         if not row or not row.file_path:
@@ -33,6 +46,8 @@ def handle_upload_processing(upload_id: int) -> dict[str, Any]:
 
         row.chunk_status = ProcessingStatusEnum.PROCESSING
         row.embedding_status = ProcessingStatusEnum.PROCESSING
+        row.processing_started_at = datetime.now(UTC)
+        row.processing_finished_at = None
         db.commit()
 
         from app.services.document_service import process_document
@@ -95,6 +110,10 @@ def handle_upload_processing(upload_id: int) -> dict[str, Any]:
             replace_all_images_after_reprocess(db, row)
         except Exception as img_exc:
             logger.warning("Image extraction after upload %s (non-fatal): %s", upload_id, img_exc)
+            db.rollback()
+
+        row.processing_finished_at = datetime.now(UTC)
+        db.commit()
 
         logger.info("Successfully processed upload %s: %d chunks, %d embedded", upload_id, total_chunks, total_added)
         return {
@@ -111,6 +130,7 @@ def handle_upload_processing(upload_id: int) -> dict[str, Any]:
             if row:
                 row.chunk_status = ProcessingStatusEnum.FAILED
                 row.embedding_status = ProcessingStatusEnum.FAILED
+                row.processing_finished_at = datetime.now(UTC)
                 db.commit()
         except Exception as db_err:
             logger.error("Failed to mark upload %s as FAILED: %s", upload_id, db_err)

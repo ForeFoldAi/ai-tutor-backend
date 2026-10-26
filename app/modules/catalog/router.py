@@ -452,7 +452,8 @@ async def upload_textbook_files(
     ``textbook_id`` attaches the files to that publisher's book (omit = default pool).
     """
     allowed_ext = {".pdf", ".doc", ".docx"}
-    labels = [l.strip() for l in content_labels.split(",")]
+    # A single file's label may itself contain commas ("Acids, Bases and Salts").
+    labels = [content_labels.strip()] if len(files) == 1 else [l.strip() for l in content_labels.split(",")]
 
     book: Textbook | None = None
     if textbook_id is not None:
@@ -526,6 +527,8 @@ def process_textbook_upload(
     row.chunk_status = ProcessingStatusEnum.QUEUED
     row.embedding_status = ProcessingStatusEnum.QUEUED
     row.ocr_status = ProcessingStatusEnum.QUEUED
+    row.processing_started_at = None
+    row.processing_finished_at = None
     db.commit()
     db.refresh(row)
 
@@ -729,16 +732,18 @@ def retry_all_failed_uploads(
 
     from app.services.catalog_pipeline import dispatch_upload_processing
 
-    requeued_count = 0
     for r in failed_rows:
         r.chunk_status = ProcessingStatusEnum.QUEUED
         r.embedding_status = ProcessingStatusEnum.QUEUED
         r.ocr_status = ProcessingStatusEnum.QUEUED
-        dispatch_upload_processing(r.id, background_tasks)
-        requeued_count += 1
+        r.processing_started_at = None
+        r.processing_finished_at = None
+    # Commit before dispatching so a fast worker's PROCESSING isn't overwritten by this QUEUED.
     db.commit()
+    for r in failed_rows:
+        dispatch_upload_processing(r.id, background_tasks)
 
-    return MessageResponse(message=f"Successfully re-queued {requeued_count} failed upload(s) to worker.")
+    return MessageResponse(message=f"Successfully re-queued {len(failed_rows)} failed upload(s) to worker.")
 
 
 @router.patch("/textbook-uploads/{upload_id}/status", response_model=TextbookUploadResponse)
