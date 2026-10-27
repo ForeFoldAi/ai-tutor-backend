@@ -507,6 +507,46 @@ def delete_collection_docs(collection_name: str, *, where_filter: dict | None = 
         logger.exception("Failed to delete docs from collection '%s'", collection_name)
 
 
+def copy_collection(old: str, new: str) -> bool:
+    """Copy all vectors of ``old`` into ``new``; False when ``old`` doesn't exist. ``old`` is left intact."""
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend import qdrant_common
+
+        return qdrant_common.copy_collection(old, new)
+
+    _sanitize_chroma_env()
+    import chromadb
+
+    client = chromadb.PersistentClient(path=CHROMA_PATH)
+    try:
+        src = client.get_collection(old)
+    except Exception:
+        return False
+    # ponytail: loads the whole collection in one get(); fine for local Chroma, page it if subjects grow huge.
+    data = src.get(include=["embeddings", "documents", "metadatas"])
+    if data["ids"]:
+        client.get_or_create_collection(new, metadata=src.metadata).upsert(
+            ids=data["ids"], embeddings=data["embeddings"], documents=data["documents"], metadatas=data["metadatas"]
+        )
+    return True
+
+
+def drop_collection(name: str) -> None:
+    from app.services.vector_backend import use_qdrant
+
+    if use_qdrant():
+        from app.services.vector_backend.qdrant_common import get_qdrant_client
+
+        get_qdrant_client().delete_collection(name)
+        return
+    _sanitize_chroma_env()
+    import chromadb
+
+    chromadb.PersistentClient(path=CHROMA_PATH).delete_collection(name)
+
+
 def vectorstore_has_documents(vs) -> bool:
     """True if the current store likely has chunks to retrieve (voice vs Jarvis routing)."""
     if vs is None:

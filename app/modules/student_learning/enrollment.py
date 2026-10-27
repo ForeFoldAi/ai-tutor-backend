@@ -70,9 +70,17 @@ def _chapter_sort_key(tb: TextbookUpload) -> tuple[int, str, int, str]:
 _SCIENCE_FAMILY = re.compile(r"(general |physical |biological )?science|evs|environmental (studies|education|science)")
 
 
-def _wanted(name: str, allowed: set[str]) -> bool:
+def _families(name: str, allowed: set[str]) -> set[str]:
+    """Signup picks covering this syllabus subject: exact, 'English - Bee Hive' → english, or a science variant."""
     key = _norm(name)
-    return key in allowed or ("science" in allowed and bool(_SCIENCE_FAMILY.fullmatch(key)))
+    hits = {a for a in allowed if key == a or key.startswith(a + " ")}
+    if "science" in allowed and _SCIENCE_FAMILY.fullmatch(key):
+        hits.add("science")
+    return hits
+
+
+def _wanted(name: str, allowed: set[str]) -> bool:
+    return bool(_families(name, allowed))
 
 
 def _subjects_from_catalog(
@@ -121,8 +129,7 @@ def _subjects_from_catalog(
     for subj in subjects:
         key = _norm(subj.subject_name)
         seen.add(key)
-        if _SCIENCE_FAMILY.fullmatch(key):
-            seen.add("science")  # the signup pick is covered; don't also add an empty 'Science'
+        seen |= _families(key, allowed)  # the signup pick is covered; don't also add an empty 'English'
         chapters = [
             StudentChapterResponse(id=tb.id, chapter=tb.chapter, file_name=tb.file_name)
             for tb in tb_by_subject.get(key, [])

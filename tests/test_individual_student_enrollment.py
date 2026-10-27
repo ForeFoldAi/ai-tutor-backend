@@ -47,3 +47,13 @@ def test_signup_science_covers_board_science_subjects():
     for name in ("Social Science", "Computer Science", "Mathematics"):
         assert not _wanted(name, picked), name
     assert not _wanted("Physical Science", {"english"})
+
+
+def test_signup_pick_covers_named_books():
+    from app.modules.student_learning.enrollment import _families, _wanted
+
+    picked = {"english", "social", "science"}
+    for name in ("English - Bee Hive English Textbook", "English Moments Supplementary Reader", "Social -  Contemporary India"):
+        assert _wanted(name, picked), name
+    assert not _wanted("Englishness", picked)
+    assert _families("Social Science", picked) == {"social"}
