@@ -49,10 +49,13 @@ class TestCatalogPipeline(unittest.TestCase):
 
     @patch("app.services.catalog_pipeline.dispatcher._can_use_celery", return_value=False)
     @patch("app.services.catalog_pipeline.handlers.upload_handler.handle_upload_processing")
-    def test_dispatch_upload_fallback_background_tasks(self, _mock_handler, _mock_can_use):
+    def test_dispatch_upload_fallback_uses_thread_not_background_tasks(self, mock_handler, _mock_can_use):
         bg_tasks = MagicMock()
-        dispatch_upload_processing(upload_id=42, background_tasks=bg_tasks)
-        bg_tasks.add_task.assert_called_once()
+        with patch("app.services.catalog_pipeline.dispatcher.threading.Thread") as mock_thread:
+            dispatch_upload_processing(upload_id=42, background_tasks=bg_tasks)
+        # BackgroundTasks would keep the request's DB session (and its pooled connection) open.
+        bg_tasks.add_task.assert_not_called()
+        mock_thread.assert_called_once_with(target=mock_handler, args=(42,), daemon=True)
 
     @patch("app.services.catalog_pipeline.dispatcher._can_use_celery", return_value=True)
     @patch("app.services.catalog_pipeline.tasks.analyze_textbook_task.delay")

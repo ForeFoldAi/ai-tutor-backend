@@ -153,6 +153,27 @@ def ensure_collection(name: str, *, vector_size: int, distance: str = "Cosine") 
         raise
 
 
+def copy_collection(old: str, new: str) -> bool:
+    """Copy every point of ``old`` into ``new`` (created with ``old``'s vector config). False if ``old`` is missing."""
+    from qdrant_client.http import models as qm
+
+    client = get_qdrant_client()
+    if not client.collection_exists(old):
+        return False
+    if not client.collection_exists(new):
+        client.create_collection(collection_name=new, vectors_config=client.get_collection(old).config.params.vectors)
+    offset = None
+    while True:
+        points, offset = client.scroll(old, limit=256, offset=offset, with_payload=True, with_vectors=True)
+        if points:
+            client.upsert(
+                collection_name=new,
+                points=[qm.PointStruct(id=p.id, vector=p.vector, payload=p.payload) for p in points],
+            )
+        if offset is None:
+            return True
+
+
 def textbook_upload_filter(upload_ids: list[str]):
     """Qdrant Filter matching payload textbook_upload_id (sequential BIGINT strings)."""
     from qdrant_client.http import models as qm

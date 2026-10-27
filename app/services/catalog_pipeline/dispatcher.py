@@ -34,12 +34,10 @@ def dispatch_upload_processing(upload_id: int, background_tasks: Any = None) -> 
 
     from app.services.catalog_pipeline.handlers.upload_handler import handle_upload_processing
 
-    if background_tasks is not None:
-        background_tasks.add_task(handle_upload_processing, upload_id)
-        logger.info("Dispatched upload %s to FastAPI BackgroundTasks", upload_id)
-    else:
-        threading.Thread(target=handle_upload_processing, args=(upload_id,), daemon=True).start()
-        logger.info("Dispatched upload %s to local daemon thread", upload_id)
+    # Not BackgroundTasks: those run before the request's get_db session closes, so every queued upload
+    # pinned a pooled connection (and a threadpool worker) while waiting for an upload slot.
+    threading.Thread(target=handle_upload_processing, args=(upload_id,), daemon=True).start()
+    logger.info("Dispatched upload %s to local daemon thread", upload_id)
 
 
 def dispatch_textbook_analysis(textbook_id: int, background_tasks: Any = None) -> None:
@@ -56,12 +54,8 @@ def dispatch_textbook_analysis(textbook_id: int, background_tasks: Any = None) -
 
     from app.services.catalog_pipeline.handlers.structure_handler import handle_textbook_analysis
 
-    if background_tasks is not None:
-        background_tasks.add_task(handle_textbook_analysis, textbook_id)
-        logger.info("Dispatched textbook analysis %s to FastAPI BackgroundTasks", textbook_id)
-    else:
-        threading.Thread(target=handle_textbook_analysis, args=(textbook_id,), daemon=True).start()
-        logger.info("Dispatched textbook analysis %s to local daemon thread", textbook_id)
+    threading.Thread(target=handle_textbook_analysis, args=(textbook_id,), daemon=True).start()
+    logger.info("Dispatched textbook analysis %s to local daemon thread", textbook_id)
 
 
 class CatalogQueueUnavailable(RuntimeError):
@@ -84,9 +78,5 @@ def dispatch_textbook_chapters(textbook_id: int, background_tasks: Any = None) -
 
     from app.services.catalog_pipeline.handlers.chapter_handler import handle_textbook_chapters
 
-    if background_tasks is not None:
-        background_tasks.add_task(handle_textbook_chapters, textbook_id)
-        logger.info("Dispatched textbook chapters %s to FastAPI BackgroundTasks", textbook_id)
-    else:
-        threading.Thread(target=handle_textbook_chapters, args=(textbook_id,), daemon=True).start()
-        logger.info("Dispatched textbook chapters %s to local daemon thread", textbook_id)
+    threading.Thread(target=handle_textbook_chapters, args=(textbook_id,), daemon=True).start()
+    logger.info("Dispatched textbook chapters %s to local daemon thread", textbook_id)

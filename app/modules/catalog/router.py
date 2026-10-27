@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse, Response
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -23,6 +23,7 @@ from app.modules.catalog.models import (
     SubjectImage,
     SyllabusSubject,
     Textbook,
+    TextbookStatusEnum,
     subject_image_url,
     TextbookChapter,
     TextbookImage,
@@ -162,23 +163,103 @@ def update_syllabus(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Syllabus entry not found.")
     fields = payload.model_dump(exclude_unset=True)
     image_id = fields.pop("image_id", ...)
+    old_key = (row.board, row.class_level, row.subject_name)
     for key, value in fields.items():
         if value is not None:
             setattr(row, key, value)
+    new_key = (row.board, row.class_level, row.subject_name)
     if image_id is not ...:
         if image_id is not None and not db.get(SubjectImage, image_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subject image not found.")
         row.image_id = image_id
+    conflict = HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail="That subject already exists for this board and class.",
+    )
+    stale_collections: list[str] = []
+    if new_key != old_key:
+        taken = db.scalar(
+            select(SyllabusSubject.id).where(
+                SyllabusSubject.board == new_key[0],
+                SyllabusSubject.class_level == new_key[1],
+                SyllabusSubject.subject_name == new_key[2],
+                SyllabusSubject.id != row.id,
+            )
+        )
+        if taken:
+            db.rollback()
+            raise conflict
+        stale_collections = _move_subject_content(db, old_key, new_key)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="That subject already exists for this board and class.",
-        )
+        raise conflict
+    from app.services.vector_service import drop_collection
+
+    for name in stale_collections:
+        try:
+            drop_collection(name)
+        except Exception as exc:
+            logger.warning("Could not drop old collection %r after subject rename: %s", name, exc)
     db.refresh(row)
     return SyllabusSubjectResponse.model_validate(row)
+
+
+def _move_subject_content(
+    db: Session, old: tuple[BoardEnum, ClassEnum, str], new: tuple[BoardEnum, ClassEnum, str]
+) -> list[str]:
+    """Uploads, textbooks and vector collections are keyed by (board, class, subject name), not the syllabus id,
+    so carry them over to the new key. Returns the old collections to drop once the DB commit succeeds."""
+    from app.modules.learning_intelligence.models import LiaLearningEvent
+    from app.modules.student_learning.models import StudentChapterProgress, StudentStudySession, StudentTutorChat
+    from app.services.image_service.image_vector_store import image_collection_name, subject_collection_from_upload
+    from app.services.lesson_planner.retrieval.chroma_store import (
+        COLLECTION_QUESTION_BANK,
+        COLLECTION_TEXTBOOK_EXPERIMENTS,
+        COLLECTION_TEXTBOOK_IMAGES,
+    )
+    from app.services.vector_service import copy_collection
+
+    def same_key(model):
+        return select(model).where(model.board == old[0], model.class_level == old[1], model.subject_name == old[2])
+
+    uploads = list(db.scalars(same_key(TextbookUpload)))
+    books = list(db.scalars(same_key(Textbook)))
+    busy = sum(u.embedding_status in (ProcessingStatusEnum.QUEUED, ProcessingStatusEnum.PROCESSING) for u in uploads)
+    busy += sum(b.status in (TextbookStatusEnum.ANALYZING, TextbookStatusEnum.PROCESSING) for b in books)
+    if busy:
+        db.rollback()
+        # Anything indexed mid-rename would land in the old collection and be dropped with it.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"{busy} upload(s) in this subject are still processing. Rename it after they finish.",
+        )
+
+    old_base, new_base = (subject_collection_from_upload(*k) for k in (old, new))
+    pairs = [(old_base, new_base), (image_collection_name(old_base), image_collection_name(new_base))]
+    pairs += [
+        (f"{p}_{old_base}", f"{p}_{new_base}")
+        for p in (COLLECTION_QUESTION_BANK, COLLECTION_TEXTBOOK_IMAGES, COLLECTION_TEXTBOOK_EXPERIMENTS)
+    ]
+    try:
+        copied = [o for o, n in pairs if copy_collection(o, n)]
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Subject rename %s -> %s: vector copy failed", old, new)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not move this subject's search index to the new name; nothing was changed.",
+        ) from exc
+
+    for r in (*uploads, *books):
+        r.board, r.class_level, r.subject_name = new
+    upload_ids = [u.id for u in uploads]
+    if upload_ids:
+        db.execute(update(TextbookImage).where(TextbookImage.textbook_upload_id.in_(upload_ids)).values(subject=new[2]))
+        for model in (StudentStudySession, StudentChapterProgress, StudentTutorChat, LiaLearningEvent):
+            db.execute(update(model).where(model.chapter_id.in_(upload_ids)).values(subject_name=new[2]))
+    return copied
 
 
 SUBJECT_IMAGE_MAX_BYTES = 5 * 1024 * 1024

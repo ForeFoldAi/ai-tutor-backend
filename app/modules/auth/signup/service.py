@@ -63,19 +63,18 @@ def signup_catalog(db: Session, curriculum: str, grade: str) -> list[dict]:
     from sqlalchemy import select
 
     from app.modules.catalog.models import SyllabusSubject
-    from app.modules.student_learning.enrollment import _norm, _parse_board, _parse_class_level
+    from app.modules.student_learning.enrollment import _families, _norm, _parse_board, _parse_class_level
 
     board, class_level = _parse_board(curriculum), _parse_class_level(parse_student_grade(grade).value)
+    picks = {_norm(s.value) for s in StudentSubjectEnum}
     in_syllabus: set[str] = set()
     if board and class_level:
-        in_syllabus = {
-            _norm(n)
-            for n in db.scalars(
-                select(SyllabusSubject.subject_name).where(
-                    SyllabusSubject.board == board, SyllabusSubject.class_level == class_level
-                )
+        for n in db.scalars(
+            select(SyllabusSubject.subject_name).where(
+                SyllabusSubject.board == board, SyllabusSubject.class_level == class_level
             )
-        }
+        ):
+            in_syllabus |= _families(n, picks)
     pubs = _publishers_by_subject(db, curriculum, parse_student_grade(grade).value)
     return [
         {
