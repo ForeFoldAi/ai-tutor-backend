@@ -538,8 +538,10 @@ def drop_collection(name: str) -> None:
 
     if use_qdrant():
         from app.services.vector_backend.qdrant_common import get_qdrant_client
+        from app.services.vector_backend.qdrant_text import invalidate_collection_cache
 
         get_qdrant_client().delete_collection(name)
+        invalidate_collection_cache(name)
         return
     _sanitize_chroma_env()
     import chromadb

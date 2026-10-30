@@ -691,7 +691,8 @@ async def chapter_chat_stream(
             ):
                 while pending:
                     yield pending.pop(0)
-                yield (json.dumps({"type": "token", "content": token}, ensure_ascii=False) + "\n").encode()
+                if token:
+                    yield (json.dumps({"type": "token", "content": token}, ensure_ascii=False) + "\n").encode()
 
             while pending:
                 yield pending.pop(0)
