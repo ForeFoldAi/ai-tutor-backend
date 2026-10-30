@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import logging
+import threading
+import time
+from collections import OrderedDict
 from typing import Any
 
 from langchain_core.documents import Document
@@ -78,8 +81,33 @@ def add_documents(docs: list[Document], *, collection_name: str) -> int:
         points.append(qm.PointStruct(id=pid, vector=list(emb), payload=payload))
 
     client.upsert(collection_name=collection_name, points=points)
+    invalidate_collection_cache(collection_name)
     logger.info("Added %d documents to Qdrant collection '%s'", len(points), collection_name)
     return len(points)
+
+
+# Every tutor turn used to scroll the whole subject collection (label map) and the whole chapter
+# (chunks) several times over HTTPS. ponytail: per-process TTL caches; writes from the catalog worker
+# process don't invalidate them, so a re-indexed chapter can serve old chunks for up to _CHUNKS_TTL_SEC.
+# Upgrade path: publish invalidations over Redis if that window matters.
+_LABEL_TTL_SEC = 300.0
+_CHUNKS_TTL_SEC = 120.0
+_CHUNKS_MAX = 32
+_cache_lock = threading.Lock()
+_label_cache: dict[str, tuple[float, dict[str, str]]] = {}
+_chunks_cache: OrderedDict[tuple[str, tuple[str, ...], int], tuple[float, list[Document]]] = OrderedDict()
+
+
+def invalidate_collection_cache(collection_name: str) -> None:
+    with _cache_lock:
+        _label_cache.pop(collection_name, None)
+        for key in [k for k in _chunks_cache if k[0] == collection_name]:
+            del _chunks_cache[key]
+
+
+def _copy_docs(docs: list[Document]) -> list[Document]:
+    # Callers enrich metadata in place; never hand out the cached objects.
+    return [Document(page_content=d.page_content, metadata=dict(d.metadata or {})) for d in docs]
 
 
 def resolve_upload_ids(
@@ -121,6 +149,10 @@ def resolve_upload_ids(
 
 
 def _label_to_upload_id(collection_name: str) -> dict[str, str]:
+    with _cache_lock:
+        hit = _label_cache.get(collection_name)
+    if hit and time.monotonic() - hit[0] < _LABEL_TTL_SEC:
+        return hit[1]
     client = get_qdrant_client()
     out: dict[str, str] = {}
     try:
@@ -143,6 +175,9 @@ def _label_to_upload_id(collection_name: str) -> dict[str, str]:
                 break
     except Exception as exc:
         logger.debug("Qdrant label lookup failed for %r: %s", collection_name, exc)
+        return out  # don't cache a failed scan
+    with _cache_lock:
+        _label_cache[collection_name] = (time.monotonic(), out)
     return out
 
 
@@ -160,7 +195,6 @@ def similarity_search(
         return []
     client = get_qdrant_client()
     try:
-        ensure_collection(collection_name, vector_size=TEXT_VECTOR_SIZE)
         qfilter = textbook_upload_filter(filter_ids) if filter_ids else None
         hits = client.search(
             collection_name=collection_name,
@@ -170,6 +204,8 @@ def similarity_search(
             with_payload=True,
         )
     except Exception as exc:
+        if _is_not_found(exc):  # subject with nothing indexed yet
+            return []
         logger.exception("Qdrant search failed for %s: %s", collection_name, exc)
         return []
 
@@ -195,6 +231,12 @@ def fetch_chapter_chunks(
     filter_ids = resolve_upload_ids(chapter_ids, chapter_names, collection_name=collection_name)
     if not filter_ids:
         return []
+    key = (collection_name, tuple(sorted(filter_ids)), limit)
+    with _cache_lock:
+        hit = _chunks_cache.get(key)
+        if hit and time.monotonic() - hit[0] < _CHUNKS_TTL_SEC:
+            _chunks_cache.move_to_end(key)
+            return _copy_docs(hit[1])
     client = get_qdrant_client()
     qfilter = textbook_upload_filter(filter_ids)
     out: list[Document] = []
@@ -225,7 +267,12 @@ def fetch_chapter_chunks(
             (d.metadata or {}).get("section_number") or "",
         )
     )
-    return out[:limit]
+    out = out[:limit]
+    with _cache_lock:
+        _chunks_cache[key] = (time.monotonic(), out)
+        while len(_chunks_cache) > _CHUNKS_MAX:
+            _chunks_cache.popitem(last=False)
+    return _copy_docs(out)
 
 
 def delete_docs(collection_name: str, *, where_filter: dict | None = None) -> None:
@@ -266,6 +313,7 @@ def delete_docs(collection_name: str, *, where_filter: dict | None = None) -> No
             logger.debug("Qdrant collection '%s' does not exist yet; nothing to delete", collection_name)
             return
         logger.exception("Failed to delete Qdrant docs from '%s'", collection_name)
+    invalidate_collection_cache(collection_name)
 
 
 def collection_stats() -> dict[str, int]:

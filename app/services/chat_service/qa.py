@@ -66,6 +66,30 @@ from app.services.chat_service.postprocess import _mistral_token_limit_for_answe
 
 logger = logging.getLogger(__name__)
 
+# Strong refs: the loop only keeps weak refs to tasks, so unreferenced ones can vanish mid-run.
+_bg_tasks: set[asyncio.Task] = set()
+
+
+def _bg_done(task: asyncio.Task) -> None:
+    _bg_tasks.discard(task)
+    if not task.cancelled() and task.exception() is not None:
+        logger.error("Background tutor bookkeeping failed", exc_info=task.exception())
+
+
+def _in_background(fn: Callable[..., Any], /, **kwargs: Any) -> None:
+    """Run sync bookkeeping (LIA events, topic progress) off the event loop; the answer never waits on it."""
+    task = asyncio.create_task(asyncio.to_thread(fn, **kwargs))
+    _bg_tasks.add(task)
+    task.add_done_callback(_bg_done)
+
+
+def _topics_left_reply(**kwargs: Any) -> str | None:
+    from app.core.database import SessionLocal
+    from app.modules.student_learning.topic_progress import try_topics_left_reply
+
+    with SessionLocal() as db:
+        return try_topics_left_reply(db, **kwargs)
+
 
 def _section_instruction_with_figures(
     section_instruction: str,
@@ -193,7 +217,8 @@ async def chapter_aware_qa(
                 "question about it. Do not use unrelated chapter stories or characters."
             )
     else:
-        docs, scope, section_instruction = retrieve_for_tutor_query(
+        docs, scope, section_instruction = await asyncio.to_thread(
+            retrieve_for_tutor_query,
             retrieval_query,
             collection_name=collection_name,
             chapter_ids=chapter_ids,
@@ -203,23 +228,16 @@ async def chapter_aware_qa(
     # Topics-left questions: answer from coverage store (no LLM needed).
     if student_key and student_key.isdigit() and chapter_ids and not skip_retrieval and not prefer_image_over_rag:
         try:
-            from app.core.database import SessionLocal
-            from app.modules.student_learning.topic_progress import try_topics_left_reply
-
-            db = SessionLocal()
-            try:
-                left_reply = try_topics_left_reply(
-                    db,
-                    user_id=int(student_key),
-                    query=query,
-                    chapter_ids=chapter_ids,
-                    subject_name=subject_name,
-                    chapter=chapter,
-                    board=board,
-                    class_level=class_level,
-                )
-            finally:
-                db.close()
+            left_reply = await asyncio.to_thread(
+                _topics_left_reply,
+                user_id=int(student_key),
+                query=query,
+                chapter_ids=chapter_ids,
+                subject_name=subject_name,
+                chapter=chapter,
+                board=board,
+                class_level=class_level,
+            )
             if left_reply:
                 return left_reply, [], None, None
         except Exception:
@@ -292,7 +310,8 @@ async def chapter_aware_qa(
             if (turn.get("role") or "").lower() == "assistant":
                 last_assistant = (turn.get("content") or "").strip()
                 break
-        emit_chat_user_question(
+        _in_background(
+            emit_chat_user_question,
             student_user_id=int(student_key),
             school_id=None,
             query=effective_query,
@@ -305,24 +324,22 @@ async def chapter_aware_qa(
             agent_mode=agent_mode,
             last_assistant=last_assistant,
         )
-        try:
-            from app.modules.student_learning.topic_progress import record_turn_topic_progress
+        from app.modules.student_learning.topic_progress import record_turn_topic_progress
 
-            scope_title = None
-            if getattr(scope, "matched", None) is not None:
-                scope_title = getattr(scope.matched, "title", None)
-            record_turn_topic_progress(
-                student_user_id=int(student_key),
-                query=effective_query,
-                chapter_ids=chapter_ids,
-                subject_name=subject_name,
-                chapter=chapter,
-                board=board,
-                class_level=class_level,
-                scope_title=scope_title,
-            )
-        except Exception:
-            logger.exception("topic progress record failed")
+        scope_title = None
+        if getattr(scope, "matched", None) is not None:
+            scope_title = getattr(scope.matched, "title", None)
+        _in_background(
+            record_turn_topic_progress,
+            student_user_id=int(student_key),
+            query=effective_query,
+            chapter_ids=chapter_ids,
+            subject_name=subject_name,
+            chapter=chapter,
+            board=board,
+            class_level=class_level,
+            scope_title=scope_title,
+        )
 
     context = "" if skip_retrieval else _join_context_within_budget(docs)
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
@@ -339,7 +356,9 @@ async def chapter_aware_qa(
             + "DIALOGUE: Acknowledge warmly from conversation history only — do not re-teach "
             "or dump chapter content. Offer one next step (example, quiz, next part, wrap up)."
         )
-    messages = _safe_build_chat_messages(
+    # Thread: prompt building reads LIA guidance from the DB.
+    messages = await asyncio.to_thread(
+        _safe_build_chat_messages,
         effective_query,
         context,
         class_level=class_level,
@@ -595,6 +614,10 @@ async def chapter_aware_qa_stream(
             yield INCOMPLETE_UTTERANCE_REPLY
             return
 
+    if emit_status:
+        await emit_status({"type": "status", "stage": "searching"})
+        yield ""  # flush: main.py only sends queued events between tokens
+
     from app.services.voice_ack import resolve_dialogue_act
 
     # LLM-first: closing/ack/intro skip chapter RAG (voice + text) but still call the model.
@@ -664,6 +687,7 @@ async def chapter_aware_qa_stream(
     if image_ids and student_user_id is not None:
         if emit_status:
             await emit_status({"type": "image_processing"})
+            yield ""
         from app.modules.image_understanding.service import understand as understand_images
         from app.modules.image_understanding.prompts import image_should_override_chapter_rag
 
@@ -726,7 +750,8 @@ async def chapter_aware_qa_stream(
         if pipeline_timing is not None:
             pipeline_timing.mark_rag_done()
     else:
-        docs, scope, section_instruction = retrieve_for_tutor_query(
+        docs, scope, section_instruction = await asyncio.to_thread(
+            retrieve_for_tutor_query,
             retrieval_query,
             collection_name=collection_name,
             chapter_ids=chapter_ids,
@@ -736,23 +761,16 @@ async def chapter_aware_qa_stream(
 
     if student_key and student_key.isdigit() and chapter_ids and not skip_retrieval and not prefer_image_over_rag:
         try:
-            from app.core.database import SessionLocal
-            from app.modules.student_learning.topic_progress import try_topics_left_reply
-
-            db = SessionLocal()
-            try:
-                left_reply = try_topics_left_reply(
-                    db,
-                    user_id=int(student_key),
-                    query=query,
-                    chapter_ids=chapter_ids,
-                    subject_name=subject_name,
-                    chapter=chapter,
-                    board=board,
-                    class_level=class_level,
-                )
-            finally:
-                db.close()
+            left_reply = await asyncio.to_thread(
+                _topics_left_reply,
+                user_id=int(student_key),
+                query=query,
+                chapter_ids=chapter_ids,
+                subject_name=subject_name,
+                chapter=chapter,
+                board=board,
+                class_level=class_level,
+            )
             if left_reply:
                 if emit_related_images:
                     await emit_related_images([])
@@ -823,7 +841,8 @@ async def chapter_aware_qa_stream(
             if (turn.get("role") or "").lower() == "assistant":
                 last_assistant = (turn.get("content") or "").strip()
                 break
-        emit_chat_user_question(
+        _in_background(
+            emit_chat_user_question,
             student_user_id=int(student_key),
             school_id=None,
             query=effective_query,
@@ -836,24 +855,22 @@ async def chapter_aware_qa_stream(
             agent_mode=agent_mode,
             last_assistant=last_assistant,
         )
-        try:
-            from app.modules.student_learning.topic_progress import record_turn_topic_progress
+        from app.modules.student_learning.topic_progress import record_turn_topic_progress
 
-            scope_title = None
-            if getattr(scope, "matched", None) is not None:
-                scope_title = getattr(scope.matched, "title", None)
-            record_turn_topic_progress(
-                student_user_id=int(student_key),
-                query=effective_query,
-                chapter_ids=chapter_ids,
-                subject_name=subject_name,
-                chapter=chapter,
-                board=board,
-                class_level=class_level,
-                scope_title=scope_title,
-            )
-        except Exception:
-            logger.exception("topic progress record failed (stream)")
+        scope_title = None
+        if getattr(scope, "matched", None) is not None:
+            scope_title = getattr(scope.matched, "title", None)
+        _in_background(
+            record_turn_topic_progress,
+            student_user_id=int(student_key),
+            query=effective_query,
+            chapter_ids=chapter_ids,
+            subject_name=subject_name,
+            chapter=chapter,
+            board=board,
+            class_level=class_level,
+            scope_title=scope_title,
+        )
 
     context = _join_context_within_budget(docs, char_budget=context_budget)
     if skip_retrieval:
@@ -962,9 +979,9 @@ async def chapter_aware_qa_stream(
             if mem_block:
                 messages[0]["content"] = messages[0]["content"] + "\n\n" + mem_block
         if student_key and student_key.isdigit():
-            from app.services.learning_intelligence.clients.lia_client import get_guidance_for_turn_sync
+            from app.services.learning_intelligence.clients.lia_client import get_guidance_for_turn_async
 
-            lia = get_guidance_for_turn_sync(
+            lia = await get_guidance_for_turn_async(
                 student_user_id=int(student_key),
                 query=effective_query,
                 topic=conv.resolved_topic or effective_query,
@@ -992,7 +1009,9 @@ async def chapter_aware_qa_stream(
                 + "DIALOGUE: Acknowledge warmly from conversation history only — do not re-teach "
                 "or dump chapter content. Offer one next step (example, quiz, next part, wrap up)."
             )
-        messages = _safe_build_chat_messages(
+        # Thread: prompt building reads LIA guidance from the DB.
+        messages = await asyncio.to_thread(
+            _safe_build_chat_messages,
             effective_query,
             context,
             class_level=class_level,
@@ -1205,6 +1224,13 @@ async def chapter_aware_qa_stream(
                 stream_temperature = VOICE_LLM_TEMPERATURE_DIALOGUE
             else:
                 stream_temperature = LLM_TEMPERATURE
+        if emit_status:
+            from app.services.llm_client import llm_slot_free
+
+            # ponytail: one-shot check; a student who starts waiting after this point sees "thinking".
+            stage = "thinking" if llm_slot_free("voice" if voice_mode else "chat") else "waiting"
+            await emit_status({"type": "status", "stage": stage})
+            yield ""
         async for token in _cs()._stream_mistral_async(
             messages,
             max_tokens=voice_token_limit,

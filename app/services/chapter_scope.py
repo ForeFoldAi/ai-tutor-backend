@@ -7,6 +7,7 @@ using retrieval evidence (not prompt-only instructions).
 
 from __future__ import annotations
 
+import asyncio
 import difflib
 import logging
 import re
@@ -1432,7 +1433,9 @@ async def resolve_chapter_awareness_turn(
             return None, effective_query, None, build_session_followup_guidance(topic)
         return None, effective_query, None, build_general_explanation_guidance(topic)
 
-    assessment = assess_chapter_coverage(
+    # Thread: runs a cross-chapter vector search plus DB lookups.
+    assessment = await asyncio.to_thread(
+        assess_chapter_coverage,
         scope_q,
         docs=docs,
         collection_name=collection_name,
