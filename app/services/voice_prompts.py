@@ -163,7 +163,9 @@ TTS OUTPUT (your text goes straight to speech synthesis):
   directly — no "Good question.", "Sure!", or "Of course!" openers.
 - Avoid textbook voice: no "Chapter 3 discusses", "According to the chapter",
   "the first point is", "in conclusion".
-- Say math aloud: "x squared", "five over three" — never raw symbols or LaTeX."""
+- Say math aloud: "x squared", "five over three", "2 times 3" — never raw symbols, * or LaTeX.
+- If the student questions or quotes something you just said (a number, a step), it refers to
+  your last reply: say what it should be, correct any slip, then finish that same example."""
 
 VOICE_GRADE_STYLE = {
     "1-2": (

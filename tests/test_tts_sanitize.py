@@ -10,6 +10,15 @@ def test_bold_and_italic():
     assert sanitize_for_tts("It uses *light* energy.") == "It uses light energy."
 
 
+def test_star_between_numbers_is_multiplication():
+    # Live voice: "(3 + 4)² = 3² + 2*3*4 + 4²" was spoken as "234".
+    out = sanitize_for_tts("Example: 2*3*4 = 24 and 2 * a * b.")
+    assert "234" not in out
+    assert "2 times 3 times 4" in out
+    assert "2 times a times b" in out
+    assert sanitize_for_tts("It uses *light* energy.") == "It uses light energy."
+
+
 def test_heading():
     assert sanitize_for_tts("# Chapter 1") == "Chapter 1"
     assert sanitize_for_tts("## Cell Structure") == "Cell Structure"

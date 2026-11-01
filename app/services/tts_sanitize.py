@@ -44,6 +44,9 @@ _ITALIC_UNDER_RE = re.compile(r"(?<!_)_([^_]+)_(?!_)")
 # Stray markdown emphasis runs
 _EMPH_RUN_RE = re.compile(r"\*{1,3}|_{1,3}")
 
+# `*` between maths terms is multiplication — emphasis stripping would turn `2*3*4` into "234".
+_MATH_STAR_RE = re.compile(r"(\d|[)²³]|\b[a-zA-Z]\b)[ \t]*\*(?!\*)[ \t]*(?=\d|\(|\b[a-zA-Z]\b)")
+
 # Table pipes (simple rows)
 _TABLE_ROW_RE = re.compile(r"^\s*\|?.+\|.+\|?\s*$", re.MULTILINE)
 
@@ -101,6 +104,7 @@ def _strip_markdown_structure(text: str) -> str:
 
 
 def _strip_emphasis(text: str) -> str:
+    text = _MATH_STAR_RE.sub(r"\1 × ", text)
     prev = None
     while prev != text:
         prev = text
