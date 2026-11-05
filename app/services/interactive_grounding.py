@@ -473,6 +473,7 @@ def llm_build_panel_from_answer(
         f"ANSWER:\n{a[:6000]}\n"
     )
     try:
+        from app.config import INTERACTIVE_PASS2_TIMEOUT_SEC
         from app.services.llm_client import complete_sync
 
         raw = complete_sync(
@@ -482,7 +483,7 @@ def llm_build_panel_from_answer(
             ],
             feature="lesson",
             max_tokens=2200,
-            timeout=90.0,
+            timeout=INTERACTIVE_PASS2_TIMEOUT_SEC,
         )
     except Exception as exc:
         logger.warning("pass-2 interactive LLM failed: %s", exc)

@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import difflib
 import logging
+import os
 import re
 from dataclasses import dataclass
 from enum import Enum
@@ -467,11 +468,13 @@ def scrub_wrong_premise_echo(
 ) -> str:
     """When refusing an off-chapter claim, drop query-only terms the student planted.
 
-    Stops answers like \"doesn't mention photosynthesis\" from naming the forbidden
-    token — replace with a neutral phrase so harness forbidden-lists don't false-ding.
+    Only the refusal sentences are touched: the rest of the answer (a "Beyond this
+    chapter" explanation, a correction, the real chapter content) keeps its terms.
     """
     text = answer or ""
     if not text or not _REFUSAL_ECHO_RE.search(text):
+        return text
+    if _GENERAL_EXPLANATION_RE.search(text):
         return text
     vocab = _chapter_vocabulary(docs or [], chapter_names)
     planted = [
@@ -485,11 +488,20 @@ def scrub_wrong_premise_echo(
     ]
     if not planted:
         return text
-    out = text
-    for term in sorted(planted, key=len, reverse=True):
-        out = re.sub(rf"\b{re.escape(term)}\b", "that topic", out, flags=re.I)
-    out = re.sub(r"(?:that topic\s*){2,}", "that topic ", out, flags=re.I)
-    return out.strip()
+
+    def _scrub(sentence: str) -> str:
+        if not _REFUSAL_ECHO_RE.search(sentence):
+            return sentence
+        for term in sorted(planted, key=len, reverse=True):
+            sentence = re.sub(rf"\b{re.escape(term)}\b", "that topic", sentence, flags=re.I)
+        return re.sub(r"(?:that topic\s*){2,}", "that topic ", sentence, flags=re.I)
+
+    return "".join(_scrub(s) for s in _SENTENCE_SPLIT_RE.split(text)).strip()
+
+
+_GENERAL_EXPLANATION_RE = re.compile(r"\b(?:beyond this chapter|additional context)\b", re.I)
+# Keeps the delimiter attached so joining the pieces restores the original text.
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?\n])(?=\s)")
 
 
 def prior_user_question(conversation_history: list[dict] | None) -> str | None:
@@ -1236,7 +1248,7 @@ def resolve_chapter_scope_message(
 # it's a 6-token completion that should return well under a second normally;
 # on any real slowness, fail fast and fall back to the existing (instant,
 # heuristic) behavior rather than make the student wait for it.
-_TOPIC_MISMATCH_LLM_TIMEOUT_SEC = 1.5
+_TOPIC_MISMATCH_LLM_TIMEOUT_SEC = float(os.environ.get("TOPIC_MISMATCH_LLM_TIMEOUT_SEC", "3.0"))
 _TOPIC_MISMATCH_LLM_SYSTEM_PROMPT = (
     "A student is in a live tutoring session on the chapter '{chapter}'. "
     "A keyword search found nothing in that chapter matching their latest "
@@ -1264,16 +1276,13 @@ async def _llm_confirms_topic_mismatch(
     query: str,
     conversation_history: list[dict] | None,
     chapter_label: str,
-) -> bool:
+) -> bool | None:
     """Second opinion before showing the disruptive stay/switch wall.
 
     Only called on the rare branch where every regex/keyword heuristic above
-    already failed to recognize a follow-up. Fails safe: True (keep today's
-    behavior — show the wall) on any error, timeout, or ambiguous reply, so
-    this can only ever suppress a false-positive wall, never invent one.
+    already failed to recognize a follow-up. Returns True for NEWTOPIC, False for
+    FOLLOWUP, and None when the model couldn't decide (error, timeout, other reply).
     """
-    import asyncio
-
     from app.services import llm_client
 
     try:
@@ -1297,13 +1306,15 @@ async def _llm_confirms_topic_mismatch(
             timeout=_TOPIC_MISMATCH_LLM_TIMEOUT_SEC,
         )
     except Exception as exc:
-        logger.debug("Topic-mismatch second opinion failed, keeping wall: %s", exc)
-        return True
+        logger.info("Topic-mismatch second opinion unavailable: %s", exc)
+        return None
 
     verdict = (raw or "").strip().upper()
     if "FOLLOWUP" in verdict:
         return False
-    return True
+    if "NEWTOPIC" in verdict:
+        return True
+    return None
 
 
 async def resolve_chapter_awareness_turn(
@@ -1482,14 +1493,14 @@ async def resolve_chapter_awareness_turn(
         # those heuristics can actually answer: does this *read* like a
         # follow-up in context, even though the keyword search found nothing?
         # Only ever runs on this rare, high-disruption branch — normal
-        # in-scope turns never pay this cost. Fails safe: any error/timeout/
-        # ambiguous reply keeps today's behavior (show the wall).
-        if await _llm_confirms_topic_mismatch(scope_q, conversation_history, current_label):
+        # in-scope turns never pay this cost. Errors/unclear replies keep the wall
+        # so retrieval misses never slip through silently.
+        verdict = await _llm_confirms_topic_mismatch(scope_q, conversation_history, current_label)
+        if verdict is not False:
             return build_chapter_awareness_message(assessment), effective_query, assessment, ""
-        prior = prior_user_question(conversation_history) or scope_q or effective_query
-        return None, prior or effective_query, assessment, build_general_explanation_guidance(
-            prior, spoken=spoken
-        )
+        # Keep the student's actual words as effective_query; prior is guidance only.
+        prior = prior_user_question(conversation_history) or scope_q
+        return None, effective_query, assessment, build_session_followup_guidance(prior)
 
     if assessment.level == ChapterCoverageLevel.PARTIAL:
         # Still solve related math practice; don't under-answer as "only partial theory"

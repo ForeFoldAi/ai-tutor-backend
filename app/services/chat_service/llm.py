@@ -17,13 +17,14 @@ async def _call_mistral_async(
     *,
     max_tokens: int | None = None,
     feature: str = "chat",
+    empty_fallback: str = ANSWER_NOT_IN_CHAPTER,
 ) -> str:
     """Non-blocking OpenAI-compatible chat completion (legacy name kept)."""
     return await llm_client.complete(
         messages,
         feature=feature,
         max_tokens=max_tokens,
-        empty_fallback=ANSWER_NOT_IN_CHAPTER,
+        empty_fallback=empty_fallback,
     )
 
 

@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Run one chapter bank on AI Tutor and/or AI Voice.
+"""Run one chapter bank on AI Tutor, AI Voice and/or Ask Learn Mastro.
 
   cd ai-tutor-backend
   .venv/bin/python suneel_chapter_qa/run_chapter.py --chapter english_unit1
-  .venv/bin/python suneel_chapter_qa/run_chapter.py --chapter 26 --channel both
+  .venv/bin/python suneel_chapter_qa/run_chapter.py --chapter 26 --channel all --tag after_fixes
+
+Without --tag, output goes to results/ and raw/ (the 2026-09-15 baseline lives there).
+With --tag NAME, output goes to runs/NAME/results and runs/NAME/raw.
 """
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import sys
 import time
@@ -16,8 +20,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from lib.api import (  # noqa: E402
+from qa_lib.api import (  # noqa: E402
     AuthSession,
+    chat_assistant,
     chat_tutor,
     chat_voice,
     clip,
@@ -25,17 +30,28 @@ from lib.api import (  # noqa: E402
     probe_nest,
     require_api,
 )
-from lib.followups import followup_from_answer  # noqa: E402
-from lib.report import slim_for_raw, write_chapter_md  # noqa: E402
-from lib.score import score_turn  # noqa: E402
+from qa_lib.followups import followup_from_answer  # noqa: E402
+from qa_lib.report import latency_stats, slim_for_raw, write_chapter_md  # noqa: E402
+from qa_lib.score import score_turn  # noqa: E402
 
 BANKS = ROOT / "banks"
-RESULTS = ROOT / "results"
-RAW = ROOT / "raw"
+CHANNEL_SETS = {
+    "tutor": ("tutor",),
+    "voice": ("voice",),
+    "assistant": ("assistant",),
+    "both": ("tutor", "voice"),
+    "all": ("tutor", "voice", "assistant"),
+}
+
+
+def out_dirs(tag: str) -> tuple[Path, Path]:
+    if not tag:
+        return ROOT / "results", ROOT / "raw"
+    base = ROOT / "runs" / tag
+    return base / "results", base / "raw"
 
 
 def load_bank(chapter: str) -> dict:
-    # slug or chapter_id
     index = json.loads((BANKS / "_index.json").read_text())
     slug = None
     for row in index:
@@ -43,7 +59,6 @@ def load_bank(chapter: str) -> dict:
             slug = row["slug"]
             break
     if not slug:
-        # direct file
         p = BANKS / f"{chapter}.json"
         if p.exists():
             return json.loads(p.read_text())
@@ -67,12 +82,8 @@ def score_row(q: dict, res: dict, channel: str) -> dict:
     )
 
 
-def pack_primary(q: dict, res: dict, channel: str) -> dict:
+def pack_result(res: dict) -> dict:
     return {
-        "id": q["id"],
-        "query": q["query"],
-        "label": q["label"],
-        "expect_keywords": q.get("expect_keywords") or [],
         "answer": res.get("answer") or "",
         "answer_clip": clip(res.get("answer"), 450),
         "images": img_brief(res.get("related_images")),
@@ -80,14 +91,22 @@ def pack_primary(q: dict, res: dict, channel: str) -> dict:
         "has_math_lesson": bool(res.get("math_lesson")),
         "has_science_experiment": bool(res.get("science_experiment")),
         "ms": res.get("ms"),
+        "ttft_ms": res.get("ttft_ms"),
         "error": res.get("error"),
         "path": res.get("path"),
-        "scores": score_row(q, res, channel),
     }
 
 
-def run_channel(session: AuthSession, bank: dict, channel: str) -> dict:
-    runner = chat_tutor if channel == "tutor" else chat_voice
+def runner_for(channel: str, assistant_mode: str):
+    if channel == "tutor":
+        return chat_tutor
+    if channel == "voice":
+        return chat_voice
+    return functools.partial(chat_assistant, agent_mode=assistant_mode)
+
+
+def run_channel(session: AuthSession, bank: dict, channel: str, *, assistant_mode: str = "ask") -> dict:
+    runner = runner_for(channel, assistant_mode)
     meta_kw = dict(
         board=bank["board"],
         class_level=bank["class_level"],
@@ -102,9 +121,20 @@ def run_channel(session: AuthSession, bank: dict, channel: str) -> dict:
     for i, q in enumerate(qs):
         print(f"  [{channel}] Q {i+1}/{n} {q['id']}…", flush=True)
         res = runner(session, query=q["query"], history=None, **meta_kw)
-        primary = pack_primary(q, res, channel)
+        primary = {
+            "id": q["id"],
+            "query": q["query"],
+            "label": q["label"],
+            "expect_keywords": q.get("expect_keywords") or [],
+            **pack_result(res),
+            "scores": score_row(q, res, channel),
+        }
         primaries.append(primary)
-        print(f"  [{channel}] {q['id']} -> {primary['scores']['overall']}", flush=True)
+        print(
+            f"  [{channel}] {q['id']} -> {primary['scores']['overall']} "
+            f"({primary['ms']} ms, first token {primary['ttft_ms']} ms)",
+            flush=True,
+        )
 
         # One follow-up right after each primary — no extra FU batch after the chapter ends.
         fu_text, derived = followup_from_answer(primary["answer"], i, q.get("label") or "normal")
@@ -121,15 +151,7 @@ def run_channel(session: AuthSession, bank: dict, channel: str) -> dict:
                 "source_query": q["query"],
                 "query": fu_text,
                 "derived": derived,
-                "answer": fu_res.get("answer") or "",
-                "answer_clip": clip(fu_res.get("answer"), 450),
-                "images": img_brief(fu_res.get("related_images")),
-                "n_images": len(fu_res.get("related_images") or []),
-                "has_math_lesson": bool(fu_res.get("math_lesson")),
-                "has_science_experiment": bool(fu_res.get("science_experiment")),
-                "ms": fu_res.get("ms"),
-                "error": fu_res.get("error"),
-                "path": fu_res.get("path"),
+                **pack_result(fu_res),
                 "scores": sc,
             }
         )
@@ -147,28 +169,30 @@ def avg_channel(data: dict) -> float:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--chapter", required=True, help="slug or chapter_id")
-    ap.add_argument("--channel", choices=("tutor", "voice", "both"), default="both")
+    ap.add_argument("--channel", choices=tuple(CHANNEL_SETS), default="both")
+    ap.add_argument("--assistant-mode", choices=("ask", "free", "explain", "practice"), default="ask")
+    ap.add_argument("--tag", default="", help="write to runs/<tag>/ instead of results/ + raw/")
     args = ap.parse_args()
 
-    RESULTS.mkdir(parents=True, exist_ok=True)
-    RAW.mkdir(parents=True, exist_ok=True)
+    results_dir, raw_dir = out_dirs(args.tag)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    raw_dir.mkdir(parents=True, exist_ok=True)
 
     bank = load_bank(args.chapter)
     print(f"=== {bank['slug']} / {bank['chapter']} ===", flush=True)
     require_api()
     session = AuthSession()
-    nest = probe_nest(session, bank)
+    channels = CHANNEL_SETS[args.channel]
+    nest = probe_nest(session, bank) if "voice" in channels else {"ok": None, "note": "voice not run"}
     print("nest_probe", nest.get("ok"), nest.get("error"), flush=True)
 
-    empty = {"primaries": [], "followups": []}
-    tutor = empty
-    voice = empty
-    if args.channel in ("tutor", "both"):
-        print("AI TUTOR", flush=True)
-        tutor = run_channel(session, bank, "tutor")
-    if args.channel in ("voice", "both"):
-        print("AI VOICE", flush=True)
-        voice = run_channel(session, bank, "voice")
+    data: dict[str, dict] = {}
+    for ch in ("tutor", "voice", "assistant"):
+        if ch in channels:
+            print(ch.upper(), flush=True)
+            data[ch] = run_channel(session, bank, ch, assistant_mode=args.assistant_mode)
+        else:
+            data[ch] = {"primaries": [], "followups": []}
 
     payload = {
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S %z"),
@@ -180,21 +204,24 @@ def main() -> None:
             "board": bank["board"],
             "class_level": bank["class_level"],
             "questions": bank["questions"],
+            "assistant_mode": args.assistant_mode,
+            "tag": args.tag,
         },
         "nest_probe": nest,
-        "tutor": tutor,
-        "voice": voice,
-        "tutor_avg": avg_channel(tutor) if tutor["primaries"] else 0.0,
-        "voice_avg": avg_channel(voice) if voice["primaries"] else 0.0,
+        **data,
     }
+    for ch in ("tutor", "voice", "assistant"):
+        payload[f"{ch}_avg"] = avg_channel(data[ch]) if data[ch]["primaries"] else 0.0
+        rows = data[ch]["primaries"] + data[ch]["followups"]
+        payload[f"{ch}_latency"] = latency_stats(rows) if rows else None
 
-    md_path = RESULTS / f"{bank['slug']}.md"
+    md_path = results_dir / f"{bank['slug']}.md"
     write_chapter_md(md_path, payload)
-    raw_path = RAW / f"{bank['slug']}.json"
+    raw_path = raw_dir / f"{bank['slug']}.json"
     raw_path.write_text(json.dumps(slim_for_raw(payload), indent=2))
     print("Wrote", md_path)
     print("Wrote", raw_path)
-    print("TUTOR", payload["tutor_avg"], "VOICE", payload["voice_avg"])
+    print(" ".join(f"{ch.upper()} {payload[f'{ch}_avg']}" for ch in channels))
 
 
 if __name__ == "__main__":

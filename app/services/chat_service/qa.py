@@ -76,6 +76,36 @@ def _bg_done(task: asyncio.Task) -> None:
         logger.error("Background tutor bookkeeping failed", exc_info=task.exception())
 
 
+_CODE_FENCE_RE = re.compile(r"```.*?(?:```|$)", re.S)
+
+
+def _strip_code_fences(text: str) -> str:
+    """Drop ```math-lesson``` / ```science-experiment``` JSON so image select sees prose."""
+    return _CODE_FENCE_RE.sub("", text or "").strip() or (text or "")
+
+
+def _image_select_question(query: str, effective_query: str) -> str:
+    """Image follow-ups ("show me the diagram") swap effective_query to the prior topic;
+    selection still needs the student's words so the explicit-ask fallback fires."""
+    from app.services.chapter_scope import is_image_follow_up_request
+
+    if effective_query and effective_query != query and is_image_follow_up_request(query):
+        return f"{query} — about: {effective_query}"
+    return effective_query or query
+
+
+def _query_changed(effective_query: str, *searched: str | None) -> bool:
+    """True when chapter-awareness swapped in a question retrieval never searched for."""
+    eff = (effective_query or "").strip().lower()
+    return bool(eff) and eff not in {(q or "").strip().lower() for q in searched}
+
+
+def _observe(task: asyncio.Task) -> asyncio.Task:
+    """Mark a task's exception as retrieved; the turn may bail out before awaiting it."""
+    task.add_done_callback(lambda t: t.cancelled() or t.exception())
+    return task
+
+
 def _in_background(fn: Callable[..., Any], /, **kwargs: Any) -> None:
     """Run sync bookkeeping (LIA events, topic progress) off the event loop; the answer never waits on it."""
     task = asyncio.create_task(asyncio.to_thread(fn, **kwargs))
@@ -260,6 +290,16 @@ async def chapter_aware_qa(
         )
     if early:
         return early, [], None, None
+    if not skip_retrieval and not prefer_image_over_rag and _query_changed(
+        effective_query, query, retrieval_query
+    ):
+        docs, scope, section_instruction = await asyncio.to_thread(
+            retrieve_for_tutor_query,
+            effective_query,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+            chapter_names=chapter_names,
+        )
 
     img_allowed = should_retrieve_images(
         conv,
@@ -405,7 +445,8 @@ async def chapter_aware_qa(
                 )
             except Exception as exc:
                 logger.warning("Image retrieval failed (build fallback): %s", exc)
-        clean, math_lesson = safe_finalize_math_answer(
+        clean, math_lesson = await asyncio.to_thread(
+            safe_finalize_math_answer,
             answer,
             effective_query,
             class_level=class_level,
@@ -461,8 +502,10 @@ async def chapter_aware_qa(
         chapter_names=chapter_names,
     )
 
-    related: list[dict] = []
-    if chapter_ids and img_allowed:
+    async def _related_images() -> list[dict]:
+        if not (chapter_ids and img_allowed):
+            return []
+        related: list[dict] = []
         try:
             related = await asyncio.wait_for(
                 asyncio.to_thread(
@@ -493,8 +536,8 @@ async def chapter_aware_qa(
             )
             if llm_ok or cite_or_list:
                 related = await _select_related_images_for_answer(
-                    effective_query,
-                    answer,
+                    _image_select_question(query, effective_query),
+                    _strip_code_fences(answer),
                     related,
                     retrieved_docs=docs,
                     chapter_ids=chapter_ids,
@@ -509,26 +552,37 @@ async def chapter_aware_qa(
             )
         except Exception as exc:
             logger.warning("Image retrieval failed: %s", exc)
+        return related
+
+    async def _panels(text: str) -> tuple[str, dict | None, dict | None]:
+        # Thread: the panel fallback is a blocking LLM call.
+        text, lesson = await asyncio.to_thread(
+            safe_finalize_math_answer,
+            text,
+            effective_query,
+            class_level=class_level,
+            subject_name=subject_name,
+            conversation_history=recent_hist,
+        )
+        text, experiment = await asyncio.to_thread(
+            finalize_science_answer,
+            text,
+            effective_query,
+            class_level=class_level,
+            subject_name=subject_name,
+        )
+        return text, lesson, experiment
+
+    related, (answer, math_lesson, science_experiment) = await asyncio.gather(
+        _related_images(), _panels(answer)
+    )
 
     from app.services.chat_service.images import figure_inventory_text
     from app.services.image_service.image_intent_extractor import is_chapter_figure_list_ask
 
     if is_chapter_figure_list_ask(effective_query) and related:
         answer = figure_inventory_text(related)
-
-    answer, math_lesson = safe_finalize_math_answer(
-        answer,
-        effective_query,
-        class_level=class_level,
-        subject_name=subject_name,
-        conversation_history=recent_hist,
-    )
-    answer, science_experiment = finalize_science_answer(
-        answer,
-        effective_query,
-        class_level=class_level,
-        subject_name=subject_name,
-    )
+        math_lesson = science_experiment = None
 
     await _mentor_profile_after_turn(
         student_key,
@@ -636,40 +690,58 @@ async def chapter_aware_qa_stream(
 
     voice_ctx: dict[str, Any] = {}
     student_affect = None
+    # Voice: affect (may call the LLM) and learner profile (Redis) don't feed retrieval,
+    # so they run while retrieval does and are awaited before the prompt is built.
+    affect_task: asyncio.Task | None = None
+    profile_task: asyncio.Task | None = None
     if voice_mode:
         last_assistant_pre = ""
         for turn in reversed(recent_hist or []):
             if (turn.get("role") or "").lower() == "assistant":
                 last_assistant_pre = (turn.get("content") or "").strip()
                 break
-        from app.services.student_affect import (
-            evaluate_student_affect_async,
-            merge_affect_trajectory,
-            rapport_from_trajectory,
-        )
+        from app.services.student_affect import evaluate_student_affect_async
 
-        student_affect = await evaluate_student_affect_async(
-            query,
-            last_assistant=last_assistant_pre,
-            tutor_state=tutor_state or "TEACHING",
+        affect_task = _observe(
+            asyncio.create_task(
+                evaluate_student_affect_async(
+                    query,
+                    last_assistant=last_assistant_pre,
+                    tutor_state=tutor_state or "TEACHING",
+                )
+            )
         )
-        understanding_scores = student_affect.to_understanding_scores()
-        merged_trajectory = merge_affect_trajectory(
-            affect_trajectory, student_affect.primary
-        )
-        session_mem.affect_trajectory = merged_trajectory
-        if student_affect.primary in ("excited", "affirmation", "curious"):
-            session_mem.last_positive_moment = query[:120]
-        session_mem.engagement_trend = (
-            session_mem.engagement_trend * 0.7 + student_affect.engagement * 0.3
-        )
-        voice_ctx["affect"] = student_affect
-        voice_ctx["affect_trajectory"] = merged_trajectory
-        voice_ctx["rapport_hint"] = rapport_from_trajectory(merged_trajectory)
         if student_key and learner_snapshot is None:
             from app.services.learner_profile import load_learner_profile
 
-            profile = await load_learner_profile(student_key)
+            profile_task = _observe(asyncio.create_task(load_learner_profile(student_key)))
+
+    def _drop_voice_presteps() -> None:
+        for task in (affect_task, profile_task):
+            if task is not None and not task.done():
+                task.cancel()
+
+    async def _finish_voice_presteps() -> None:
+        nonlocal student_affect, understanding_scores, learner_snapshot
+        if affect_task is not None:
+            from app.services.student_affect import merge_affect_trajectory, rapport_from_trajectory
+
+            student_affect = await affect_task
+            understanding_scores = student_affect.to_understanding_scores()
+            merged_trajectory = merge_affect_trajectory(
+                affect_trajectory, student_affect.primary
+            )
+            session_mem.affect_trajectory = merged_trajectory
+            if student_affect.primary in ("excited", "affirmation", "curious"):
+                session_mem.last_positive_moment = query[:120]
+            session_mem.engagement_trend = (
+                session_mem.engagement_trend * 0.7 + student_affect.engagement * 0.3
+            )
+            voice_ctx["affect"] = student_affect
+            voice_ctx["affect_trajectory"] = merged_trajectory
+            voice_ctx["rapport_hint"] = rapport_from_trajectory(merged_trajectory)
+        if profile_task is not None:
+            profile = await profile_task
             learner_snapshot = profile.snapshot().__dict__
 
     conv = resolve_conversation_context(
@@ -772,6 +844,7 @@ async def chapter_aware_qa_stream(
                 class_level=class_level,
             )
             if left_reply:
+                _drop_voice_presteps()
                 if emit_related_images:
                     await emit_related_images([])
                 yield left_reply
@@ -796,10 +869,24 @@ async def chapter_aware_qa_stream(
             spoken=voice_mode,
         )
     if early:
+        _drop_voice_presteps()
         if emit_related_images:
             await emit_related_images([])
         yield early
         return
+    if not skip_retrieval and not prefer_image_over_rag and _query_changed(
+        effective_query, query, retrieval_query
+    ):
+        docs, scope, section_instruction = await asyncio.to_thread(
+            retrieve_for_tutor_query,
+            effective_query,
+            collection_name=collection_name,
+            chapter_ids=chapter_ids,
+            chapter_names=chapter_names,
+            k=retrieval_k,
+        )
+
+    await _finish_voice_presteps()
 
     use_text_format = _voice_should_use_text_format(
         subject_name,
@@ -1096,7 +1183,7 @@ async def chapter_aware_qa_stream(
                     chapter_ids=chapter_ids,
                     chapter_names=chapter_names or [],
                     chapter=chapter,
-                    query=query,
+                    query=effective_query,
                     docs=docs,
                     conversation_history=recent_hist,
                     top_n=img_top_n,
@@ -1104,7 +1191,7 @@ async def chapter_aware_qa_stream(
                 timeout=IMAGE_RETRIEVAL_TIMEOUT_SEC,
             )
             return await _select_related_images_for_answer(
-                query,
+                _image_select_question(query, effective_query),
                 answer_text,
                 candidates,
                 retrieved_docs=docs,
@@ -1162,11 +1249,13 @@ async def chapter_aware_qa_stream(
     if chapter_ids and img_allowed and early_img_task is not None:
         emit_early_task = asyncio.create_task(_emit_early_images_when_ready())
 
+    final_img_task: asyncio.Task[list[dict]] | None = None
+
     async def _cancel_bg_tasks() -> None:
-        for task in (emit_early_task, img_task, early_img_task):
+        for task in (emit_early_task, img_task, early_img_task, final_img_task):
             if task is not None and not task.done():
                 task.cancel()
-        for task in (emit_early_task, img_task, early_img_task):
+        for task in (emit_early_task, img_task, early_img_task, final_img_task):
             if task is None:
                 continue
             try:
@@ -1291,6 +1380,20 @@ async def chapter_aware_qa_stream(
         should_finalize_science = use_text_format or (
             voice_mode and _is_science_subject(subject_name)
         )
+        if img_task is not None and not img_task.done():
+            img_task.cancel()
+            try:
+                await img_task
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                pass
+        # Image selection only needs the prose, so it runs while the panels are built.
+        final_img_task = _observe(
+            asyncio.create_task(
+                _retrieve_images_for_answer(_strip_code_fences(answer_text), llm_ok=llm_ok)
+            )
+        )
         if should_finalize_math:
             from app.services.chapter_scope import detect_chapter_scope_choice
 
@@ -1299,7 +1402,8 @@ async def chapter_aware_qa_stream(
             )
             allow_fallback = not is_scope_choice and (use_text_format or voice_live_teaching)
             streamed_prose = answer_text
-            clean_answer, math_lesson = safe_finalize_math_answer(
+            clean_answer, math_lesson = await asyncio.to_thread(
+                safe_finalize_math_answer,
                 answer_text,
                 effective_query,
                 class_level=class_level,
@@ -1311,11 +1415,13 @@ async def chapter_aware_qa_stream(
             display_answer = (clean_answer or "").strip() or streamed_prose
             if math_lesson and emit_math_lesson:
                 await emit_math_lesson(math_lesson, display_answer)
+                yield ""  # flush: main.py only sends queued events between tokens
             if use_text_format or voice_live_teaching:
                 answer_text = display_answer
         if should_finalize_science:
             streamed_prose = answer_text
-            clean_answer, science_experiment = finalize_science_answer(
+            clean_answer, science_experiment = await asyncio.to_thread(
+                finalize_science_answer,
                 answer_text,
                 effective_query,
                 class_level=class_level,
@@ -1324,17 +1430,10 @@ async def chapter_aware_qa_stream(
             display_answer = (clean_answer or "").strip() or streamed_prose
             if science_experiment and emit_science_experiment:
                 await emit_science_experiment(science_experiment, display_answer)
+                yield ""
             if use_text_format or (voice_mode and _is_science_subject(subject_name)):
                 answer_text = display_answer
-        if img_task is not None and not img_task.done():
-            img_task.cancel()
-            try:
-                await img_task
-            except asyncio.CancelledError:
-                pass
-            except Exception:
-                pass
-        final_imgs = await _retrieve_images_for_answer(answer_text, llm_ok=llm_ok)
+        final_imgs = await final_img_task
         last_imgs = final_imgs
         from app.services.chat_service.images import figure_inventory_text
         from app.services.image_service.image_intent_extractor import is_chapter_figure_list_ask

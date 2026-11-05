@@ -173,7 +173,7 @@ def _run_whisper(model: Any, audio: Any, *, language: str, subject_name: str, pr
     return model.transcribe(
         audio,
         language=language or "en",
-        beam_size=1,
+        beam_size=3,
         best_of=1,
         vad_filter=vad_filter,
         vad_parameters={

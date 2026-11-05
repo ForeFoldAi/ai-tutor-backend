@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT.parent))
 
-from lib.api import AuthSession, chat_tutor, chat_voice, clip  # noqa: E402
+from qa_lib.api import AuthSession, chat_tutor, chat_voice, clip  # noqa: E402
 
 OUT = ROOT / "results" / "live_grounding_examples.md"
 RAW = ROOT / "raw" / "live_grounding_examples.json"

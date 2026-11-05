@@ -148,6 +148,11 @@ class _Session:
         "tts_voice",
         "voice_session_id",
         "stt_mode",
+        "vocab",
+        "vocab_task",
+        "turn_suspect",
+        "stt_hint",
+        "pending_confirm",
     )
 
     def __init__(self) -> None:
@@ -174,6 +179,11 @@ class _Session:
         self.tts_voice: str | None = None
         self.voice_session_id: str = ""
         self.stt_mode: str = "hybrid"
+        self.vocab = None  # ChapterVocab, built after session_start
+        self.vocab_task: asyncio.Task | None = None
+        self.turn_suspect = False  # this turn's transcript is doubtful -> keep out of history
+        self.stt_hint = ""
+        self.pending_confirm = ""  # transcript awaiting "yes, that's what I said"
 
     def configure(self, msg: dict) -> None:
         self.board = msg.get("board", self.board)
@@ -275,6 +285,147 @@ async def _general_answer_stream(
     )
     async for token in _stream_mistral_async(messages, feature="voice"):
         yield token
+
+
+def _schedule_vocab_load(session: _Session) -> None:
+    """Build the chapter vocabulary in the background (used to bias + repair STT)."""
+    from app.services.voice_chapter_vocab import load_chapter_vocab
+
+    if session.vocab_task and not session.vocab_task.done():
+        return
+    if not session.has_context:
+        return
+
+    async def _run() -> None:
+        session.vocab = await asyncio.to_thread(
+            load_chapter_vocab, session.collection, session.chapter_ids, session.chapter_names
+        )
+
+    session.vocab_task = asyncio.create_task(_run(), name="voice-vocab")
+
+
+async def _get_vocab(session: _Session):
+    task = session.vocab_task
+    if session.vocab is None and task is not None and not task.done():
+        try:
+            await asyncio.wait_for(asyncio.shield(task), timeout=0.4)
+        except Exception:
+            pass
+    return session.vocab
+
+
+def _last_assistant(session: _Session) -> str:
+    for turn in reversed(session.history):
+        if (turn.get("role") or "").lower() == "assistant":
+            return (turn.get("content") or "").strip()
+    return ""
+
+
+def _text_similarity(a: str, b: str) -> float:
+    import difflib
+    import re as _re
+
+    na = " ".join(_re.findall(r"[a-z0-9']+", (a or "").lower()))
+    nb = " ".join(_re.findall(r"[a-z0-9']+", (b or "").lower()))
+    if not na or not nb:
+        return 0.0
+    return difflib.SequenceMatcher(None, na, nb).ratio()
+
+
+async def _refine_transcript(
+    session: _Session, browser_text: str, audio: bytes | None
+) -> dict:
+    """Turn browser text (+ optional audio) into the best transcript for this turn.
+
+    Order: server Whisper with chapter-biased prompt -> chapter homophone repair.
+    Returns text, hints, confidence, suspect and needs_confirm.
+    """
+    from app.services.voice_chapter_vocab import is_student_correction
+    from app.services.voice_cloud_stt import cloud_stt_enabled, transcribe_cloud
+    from app.services.voice_stt_postprocess import transcript_likely_echo
+
+    vocab = await _get_vocab(session)
+    last_ai = _last_assistant(session)
+    text = browser_text
+    conf = -0.3
+    sim = 1.0
+    used_server = False
+
+    if audio and cloud_stt_enabled():
+        terms = vocab.whisper_prompt_terms() if vocab is not None and not vocab.empty else ""
+        stt_prompt = " ".join(p for p in (terms, last_ai[-160:]) if p)
+        res = await transcribe_cloud(
+            audio, prompt=stt_prompt, subject_name=session.subject_name
+        )
+        if res and res.get("transcript"):
+            server_text = str(res["transcript"])
+            if last_ai and transcript_likely_echo(server_text, last_ai):
+                return {"drop": True}
+            sim = _text_similarity(browser_text, server_text)
+            text, conf, used_server = server_text, float(res["confidence"]), True
+
+    hints: list[str] = []
+    if vocab is not None and not vocab.empty:
+        text, hints = vocab.resolve(text)
+
+    words = len(text.split())
+    relevance = vocab.relevance(text) if vocab is not None and not vocab.empty else 1.0
+    correction = is_student_correction(text)
+    has_overlap_with_last = bool(last_ai) and _text_similarity(text, last_ai[:300]) > 0.25
+
+    # Doubtful: Whisper unsure, or off-chapter and not obviously a follow-up.
+    suspect = (
+        (used_server and conf < -0.9)
+        or (words >= 3 and relevance < 0.15 and not has_overlap_with_last and not correction)
+    )
+    needs_confirm = (
+        used_server
+        and conf < -1.0
+        and sim < 0.5
+        and relevance < 0.34
+        and words >= 2
+        and not correction
+    )
+    return {
+        "text": text,
+        "hints": hints,
+        "confidence": conf,
+        "suspect": suspect,
+        "needs_confirm": needs_confirm,
+        "correction": correction,
+        "drop": False,
+    }
+
+
+def _retract_last_turn(session: _Session) -> None:
+    """The student said we misheard — forget the last Q/A pair so it can't mislead later turns."""
+    h = session.history
+    if len(h) >= 2 and (h[-1].get("role") or "") == "assistant" and (h[-2].get("role") or "") == "user":
+        del h[-2:]
+    elif h and (h[-1].get("role") or "") == "assistant":
+        h.pop()
+    try:
+        qs = session.memory.student_questions
+        if qs:
+            qs.pop()
+        session.memory.last_student_question = qs[-1] if qs else ""
+        session.memory.last_ai_snippet = ""
+        session.memory.current_concept = ""
+    except Exception:
+        pass
+    session.quiz_pending = False
+    session.quiz_question = ""
+    session.quiz_attempts = 0
+
+
+async def _speak_line(ws: WebSocket, session: _Session, text: str, stop: asyncio.Event) -> None:
+    """Speak a short tutor line (clarification) without touching history."""
+    timing = VoicePipelineTiming(turn_id="clarify")
+    await _send(ws, {"type": "thinking"})
+    await _pipeline_cached_answer(ws, text, stop, timing, tts_voice=session.tts_voice)
+    if not stop.is_set():
+        await _send(ws, {"type": "done"})
+        await _send(ws, {"type": "listening"})
 
 
 async def _play_session_greeting(ws: WebSocket, session: _Session) -> None:
@@ -390,10 +541,33 @@ async def _stream_answer(
     # done, so next_tutor_state() near the end of this turn can use it in
     # place of the heuristic `scores` above (see below). If it's still
     # running, the heuristic result already computed is used, unchanged.
-    llm_scores_task = asyncio.create_task(
-        classify_understanding_llm(question, last_assistant=last_assistant),
-        name="voice-understanding-llm",
+    # Only worth an LLM call (and its rate-limit cost) when the heuristic can't tell:
+    # short replies, pending quiz answers, or after a check-in question.
+    q_words = len(question.split())
+    needs_llm_scores = (
+        session.quiz_pending
+        or current_state == TutorState.CHECKING_UNDERSTANDING
+        or (q_words <= 6 and "?" not in question)
+    ) and not (scores.is_affirmation or scores.wants_quiz or scores.wants_expansion)
+    llm_scores_task = (
+        asyncio.create_task(
+            classify_understanding_llm(question, last_assistant=last_assistant),
+            name="voice-understanding-llm",
+        )
+        if needs_llm_scores
+        else None
     )
+
+    from app.services.voice_chapter_vocab import is_chapter_overview_request
+    from app.services.voice_prompts import stt_hint_var
+
+    hint = session.stt_hint
+    if is_chapter_overview_request(question):
+        hint = (hint + " " if hint else "") + (
+            "The student wants the whole chapter explained from start to end: give a short, "
+            "ordered walkthrough of the chapter's main events or ideas from the context."
+        )
+    stt_hint_var.set(hint)
 
     if session.student_key:
         from app.services.voice_performance import resolve_learner_profile
@@ -558,15 +732,21 @@ async def _stream_answer(
         chapter=session.chapter,
         memory=session.memory,
     )
-    session.history, session.memory = remember_turn(
-        session.history,
-        session.memory,
-        user_query=question,
-        assistant_response=full_answer,
-        resolved_topic=turn_conv.resolved_topic,
-        followup_type=turn_conv.followup_type,
-        chapter=session.chapter,
-    )
+    # Only clean turns become history: a doubtful transcript or an empty/failed reply
+    # must never steer later answers.
+    commit_turn = bool(full_answer.strip()) and not session.turn_suspect
+    if not commit_turn:
+        logger.info("[voice %s] Turn not committed to history (suspect=%s)", turn_id, session.turn_suspect)
+    if commit_turn:
+        session.history, session.memory = remember_turn(
+            session.history,
+            session.memory,
+            user_query=question,
+            assistant_response=full_answer,
+            resolved_topic=turn_conv.resolved_topic,
+            followup_type=turn_conv.followup_type,
+            chapter=session.chapter,
+        )
     if session.student_key and session.student_key.isdigit():
         from app.services.learning_intelligence.clients.lia_client import emit_voice_turn
 
@@ -592,7 +772,7 @@ async def _stream_answer(
     # Never awaited: if it's still running, fall back to the heuristic
     # `scores` already computed, so this line never adds latency.
     final_scores = scores
-    if llm_scores_task.done():
+    if llm_scores_task is not None and llm_scores_task.done():
         try:
             final_scores = llm_scores_task.result() or scores
         except Exception as exc:
@@ -607,21 +787,22 @@ async def _stream_answer(
 
     # Rules 4 & 6: track whether this turn's quiz question got resolved
     # (correct answer or forced reveal) so it's never silently dropped.
-    was_pending = session.quiz_pending
-    session.quiz_pending, session.quiz_attempts = update_quiz_state(
-        quiz_pending=was_pending,
-        quiz_attempts=session.quiz_attempts,
-        reply_intent=reply_intent,
-        assistant_reply=full_answer,
-    )
-    if session.quiz_pending and not was_pending:
-        session.quiz_question = pending_question(full_answer)
-    elif not session.quiz_pending:
-        session.quiz_question = ""
+    if commit_turn:
+        was_pending = session.quiz_pending
+        session.quiz_pending, session.quiz_attempts = update_quiz_state(
+            quiz_pending=was_pending,
+            quiz_attempts=session.quiz_attempts,
+            reply_intent=reply_intent,
+            assistant_reply=full_answer,
+        )
+        if session.quiz_pending and not was_pending:
+            session.quiz_question = pending_question(full_answer)
+        elif not session.quiz_pending:
+            session.quiz_question = ""
 
     # Rule 5: remember what's been taught this session so we don't repeat
     # the same explanation verbatim later.
-    if reply_intent == ReplyIntent.NEW_QUESTION:
+    if reply_intent == ReplyIntent.NEW_QUESTION and commit_turn:
         key = topic_key(question)
         if key and key not in session.explained_points:
             session.explained_points = (session.explained_points + [key])[-20:]
@@ -704,6 +885,7 @@ async def voice_ws(
 
                 schedule_session_prewarm(session)
                 schedule_learner_profile_load(session)
+                _schedule_vocab_load(session)
                 if msg.get("greet"):
                     asyncio.create_task(
                         _play_session_greeting(websocket, session),
@@ -726,14 +908,19 @@ async def voice_ws(
                         len(audio_b64),
                     )
                     audio_b64 = ""
-                if audio_b64 and session.voice_session_id:
+                audio_bytes: bytes | None = None
+                if audio_b64:
+                    try:
+                        audio_bytes = base64.b64decode(audio_b64)
+                    except Exception:
+                        audio_bytes = None
+                if audio_bytes and session.voice_session_id:
                     try:
                         from app.services.voice_session_profile import (
                             bootstrap_session_voice,
                             evaluate_session_user_audio,
                         )
 
-                        audio_bytes = base64.b64decode(audio_b64)
                         # Verify against the session voiceprint (once it has enough
                         # samples) before trusting this audio as real student speech —
                         # catches tutor-echo that slipped past text-similarity matching.
@@ -764,8 +951,47 @@ async def voice_ws(
                             bootstrap_session_voice(session.voice_session_id, audio_bytes)
                     except Exception as exc:
                         logger.debug("Session voice bootstrap skipped: %s", exc)
+
                 await _cancel_gen()
                 stop.clear()
+
+                # "Did you say ...?" follow-up: yes -> answer the held transcript; anything else -> new turn.
+                if session.pending_confirm:
+                    from app.services.voice_tutor import _AFFIRM
+
+                    held, session.pending_confirm = session.pending_confirm, ""
+                    if _AFFIRM.match(text.strip()):
+                        text = held
+
+                refined = await _refine_transcript(session, text, audio_bytes)
+                if refined.get("drop"):
+                    await _send(websocket, {"type": "listening"})
+                    continue
+                text = refined["text"]
+                session.turn_suspect = bool(refined["suspect"])
+                hints = list(refined["hints"])
+                if refined["correction"]:
+                    _retract_last_turn(session)
+                    hints.append("The student is correcting what you misheard; answer what they meant")
+                if hints:
+                    session.stt_hint = "Possible mishears this turn: " + "; ".join(hints) + "."
+                else:
+                    session.stt_hint = ""
+
+                if refined["needs_confirm"]:
+                    session.pending_confirm = text
+                    session.turn_suspect = True
+                    gen_task = asyncio.create_task(
+                        _speak_line(
+                            websocket,
+                            session,
+                            f"Sorry, I may have misheard. Did you say, {text.rstrip('?.! ')}?",
+                            stop,
+                        ),
+                        name="voice-confirm",
+                    )
+                    continue
+
                 gen_task = asyncio.create_task(
                     _stream_answer(websocket, text, session, stop),
                     name="voice-gen",

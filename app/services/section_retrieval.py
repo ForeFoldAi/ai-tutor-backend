@@ -8,6 +8,7 @@ Subsection question → chunks for that subtopic only.
 from __future__ import annotations
 
 import logging
+import os
 import re
 from typing import Any
 
@@ -38,8 +39,10 @@ SUBSECTION_MAX_CHUNKS = 12
 _MIN_SUBTOPIC_IMAGE_SCORE = 25.0
 # Qdrant Cosine score is similarity (higher = better). Relative keep avoids
 # discarding useful near-neighbors; floor only drops clearly irrelevant tops.
-_RELATIVE_KEEP = 0.50
-_WEAK_TOP_FLOOR = 0.28
+_RELATIVE_KEEP = float(os.environ.get("RETRIEVAL_RELATIVE_KEEP", "0.50"))
+# BGE gives unrelated text a fairly high cosine; tune from the "[RAG] ... scores=" log
+# lines (e.g. off-chapter benchmark questions) before raising this.
+_WEAK_TOP_FLOOR = float(os.environ.get("RETRIEVAL_MIN_TOP_SCORE", "0.28"))
 _BROAD_CONTEXT_CHAR_BUDGET = 11000
 
 _BROAD_ASK_RE = re.compile(
@@ -98,6 +101,7 @@ def filter_weak_semantic_hits(docs: list[Any]) -> list[Any]:
         return docs
     top = max(s for _d, s in scored)
     if top < _WEAK_TOP_FLOOR:
+        logger.info("[RAG] all %d semantic hits below floor (top=%.3f)", len(scored), top)
         return []
     keep = [d for d, s in scored if s >= top * _RELATIVE_KEEP]
     return keep + unscored
