@@ -32,7 +32,7 @@ __all__ = [
     "voice_grade_band",
 ]
 
-VOICE_HISTORY_TURNS = 14  # 7 user/assistant pairs max injected into Mistral
+VOICE_HISTORY_TURNS = 8  # 4 user/assistant pairs: less stale context, faster first token
 
 
 class TutorState(str, Enum):
@@ -338,6 +338,18 @@ def evaluate_student_response(
     )
 
 
+_NEW_Q = re.compile(
+    r"^(?:who|what|why|how|when|where|which|explain|tell\s+me|can\s+you|could\s+you|"
+    r"describe|define|summari[sz]e|teach|give\s+me|show\s+me)\b",
+    re.I,
+)
+
+
+def _looks_like_new_question(q: str) -> bool:
+    """Wh-word/imperative openers or an explicit '?' with >=4 words signal a new question."""
+    return bool(_NEW_Q.match(q)) or ("?" in q and len(q.split()) >= 4)
+
+
 def classify_reply_intent(student_text: str, *, quiz_pending: bool) -> ReplyIntent:
     """Zero-latency heuristic classification of the student's last turn —
     NEW_QUESTION / WRONG_ANSWER / DONT_KNOW / CLOSING / UNCLEAR.
@@ -356,6 +368,11 @@ def classify_reply_intent(student_text: str, *, quiz_pending: bool) -> ReplyInte
 
     if _CONFUSION.search(q):
         return ReplyIntent.DONT_KNOW
+
+    # A fresh question is never an "answer" to the pending quiz — otherwise one old
+    # check-question hijacks every following turn (the "kinetic energy" drift).
+    if quiz_pending and _looks_like_new_question(q):
+        return ReplyIntent.NEW_QUESTION
 
     if quiz_pending and not _AFFIRM.match(q):
         return ReplyIntent.WRONG_ANSWER
@@ -515,7 +532,7 @@ async def classify_understanding_llm(
     ]
     try:
         raw = await asyncio.wait_for(
-            llm_client.complete(messages, feature="voice", max_tokens=80),
+            llm_client.complete(messages, feature="voice_understanding", max_tokens=80),
             timeout=_UNDERSTANDING_LLM_TIMEOUT_SEC,
         )
     except Exception as exc:

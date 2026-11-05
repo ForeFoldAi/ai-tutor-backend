@@ -50,6 +50,15 @@ def seed_concept_graph(
 
     concepts_added = 0
     deps_added = 0
+    # Concept keys ignore board/class, so the same chapter across boards/classes (or a
+    # re-upload) maps to one key — track keys added in this run, not just persisted rows.
+    known_keys: set[str] = set(db.scalars(select(LiaConcept.concept_key)).all())
+    known_deps: set[tuple[str, str]] = {
+        (p, d)
+        for p, d in db.execute(
+            select(LiaConceptDependency.prerequisite_key, LiaConceptDependency.dependent_key)
+        ).all()
+    }
 
     for (_board, _class, subject), chapters in groups.items():
         ordered = sorted(chapters, key=_chapter_sort_key)
@@ -61,8 +70,8 @@ def seed_concept_graph(
                 board=_board,
                 class_level=_class,
             )
-            existing = db.scalar(select(LiaConcept).where(LiaConcept.concept_key == ckey))
-            if existing is None:
+            if ckey not in known_keys:
+                known_keys.add(ckey)
                 db.add(
                     LiaConcept(
                         concept_key=ckey,
@@ -74,13 +83,8 @@ def seed_concept_graph(
                 )
                 concepts_added += 1
             if prev_key and prev_key != ckey:
-                dep = db.scalar(
-                    select(LiaConceptDependency).where(
-                        LiaConceptDependency.prerequisite_key == prev_key,
-                        LiaConceptDependency.dependent_key == ckey,
-                    )
-                )
-                if dep is None:
+                if (prev_key, ckey) not in known_deps:
+                    known_deps.add((prev_key, ckey))
                     db.add(
                         LiaConceptDependency(
                             prerequisite_key=prev_key,

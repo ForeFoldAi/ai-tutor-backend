@@ -81,7 +81,11 @@ async def assistant_chat_stream(
             ):
                 if isinstance(token, str) and token.startswith("\0STATUS:"):
                     rest = token[len("\0STATUS:") :]
-                    if rest.startswith("image_processing"):
+                    if rest == "searching":
+                        yield (
+                            json.dumps({"type": "status", "stage": "searching"}, ensure_ascii=False) + "\n"
+                        ).encode()
+                    elif rest.startswith("image_processing"):
                         yield (
                             json.dumps({"type": "image_processing"}, ensure_ascii=False) + "\n"
                         ).encode()

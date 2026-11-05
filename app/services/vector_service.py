@@ -3,10 +3,13 @@ import os
 import shutil
 import sqlite3
 import sys
+import threading
+from collections import OrderedDict
 from functools import lru_cache
 from typing import List
 
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from langchain_core.retrievers import BaseRetriever
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from app.config import CHROMA_PATH
@@ -48,6 +51,57 @@ if sys.version_info >= (3, 14):
 
 _embedding_model = None
 
+# One turn embeds the same question several times (main search, cross-chapter
+# coverage check, intent classifier, affect); short texts are memoised.
+_EMBED_CACHE_MAX = int(os.environ.get("EMBED_CACHE_MAX", "4096"))
+_EMBED_CACHE_MAX_CHARS = 2000
+
+
+class _CachedEmbeddings(Embeddings):
+    def __init__(self, inner: Embeddings) -> None:
+        self._inner = inner
+        self._cache: OrderedDict[tuple[str, str], list[float]] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def __getattr__(self, name: str):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        return getattr(self._inner, name)
+
+    def _get(self, key: tuple[str, str]) -> list[float] | None:
+        with self._lock:
+            vec = self._cache.get(key)
+            if vec is not None:
+                self._cache.move_to_end(key)
+            return vec
+
+    def _put(self, key: tuple[str, str], vec: list[float]) -> None:
+        if len(key[1]) > _EMBED_CACHE_MAX_CHARS:
+            return
+        with self._lock:
+            self._cache[key] = vec
+            self._cache.move_to_end(key)
+            while len(self._cache) > _EMBED_CACHE_MAX:
+                self._cache.popitem(last=False)
+
+    def embed_query(self, text: str) -> list[float]:
+        key = ("q", text)
+        vec = self._get(key)
+        if vec is None:
+            vec = self._inner.embed_query(text)
+            self._put(key, vec)
+        return vec
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        out: list[list[float] | None] = [self._get(("d", t)) for t in texts]
+        missing = [i for i, v in enumerate(out) if v is None]
+        if missing:
+            fresh = self._inner.embed_documents([texts[i] for i in missing])
+            for i, vec in zip(missing, fresh):
+                out[i] = vec
+                self._put(("d", texts[i]), vec)
+        return out  # type: ignore[return-value]
+
 
 def is_embedding_model_loaded() -> bool:
     """True when HuggingFace embeddings are already in memory (no load triggered)."""
@@ -63,7 +117,9 @@ def _get_embedding_model():
     if _embedding_model is not None:
         return _embedding_model
     try:
-        _embedding_model = HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
+        _embedding_model = _CachedEmbeddings(
+            HuggingFaceEmbeddings(model_name="BAAI/bge-base-en-v1.5")
+        )
         return _embedding_model
     except Exception:
         # If embeddings can't be created (e.g. HF download blocked),

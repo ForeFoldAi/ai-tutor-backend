@@ -630,7 +630,10 @@ async def _handle_voice_transcribe(
     from app.services.voice_session_profile import bootstrap_session_voice
     from app.services.voice_whisper_stt import transcribe_audio_bytes, whisper_available
 
-    if not whisper_available():
+    from app.services.voice_cloud_stt import cloud_stt_enabled, transcribe_cloud
+    from app.services.voice_stt_postprocess import transcript_likely_echo
+
+    if not whisper_available() and not cloud_stt_enabled():
         raise HTTPException(
             status_code=503,
             detail="Server Whisper STT is not available. Install faster-whisper or use browser speech.",
@@ -640,6 +643,19 @@ async def _handle_voice_transcribe(
         raise HTTPException(status_code=400, detail="Audio too short to transcribe.")
 
     sid = (voice_session_id or "").strip()
+    if cloud_stt_enabled():
+        cloud = await transcribe_cloud(
+            data, prompt=prompt, language=language or "en", subject_name=subject_name
+        )
+        if cloud is not None:
+            text = str(cloud.get("transcript") or "")
+            if text and reject_if_similar_to and transcript_likely_echo(text, reject_if_similar_to):
+                return {"transcript": "", "provider": "groq", "confidence": cloud["confidence"], "rejected": True}
+            if text and sid and not is_barge:
+                bootstrap_session_voice(sid, data)
+            return {"transcript": text, "provider": "groq", "confidence": cloud["confidence"], "rejected": False}
+        if not whisper_available():
+            raise HTTPException(status_code=503, detail="Cloud STT failed and no local Whisper.")
     try:
         result = await transcribe_audio_bytes(
             data,

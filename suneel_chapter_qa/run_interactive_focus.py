@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 
-from lib.api import AuthSession, chat_tutor, chat_voice, clip, probe_nest  # noqa: E402
+from qa_lib.api import AuthSession, chat_tutor, chat_voice, clip, probe_nest  # noqa: E402
 
 BANKS = ROOT / "banks"
 OUT = ROOT / "results" / "interactive_focus.md"

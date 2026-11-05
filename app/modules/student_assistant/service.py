@@ -2,15 +2,20 @@
 
 from __future__ import annotations
 
+import asyncio
+import logging
 import re
 from collections.abc import AsyncIterator
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
 from app.modules.student_assistant.context import build_student_context, build_suggested_prompts
 from app.modules.student_learning import service as learning_service
 from app.modules.users.models import User
-from app.config import ASSISTANT_MAX_TOKENS
+from app.config import ASSISTANT_MAX_TOKENS, ASSISTANT_RAG_CHUNK_CHARS, ASSISTANT_RAG_CHUNKS
+from app.core.student_messages import ANSWER_NOT_IN_CHAPTER, CHAT_ANSWER_FAILED
 from app.services.chapter_scope import extract_mentioned_chapter_numbers
 from app.services.chat_service import (
     _call_mistral_async,
@@ -19,6 +24,8 @@ from app.services.chat_service import (
 )
 from app.services.conversation_context import resolve_conversation_context
 from app.services.conversation_memory import format_memory_for_prompt, prepare_conversation_inputs
+
+logger = logging.getLogger(__name__)
 
 _AGENT_MODES = frozenset({"free", "ask", "practice", "explain"})
 
@@ -56,6 +63,7 @@ Student facts (enrollment, progress, school, tutor):
 Academic / out-of-book help:
 - You MAY use general knowledge appropriate for their grade. Prefer clear steps and simple examples.
 - When TEXTBOOK CONTEXT is present and relevant, prefer it; if the question is outside the textbook, still answer helpfully (this mode allows out-of-book).
+- When an academic answer comes from general knowledge rather than TEXTBOOK CONTEXT, start it with "Beyond your textbook:" so the student knows. Never add this label to platform/account answers or to answers taken from TEXTBOOK CONTEXT.
 - For deeper chapter-locked tutoring, you may mention Chapter AI Tutor or AI Voice after picking a subject/chapter.
 
 Rules:
@@ -193,6 +201,40 @@ def _with_continue(messages: list[dict[str, str]], partial: str) -> list[dict[st
         {"role": "assistant", "content": partial},
         {"role": "user", "content": _CONTINUE_USER},
     ]
+
+
+def _squash(text: str) -> str:
+    return re.sub(r"\s+", " ", text or "").strip().lower()
+
+
+# Enough of the continuation to tell a real continuation from a restart.
+_CONTINUE_PROBE_CHARS = 80
+
+
+def _continuation_tail(partial: str, more: str) -> str | None:
+    """Text to append after *partial*, or None when *more* restarts the answer from scratch."""
+    more = (more or "").lstrip()
+    if not more:
+        return ""
+    head = _squash(more[:40])
+    if len(head) >= 30 and head in _squash(partial):
+        return None
+    # Drop an echoed overlap ("...write them vertically:" -> "Write them vertically: 12 + 5").
+    tail = partial.rstrip()
+    for k in range(min(len(tail), len(more)), 9, -1):
+        if _squash(tail[-k:]) == _squash(more[:k]):
+            more = more[k:].lstrip()
+            break
+    if not more:
+        return ""
+    sep = " " if tail.endswith((",", ";", "—", "–", "-", "/", "(")) else "\n"
+    return sep + more
+
+
+def _fallback_text(mode: str, textbook: str) -> str:
+    if mode in _TEXTBOOK_MODES and not textbook.strip():
+        return ANSWER_NOT_IN_CHAPTER
+    return CHAT_ANSWER_FAILED
 
 
 def _first_name(full_name: str | None) -> str:
@@ -432,21 +474,23 @@ def _scope_from_enrolled_content(overview, q: str) -> dict:
     best_subj = None
     best_ch = None
 
-    for subj in _named_subjects(overview.subjects, q):
-        if not subj.chapters:
-            continue
+    def _search(subj):
         board = getattr(subj.board, "value", str(subj.board))
         class_level = getattr(subj.class_level, "value", str(subj.class_level))
         collection = f"{board}_{class_level}_{subj.subject_name}".replace(" ", "_")
         try:
-            docs = retrieve_from_collection(
-                q,
-                collection_name=collection,
-                chapter_ids=None,
-                k=6,
-            )
+            return retrieve_from_collection(q, collection_name=collection, chapter_ids=None, k=6)
         except Exception:
-            continue
+            logger.warning("assistant scope search failed for %s", collection, exc_info=True)
+            return []
+
+    subjects = [s for s in _named_subjects(overview.subjects, q) if s.chapters]
+    if not subjects:
+        return {}
+    with ThreadPoolExecutor(max_workers=min(4, len(subjects))) as pool:
+        results = list(pool.map(_search, subjects))
+
+    for subj, docs in zip(subjects, results):
         for doc in docs or []:
             meta = getattr(doc, "metadata", None) or {}
             ch = _chapter_from_doc_meta(subj, meta)
@@ -473,14 +517,21 @@ def detect_learning_scope(
     conversation_history: list[dict[str, str]] | None = None,
     *,
     agent_mode: str = "free",
+    overview=None,
+    turn: tuple | None = None,
 ) -> dict:
-    """Match enrolled subject/chapter from the free-text prompt (no picker required)."""
-    overview = learning_service.get_overview(db, user)
+    """Match enrolled subject/chapter from the free-text prompt (no picker required).
+
+    *overview* and *turn* (from ``_resolve_turn_context``) let the caller share work
+    it already did this turn.
+    """
+    if overview is None:
+        overview = learning_service.get_overview(db, user)
     if not overview.subjects:
         return {}
 
     mode = normalize_agent_mode(agent_mode)
-    conv, recent_hist, mem = _resolve_turn_context(query, conversation_history)
+    conv, recent_hist, mem = turn or _resolve_turn_context(query, conversation_history)
     q_resolved = conv.retrieval_query or query
     q_full = _scope_query_text(q_resolved, recent_hist)
     full_score, full_subj, full_ch = _best_learning_match(overview, q_full)
@@ -515,13 +566,13 @@ def detect_learning_scope(
                 return _scope_dict(hist_subj, hist_ch, hist_score)
 
     scoped = _scope_dict(full_subj, full_ch, full_score)
-    # Ask / Practice / Explain: if title match missed (any subject), fall back to
-    # content search across enrolled textbooks so section headings still resolve.
+    # If title match missed (any subject), fall back to content search across enrolled
+    # textbooks so section headings still resolve — free mode too, so its academic answers
+    # stay grounded in the student's book when it covers the topic.
     # A "chapter N" that matched nothing stays unresolved: guessing another chapter
     # is how "chapter 1 in english" got answered from Science.
     if (
-        mode in _TEXTBOOK_MODES
-        and not scoped.get("chapter_id")
+        not scoped.get("chapter_id")
         and not extract_mentioned_chapter_numbers(q_full)
     ):
         content_scope = _scope_from_enrolled_content(overview, q_full)
@@ -581,10 +632,10 @@ def _textbook_snippets(
         if not docs:
             return ""
         bits: list[str] = []
-        for doc in docs[:4]:
+        for doc in docs[:ASSISTANT_RAG_CHUNKS]:
             text = (getattr(doc, "page_content", None) or str(doc) or "").strip()
             if text:
-                bits.append(text[:700])
+                bits.append(text[:ASSISTANT_RAG_CHUNK_CHARS])
         if not bits:
             return ""
         if mode == "free":
@@ -598,6 +649,12 @@ def _textbook_snippets(
             )
         return header + "\n---\n".join(bits)
     except Exception:
+        logger.warning(
+            "assistant textbook retrieval failed (chapter=%s, subject=%s)",
+            chapter_id,
+            subject_name,
+            exc_info=True,
+        )
         return ""
 
 
@@ -661,11 +718,12 @@ def build_greeting(user: User) -> str:
     return ""
 
 
-def mode_suggested_prompts(db: Session, user: User, agent_mode: str) -> list[str]:
+def mode_suggested_prompts(db: Session, user: User, agent_mode: str, *, overview=None) -> list[str]:
     mode = normalize_agent_mode(agent_mode)
     if mode == "free":
-        return build_suggested_prompts(db, user)
-    overview = learning_service.get_overview(db, user)
+        return build_suggested_prompts(db, user, overview=overview)
+    if overview is None:
+        overview = learning_service.get_overview(db, user)
     subject = overview.subjects[0].subject_name if overview.subjects else "your subject"
     chapter = None
     if overview.continue_learning and overview.continue_learning.chapter_name:
@@ -693,54 +751,61 @@ def mode_suggested_prompts(db: Session, user: User, agent_mode: str) -> list[str
     ][:6]
 
 
-async def chat(
+@dataclass
+class _Turn:
+    query: str
+    messages: list[dict[str, str]]
+    overview: object
+    fallback: str
+
+
+async def _understand_images_for_turn(user: User, overview, query: str, image_ids: list[str]):
+    from app.modules.image_understanding.service import understand as understand_images
+
+    class_level = str(getattr(overview, "class_level", "") or "")
+    return await understand_images(
+        image_ids,
+        query,
+        user_id=int(user.id),
+        class_level=class_level,
+    )
+
+
+def _prepare_turn(
     db: Session,
     user: User,
     *,
+    overview,
     query: str,
-    conversation_history: list[dict[str, str]] | None = None,
-    agent_mode: str = "free",
-    image_ids: list[str] | None = None,
-) -> tuple[str, list[str]]:
-    mode = normalize_agent_mode(agent_mode)
-    context = build_student_context(db, user)
-    image_block = ""
-    math_block = ""
-    retrieval_query = query
-    image_unclear = False
-    if image_ids:
-        from app.modules.image_understanding.service import understand as understand_images
+    retrieval_query: str,
+    conversation_history: list[dict[str, str]] | None,
+    mode: str,
+    image_unclear: bool,
+    image_block: str,
+    math_block: str,
+) -> tuple[list[dict[str, str]], str]:
+    """Blocking turn setup (DB, embeddings, vector search, SymPy) — run in a worker thread.
 
-        class_level = ""
-        try:
-            overview = learning_service.get_overview(db, user)
-            class_level = str(getattr(overview, "class_level", "") or "")
-        except Exception:
-            pass
-        bundle = await understand_images(
-            image_ids,
-            query,
-            user_id=int(user.id),
-            class_level=class_level,
-        )
-        if bundle:
-            image_unclear = bundle.result.status == "unclear"
-            image_block = bundle.tutor_prompt_block
-            math_block = bundle.math_prompt_block
-            if bundle.retrieval_query:
-                retrieval_query = bundle.retrieval_query
-            if not (query or "").strip():
-                query = bundle.retrieval_query or "Please help me with the attached image."
-
-    conv, recent_hist, mem = _resolve_turn_context(query, conversation_history)
+    Returns the LLM messages and the student-facing text to show if the model returns nothing.
+    """
+    context = build_student_context(db, user, overview=overview)
+    turn = _resolve_turn_context(query, conversation_history)
+    _conv, recent_hist, mem = turn
+    scope_q = retrieval_query or query
     # Unreadable image: the tutor must ask for a clearer photo, so don't fetch unrelated textbook text.
     scope = {} if image_unclear else detect_learning_scope(
-        db, user, retrieval_query or query, recent_hist, agent_mode=mode
+        db,
+        user,
+        scope_q,
+        recent_hist,
+        agent_mode=mode,
+        overview=overview,
+        turn=turn if scope_q == query else None,
     )
     textbook = (
         _textbook_snippets(
             scope,
-            retrieval_query or query,
+            scope_q,
             agent_mode=mode,
             conversation_history=recent_hist,
         )
@@ -766,19 +831,102 @@ async def chat(
         image_understanding_block=image_block,
         math_prompt_block=math_block,
     )
-    answer = (await _call_mistral_async(messages, max_tokens=ASSISTANT_MAX_TOKENS, feature="assistant") or "").strip()
-    if _looks_incomplete(answer):
+    return messages, _fallback_text(mode, textbook)
+
+
+async def _start_turn(
+    db: Session,
+    user: User,
+    *,
+    query: str,
+    conversation_history: list[dict[str, str]] | None,
+    mode: str,
+    image_ids: list[str] | None,
+    on_image_status=None,
+) -> _Turn:
+    overview = await asyncio.to_thread(learning_service.get_overview, db, user)
+    image_block = ""
+    math_block = ""
+    retrieval_query = query
+    image_unclear = False
+    if image_ids:
+        bundle = await _understand_images_for_turn(user, overview, query, image_ids)
+        if bundle:
+            image_unclear = bundle.result.status == "unclear"
+            image_block = bundle.tutor_prompt_block
+            math_block = bundle.math_prompt_block
+            if bundle.retrieval_query:
+                retrieval_query = bundle.retrieval_query
+            if not (query or "").strip():
+                query = bundle.retrieval_query or "Please help me with the attached image."
+            if on_image_status:
+                await on_image_status(
+                    "\0STATUS:image_understood:"
+                    f"{bundle.result.image_type}:{bundle.intent}:{bundle.result.confidence}"
+                )
+    messages, fallback = await asyncio.to_thread(
+        _prepare_turn,
+        db,
+        user,
+        overview=overview,
+        query=query,
+        retrieval_query=retrieval_query,
+        conversation_history=conversation_history,
+        mode=mode,
+        image_unclear=image_unclear,
+        image_block=image_block,
+        math_block=math_block,
+    )
+    return _Turn(query=query, messages=messages, overview=overview, fallback=fallback)
+
+
+async def chat(
+    db: Session,
+    user: User,
+    *,
+    query: str,
+    conversation_history: list[dict[str, str]] | None = None,
+    agent_mode: str = "free",
+    image_ids: list[str] | None = None,
+) -> tuple[str, list[str]]:
+    mode = normalize_agent_mode(agent_mode)
+    turn = await _start_turn(
+        db,
+        user,
+        query=query,
+        conversation_history=conversation_history,
+        mode=mode,
+        image_ids=image_ids,
+    )
+    messages = turn.messages
+    answer = (
+        await _call_mistral_async(
+            messages,
+            max_tokens=ASSISTANT_MAX_TOKENS,
+            feature="assistant",
+            empty_fallback=turn.fallback,
+        )
+        or ""
+    ).strip() or turn.fallback
+    if answer != turn.fallback and _looks_incomplete(answer):
         more = (
             await _call_mistral_async(
                 _with_continue(messages, answer),
                 max_tokens=ASSISTANT_MAX_TOKENS,
                 feature="assistant",
+                empty_fallback="",
             )
             or ""
         ).strip()
-        if more:
-            answer = f"{answer.rstrip()}\n{more}".strip()
-    return answer, mode_suggested_prompts(db, user, mode)
+        tail = _continuation_tail(answer, more)
+        if tail is None:
+            # Model restarted instead of continuing; keep the restart if it is the complete one.
+            if not _looks_incomplete(more):
+                answer = more
+        elif tail:
+            answer = (answer.rstrip() + tail).strip()
+    prompts = await asyncio.to_thread(mode_suggested_prompts, db, user, mode, overview=turn.overview)
+    return answer, prompts
 
 
 async def chat_stream(
@@ -791,74 +939,27 @@ async def chat_stream(
     image_ids: list[str] | None = None,
 ) -> AsyncIterator[str]:
     mode = normalize_agent_mode(agent_mode)
-    context = build_student_context(db, user)
-    image_block = ""
-    math_block = ""
-    retrieval_query = query
-    image_unclear = False
+    # Sent before any setup so the client (and proxies) get bytes immediately.
+    yield "\0STATUS:searching"
     if image_ids:
         yield "\0STATUS:image_processing"
-        from app.modules.image_understanding.service import understand as understand_images
+    statuses: list[str] = []
 
-        class_level = ""
-        try:
-            overview = learning_service.get_overview(db, user)
-            class_level = str(getattr(overview, "class_level", "") or "")
-        except Exception:
-            pass
-        bundle = await understand_images(
-            image_ids,
-            query,
-            user_id=int(user.id),
-            class_level=class_level,
-        )
-        if bundle:
-            image_unclear = bundle.result.status == "unclear"
-            image_block = bundle.tutor_prompt_block
-            math_block = bundle.math_prompt_block
-            if bundle.retrieval_query:
-                retrieval_query = bundle.retrieval_query
-            if not (query or "").strip():
-                query = bundle.retrieval_query or "Please help me with the attached image."
-            yield (
-                "\0STATUS:image_understood:"
-                f"{bundle.result.image_type}:{bundle.intent}:{bundle.result.confidence}"
-            )
+    async def _queue_status(s: str) -> None:
+        statuses.append(s)
 
-    conv, recent_hist, mem = _resolve_turn_context(query, conversation_history)
-    # Unreadable image: the tutor must ask for a clearer photo, so don't fetch unrelated textbook text.
-    scope = {} if image_unclear else detect_learning_scope(
-        db, user, retrieval_query or query, recent_hist, agent_mode=mode
-    )
-    textbook = (
-        _textbook_snippets(
-            scope,
-            retrieval_query or query,
-            agent_mode=mode,
-            conversation_history=recent_hist,
-        )
-        if scope
-        else ""
-    )
-    math_block = math_block or _prepare_math_engine_block(
-        query,
-        subject_name=scope.get("subject_name", ""),
-        class_level="",
-        context=textbook,
-        conversation_history=recent_hist,
-    )
-    messages = _build_messages(
-        context=context,
-        student_name=user.full_name,
+    turn = await _start_turn(
+        db,
+        user,
         query=query,
-        conversation_history=recent_hist,
-        agent_mode=mode,
-        detected=_format_detected(scope),
-        textbook=textbook,
-        conversation_memory=format_memory_for_prompt(mem),
-        image_understanding_block=image_block,
-        math_prompt_block=math_block,
+        conversation_history=conversation_history,
+        mode=mode,
+        image_ids=image_ids,
+        on_image_status=_queue_status,
     )
+    for s in statuses:
+        yield s
+    messages = turn.messages
     parts: list[str] = []
     async for token in _stream_mistral_async(
         messages, max_tokens=ASSISTANT_MAX_TOKENS, feature="assistant"
@@ -866,15 +967,36 @@ async def chat_stream(
         parts.append(token)
         yield token
     answer = "".join(parts).strip()
+    if not answer:
+        yield turn.fallback
+        return
     if not _looks_incomplete(answer):
         return
-    # One continuation pass — stream the rest so the UI finishes the cut-off reply.
+    # One continuation pass — buffer its start so an echoed overlap or a full restart
+    # never gets streamed on top of what the student already sees.
+    probe = ""
+    checked = False
     async for token in _stream_mistral_async(
         _with_continue(messages, answer),
         max_tokens=ASSISTANT_MAX_TOKENS,
         feature="assistant",
     ):
-        yield token
+        if checked:
+            yield token
+            continue
+        probe += token
+        if len(probe.lstrip()) < _CONTINUE_PROBE_CHARS:
+            continue
+        checked = True
+        tail = _continuation_tail(answer, probe)
+        if tail is None:
+            return
+        if tail:
+            yield tail
+    if not checked:
+        tail = _continuation_tail(answer, probe)
+        if tail:
+            yield tail
 
 
 if __name__ == "__main__":

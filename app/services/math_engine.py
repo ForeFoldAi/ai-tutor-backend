@@ -360,7 +360,8 @@ def _try_arithmetic(query: str, class_band: str) -> MathEngineResult | None:
         return None
 
     formula_words = "Result = evaluate the expression using order of operations (BODMAS)"
-    formula_latex = f"$$\\text{{Result}} = {cleaned.replace('*', ' \\times ').replace('/', ' \\div ')}$$"
+    latex_expr = cleaned.replace("*", " \\times ").replace("/", " \\div ")
+    formula_latex = f"$$\\text{{Result}} = {latex_expr}$$"
     solution = [f"$$= {latex_number(num)}$$"]
     return MathEngineResult(
         solved=True,

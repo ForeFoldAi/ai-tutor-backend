@@ -15,7 +15,7 @@ from app.modules.users.models import User
 
 _PLATFORM_GUIDE = """
 AI Tutor platform (student-facing):
-- AI Learning Studio: home for subjects, quick-start modes, and resume learning.
+- My Learning: home for subjects, quick-start modes, and resume learning.
 - Ask AI Tutor (this chat): platform help plus general school questions — including topics outside the textbook.
 - Quick Start (Ask / Practice / Explain): textbook-only popup modes that detect subject/topic from your question — no subject/chapter picker.
 - Chapter AI Tutor: deeper textbook-grounded chat after picking a subject and chapter from Your Subjects.
@@ -37,10 +37,11 @@ def _enum_list(values) -> list[str]:
     return out
 
 
-def build_student_context(db: Session, user: User) -> str:
+def build_student_context(db: Session, user: User, *, overview=None) -> str:
     """Serialize only this student's data plus their tagged school/tutor."""
     profile = db.get(UserSignupProfile, user.id)
-    overview = learning_service.get_overview(db, user)
+    if overview is None:
+        overview = learning_service.get_overview(db, user)
     school_class = resolve_student_school_class(db, user)
     class_entry = student_class_entry(user)
 
@@ -161,13 +162,14 @@ def build_student_context(db: Session, user: User) -> str:
     return "\n".join(lines)
 
 
-def build_suggested_prompts(db: Session, user: User) -> list[str]:
-    overview = learning_service.get_overview(db, user)
+def build_suggested_prompts(db: Session, user: User, *, overview=None) -> list[str]:
+    if overview is None:
+        overview = learning_service.get_overview(db, user)
     prompts = [
         "What subjects am I enrolled in?",
         "Explain photosynthesis in simple words",
         "How can AI Tutor help me study?",
-        "What is AI Learning Studio?",
+        "What is My Learning?",
     ]
     if overview.continue_learning:
         prompts.insert(0, "What was I studying last?")

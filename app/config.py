@@ -20,15 +20,77 @@ def _env_first(*names: str, default: str = "") -> str:
     return default
 
 
-LLM_BASE_URL = _env_first("LLM_BASE_URL", default="https://api.mistral.ai/v1").rstrip("/")
-LLM_API_KEY = _env_first("LLM_API_KEY", "MISTRAL_API_KEY") or None
-LLM_MODEL = _env_first("LLM_MODEL", "MISTRAL_MODEL", default="mistral-small-latest")
-LLM_TEMPERATURE = float(_env_first("LLM_TEMPERATURE", "MISTRAL_TEMPERATURE", default="0.35"))
+# Provider presets (all OpenAI-compatible, all have a free tier). Switch with LLM_PROVIDER.
+_PROVIDERS: dict[str, dict[str, str]] = {
+    "groq": {
+        "base_url": "https://api.groq.com/openai/v1",
+        "key_env": "GROQ_API_KEY",
+        "model": os.environ.get("GROQ_MODEL", "qwen/qwen3.8-27b"),
+        "fast_model": os.environ.get("GROQ_FAST_MODEL", "qwen/qwen3.8-27b"),
+    },
+    "mistral": {
+        "base_url": "https://api.mistral.ai/v1",
+        "key_env": "MISTRAL_API_KEY",
+        "model": _env_first("MISTRAL_MODEL", default="mistral-small-latest"),
+        "fast_model": _env_first("MISTRAL_MODEL", default="mistral-small-latest"),
+    },
+    "gemini": {
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai",
+        "key_env": "GEMINI_API_KEY",
+        "model": os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
+        "fast_model": os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
+    },
+}
+
+
+def model_extra_params(model: str) -> dict[str, str]:
+    """Reasoning models think before answering — turn that off/down so the first word comes fast."""
+    m = (model or "").lower()
+    if "qwen3" in m:
+        return {"reasoning_effort": os.environ.get("LLM_QWEN_REASONING", "none")}
+    if "gpt-oss" in m:
+        return {"reasoning_effort": os.environ.get("LLM_GPT_OSS_REASONING", "low")}
+    return {}
+
+
+def _provider_key(name: str) -> str | None:
+    p = _PROVIDERS.get(name)
+    return (os.environ.get(p["key_env"], "").strip() or None) if p else None
+
+
+def _pick_provider() -> str:
+    explicit = os.environ.get("LLM_PROVIDER", "").strip().lower()
+    if explicit in _PROVIDERS and _provider_key(explicit):
+        return explicit
+    if explicit in _PROVIDERS:  # chosen provider has no key yet -> use one that does
+        return next((n for n in ("mistral", "groq", "gemini") if _provider_key(n)), explicit)
+    # Auto: prefer Groq when a key exists, otherwise legacy Mistral behaviour.
+    return "groq" if _provider_key("groq") else "mistral"
+
+
+LLM_PROVIDER = _pick_provider()
+_prov = _PROVIDERS[LLM_PROVIDER]
+LLM_FALLBACK_PROVIDER = (os.environ.get("LLM_SECONDARY_PROVIDER") or os.environ.get("LLM_FALLBACK_PROVIDER") or "").strip().lower()
+if LLM_FALLBACK_PROVIDER not in _PROVIDERS or LLM_FALLBACK_PROVIDER == LLM_PROVIDER or not _provider_key(LLM_FALLBACK_PROVIDER):
+    # Auto fallback: first other provider that has a key configured.
+    LLM_FALLBACK_PROVIDER = next(
+        (n for n in ("mistral", "groq", "gemini") if n != LLM_PROVIDER and _provider_key(n)), ""
+    )
+
+LLM_BASE_URL = _env_first("LLM_BASE_URL", default=_prov["base_url"]).rstrip("/")
+LLM_API_KEY = _env_first("LLM_API_KEY") or _provider_key(LLM_PROVIDER)
+LLM_MODEL = _env_first("LLM_MODEL", default=_prov["model"])
+LLM_TEMPERATURE = float(_env_first("LLM_TEMPERATURE", "MISTRAL_TEMPERATURE", default="0.3"))
 LLM_MAX_TOKENS = int(_env_first("LLM_MAX_TOKENS", "MISTRAL_MAX_TOKENS", default="1024"))
 # Mathematics chat needs prose + ```math-lesson``` JSON — 1024 often truncates mid-fence.
 MATH_CHAT_MAX_TOKENS = int(os.environ.get("MATH_CHAT_MAX_TOKENS", "2048"))
 # Ask AI Tutor: small/medium replies only (text + voice share this budget).
 ASSISTANT_MAX_TOKENS = int(os.environ.get("ASSISTANT_MAX_TOKENS", "512"))
+ASSISTANT_RAG_CHUNKS = int(os.environ.get("ASSISTANT_RAG_CHUNKS", "6"))
+ASSISTANT_RAG_CHUNK_CHARS = int(os.environ.get("ASSISTANT_RAG_CHUNK_CHARS", "1200"))
+# Pass-2 math/science panel JSON runs after the answer and holds back the stream's
+# `done` event; the panel is optional, so give up early rather than wait 90 s.
+INTERACTIVE_PASS2_TIMEOUT_SEC = float(os.environ.get("INTERACTIVE_PASS2_TIMEOUT_SEC", "25"))
 
 # Optional per-feature model overrides (empty → LLM_MODEL).
 LLM_CHAT_MODEL = _env_first("LLM_CHAT_MODEL")
@@ -79,25 +141,83 @@ _LLM_FEATURE_BASE_URLS = {
 }
 
 
+# Features that are tiny background classifiers — they get the provider's fast model.
+_SIDE_CARS = ("voice_affect", "image_select", "voice_understanding")
+
+
+def _feature_provider(feature: str) -> str | None:
+    """Provider name for a feature: LLM_<FEATURE>_PROVIDER = primary|secondary|groq|mistral|gemini.
+
+    Defaults: lesson -> secondary (if configured); side-car classifiers -> primary (fast model).
+    Returns None to use the global primary provider.
+    """
+    raw = os.environ.get(f"LLM_{feature.upper()}_PROVIDER", "").strip().lower()
+    if not raw:
+        raw = "secondary" if feature == "lesson" else ""
+    if raw == "secondary":
+        raw = LLM_FALLBACK_PROVIDER
+    elif raw == "primary":
+        raw = ""
+    if raw in _PROVIDERS and _provider_key(raw):
+        return raw
+    return None
+
+
+def _provider_for(feature: str) -> str:
+    return _feature_provider(feature) or LLM_PROVIDER
+
+
+def llm_fallback_for(feature: str = "chat") -> dict[str, str] | None:
+    """The *other* provider for a feature, used when its own provider 429s or stalls."""
+    if feature == "vision":
+        return None
+    used = _provider_for(feature)
+    other = LLM_FALLBACK_PROVIDER if used == LLM_PROVIDER else LLM_PROVIDER
+    if not other or other == used or not _provider_key(other):
+        return None
+    p = _PROVIDERS[other]
+    return {
+        "name": other,
+        "base_url": p["base_url"],
+        "key": _provider_key(other) or "",
+        "model": p["fast_model"] if feature in _SIDE_CARS else p["model"],
+    }
+
+
 def llm_model_for(feature: str = "chat") -> str:
-    """Resolve model for a feature; falls back to LLM_MODEL (vision has its own default)."""
+    """Resolve model for a feature (explicit LLM_<F>_MODEL > provider preset)."""
     override = _LLM_FEATURE_MODELS.get(feature) or ""
     if override:
         return override
     if feature == "vision":
         return LLM_VISION_MODEL or "pixtral-12b-2409"
+    prov = _provider_for(feature)
+    if feature in _SIDE_CARS:
+        return _PROVIDERS[prov]["fast_model"]
+    if prov != LLM_PROVIDER:
+        return _PROVIDERS[prov]["model"]
     return LLM_MODEL
 
 
 def llm_api_key_for(feature: str = "chat") -> str | None:
-    """Resolve API key for a feature; falls back to LLM_API_KEY."""
-    return _LLM_FEATURE_KEYS.get(feature) or LLM_API_KEY
+    """Resolve API key for a feature."""
+    if _LLM_FEATURE_KEYS.get(feature):
+        return _LLM_FEATURE_KEYS[feature]
+    if feature == "vision":
+        return _provider_key("mistral") or LLM_API_KEY
+    prov = _provider_for(feature)
+    return (_provider_key(prov) if prov != LLM_PROVIDER else None) or LLM_API_KEY
 
 
 def llm_base_url_for(feature: str = "chat") -> str:
-    """Resolve base URL for a feature; falls back to LLM_BASE_URL."""
+    """Resolve base URL for a feature."""
     override = (_LLM_FEATURE_BASE_URLS.get(feature) or "").rstrip("/")
-    return override or LLM_BASE_URL
+    if override:
+        return override
+    if feature == "vision":
+        return _PROVIDERS["mistral"]["base_url"]  # Pixtral lives on Mistral
+    prov = _provider_for(feature)
+    return _PROVIDERS[prov]["base_url"] if prov != LLM_PROVIDER else LLM_BASE_URL
 
 
 # Back-compat aliases — same resolved values so existing imports keep working.

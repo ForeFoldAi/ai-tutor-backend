@@ -20,11 +20,15 @@ from app.config import (
     LLM_API_KEY,
     LLM_BASE_URL,
     LLM_MAX_TOKENS,
+    LLM_FALLBACK_PROVIDER,
     LLM_MODEL,
+    LLM_PROVIDER,
     LLM_TEMPERATURE,
     llm_api_key_for,
     llm_base_url_for,
+    llm_fallback_for,
     llm_model_for,
+    model_extra_params,
 )
 from app.services.token_usage import current_user_id, record_usage, usage_from
 
@@ -46,15 +50,17 @@ _RETRY_STATUSES = frozenset({429, 503})
 _RETRY_WAITS_SEC = (2.0, 5.0, 15.0)
 # Side-car features must not amplify 429 storms (chat answer is primary).
 # "vision" retries are owned by image_understanding/vision.py (VISION_MAX_RETRIES) to avoid nesting.
-_NO_RETRY_FEATURES = frozenset({"image_select", "voice_affect", "vision"})
+_NO_RETRY_FEATURES = frozenset({"image_select", "voice_affect", "voice_understanding", "vision"})
 # Concurrent answers per process. Raise on a paid tier; 429s still back everyone off via cooldown.
-_LLM_MAX_CONCURRENCY = max(1, int(os.environ.get("LLM_MAX_CONCURRENCY", "4")))
+_LLM_MAX_CONCURRENCY = max(1, int(os.environ.get("LLM_MAX_CONCURRENCY", "8")))
 # Side-car calls get their own single slot so they never delay a student's answer.
-_SIDE_FEATURES = frozenset({"image_select", "voice_affect"})
+_SIDE_FEATURES = frozenset({"image_select", "voice_affect", "voice_understanding"})
 # Minimum gap between request *starts* (not durations) across the process.
-_LLM_MIN_INTERVAL_SEC = float(os.environ.get("LLM_MIN_INTERVAL_SEC", "0.2"))
+_LLM_MIN_INTERVAL_SEC = float(os.environ.get("LLM_MIN_INTERVAL_SEC", "0.0"))
 _pace_lock = threading.Lock()
-_next_start_at = 0.0
+_next_start_at: dict[str, float] = {}  # per provider base URL
+# Streaming: give up on a provider that sends no first token within this window.
+_FIRST_TOKEN_TIMEOUT_SEC = float(os.environ.get("LLM_FIRST_TOKEN_TIMEOUT_SEC", "6"))
 _sync_gate = threading.BoundedSemaphore(_LLM_MAX_CONCURRENCY)
 _sync_client = httpx.Client(timeout=180.0)
 # Tests inject an httpx.MockTransport here.
@@ -118,6 +124,7 @@ def _payload(
         "max_tokens": token_limit,
         "temperature": LLM_TEMPERATURE if temperature is None else temperature,
     }
+    body.update(model_extra_params(body["model"]))
     if stream:
         body["stream"] = True
     return body
@@ -144,12 +151,15 @@ def strip_emojis(text: str) -> str:
     return re.sub(r"[ \t]{2,}", " ", out)
 
 
+_THINK_RE = re.compile(r"<think>.*?</think>\s*", re.S)
+
+
 def _content_from_response(payload: dict[str, Any]) -> str:
-    return strip_emojis(
+    return _THINK_RE.sub("", strip_emojis(
         payload.get("choices", [{}])[0]
         .get("message", {})
         .get("content", "")
-    ).strip()
+    )).strip()
 
 
 def _max_attempts(feature: str) -> int:
@@ -170,69 +180,121 @@ def _retry_wait_sec(resp: httpx.Response, attempt: int) -> float:
     return base + random.uniform(0.0, 0.5)
 
 
-def _reserve_start() -> float:
-    """Claim the next start time (spaced by _LLM_MIN_INTERVAL_SEC); returns seconds to wait for it."""
-    global _next_start_at
+def _reserve_start(provider: str = "") -> float:
+    """Claim the next start time for a provider; returns seconds to wait for it."""
     with _pace_lock:
         now = time.monotonic()
-        start = max(now, _next_start_at)
-        _next_start_at = start + _LLM_MIN_INTERVAL_SEC
+        start = max(now, _next_start_at.get(provider, 0.0))
+        _next_start_at[provider] = start + _LLM_MIN_INTERVAL_SEC
         return start - now
 
 
-def _cool_down(wait: float) -> None:
-    """After a 429/503 nobody on this process starts a new call for ``wait`` seconds."""
-    global _next_start_at
+def _cool_down(wait: float, provider: str = "") -> None:
+    """After a 429/503 nobody starts a new call to *that provider* for ``wait`` seconds."""
     with _pace_lock:
-        _next_start_at = max(_next_start_at, time.monotonic() + wait)
+        _next_start_at[provider] = max(_next_start_at.get(provider, 0.0), time.monotonic() + wait)
 
 
-async def _pace_async() -> None:
-    delay = _reserve_start()
+async def _pace_async(provider: str = "") -> None:
+    delay = _reserve_start(provider)
     if delay > 0:
         await asyncio.sleep(delay)
 
 
-def _pace_sync() -> None:
-    delay = _reserve_start()
+def _pace_sync(provider: str = "") -> None:
+    delay = _reserve_start(provider)
     if delay > 0:
         time.sleep(delay)
 
 
-async def _send_with_retries(
-    feature: str, send: Callable[[httpx.AsyncClient], Any], *, stream: bool = False
-) -> httpx.Response:
-    """Send under a concurrency slot; 429/503 backoff sleeps happen *outside* the slot.
+def _targets(feature: str) -> list[dict[str, str]]:
+    """Primary provider first, then the configured fallback (if any)."""
+    out = [
+        {
+            "name": llm_base_url_for(feature),
+            "base_url": llm_base_url_for(feature),
+            "key": llm_api_key_for(feature) or "",
+            "model": llm_model_for(feature),
+        }
+    ]
+    fb = llm_fallback_for(feature)
+    if fb and fb["key"]:
+        out.append({**fb, "name": fb["base_url"]})
+    return out
 
-    For ``stream=True`` the slot stays held on return; caller must call ``_async_slot(feature).release()``
-    after closing the response. For non-stream calls the slot is already released.
+
+def _target_body(body: dict[str, Any], target: dict[str, str]) -> dict[str, Any]:
+    out = {k: v for k, v in body.items() if k != "reasoning_effort"}
+    return {**out, "model": target["model"], **model_extra_params(target["model"])}
+
+
+def _target_request(client: httpx.AsyncClient, target: dict[str, str], body: dict[str, Any], *, stream: bool, timeout: float):
+    headers = {"Authorization": f"Bearer {target['key']}", "Content-Type": "application/json"}
+    url = f"{target['base_url']}/chat/completions"
+    payload = _target_body(body, target)
+    if stream:
+        return client.send(client.build_request("POST", url, headers=headers, json=payload), stream=True)
+    return client.post(url, headers=headers, json=payload, timeout=timeout)
+
+
+async def _send_with_retries(
+    feature: str, body: dict[str, Any], *, stream: bool = False, timeout: float = 90.0
+) -> httpx.Response:
+    """Send under a concurrency slot with instant provider failover.
+
+    A 429/5xx/timeout on the primary provider switches straight to the fallback
+    provider (no sleeping); we only back off once every provider has failed.
+    For ``stream=True`` the slot stays held on return; caller must release it.
     """
     client, *_ = _async_state()
     slot = _async_slot(feature)
-    attempts = _max_attempts(feature)
+    targets = _targets(feature)
+    attempts = max(_max_attempts(feature), len(targets))
+    last_exc: BaseException | None = None
     for attempt in range(attempts):
+        target = targets[attempt % len(targets)]
         await slot.acquire()
         try:
-            await _pace_async()
-            resp = await send(client)
+            await _pace_async(target["name"])
+            # Streaming: bound the wait for response headers/first byte so a stalled provider fails over.
+            if stream and len(targets) > 1:
+                resp = await asyncio.wait_for(
+                    _target_request(client, target, body, stream=True, timeout=timeout),
+                    timeout=_FIRST_TOKEN_TIMEOUT_SEC,
+                )
+            else:
+                resp = await _target_request(client, target, body, stream=stream, timeout=timeout)
+        except (asyncio.TimeoutError, httpx.TransportError) as exc:
+            slot.release()
+            last_exc = exc
+            logger.warning("LLM feature=%s provider=%s %s — failing over", feature, target["name"], exc.__class__.__name__)
+            _cool_down(2.0, target["name"])
+            if attempt + 1 >= attempts:
+                raise
+            continue
         except BaseException:
             slot.release()
             raise
-        if resp.status_code not in _RETRY_STATUSES or attempt + 1 >= attempts:
-            if resp.status_code in _RETRY_STATUSES:
-                _cool_down(_retry_wait_sec(resp, attempt))
+        failed = resp.status_code in _RETRY_STATUSES or resp.status_code >= 500
+        if not failed or attempt + 1 >= attempts:
+            if failed:
+                _cool_down(_retry_wait_sec(resp, attempt), target["name"])
             if not stream:
                 slot.release()
             return resp
         wait = _retry_wait_sec(resp, attempt)
-        _cool_down(wait)
+        _cool_down(wait, target["name"])
         if stream:
             await resp.aclose()
         slot.release()
         logger.warning(
-            "LLM feature=%s status=%s attempt=%d retry_in=%.1fs", feature, resp.status_code, attempt + 1, wait
+            "LLM feature=%s provider=%s status=%s attempt=%d", feature, target["name"], resp.status_code, attempt + 1
         )
-        await asyncio.sleep(wait)
+        # Another provider is available -> switch immediately; otherwise back off.
+        if len(targets) == 1 or (attempt + 1) % len(targets) == 0:
+            await asyncio.sleep(min(wait, 5.0))
+    if last_exc:
+        raise last_exc
     raise AssertionError("unreachable")
 
 
@@ -247,24 +309,14 @@ async def complete(
 ) -> str:
     ensure_llm_config(feature)
     body = _payload(messages, feature=feature, max_tokens=max_tokens, temperature=temperature)
-    logger.debug(
-        "LLM request feature=%s model=%s base=%s max_tokens=%s",
-        feature,
-        body["model"],
-        llm_base_url_for(feature),
-        body["max_tokens"],
-    )
-    client_timeout = 90.0 if timeout is None else float(timeout)
+    logger.debug("LLM request feature=%s model=%s max_tokens=%s", feature, body["model"], body["max_tokens"])
+    client_timeout = 60.0 if timeout is None else float(timeout)
 
-    resp = await _send_with_retries(
-        feature,
-        lambda c: c.post(_chat_url(feature), headers=_headers(feature), json=body, timeout=client_timeout),
-    )
+    resp = await _send_with_retries(feature, body, timeout=client_timeout)
     resp.raise_for_status()
     data = resp.json()
     _track(feature, body["model"], data, in_loop=True)
     text = _content_from_response(data)
-    logger.debug("LLM response length=%d chars", len(text))
     return text or empty_fallback
 
 
@@ -279,21 +331,9 @@ async def stream(
     body = _payload(
         messages, feature=feature, max_tokens=max_tokens, stream=True, temperature=temperature
     )
-    logger.debug(
-        "LLM streaming request feature=%s model=%s base=%s max_tokens=%s",
-        feature,
-        body["model"],
-        llm_base_url_for(feature),
-        body["max_tokens"],
-    )
+    logger.debug("LLM streaming request feature=%s model=%s", feature, body["model"])
 
-    response = await _send_with_retries(
-        feature,
-        lambda c: c.send(
-            c.build_request("POST", _chat_url(feature), headers=_headers(feature), json=body), stream=True
-        ),
-        stream=True,
-    )
+    response = await _send_with_retries(feature, body, stream=True)
     try:
         response.raise_for_status()
         async for line in response.aiter_lines():
@@ -304,8 +344,6 @@ async def stream(
                 break
             try:
                 chunk = json.loads(data)
-                # ponytail: Mistral/Groq send usage on the last chunk by default; OpenAI would need
-                # stream_options.include_usage. Streams cut short by an interrupt record nothing.
                 _track(feature, body["model"], chunk, in_loop=True)
                 delta = chunk["choices"][0]["delta"].get("content", "")
                 if delta:
@@ -341,7 +379,7 @@ def complete_sync(
     attempts = _max_attempts(feature)
     for attempt in range(attempts):
         with _sync_gate:
-            _pace_sync()
+            _pace_sync(llm_base_url_for(feature))
             resp = _sync_client.post(_chat_url(feature), headers=_headers(feature), json=body, timeout=timeout)
         if resp.status_code not in _RETRY_STATUSES:
             resp.raise_for_status()
@@ -349,7 +387,7 @@ def complete_sync(
             _track(feature, body["model"], data, in_loop=False)
             return _content_from_response(data)
         wait = _retry_wait_sec(resp, attempt)
-        _cool_down(wait)
+        _cool_down(wait, llm_base_url_for(feature))
         if attempt + 1 >= attempts:
             resp.raise_for_status()
         logger.warning(
@@ -365,7 +403,7 @@ def complete_sync(
 
 # ponytail: self-check only; ceiling = import-time assert, upgrade = pytest if suite grows
 def _self_check() -> None:
-    for feat in ("chat", "voice", "lesson", "assistant"):
+    for feat in ("chat", "voice", "assistant"):
         assert llm_model_for(feat) == LLM_MODEL, f"default override leak for {feat}"
         assert llm_base_url_for(feat) == LLM_BASE_URL, f"default base leak for {feat}"
         assert llm_api_key_for(feat) == LLM_API_KEY, f"default key leak for {feat}"
@@ -386,3 +424,6 @@ def _self_check() -> None:
 
 
 _self_check()
+logger.info(
+    "LLM provider=%s model=%s fallback=%s", LLM_PROVIDER, LLM_MODEL, LLM_FALLBACK_PROVIDER or "none"
+)
