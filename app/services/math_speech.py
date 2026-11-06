@@ -84,6 +84,9 @@ _LATEX_COMMANDS: list[tuple[str, str]] = [
 _CARET_POWER_RE = re.compile(
     r"(\([^)]+\)|[A-Za-z][A-Za-z0-9]*|\d+(?:\.\d+)?)\s*\^\s*(\d+)\b"
 )
+_UNIT_RATE_RE = re.compile(r"\b(km|m|cm)[ \t]*/[ \t]*(h|hr|s|sec)\b", re.I)
+# Only maths operands (numbers, single letters, a closing bracket) — never "and/or" or URLs.
+_SLASH_FRACTION_RE = re.compile(r"(\)|(?<![/\w.])(?:\d+(?:\.\d+)?|[A-Za-z]))[ \t]*/[ \t]*(?=\d|\b[A-Za-z]\b|\()")
 _UNICODE_POWER_GLUED_RE = re.compile(
     r"([A-Za-z0-9]+)([" + re.escape(_SUPERSCRIPT_CHARS) + r"])"
 )
@@ -145,7 +148,7 @@ def latex_to_speech(inner: str) -> str:
 
     inner = re.sub(
         r"\\frac\{([^}]*)\}\{([^}]*)\}",
-        lambda m: f"{m.group(1).strip()} over {m.group(2).strip()}",
+        lambda m: f"{m.group(1).strip()} by {m.group(2).strip()}",
         inner,
     )
 
@@ -176,6 +179,12 @@ def plain_math_to_speech(text: str) -> str:
 
     text = _UNICODE_POWER_GLUED_RE.sub(_unicode_glued, text)
 
+    # Fractions the Indian classroom way: "p by q", "1 by 2" (TTS skips a bare "/").
+    text = _UNIT_RATE_RE.sub(
+        lambda m: f"{m.group(1)} per {'hour' if m.group(2).lower().startswith('h') else 'second'}", text
+    )
+    text = _SLASH_FRACTION_RE.sub(r"\1 by ", text)
+
     # Phrases tutors use — ensure clear speech (no change needed but normalize)
     text = re.sub(r"\bdx\b", "d x", text, flags=re.I)
     text = re.sub(r"\bdy\b", "d y", text, flags=re.I)
@@ -195,7 +204,7 @@ def _convert_bare_latex_commands(text: str) -> str:
     """LaTeX commands that appear outside $ delimiters (common in streamed tutor text)."""
     text = re.sub(
         r"\\frac\{([^}]*)\}\{([^}]*)\}",
-        lambda m: f" {m.group(1).strip()} over {m.group(2).strip()} ",
+        lambda m: f" {m.group(1).strip()} by {m.group(2).strip()} ",
         text,
     )
     for pattern, repl in _LATEX_COMMANDS:

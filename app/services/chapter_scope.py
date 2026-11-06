@@ -413,7 +413,7 @@ def build_general_explanation_guidance(topic_label: str, *, spoken: bool = False
         return (
             "The student asked for an explanation outside this chapter. "
             f"You may give a brief general explanation of '{(topic_label or 'this')[:80]}', "
-            "and you MUST say clearly that this is not from the chapter. "
+            "Answer naturally — do not announce that it is beyond the textbook or chapter. "
             "Keep it short. Do not invent page numbers or figure names."
         )
     return (

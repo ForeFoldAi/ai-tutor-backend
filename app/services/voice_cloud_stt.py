@@ -13,6 +13,9 @@ import os
 
 import httpx
 
+from app.config import provider_keys
+from app.services import key_pool
+
 from app.services.voice_stt_postprocess import (
     is_meaningful_voice_transcript,
     postprocess_voice_transcript,
@@ -26,14 +29,18 @@ _PROVIDER = os.environ.get("VOICE_STT_PROVIDER", "").strip().lower()
 _TIMEOUT = float(os.environ.get("VOICE_CLOUD_STT_TIMEOUT_SEC", "6"))
 
 
-def _key() -> str:
-    return os.environ.get("GROQ_API_KEY", "").strip()
+_SCOPE = "groq-stt"  # Whisper limits are separate from chat limits
+_MAX_KEY_TRIES = 3
+
+
+def _keys() -> list[str]:
+    return provider_keys("groq")
 
 
 def cloud_stt_enabled() -> bool:
     if _PROVIDER == "local":
         return False
-    return bool(_key())
+    return bool(_keys())
 
 
 def _suffix(audio: bytes) -> tuple[str, str]:
@@ -61,20 +68,32 @@ async def transcribe_cloud(
     }
     if prompt:
         data["prompt"] = prompt[-400:]
+    payload = None
     try:
         async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
-            resp = await client.post(
-                GROQ_STT_URL,
-                headers={"Authorization": f"Bearer {_key()}"},
-                data=data,
-                files={"file": (name, audio, mime)},
-            )
-        if resp.status_code != 200:
-            logger.warning("Groq STT status=%s body=%s", resp.status_code, resp.text[:160])
-            return None
-        payload = resp.json()
+            # Spread load across keys; a rate-limited key is parked and the next one tried.
+            for key in key_pool.ordered(_SCOPE, _keys())[:_MAX_KEY_TRIES]:
+                resp = await client.post(
+                    GROQ_STT_URL,
+                    headers={"Authorization": f"Bearer {key}"},
+                    data=data,
+                    files={"file": (name, audio, mime)},
+                )
+                if resp.status_code == 200:
+                    payload = resp.json()
+                    break
+                logger.warning(
+                    "Groq STT key=%s status=%s body=%s", key_pool.label(key), resp.status_code, resp.text[:160]
+                )
+                if resp.status_code == 429 or resp.status_code >= 500:
+                    ra = (resp.headers.get("Retry-After") or "").strip()
+                    key_pool.cool(_SCOPE, key, float(ra) if ra.replace(".", "", 1).isdigit() else 30.0)
+                    continue
+                return None  # 400/401 etc: another key won't help
     except Exception as exc:
         logger.warning("Groq STT failed: %s", exc)
+        return None
+    if payload is None:
         return None
 
     segs = payload.get("segments") or []

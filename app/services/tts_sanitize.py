@@ -161,6 +161,13 @@ def _strip_figure_page_metadata(text: str) -> str:
     return t
 
 
+# Source labels the student should never hear ("Beyond your textbook: …").
+_SOURCE_LABEL_RE = re.compile(
+    r"\b(?:beyond (?:your|the) textbook|beyond this chapter|additional context)\s*(?:\.\.\.|…|[:,—–-])\s*",
+    re.I,
+)
+
+
 def sanitize_for_tts(text: str) -> str:
     """
     Strip markdown / markup and return natural spoken plain text.
@@ -170,7 +177,7 @@ def sanitize_for_tts(text: str) -> str:
     if not text or not text.strip():
         return ""
 
-    t = text.strip()
+    t = _SOURCE_LABEL_RE.sub("", text.strip())
     t = _replace_code_blocks(t)
     t = _replace_inline_code(t)
     t = _replace_links_and_urls(t)

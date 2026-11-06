@@ -123,17 +123,17 @@ def test_latex_math_stripped_for_speech():
     assert "$$" not in out
     assert "\\times" not in out
     assert "times" in out
-    assert "10 over 2" in out
+    assert "10 by 2" in out
     assert "Solution" in out
 
 
 def test_orphan_dollars_and_bare_frac():
     out = sanitize_for_tts("The answer is $$\\frac{10}{2} and more")
     assert "$$" not in out
-    assert "10 over 2" in out
+    assert "10 by 2" in out
 
     out = sanitize_for_tts("Use \\frac{a}{b} for ratios")
-    assert "a over b" in out
+    assert "a by b" in out
     assert "\\" not in out
 
 
@@ -181,3 +181,7 @@ def test_voice_live_teaching_vs_full_format():
         query="what are weather instruments",
         heading_scope=main_scope,
     ) is False
+
+
+def test_source_labels_not_spoken():
+    assert sanitize_for_tts("Beyond your textbook: carbon forms four bonds.") == "carbon forms four bonds."
