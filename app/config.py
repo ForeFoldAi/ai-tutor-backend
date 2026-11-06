@@ -53,9 +53,30 @@ def model_extra_params(model: str) -> dict[str, str]:
     return {}
 
 
-def _provider_key(name: str) -> str | None:
+def provider_keys(name: str) -> list[str]:
+    """Every API key configured for a provider, in priority order, de-duplicated.
+
+    Sources: ``<KEY_ENV>`` (e.g. GROQ_API_KEY), ``<KEY_ENV>S`` (comma/space/newline
+    separated list, e.g. GROQ_API_KEYS=k1,k2,k3) and ``<KEY_ENV>_2`` … ``_20``.
+    """
     p = _PROVIDERS.get(name)
-    return (os.environ.get(p["key_env"], "").strip() or None) if p else None
+    if not p:
+        return []
+    base = p["key_env"]
+    raw = [os.environ.get(base, "")]
+    raw += os.environ.get(f"{base}S", "").replace("\n", ",").replace(" ", ",").split(",")
+    raw += [os.environ.get(f"{base}_{i}", "") for i in range(2, 21)]
+    out: list[str] = []
+    for k in raw:
+        k = k.strip().strip('"').strip("'")
+        if k and k not in out:
+            out.append(k)
+    return out
+
+
+def _provider_key(name: str) -> str | None:
+    keys = provider_keys(name)
+    return keys[0] if keys else None
 
 
 def _pick_provider() -> str:
@@ -180,8 +201,20 @@ def llm_fallback_for(feature: str = "chat") -> dict[str, str] | None:
         "name": other,
         "base_url": p["base_url"],
         "key": _provider_key(other) or "",
+        "keys": provider_keys(other),
         "model": p["fast_model"] if feature in _SIDE_CARS else p["model"],
     }
+
+
+def llm_key_pool_for(feature: str = "chat") -> list[str]:
+    """All keys usable for a feature's own provider (primary key first)."""
+    first = llm_api_key_for(feature)
+    if not first:
+        return []
+    if _LLM_FEATURE_KEYS.get(feature) or feature == "vision":
+        return [first]  # explicit per-feature key / vision stays single
+    prov = _provider_for(feature)
+    return [first] + [k for k in provider_keys(prov) if k != first]
 
 
 def llm_model_for(feature: str = "chat") -> str:

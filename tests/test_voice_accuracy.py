@@ -111,3 +111,58 @@ def test_failover_to_second_provider_on_429(monkeypatch):
 
     assert asyncio.run(run()) == "hi there"
     assert len(calls) == 2 and "second.test" in calls[1]
+
+
+def test_groq_keys_rotate_then_fall_to_secondary(monkeypatch):
+    from app.services import key_pool, llm_client as c
+
+    key_pool.reset()
+    monkeypatch.setenv("GROQ_API_KEY", "g1")
+    monkeypatch.setenv("GROQ_API_KEYS", "g2, g3\ng1")
+    from app.config import provider_keys
+
+    assert provider_keys("groq") == ["g1", "g2", "g3"]  # de-duplicated, ordered
+
+    seen: list[str] = []
+    busy = {"g1", "g2", "g3"}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        auth = request.headers["authorization"].removeprefix("Bearer ")
+        seen.append(auth)
+        if auth in busy:
+            return httpx.Response(429, headers={"Retry-After": "30"}, json={})
+        return httpx.Response(200, json={"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(c, "llm_base_url_for", lambda feature="chat": "https://groq.test/v1")
+    monkeypatch.setattr(c, "llm_key_pool_for", lambda feature="chat": ["g1", "g2", "g3"])
+    monkeypatch.setattr(c, "llm_model_for", lambda feature="chat": "m")
+    monkeypatch.setattr(
+        c,
+        "llm_fallback_for",
+        lambda feature="chat": {"base_url": "https://mistral.test/v1", "key": "m1", "keys": ["m1"], "model": "m"},
+    )
+    targets = c._targets
+
+    monkeypatch.setattr(c, "_targets", targets)
+    monkeypatch.setattr(c, "_TRANSPORT", httpx.MockTransport(handler))
+    monkeypatch.setattr(c, "ensure_llm_config", lambda feature="chat": None)
+    c._loop_state.clear()
+
+    async def ask():
+        return await c.complete([{"role": "user", "content": "x"}], feature="chat")
+
+    # All three Groq keys busy -> each tried once, then the secondary answers.
+    assert asyncio.run(ask()) == "ok"
+    assert sorted(seen[:3]) == ["g1", "g2", "g3"] and seen[3] == "m1"
+
+    # Keys are now parked: the next call goes straight to the secondary, no wasted tries.
+    seen.clear()
+    assert asyncio.run(ask()) == "ok"
+    assert seen == ["m1"]
+
+    # One key recovers -> traffic returns to Groq (usable keys sort first).
+    busy.discard("g2")
+    key_pool.reset()
+    seen.clear()
+    assert asyncio.run(ask()) == "ok"
+    assert seen[-1] in {"g2"} and "m1" not in seen

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -5,6 +6,8 @@ import re
 from typing import Annotated
 
 logger = logging.getLogger(__name__)
+# Keepalive cadence for NDJSON answer streams (voice server idle-times-out at 20 s).
+_STREAM_HEARTBEAT_SEC = float(os.environ.get("STREAM_HEARTBEAT_SEC", "5"))
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -656,8 +659,30 @@ async def chapter_chat_stream(
             else None
         )
         voice_meta: dict = {}
+
+        async def with_heartbeat(gen):
+            """Yield a ping while the answer stream is silent (e.g. the math/science panel pass
+            after the prose) so clients' idle timers don't mistake post-processing for a hang."""
+            it = gen.__aiter__()
+            nxt = asyncio.ensure_future(it.__anext__())
+            try:
+                while True:
+                    done, _ = await asyncio.wait({nxt}, timeout=_STREAM_HEARTBEAT_SEC)
+                    if not done:
+                        yield None
+                        continue
+                    try:
+                        item = nxt.result()
+                    except StopAsyncIteration:
+                        return
+                    yield item
+                    nxt = asyncio.ensure_future(it.__anext__())
+            finally:
+                if not nxt.done():
+                    nxt.cancel()
+
         try:
-            async for token in chapter_aware_qa_stream(
+            async for token in with_heartbeat(chapter_aware_qa_stream(
                 req.query or "",
                 collection_name=collection,
                 chapter_ids=req.chapter_ids,
@@ -688,9 +713,12 @@ async def chapter_chat_stream(
                 voice_metadata_out=voice_meta,
                 image_ids=req.image_ids,
                 student_user_id=int(_current_user.id),
-            ):
+            )):
                 while pending:
                     yield pending.pop(0)
+                if token is None:
+                    yield b'{"type":"ping"}\n'
+                    continue
                 if token:
                     yield (json.dumps({"type": "token", "content": token}, ensure_ascii=False) + "\n").encode()
 

@@ -22,7 +22,7 @@ def test_latex_powers_and_frac():
     assert "2ab" in out or "2 a b" in out.replace("  ", " ")
 
     out = latex_to_speech(r"\frac{1}{2}")
-    assert "1 over 2" in out
+    assert "1 by 2" in out
 
 
 def test_latex_integration_geometry():
@@ -67,3 +67,11 @@ if __name__ == "__main__":
     test_plain_geometry_symbols()
     test_full_sanitize_math_voice()
     print("ok")
+
+
+def test_slash_fractions_read_as_by():
+    assert math_to_speech("p/q") == "p by q"
+    assert math_to_speech("1/2") == "1 by 2"
+    assert math_to_speech("(a+b)/2") == "(a+b) by 2"
+    assert "km per hour" in math_to_speech("60 km/h")
+    assert math_to_speech("and/or") == "and/or"

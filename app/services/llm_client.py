@@ -25,11 +25,13 @@ from app.config import (
     LLM_PROVIDER,
     LLM_TEMPERATURE,
     llm_api_key_for,
+    llm_key_pool_for,
     llm_base_url_for,
     llm_fallback_for,
     llm_model_for,
     model_extra_params,
 )
+from app.services import key_pool
 from app.services.token_usage import current_user_id, record_usage, usage_from
 
 logger = logging.getLogger(__name__)
@@ -180,6 +182,10 @@ def _retry_wait_sec(resp: httpx.Response, attempt: int) -> float:
     return base + random.uniform(0.0, 0.5)
 
 
+# A parked key is tried last; never make a student wait out a long Retry-After for it.
+_MAX_PACE_WAIT_SEC = float(os.environ.get("LLM_MAX_PACE_WAIT_SEC", "3"))
+
+
 def _reserve_start(provider: str = "") -> float:
     """Claim the next start time for a provider; returns seconds to wait for it."""
     with _pace_lock:
@@ -198,7 +204,7 @@ def _cool_down(wait: float, provider: str = "") -> None:
 async def _pace_async(provider: str = "") -> None:
     delay = _reserve_start(provider)
     if delay > 0:
-        await asyncio.sleep(delay)
+        await asyncio.sleep(min(delay, _MAX_PACE_WAIT_SEC))
 
 
 def _pace_sync(provider: str = "") -> None:
@@ -207,20 +213,37 @@ def _pace_sync(provider: str = "") -> None:
         time.sleep(delay)
 
 
-def _targets(feature: str) -> list[dict[str, str]]:
-    """Primary provider first, then the configured fallback (if any)."""
-    out = [
+def _key_targets(base_url: str, keys: list[str], model: str) -> list[dict[str, str]]:
+    """One target per API key (round-robin start, rate-limited keys last)."""
+    return [
         {
-            "name": llm_base_url_for(feature),
-            "base_url": llm_base_url_for(feature),
-            "key": llm_api_key_for(feature) or "",
-            "model": llm_model_for(feature),
+            "name": f"{base_url}#{key_pool.label(k)}",
+            "scope": base_url,
+            "base_url": base_url,
+            "key": k,
+            "model": model,
         }
+        for k in key_pool.ordered(base_url, keys)
     ]
+
+
+def _targets(feature: str) -> list[dict[str, str]]:
+    """Primary provider's keys (rotating), then the secondary provider's keys."""
+    primary = _key_targets(llm_base_url_for(feature), llm_key_pool_for(feature), llm_model_for(feature))
+    ready = [t for t in primary if not key_pool.is_cooling(t["scope"], t["key"])]
+    parked = [t for t in primary if t not in ready]
+    out = ready
     fb = llm_fallback_for(feature)
     if fb and fb["key"]:
-        out.append({**fb, "name": fb["base_url"]})
-    return out
+        out = out + _key_targets(fb["base_url"], fb.get("keys") or [fb["key"]], fb["model"])
+    # Rate-limited keys are a last resort: the secondary answers before we retry them.
+    return out + parked
+
+
+def _park(target: dict[str, str], wait: float) -> None:
+    """Rate-limited/failing key: nobody uses it for ``wait`` s; traffic moves to the next key."""
+    _cool_down(wait, target["name"])
+    key_pool.cool(target.get("scope", target["base_url"]), target["key"], wait)
 
 
 def _target_body(body: dict[str, Any], target: dict[str, str]) -> dict[str, Any]:
@@ -268,7 +291,7 @@ async def _send_with_retries(
             slot.release()
             last_exc = exc
             logger.warning("LLM feature=%s provider=%s %s — failing over", feature, target["name"], exc.__class__.__name__)
-            _cool_down(2.0, target["name"])
+            _park(target, 2.0)
             if attempt + 1 >= attempts:
                 raise
             continue
@@ -278,12 +301,12 @@ async def _send_with_retries(
         failed = resp.status_code in _RETRY_STATUSES or resp.status_code >= 500
         if not failed or attempt + 1 >= attempts:
             if failed:
-                _cool_down(_retry_wait_sec(resp, attempt), target["name"])
+                _park(target, _retry_wait_sec(resp, attempt))
             if not stream:
                 slot.release()
             return resp
         wait = _retry_wait_sec(resp, attempt)
-        _cool_down(wait, target["name"])
+        _park(target, wait)
         if stream:
             await resp.aclose()
         slot.release()
@@ -377,17 +400,32 @@ def complete_sync(
     )
 
     attempts = _max_attempts(feature)
+    pool = llm_key_pool_for(feature)
     for attempt in range(attempts):
+        key = key_pool.ordered(llm_base_url_for(feature), pool)[0] if pool else llm_api_key_for(feature)
         with _sync_gate:
             _pace_sync(llm_base_url_for(feature))
-            resp = _sync_client.post(_chat_url(feature), headers=_headers(feature), json=body, timeout=timeout)
+            resp = _sync_client.post(
+                _chat_url(feature),
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                json=body,
+                timeout=timeout,
+            )
         if resp.status_code not in _RETRY_STATUSES:
             resp.raise_for_status()
             data = resp.json()
             _track(feature, body["model"], data, in_loop=False)
             return _content_from_response(data)
         wait = _retry_wait_sec(resp, attempt)
-        _cool_down(wait, llm_base_url_for(feature))
+        if key:
+            key_pool.cool(llm_base_url_for(feature), key, wait)
+        other_ready = any(
+            not key_pool.is_cooling(llm_base_url_for(feature), k) for k in pool if k != key
+        )
+        if other_ready:
+            wait = 0.0  # another key is free: switch immediately, no pacing cooldown
+        else:
+            _cool_down(wait, llm_base_url_for(feature))
         if attempt + 1 >= attempts:
             resp.raise_for_status()
         logger.warning(
@@ -425,5 +463,9 @@ def _self_check() -> None:
 
 _self_check()
 logger.info(
-    "LLM provider=%s model=%s fallback=%s", LLM_PROVIDER, LLM_MODEL, LLM_FALLBACK_PROVIDER or "none"
+    "LLM provider=%s keys=%d model=%s fallback=%s",
+    LLM_PROVIDER,
+    len(llm_key_pool_for("chat")),
+    LLM_MODEL,
+    LLM_FALLBACK_PROVIDER or "none",
 )
