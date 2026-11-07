@@ -94,6 +94,10 @@ class StorageBackend(ABC):
     def delete_prefix(self, prefix: str) -> None:
         """Remove all objects under *prefix* (trailing slash optional). Default: no-op."""
 
+    def copy_prefix(self, src_prefix: str, dst_prefix: str) -> int:
+        """Copy every object under *src_prefix* to *dst_prefix*; returns objects copied. Default: no-op."""
+        return 0
+
     # ------------------------------------------------------------------
     # Shared helpers
     # ------------------------------------------------------------------
@@ -197,6 +201,15 @@ class LocalStorageBackend(StorageBackend):
             import shutil
 
             shutil.rmtree(abs_dir, ignore_errors=True)
+
+    def copy_prefix(self, src_prefix: str, dst_prefix: str) -> int:
+        src = self._abs(src_prefix.strip("/"))
+        if not os.path.isdir(src):
+            return 0
+        import shutil
+
+        shutil.copytree(src, self._abs(dst_prefix.strip("/")), dirs_exist_ok=True)
+        return sum(len(files) for _, _, files in os.walk(src))
 
 
 # ---------------------------------------------------------------------------
@@ -392,6 +405,28 @@ class S3StorageBackend(StorageBackend):
                 )
         except Exception as exc:
             logger.debug("[STORAGE] S3 delete_prefix error %s: %s", key_prefix, exc)
+
+    def copy_prefix(self, src_prefix: str, dst_prefix: str) -> int:
+        """Server-side copy of src_prefix/ → dst_prefix/. Raises on failure."""
+        from concurrent.futures import ThreadPoolExecutor
+
+        src = self._key(src_prefix.strip("/")) + "/"
+        dst = self._key(dst_prefix.strip("/")) + "/"
+        keys: list[str] = []
+        paginator = self._client.get_paginator("list_objects_v2")
+        for page in paginator.paginate(Bucket=self.bucket, Prefix=src):
+            keys.extend(obj["Key"] for obj in page.get("Contents") or ())
+
+        def _copy(key: str) -> None:
+            self._client.copy_object(
+                Bucket=self.bucket,
+                Key=dst + key[len(src):],
+                CopySource={"Bucket": self.bucket, "Key": key},
+            )
+
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            list(pool.map(_copy, keys))
+        return len(keys)
 
 
 # ---------------------------------------------------------------------------

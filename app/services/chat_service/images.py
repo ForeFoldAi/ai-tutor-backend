@@ -137,8 +137,14 @@ def _prefer_cited_figure_candidates(
     candidates: list[dict],
     *,
     retrieved_docs: list[Any] | None = None,
+    rag_short_circuit: bool = True,
 ) -> list[dict] | None:
-    """Prefer Fig N cites on ranked candidates: question → RAG → answer (trusted)."""
+    """Prefer Fig N cites on ranked candidates: question → RAG → answer (trusted).
+
+    rag_short_circuit=False: a figure merely mentioned in retrieved passages is not
+    returned on its own (it may be unrelated to the answer); RAG cites still mark
+    answer cites as trusted.
+    """
     from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
 
     if not candidates:
@@ -150,9 +156,10 @@ def _prefer_cited_figure_candidates(
         return hit
 
     rag_cited = figure_numbers_cited_in_text(_docs_text(retrieved_docs))
-    hit = _match_cited(rag_cited, candidates)
-    if hit:
-        return hit
+    if rag_short_circuit:
+        hit = _match_cited(rag_cited, candidates)
+        if hit:
+            return hit
 
     a_cited = figure_numbers_cited_in_text(answer)
     if not a_cited:
@@ -173,37 +180,16 @@ def _prefer_cited_figure_candidates(
     return _match_cited(trusted, candidates) or None
 
 
-def _merge_cited_with_candidates(
-    cited: list[dict],
-    candidates: list[dict] | None,
-    *,
-    max_n: int,
-) -> list[dict]:
-    """Cited figures first; optionally fill remaining slots from ranked candidates."""
-    if max_n <= 0:
-        return []
-    # When we only have exact DB hits, prefer not padding with unrelated ranked noise
-    # beyond TOP_RELATED_IMAGES — but always keep every cited figure (up to max_n).
-    if len(cited) >= max_n:
-        return cited[:max_n]
-    seen: set[str] = set()
-    out: list[dict] = []
-    for c in cited:
-        key = str(c.get("url") or c.get("file_name") or id(c))
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(c)
-    fill_cap = max(max_n, TOP_RELATED_IMAGES)
-    for c in candidates or []:
-        if len(out) >= fill_cap:
-            break
-        key = str(c.get("url") or c.get("file_name") or id(c))
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append(c)
-    return out
+def _rag_cited_first(candidates: list[dict], retrieved_docs: list[Any] | None) -> list[dict]:
+    """Figures cited in the retrieved passages go to the front of the LLM pool."""
+    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+
+    cited = set(figure_numbers_cited_in_text(_docs_text(retrieved_docs)))
+    if not cited:
+        return list(candidates)
+    first = [c for c in candidates if str(c.get("figure_number") or "").strip() in cited]
+    rest = [c for c in candidates if str(c.get("figure_number") or "").strip() not in cited]
+    return first + rest
 
 
 def _db_figures_for_numbers(
@@ -292,31 +278,26 @@ async def _select_related_images_for_answer(
     q_cited = figure_numbers_cited_in_text(question)
     a_cited = figure_numbers_cited_in_text(answer)
 
+    # Exact Fig N asks / answer cites are returned alone: padding them with ranked
+    # candidates shows figures the answer never talks about.
     if chapter_ids and q_cited:
         found = _db_figures_for_numbers(chapter_ids, q_cited)
         if found:
-            merged = _merge_cited_with_candidates(
-                found,
-                candidates,
-                max_n=max(TOP_RELATED_IMAGES, min(_MAX_CITED_FIGURES, len(found))),
-            )
-            _log_image_stage("question_fig_db", merged)
-            return merged
+            _log_image_stage("question_fig_db", found)
+            return found[:_MAX_CITED_FIGURES]
 
     if chapter_ids and a_cited:
         found = _db_figures_for_numbers(chapter_ids, a_cited)
         if found:
-            # Answer-cited figures are guaranteed when the chapter DB has them.
-            merged = _merge_cited_with_candidates(
-                found,
-                candidates,
-                max_n=max(TOP_RELATED_IMAGES, min(_MAX_CITED_FIGURES, len(found))),
-            )
-            _log_image_stage("answer_fig_db", merged)
-            return merged
+            _log_image_stage("answer_fig_db", found)
+            return found[:_MAX_CITED_FIGURES]
 
     cited = _prefer_cited_figure_candidates(
-        question, answer, candidates, retrieved_docs=retrieved_docs
+        question,
+        answer,
+        candidates,
+        retrieved_docs=retrieved_docs,
+        rag_short_circuit=not ENABLE_LLM_IMAGE_SELECT,
     )
     if cited:
         _log_image_stage("cited_figure_short_circuit", cited)
@@ -329,11 +310,18 @@ async def _select_related_images_for_answer(
             _log_image_stage("explicit_show_no_llm", picked)
             return picked
         return candidates
-    from app.services.image_service.llm_image_select import select_images_for_qa
+    from app.services.image_service.llm_image_select import select_images_for_qa_status
 
-    selected = await select_images_for_qa(question, answer, candidates)
+    pool = _rag_cited_first(candidates, retrieved_docs)
+    selected, decided = await select_images_for_qa_status(question, answer, pool)
     if selected:
+        _log_image_stage("llm_select", selected)
         return selected
+    if decided:
+        # The LLM saw the answer and judged no candidate depicts it — don't override
+        # that with heuristic picks.
+        _log_image_stage("llm_select_none_fit", [])
+        return []
     fallback = _strong_relevance_fallback(candidates)
     if fallback:
         _log_image_stage("llm_select_fail_open", fallback)

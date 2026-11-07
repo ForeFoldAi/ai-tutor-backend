@@ -177,6 +177,7 @@ def update_syllabus(
         detail="That subject already exists for this board and class.",
     )
     stale_collections: list[str] = []
+    stale_prefixes: list[str] = []
     if new_key != old_key:
         taken = db.scalar(
             select(SyllabusSubject.id).where(
@@ -189,12 +190,13 @@ def update_syllabus(
         if taken:
             db.rollback()
             raise conflict
-        stale_collections = _move_subject_content(db, old_key, new_key)
+        stale_collections, stale_prefixes = _move_subject_content(db, old_key, new_key)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
         raise conflict
+    _delete_stale_asset_prefixes(stale_prefixes)
     from app.services.vector_service import drop_collection
 
     for name in stale_collections:
@@ -214,6 +216,7 @@ def _move_subject_content(
     from app.modules.learning_intelligence.models import LiaLearningEvent
     from app.modules.student_learning.models import StudentChapterProgress, StudentStudySession, StudentTutorChat
     from app.services.image_service.image_vector_store import image_collection_name, subject_collection_from_upload
+    from app.services.image_service.textbook_image_extraction import upload_asset_prefix
     from app.services.lesson_planner.retrieval.chroma_store import (
         COLLECTION_QUESTION_BANK,
         COLLECTION_TEXTBOOK_EXPERIMENTS,
@@ -252,14 +255,51 @@ def _move_subject_content(
             detail="Could not move this subject's search index to the new name; nothing was changed.",
         ) from exc
 
+    old_prefixes = {u.id: upload_asset_prefix(u) for u in uploads}
     for r in (*uploads, *books):
         r.board, r.class_level, r.subject_name = new
+    try:
+        stale_prefixes = _copy_upload_assets(uploads, old_prefixes)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Subject rename %s -> %s: image copy failed", old, new)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not move this subject's images to the new name; nothing was changed.",
+        ) from exc
     upload_ids = [u.id for u in uploads]
     if upload_ids:
         db.execute(update(TextbookImage).where(TextbookImage.textbook_upload_id.in_(upload_ids)).values(subject=new[2]))
         for model in (StudentStudySession, StudentChapterProgress, StudentTutorChat, LiaLearningEvent):
             db.execute(update(model).where(model.chapter_id.in_(upload_ids)).values(subject_name=new[2]))
-    return copied
+    return copied, stale_prefixes
+
+
+def _copy_upload_assets(uploads: list[TextbookUpload], old_prefixes: dict[int, str]) -> list[str]:
+    """Image storage keys embed board/class/subject/chapter, so a rename must copy the objects
+    to the new prefix. Returns the old prefixes to delete once the DB commit succeeds."""
+    from app.services.image_service.storage_backend import get_storage_backend
+    from app.services.image_service.textbook_image_extraction import upload_asset_prefix
+
+    backend = get_storage_backend()
+    stale: list[str] = []
+    for u in uploads:
+        old_prefix, new_prefix = old_prefixes[u.id], upload_asset_prefix(u)
+        if old_prefix != new_prefix:
+            backend.copy_prefix(old_prefix, new_prefix)
+            stale.append(old_prefix)
+    return stale
+
+
+def _delete_stale_asset_prefixes(prefixes: list[str]) -> None:
+    from app.services.image_service.storage_backend import get_storage_backend
+
+    backend = get_storage_backend()
+    for prefix in prefixes:
+        try:
+            backend.delete_prefix(prefix)
+        except Exception as exc:
+            logger.warning("Could not delete old image prefix %r: %s", prefix, exc)
 
 
 SUBJECT_IMAGE_MAX_BYTES = 5 * 1024 * 1024
@@ -916,13 +956,26 @@ def update_textbook_upload(
     row = db.get(TextbookUpload, upload_id)
     if not row:
         raise HTTPException(status_code=404, detail="Upload not found.")
+    from app.services.image_service.textbook_image_extraction import upload_asset_prefix
+
+    old_prefixes = {row.id: upload_asset_prefix(row)}
     if payload.chapter is not None:
         row.chapter = clean_display_label(payload.chapter)
     if payload.content_label is not None:
         row.content_label = clean_display_label(payload.content_label)
     if payload.content_type is not None:
         row.content_type = payload.content_type
+    try:
+        stale_prefixes = _copy_upload_assets([row], old_prefixes)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Upload %s rename: image copy failed", upload_id)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Could not move this chapter's images to the new name; nothing was changed.",
+        ) from exc
     db.commit()
+    _delete_stale_asset_prefixes(stale_prefixes)
     db.refresh(row)
     return TextbookUploadResponse.model_validate(row)
 

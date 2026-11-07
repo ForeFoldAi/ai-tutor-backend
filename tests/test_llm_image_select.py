@@ -4,9 +4,12 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 
 from app.services.image_service.llm_image_select import (
+    _candidate_lines,
+    _parse_descriptions,
     apply_select_result,
     _parse_select_json,
     select_images_for_qa,
+    select_images_for_qa_status,
 )
 
 
@@ -81,3 +84,39 @@ def test_select_images_parse_fail_returns_empty():
             return await select_images_for_qa("q", "a", _CANDS)
 
     assert asyncio.run(run()) == []
+
+
+def test_status_distinguishes_none_fit_from_failure():
+    async def run(reply):
+        with patch("app.services.llm_client.complete", AsyncMock(return_value=reply)):
+            return await select_images_for_qa_status("q", "a", _CANDS)
+
+    assert asyncio.run(run('{"ids":[],"confidence":0.0}')) == ([], True)
+    assert asyncio.run(run("not json")) == ([], False)
+
+
+def test_parse_descriptions_flattens_nested_values():
+    raw = (
+        '```json\n{"0": {"type": "diagram", "subject": "two bar magnets"},'
+        ' "Image 1": {"type": ["photo", "text box"], "subject": ["maze board"]}, "7": "x"}\n```'
+    )
+    out = _parse_descriptions(raw, 2)
+    assert out == {
+        0: "type: diagram; subject: two bar magnets",
+        1: "type: photo, text box; subject: maze board",
+    }
+
+
+def test_seen_text_only_detection():
+    from app.services.image_service.llm_image_select import _seen_as_text_only
+
+    assert _seen_as_text_only({"_seen": "type: Table; subject: Science keywords"})
+    assert _seen_as_text_only({"_seen": "type: text box; subject: questions"})
+    assert not _seen_as_text_only({"_seen": "type: diagram; subject: water cycle"})
+    assert not _seen_as_text_only({"_seen": "type: photo; subject: a table and chairs"})
+    assert not _seen_as_text_only({"content_kind": "table", "_seen": "type: table; subject: data"})
+
+
+def test_seen_description_listed_before_caption():
+    line = _candidate_lines([{"figure_number": "4.14", "caption": "magnet cars", "_seen": "maze board"}])
+    assert line.index("seen=") < line.index("caption=")

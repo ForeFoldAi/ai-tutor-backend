@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
+from functools import lru_cache
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -184,6 +185,36 @@ def _get_conflicts_for_concept(core_concept: str) -> list[str]:
     return conflicts
 
 
+_PHRASE_SKIP_WORDS = frozenset({"a", "an", "the", "of", "to", "in", "on", "and", "or", "for"})
+
+
+def _stem(word: str) -> str:
+    for suffix in ("ing", "ed", "es", "s", "e"):
+        if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+            return word[: -len(suffix)]
+    return word
+
+
+@lru_cache(maxsize=512)
+def _phrase_pattern(phrase: str) -> re.Pattern[str] | None:
+    words = [w for w in re.findall(r"[a-z0-9]+", phrase.lower()) if w not in _PHRASE_SKIP_WORDS]
+    if len(words) < 2:
+        return None
+    gap = r"(?:\W+\w+){0,2}?\W+"
+    return re.compile(r"\b" + gap.join(re.escape(_stem(w)) + r"\w*" for w in words))
+
+
+def phrase_in_text(phrase: str, text: str) -> bool:
+    """Multi-word phrase match tolerant to inflection and up to two filler words
+    ("read map" matches "reading a map"). Wider gaps stay unmatched so
+    "weather station" does not match "weather at the bus station"."""
+    pl = phrase.lower()
+    if pl in text:
+        return True
+    pat = _phrase_pattern(pl)
+    return bool(pat and pat.search(text))
+
+
 def count_required_term_matches(
     intent: "ImageIntent",
     full_text: str,
@@ -205,7 +236,7 @@ def count_required_term_matches(
 
     for t in required:
         tl = t.lower()
-        if len(t.split()) > 1 and tl in full_text and t not in matches:
+        if len(t.split()) > 1 and phrase_in_text(tl, full_text) and t not in matches:
             matches.append(t)
         elif len(t.split()) == 1:
             if (len(t) <= 5 and t.isalpha()) or len(t) >= 8:

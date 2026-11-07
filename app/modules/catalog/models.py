@@ -175,6 +175,8 @@ class TextbookImage(Base):
     embedding_model: Mapped[str | None] = mapped_column(String(120), nullable=True)
     # Production metadata fields (migration 0015)
     generated_caption: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # What the vision model sees in the pixels, written without showing it the caption.
+    visual_summary: Mapped[str | None] = mapped_column(String(255), nullable=True)
     content_hash: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     semantic_keywords: Mapped[str | None] = mapped_column(String(512), nullable=True)
     educational_tags: Mapped[str | None] = mapped_column(String(256), nullable=True)

@@ -141,17 +141,27 @@ _EXAMPLE_PATTERNS = re.compile(
 
 # Question prefix stripping for core concept extraction
 _QUESTION_STRIP_RE = re.compile(
-    r"^(?:explain|describe|tell\s+me\s+about|what\s+is|what\s+are|how\s+does|"
-    r"how\s+do|discuss|write\s+(?:a\s+note\s+)?(?:on|about)|"
+    r"^(?:explain|describe|tell\s+me\s+about|discuss|write\s+(?:a\s+note\s+)?(?:on|about)|"
     r"give\s+(?:information\s+|details\s+)?(?:on|about)|"
     r"define|list|name|mention|write\s+about|describe\s+briefly|"
     r"draw\s+a?\s*(?:labelled?\s*)?diagram\s+of|"
-    r"with\s+the\s+help\s+of\s+a\s+diagram)\s+",
+    r"with\s+the\s+help\s+of\s+a\s+diagram|"
+    r"(?:who|what|where|when|why|which)\s+(?:is|are|was|were|did|does|do)|"
+    r"how\s+(?:do|does|did|can|could|should|would|is|are|was|were)"
+    r"(?:\s+(?:we|i|you|they|one|people))?)\s+",
+    re.I,
+)
+_LEADING_FILLER_RE = re.compile(
+    r"^(?:(?:a|an|the)\s+)?"
+    r"(?:(?:different\s+|main\s+|various\s+)?"
+    r"(?:types?|kinds?|parts?|examples?|uses?|features?|characteristics|properties|functions?)"
+    r"\s+of\s+)?(?:(?:a|an|the)\s+)?",
     re.I,
 )
 _QUESTION_TAIL_RE = re.compile(
     r"\s+(?:with\s+(?:diagram|images?|figure|pictures?)|"
-    r"in\s+detail|briefly|shortly|in\s+short|with\s+example)$",
+    r"in\s+detail|briefly|shortly|in\s+short|with\s+example|"
+    r"looks?(?:\s+like)?|appears?|works?)$",
     re.I,
 )
 
@@ -359,6 +369,8 @@ _CHAPTER_FIGURE_LIST_ASK_RE = re.compile(
     r"|\b(?:show|give|get|fetch|bring)\b.{0,48}\b(?:all\s+)(?:the\s+)?(?:figures?|figs?|diagrams?|images?|maps?)\b"
     r"|\bhow\s+many\s+(?:figures?|figs?|diagrams?|images?|maps?)\b"
     r"|\b(?:images?|figures?|diagrams?)\s+from\s+(?:the\s+|this\s+)?(?:textbook|chapter|book|unit)\b"
+    r"|\b(?:images?|figures?|figs?|diagrams?|pictures?|maps?|illustrations?)\s+(?:in|of)\s+"
+    r"(?:the\s+|this\s+)?(?:textbook|chapter|book|unit|lesson)\b"
     r")",
     re.I,
 )
@@ -372,9 +384,10 @@ def _tokenize(text: str) -> frozenset[str]:
 def _extract_core_concept(question: str) -> str:
     q = re.sub(r"\s+", " ", (question or "").strip())
     q = _QUESTION_STRIP_RE.sub("", q)
-    q = _QUESTION_TAIL_RE.sub("", q)
+    q = _QUESTION_TAIL_RE.sub("", q.rstrip(" ?!.,;:-"))
     # Strip trailing punctuation that leaked from the question form
     q = q.strip(" ?!.,;:-")
+    q = _LEADING_FILLER_RE.sub("", q)
     return q.strip() or question.strip(" ?!.,;:-")
 
 

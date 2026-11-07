@@ -8,7 +8,8 @@ browsers cannot render when saved with a .png extension.
 from __future__ import annotations
 
 import logging
-import statistics
+import os
+from functools import lru_cache
 from io import BytesIO
 
 import numpy as np
@@ -69,11 +70,10 @@ def _is_blank_rgb(rgb_im) -> bool:
     if w < 1 or h < 1:
         return True
     step = max(1, (w * h) // 5000)
-    sample = list(rgb_im.getdata())[::step]
+    sample = np.asarray(rgb_im, dtype=np.float32).reshape(-1, 3)[::step]
     if len(sample) < 2:
         return True
-    lum = [sum(px) / 3.0 for px in sample]
-    return statistics.pstdev(lum) < _MIN_LUMINANCE_STDDEV
+    return float(sample.mean(axis=1).std()) < _MIN_LUMINANCE_STDDEV
 
 
 def _is_blue_diagram_rgb(rgb_im) -> bool:
@@ -260,6 +260,15 @@ def _rgb_looks_like_disclaimer_plate(rgb_im) -> bool:
 
 def image_has_visible_content(path: str) -> bool:
     """False for empty frames, copyright slabs, and other non-figure assets."""
+    try:
+        st = os.stat(path)
+    except OSError:
+        return False
+    return _image_has_visible_content_cached(path, st.st_mtime_ns, st.st_size)
+
+
+@lru_cache(maxsize=4096)
+def _image_has_visible_content_cached(path: str, _mtime_ns: int, _size: int) -> bool:
     try:
         from PIL import Image
 
