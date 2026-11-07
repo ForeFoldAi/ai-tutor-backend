@@ -210,6 +210,63 @@ def _score_label_candidate(
     return score, label_box, context.strip()
 
 
+_REFERENCE_LEAD_RE = re.compile(
+    r"(?i)(?:\brefer(?:\s+to)?|\bto|\bsee|\bshown|\bgiven|\bin|\bfrom|\bof|\busing|\blike|"
+    r"\bas|\band|\bor|\bwith|\bthe|\bis|\bare|\bat|\bon|\bby|\(|,)\s*$"
+)
+
+
+def _line_text(line: dict[str, Any]) -> str:
+    return re.sub(r"\s+", " ", "".join(s.get("text", "") for s in line.get("spans", []))).strip()
+
+
+def _is_inline_figure_reference(page: fitz.Page, rect: fitz.Rect) -> bool:
+    """True for "refer to Fig. 12.4" / "shown in Fig. 12.14" — a mention in prose,
+    not the printed caption under a figure (also when the mention wraps to a new line)."""
+    best: tuple[float, list[dict[str, Any]], int] | None = None
+    for block in page.get_text("dict")["blocks"]:
+        if block.get("type") != 0:
+            continue
+        lines = block["lines"]
+        for i, line in enumerate(lines):
+            lr = fitz.Rect(line["bbox"])
+            if not lr.intersects(rect):
+                continue
+            overlap = min(lr.y1, rect.y1) - max(lr.y0, rect.y0)
+            if best is None or overlap > best[0]:
+                best = (overlap, lines, i)
+    if best is None:
+        return False
+    _, lines, i = best
+    line_rect = fitz.Rect(lines[i]["bbox"])
+    after = page.get_text(
+        "text", clip=fitz.Rect(rect.x1 + 0.2, line_rect.y0, line_rect.x1 + 1, line_rect.y1)
+    ).strip()
+    # "(Fig. 12.9)." or "Fig. 12.2 shows …" — captions continue with ":" / "." / nothing.
+    if after.startswith(")") or re.match(r"[a-z]", after):
+        return True
+    before = ""
+    if rect.x0 - line_rect.x0 >= 2:
+        before = page.get_text(
+            "text", clip=fitz.Rect(line_rect.x0, line_rect.y0, rect.x0 - 0.5, line_rect.y1)
+        )
+        before = re.sub(r"\s+", " ", before or "").strip()
+    if before:
+        if _REFERENCE_LEAD_RE.search(before):
+            return True
+        # "Fig. 2.4. The Qutub Minar. Fig. 2.5. …" — a second caption on the same line.
+        if re.search(r"[.!?]\s*$", before):
+            return False
+        return len(re.findall(r"[A-Za-z]{2,}", before)) >= 4
+    if i == 0:
+        return False
+    prev = _line_text(lines[i - 1])
+    # "(a)" sub-panel markers or short headers above a caption are not running prose.
+    if len(re.findall(r"[A-Za-z]{2,}", prev)) < 3:
+        return False
+    return not re.search(r"[.!?:]\s*$", prev)
+
+
 def _find_figure_labels(
     page: fitz.Page,
     figures: list[dict[str, Any]],
@@ -221,6 +278,8 @@ def _find_figure_labels(
         label_text = match.group(0)
         fig_number = match.group(1)
         for rect in page.search_for(label_text):
+            if _is_inline_figure_reference(page, rect):
+                continue
             score, label_box, context = _score_label_candidate(
                 page, rect, fig_number, figures, figure_captions, dpi
             )
@@ -534,25 +593,50 @@ def _find_table_number(text: str) -> str | None:
     return m.group(1) if m else None
 
 
+_SENTENCE_END_RE = re.compile(r"[.!?]\s*$")
+
+
+def _caption_like(text: str) -> bool:
+    """Short title-style line (e.g. "Indian Astronomical Observatory, Hanle") — not a
+    sentence fragment pulled from the surrounding paragraph."""
+    t = re.sub(r"\s+", " ", (text or "").strip())
+    if not t or _is_prose_orphan_caption(t):
+        return False
+    if re.search(r"(?i)\breprint\b|not\s+to\s+be\s+republished|\btextbook\s+of\b|\|", t):
+        return False
+    if FIGURE_LABEL_RE.search(t):
+        return True
+    words = t.split()
+    if len(words) > 14 or t.endswith("?"):
+        return False
+    if not (t[0].isupper() or t[0] in "(“\"'"):
+        return False
+    # A full sentence or a clause cut off mid-line is body text, not a caption.
+    if len(words) >= 8 and _SENTENCE_END_RE.search(t):
+        return False
+    if len(words) >= 6 and re.search(r"\b(is|are|was|were|has|have|can|will|used)\b", t, re.I):
+        return False
+    return not re.search(r"\b(the|a|an|of|to|in|and|is|are|which|that|with)$", t, re.I)
+
+
 def _caption_from_embedded_context(
     page: fitz.Page,
     rect: fitz.Rect,
     nearby_before: str,
     nearby_after: str,
 ) -> str:
-    """Best caption for an embedded photo from PDF text layer (not layout OCR)."""
-    for blob in (nearby_after, nearby_before):
-        for line in (blob or "").splitlines():
-            line = re.sub(r"\s+", " ", line.strip())
-            if len(line) >= 24:
-                return line[:500]
+    """Caption-like line next to an embedded photo from the PDF text layer; "" when the
+    neighbours are only body text (vision description fills in later)."""
+    first_after = next((ln for ln in (nearby_after or "").splitlines() if ln.strip()), "")
+    last_before = next((ln for ln in reversed((nearby_before or "").splitlines()) if ln.strip()), "")
     below = page.get_text(
         "text",
-        clip=fitz.Rect(rect.x0 - 20, rect.y1, rect.x1 + 40, min(page.rect.height, rect.y1 + 140)),
+        clip=fitz.Rect(rect.x0 - 20, rect.y1, rect.x1 + 40, min(page.rect.height, rect.y1 + 40)),
     )
-    below = re.sub(r"\s+", " ", (below or "").strip())
-    if len(below) >= 16:
-        return below[:500]
+    for cand in (below, first_after, last_before):
+        cand = re.sub(r"\s+", " ", (cand or "").strip())
+        if _caption_like(cand):
+            return cand[:500]
     return ""
 
 
@@ -816,7 +900,8 @@ def extract_assets_from_page(
             continue
         nearby_before, nearby_after = _nearby_text_for_figure(page, box, image_size, dpi)
         section = section_heading_above_figure(page, box, image_size, dpi)
-        caption = section or nearby_before.splitlines()[-1].strip()[:200] if nearby_before else ""
+        last_before = nearby_before.splitlines()[-1].strip()[:200] if nearby_before else ""
+        caption = section or (last_before if _caption_like(last_before) else "")
         if is_prose_figure_region(page, box, image_size, dpi, caption=caption):
             continue
         if has_numbered_on_page and _should_skip_orphan_figure(

@@ -124,6 +124,7 @@ def _get_embedding_model():
     except Exception:
         # If embeddings can't be created (e.g. HF download blocked),
         # fall back to keyword-only retrieval in-memory.
+        logger.exception("Embedding model unavailable — semantic retrieval disabled")
         _embedding_model = None
         return None
 

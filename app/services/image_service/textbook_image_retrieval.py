@@ -42,6 +42,7 @@ from app.services.image_service.symbolic_image_filters import (
     count_required_term_matches,
     entity_match_score,
     level3_overlap_allowed,
+    phrase_in_text,
     topic_purity_score,
     extract_caption_entities,
 )
@@ -347,7 +348,7 @@ def _concept_specificity_score(intent: "ImageIntent", im: TextbookImage) -> floa
         return max(70.0, min(100.0, raw))
 
     # ── Level 1: required multi-word phrase match ─────────────────────────────
-    phrase_matches = [t for t in required_terms if len(t.split()) > 1 and t.lower() in topic_text]
+    phrase_matches = [t for t in required_terms if len(t.split()) > 1 and phrase_in_text(t, topic_text)]
     if phrase_matches:
         base = 70.0 + len(phrase_matches) * 8.0
         raw = min(95.0, base) + _sup_bonus() - _neg_penalty()
@@ -901,6 +902,14 @@ def _payload_row(
         row["title"] = im.title
     if getattr(im, "figure_number", None):
         row["figure_number"] = im.figure_number
+    # What the pixels show (vision caption) + surrounding text: lets the LLM select tell a
+    # timeline or painting from a map when the textbook caption alone is ambiguous.
+    if getattr(im, "generated_caption", None):
+        row["visual_description"] = im.generated_caption.strip()[:300]
+    if getattr(im, "visual_summary", None):
+        row["visual_summary"] = im.visual_summary
+    if getattr(im, "figure_context", None):
+        row["figure_context"] = im.figure_context.strip()[:300]
     structured = getattr(im, "structured_content", None)
     kind = get_content_kind(im)
     if structured and kind in ("formula", "table"):
@@ -1261,7 +1270,7 @@ def _pedagogy_rank(
     Mandatory stage → supporting rank stage → adaptive assembly.
     Mandatory figures never enter the scoring competition.
     """
-    from app.config import MAX_GROUNDED_IMAGES
+    from app.config import ENABLE_LLM_IMAGE_SELECT, MAX_GROUNDED_IMAGES
 
     from app.services.image_service.content_kind_retrieval import resolve_content_kind_pool
 
@@ -1285,7 +1294,9 @@ def _pedagogy_rank(
         page_proximity_fn=_page_proximity_score,
         clip_sims=clip_sims,
         min_supporting_score=min_ped_score,
-        max_images=min(max_n, MAX_GROUNDED_IMAGES),
+        # With LLM select on, this stage only shortlists; the LLM makes the final cut
+        # against the answer, so don't pre-truncate to the display cap.
+        max_images=max_n if ENABLE_LLM_IMAGE_SELECT else min(max_n, MAX_GROUNDED_IMAGES),
     )
 
     rows = assemble_payload_rows(stages)

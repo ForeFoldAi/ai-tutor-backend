@@ -149,6 +149,28 @@ def _bge_cosine_pair(query_text: str, doc_text: str, qvec: np.ndarray | None) ->
     return cosine_100(vecs[0], vecs[1])
 
 
+def _prefetch_caption_embeddings(images: Any) -> None:
+    """One batched BGE call for every caption/context the scoring loop will embed."""
+    from app.services.image_service.figure_context_bge import (
+        _figure_context_text,
+        embed_texts,
+        get_stored_context_embedding,
+    )
+
+    texts: list[str] = []
+    for im in images:
+        if get_has_caption(im):
+            cap = getattr(im, "caption_normalized", None) or normalize_caption(im.caption or "")
+            if cap.strip():
+                texts.append(cap[:2000])
+        if get_stored_context_embedding(im) is None:
+            ctx = _figure_context_text(im)
+            if ctx.strip():
+                texts.append(ctx)
+    if texts:
+        embed_texts(texts)
+
+
 def caption_bge_score(
     intent: ImageIntent,
     im: TextbookImage,
@@ -500,6 +522,7 @@ def run_topic_centric_retrieval(
     stages = RetrievalStages()
     qtext = _query_text(intent, rag_docs)
     qvec = embed_query(qtext)
+    _prefetch_caption_embeddings(c[0] for c in candidates)
     clip_map = clip_sims or {}
     seen_mandatory: set[str] = set()
 

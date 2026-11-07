@@ -513,7 +513,17 @@ LLM_IMAGE_SELECT_MIN_CONFIDENCE = float(
     os.environ.get("LLM_IMAGE_SELECT_MIN_CONFIDENCE", "0.65")
 )
 LLM_IMAGE_SELECT_TIMEOUT_SEC = float(
-    os.environ.get("LLM_IMAGE_SELECT_TIMEOUT_SEC", "4")
+    os.environ.get("LLM_IMAGE_SELECT_TIMEOUT_SEC", "8")
+)
+# Let the vision model (LLM_VISION_MODEL) look at candidate thumbnails: extracted captions
+# are sometimes paired with the wrong image, which text-only selection can't detect.
+# Falls back to text-only selection on error/timeout.
+LLM_IMAGE_SELECT_VISION = os.environ.get(
+    "LLM_IMAGE_SELECT_VISION", "true"
+).lower() in ("1", "true", "yes")
+LLM_IMAGE_SELECT_VISION_MAX = int(os.environ.get("LLM_IMAGE_SELECT_VISION_MAX", "8"))
+LLM_IMAGE_SELECT_VISION_TIMEOUT_SEC = float(
+    os.environ.get("LLM_IMAGE_SELECT_VISION_TIMEOUT_SEC", "12")
 )
 
 # Frontend defers figure blocks until safe markdown boundaries (see stream-safe util).

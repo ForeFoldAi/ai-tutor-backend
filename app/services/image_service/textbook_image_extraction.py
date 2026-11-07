@@ -76,6 +76,9 @@ _IMAGE_TYPE_PATTERNS: list[tuple[str, str]] = [
     (r"\b(instrument|sensor|gauge|thermometer|barometer|anemometer|hygrometer|apparatus|equipment|device|"
      r"setup|calibrat|measur)\b", "instrument"),
     (r"\b(satellite|aerial|from\s+above|top.?view|remote\s+sensing)\b", "satellite_image"),
+    (r"\b(paintings?|miniatures?|portraits?|artist['’]s\s+impression|statues?|sculptures?|reliefs?|"
+     r"plaques?|coins?|inscriptions?|manuscripts?|murals?|frescos?|frescoes)\b", "historical_photo"),
+    (r"\b(timeline|time\s*line)\b", "chart"),
     (r"\b(map|distribution|region|boundary|border|territory|location\s+of)\b", "map"),
     (r"\b(gharial|crocodile|tiger|lion|elephant|leopard|peacock|macaque|cobra|"
      r"bird|animal|species|fauna|wildlife|reptile|insect|fish|deer|bear|yak|camel)\b", "wildlife"),
@@ -107,7 +110,7 @@ _EDUCATIONAL_ROLE_BY_TYPE: dict[str, str] = {
     "historical_photo": "supporting_example",
     "activity": "supporting_example",
     "wildlife": "sidebar_example",
-    "unknown": "sidebar_example",
+    "unknown": "supporting_example",
 }
 
 # Patterns that indicate a line is a section/subsection heading
@@ -126,12 +129,44 @@ _CAPTION_STOPWORDS: frozenset[str] = frozenset({
 })
 
 
-def classify_image_type(caption: str, snippet: str = "") -> str:
-    """Classify a figure into a pedagogic image-type category."""
-    text = f"{caption or ''} {snippet or ''}".lower()
+_VISUAL_TYPE_RE: list[tuple[str, str]] = [
+    (r"\bmap\b", "map"),
+    (r"\b(chart|graph|timeline|table|flowchart)\b", "chart"),
+    (r"\b(painting|miniature|sculpture|statue|relief|coin|manuscript|mural)\b", "historical_photo"),
+    (r"\b(diagram|illustration|drawing|schematic|cartoon)\b", "diagram"),
+]
+
+
+def _match_image_type(text: str) -> str | None:
     for pattern, img_type in _IMAGE_TYPE_PATTERNS:
         if re.search(pattern, text, re.I):
             return img_type
+    return None
+
+
+def _visual_summary_type(visual_summary: str) -> str | None:
+    """Image type from the vision model's ``type: ...`` segment (what the pixels show)."""
+    vs = (visual_summary or "").lower()
+    m = re.search(r"type\s*:\s*([^;]+)", vs)
+    kind = m.group(1) if m else vs.split(":", 1)[0]
+    for pattern, img_type in _VISUAL_TYPE_RE:
+        if re.search(pattern, kind):
+            return img_type
+    return None
+
+
+def classify_image_type(caption: str, snippet: str = "", visual_summary: str = "") -> str:
+    """Classify a figure into a pedagogic image-type category.
+
+    Priority: caption → what the vision model saw → nearby text (only when the caption is
+    a bare label). Nearby text and the chapter title name the chapter's theme, not this
+    figure — "Political Map" in a chapter title must not make every photo a map."""
+    cap = normalize_caption(caption or "")
+    t = _match_image_type(cap) or _visual_summary_type(visual_summary)
+    if t:
+        return t
+    if len(cap.split()) < 3 and snippet:
+        return _match_image_type(snippet.lower()) or "unknown"
     return "unknown"
 
 
@@ -1262,7 +1297,7 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
             seen_phashes[ph] = fname
 
         snippet = _page_snippet(fig_ctx, [cap] if cap else [])
-        img_type = classify_image_type(cap, fig_ctx)
+        img_type = classify_image_type(cap, f"{pf.nearby_before or ''}\n{pf.nearby_after or ''}")
         has_cap = not is_minimal_figure_caption(cap)
         cap_dist = round(pf.pairing_distance, 2) if pf.pairing_distance >= 0 else None
         conf = round(pf.pairing_confidence, 4) if pf.pairing_confidence >= 0 else None
@@ -1410,7 +1445,7 @@ def extract_docx_images(db: Session, upload: TextbookUpload) -> int:
             chapter_title=chapter_title,
             page_snippet=snippet,
         )
-        img_type = classify_image_type(cap, fig_ctx or snippet or "")
+        img_type = classify_image_type(cap, f"{before}\n{after}")
         has_cap = len((cap or "").strip()) >= 8
         row = TextbookImage(
             textbook_upload_id=upload.id,
@@ -1455,7 +1490,13 @@ def image_count_for_upload(db: Session, upload_id: int) -> int:
     )
 
 
-def upload_disk_assets_missing(db: Session, upload_id: int, *, sample_limit: int = 12) -> bool:
+def upload_disk_assets_missing(
+    db: Session,
+    upload_id: int,
+    *,
+    upload: TextbookUpload | None = None,
+    sample_limit: int = 12,
+) -> bool:
     """
     True when the upload has image rows in Postgres but none of the sampled
     assets are readable on disk (e.g. DB restored without ``_textbook_images``).
@@ -1489,7 +1530,7 @@ def ensure_textbook_images_extracted(db: Session, upload: TextbookUpload) -> int
     Returns number of new rows created (0 if already extracted or failed).
     """
     if image_count_for_upload(db, upload.id) > 0:
-        if upload_disk_assets_missing(db, upload.id):
+        if upload_disk_assets_missing(db, upload.id, upload=upload):
             logger.warning(
                 "Textbook image rows exist but disk assets are missing for upload %s — re-extracting",
                 upload.id,
@@ -1513,6 +1554,7 @@ def ensure_textbook_images_extracted(db: Session, upload: TextbookUpload) -> int
             _index_multimodal_after_extract(db, upload)
             ensure_figure_context_bge_indexed(db, upload)
             _run_ocr_if_needed(db, upload)
+            _describe_images_after_extract(upload)
         return n
     except Exception as exc:
         logger.warning("Image extraction failed for upload %s: %s", upload.id, exc)
@@ -1533,6 +1575,26 @@ def _run_ocr_if_needed(db: Session, upload: TextbookUpload) -> None:
         ocr_upload_if_needed(db, upload, images)
     except Exception as exc:
         logger.warning("OCR post-extract failed for %s: %s", upload.id, exc)
+
+
+def _describe_images_after_extract(upload: TextbookUpload) -> None:
+    """Store vision descriptions in the background so chat image selection never waits on them."""
+    import threading
+
+    from app.config import LLM_IMAGE_SELECT_VISION
+
+    if not LLM_IMAGE_SELECT_VISION:
+        return
+
+    def _run(upload_id: int) -> None:
+        try:
+            from app.services.image_service.llm_image_select import backfill_visual_summaries
+
+            backfill_visual_summaries(upload_id)
+        except Exception as exc:
+            logger.warning("visual_summary backfill failed for %s: %s", upload_id, exc)
+
+    threading.Thread(target=_run, args=(upload.id,), daemon=True).start()
 
 
 def _index_multimodal_after_extract(db: Session, upload: TextbookUpload) -> None:
@@ -1586,6 +1648,7 @@ def reextract_textbook_images(db: Session, upload: TextbookUpload) -> int:
             _index_multimodal_after_extract(db, upload)
             ensure_figure_context_bge_indexed(db, upload)
             _run_ocr_if_needed(db, upload)
+            _describe_images_after_extract(upload)
         return n
     except Exception as exc:
         logger.warning("reextract failed for %s: %s", upload.id, exc)

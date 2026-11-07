@@ -54,6 +54,19 @@ def _rect_area(rect: fitz.Rect) -> float:
     return max(0.0, rect.width * rect.height)
 
 
+def _prose_line_count(page: fitz.Page, rect: fitz.Rect) -> int:
+    """Body-text lines (6+ words) lying inside ``rect``; map labels and legends are shorter."""
+    n = 0
+    for block in page.get_text("dict", clip=rect).get("blocks", []):
+        if block.get("type") != 0:
+            continue
+        for line in block["lines"]:
+            text = "".join(span["text"] for span in line["spans"])
+            if len(text.split()) >= 6 and fitz.Rect(line["bbox"]) in rect + (-2, -2, 2, 2):
+                n += 1
+    return n
+
+
 def _is_column_template_plate(rect: fitz.Rect, page: fitz.Page) -> bool:
     """Reject tall column plates that mix paragraphs and figures in one XObject."""
     pw, ph = page.rect.width, page.rect.height
@@ -64,16 +77,81 @@ def _is_column_template_plate(rect: fitz.Rect, page: fitz.Page) -> bool:
         area_frac >= _COLUMN_PLATE_AREA_FRAC
         and rect.width >= _COLUMN_PLATE_WIDTH_FRAC * pw
         and rect.height >= _COLUMN_PLATE_HEIGHT_FRAC * ph
+        and _prose_line_count(page, rect) >= 3
     ):
         return True
     rejected, _ = reject_figure_rect(rect.x0, rect.y0, rect.x1, rect.y1, pw, ph)
     return rejected
 
 
+_TILE_EDGE_TOL = 2.0
+
+
+def _tiles_abut(a: fitz.Rect, b: fitz.Rect) -> bool:
+    """True when two image tiles share a full edge (one picture split into strips)."""
+    t = _TILE_EDGE_TOL
+    side_by_side = (abs(a.x1 - b.x0) <= t or abs(b.x1 - a.x0) <= t) and (
+        abs(a.y0 - b.y0) <= t and abs(a.y1 - b.y1) <= t
+    )
+    stacked = (abs(a.y1 - b.y0) <= t or abs(b.y1 - a.y0) <= t) and (
+        abs(a.x0 - b.x0) <= t and abs(a.x1 - b.x1) <= t
+    )
+    return side_by_side or stacked
+
+
+def _stitch_tiles(rects: list[fitz.Rect]) -> list[fitz.Rect]:
+    """Merge abutting tiles until stable (2×2 grids stitch in two passes)."""
+    out = [fitz.Rect(r) for r in rects]
+    changed = True
+    while changed:
+        changed = False
+        for i in range(len(out)):
+            for j in range(i + 1, len(out)):
+                if _tiles_abut(out[i], out[j]):
+                    out[i] = out[i] | out[j]
+                    del out[j]
+                    changed = True
+                    break
+            if changed:
+                break
+    return out
+
+
+_recurring_rect_cache: dict[tuple[str, int], frozenset[tuple[int, int, int, int]]] = {}
+
+
+def _rect_key(rect: fitz.Rect) -> tuple[int, int, int, int]:
+    return (round(rect.x0), round(rect.y0), round(rect.x1), round(rect.y1))
+
+
+def _recurring_image_rects(doc: fitz.Document) -> frozenset[tuple[int, int, int, int]]:
+    """Image placements repeated at the same spot on many pages — watermark stamps and
+    page templates, never figures."""
+    key = (doc.name or str(id(doc)), doc.page_count)
+    cached = _recurring_rect_cache.get(key)
+    if cached is not None:
+        return cached
+    counts: dict[tuple[int, int, int, int], int] = {}
+    for p in doc:
+        seen: set[tuple[int, int, int, int]] = set()
+        for info in p.get_image_info():
+            seen.add(_rect_key(fitz.Rect(info["bbox"])))
+        for k in seen:
+            counts[k] = counts.get(k, 0) + 1
+    threshold = max(3, int(doc.page_count * 0.4))
+    result = frozenset(k for k, n in counts.items() if n >= threshold)
+    if len(_recurring_rect_cache) > 16:
+        _recurring_rect_cache.clear()
+    _recurring_rect_cache[key] = result
+    return result
+
+
 def list_embedded_figure_rects(page: fitz.Page) -> list[fitz.Rect]:
-    """Teaching-sized embedded images on a page (not full-page background plates)."""
+    """Teaching-sized embedded images on a page (not full-page background plates).
+    Pictures stored as abutting tiles (common for NCERT maps) come back as one rect."""
     pw, ph = page.rect.width, page.rect.height
-    rects: list[fitz.Rect] = []
+    recurring = _recurring_image_rects(page.parent) if page.parent is not None else frozenset()
+    raw: list[fitz.Rect] = []
     for info in page.get_images(full=True):
         xref = int(info[0])
         try:
@@ -81,18 +159,19 @@ def list_embedded_figure_rects(page: fitz.Page) -> list[fitz.Rect]:
         except Exception:
             continue
         for rect in image_rects:
-            if rect.width < 28 or rect.height < 28:
+            if rect.x0 < -4 or rect.y0 < -4 or rect.is_empty or _rect_key(rect) in recurring:
                 continue
-            if rect.x0 < -4 or rect.y0 < -4:
-                continue
-            if _is_column_template_plate(rect, page):
-                continue
-            rejected, _ = reject_figure_rect(
-                rect.x0, rect.y0, rect.x1, rect.y1, pw, ph
-            )
-            if rejected:
-                continue
-            rects.append(rect)
+            raw.append(rect)
+    rects: list[fitz.Rect] = []
+    for rect in _stitch_tiles(raw):
+        if rect.width < 28 or rect.height < 28:
+            continue
+        if _is_column_template_plate(rect, page):
+            continue
+        rejected, _ = reject_figure_rect(rect.x0, rect.y0, rect.x1, rect.y1, pw, ph)
+        if rejected:
+            continue
+        rects.append(rect)
     return rects
 
 
@@ -126,7 +205,10 @@ def _label_rect_for_figure(page: fitz.Page, fig_number: str) -> fitz.Rect | None
         hits = page.search_for(f"Fig.{fig_number}")
     if not hits:
         return None
-    return min(hits, key=lambda r: (r.y0, r.x0))
+    from app.services.pdf_extract_pipeline.figure_pairing import _is_inline_figure_reference
+
+    captions = [r for r in hits if not _is_inline_figure_reference(page, r)]
+    return min(captions or hits, key=lambda r: (r.y0, r.x0))
 
 
 def _extend_for_caption(
@@ -507,6 +589,7 @@ def try_extract_embedded_jpeg_bytes(
     if layout_rect is not None and _layout_has_prose_bleed(page, layout_rect):
         return None
 
+    recurring = _recurring_image_rects(page.parent) if page.parent is not None else frozenset()
     best: tuple[float, int, fitz.Rect] | None = None
     for info in page.get_images(full=True):
         xref = int(info[0])
@@ -515,7 +598,7 @@ def try_extract_embedded_jpeg_bytes(
         except Exception:
             continue
         for rect in rects:
-            if _is_column_template_plate(rect, page):
+            if _rect_key(rect) in recurring or _is_column_template_plate(rect, page):
                 continue
             if rect.width < 40 or rect.height < 40:
                 continue
@@ -596,6 +679,14 @@ def refine_figure_box(
         )
     else:
         crop = fitz.Rect(layout_rect)
+
+    # Layout detector caught only a strip of a larger picture (legend / edge tile):
+    # grow to the whole embedded image the strip sits inside.
+    if embedded_rect is not None and not split_gutter and _rect_area(crop) > 0:
+        inside = _rect_intersection_area(crop, embedded_rect) / _rect_area(crop)
+        above_label = label_rect is None or embedded_rect.y1 <= label_rect.y0 + 6
+        if inside >= 0.6 and _rect_area(embedded_rect) > _rect_area(crop) * 1.3 and above_label:
+            crop = crop | embedded_rect
 
     crop = crop & page_rect
 

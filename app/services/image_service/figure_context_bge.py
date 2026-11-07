@@ -8,6 +8,8 @@ Query-time cosine uses stored vectors when present; otherwise embeds on the fly.
 from __future__ import annotations
 
 import logging
+import threading
+from collections import OrderedDict
 from typing import Any
 
 import numpy as np
@@ -55,21 +57,37 @@ def cosine_100(a: np.ndarray, b: np.ndarray) -> float:
     return max(0.0, float(np.dot(an, bn))) * 100.0
 
 
+_EMBED_CACHE_MAX = 4096
+_embed_cache: OrderedDict[str, np.ndarray] = OrderedDict()
+_embed_lock = threading.Lock()
+
+
 def embed_texts(texts: list[str]) -> list[np.ndarray | None]:
     if not texts:
         return []
-    try:
-        from app.services.vector_service import _get_embedding_model
+    trimmed = [(t or "")[:2000] or " " for t in texts]
+    with _embed_lock:
+        hits = {t: _embed_cache[t] for t in trimmed if t in _embed_cache}
+    missing = list(dict.fromkeys(t for t in trimmed if t not in hits))
+    if missing:
+        try:
+            from app.services.vector_service import _get_embedding_model
 
-        model = _get_embedding_model()
-        if model is None:
-            return [None] * len(texts)
-        trimmed = [(t or "")[:2000] or " " for t in texts]
-        raw = model.embed_documents(trimmed)
-        return [np.array(v, dtype=np.float32) for v in raw]
-    except Exception as exc:
-        logger.warning("figure_context BGE embed batch failed: %s", exc)
-        return [None] * len(texts)
+            model = _get_embedding_model()
+            if model is None:
+                return [hits.get(t) for t in trimmed]
+            raw = model.embed_documents(missing)
+        except Exception as exc:
+            logger.warning("figure_context BGE embed batch failed: %s", exc)
+            return [hits.get(t) for t in trimmed]
+        with _embed_lock:
+            for t, v in zip(missing, raw):
+                vec = np.array(v, dtype=np.float32)
+                hits[t] = vec
+                _embed_cache[t] = vec
+            while len(_embed_cache) > _EMBED_CACHE_MAX:
+                _embed_cache.popitem(last=False)
+    return [hits.get(t) for t in trimmed]
 
 
 def embed_query(text: str) -> np.ndarray | None:
