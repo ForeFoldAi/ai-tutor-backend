@@ -563,9 +563,36 @@ def _extract_referenced_asset(question: str) -> tuple[str | None, str | None]:
     return None, None
 
 
+_DIGIT_WORDS = {
+    "zero": "0", "oh": "0", "one": "1", "two": "2", "three": "3", "four": "4", "five": "5",
+    "six": "6", "seven": "7", "eight": "8", "nine": "9", "ten": "10", "eleven": "11",
+    "twelve": "12", "thirteen": "13", "fourteen": "14", "fifteen": "15", "sixteen": "16",
+    "seventeen": "17", "eighteen": "18", "nineteen": "19", "twenty": "20",
+}
+_NUM_TOKEN = r"(?:\d+|" + "|".join(_DIGIT_WORDS) + r")"
+# Speech-to-text writes "Fig. 2.12" as "figure 2 point 12", "figure two point one two",
+# "figure 2, 12" or "figure 2-12"; the textbook (and the DB) only know "2.12".
+_SPOKEN_FIG_RE = re.compile(
+    rf"(?i)\b(fig(?:ure)?\.?)\s*({_NUM_TOKEN})"
+    rf"(?:\s*(?:point|dot)\s+((?:{_NUM_TOKEN})(?:\s+{_NUM_TOKEN})*)|\s*[,\-]\s*(\d+))\b"
+)
+
+
+def _spoken_number(tokens: str) -> str:
+    return "".join(_DIGIT_WORDS.get(t.lower(), t) for t in tokens.split())
+
+
+def normalize_spoken_figure_refs(text: str) -> str:
+    """'figure two point one two' → 'figure 2.12' so Fig N lookups work on voice transcripts."""
+    return _SPOKEN_FIG_RE.sub(
+        lambda m: f"{m.group(1)} {_spoken_number(m.group(2))}.{_spoken_number(m.group(3) or m.group(4))}",
+        text or "",
+    )
+
+
 def figure_numbers_cited_in_text(text: str) -> list[str]:
     """Ordered unique Fig./Figure N citations from question or answer prose."""
-    return list(dict.fromkeys(_FIG_REF_QUERY_RE.findall(text or "")))
+    return list(dict.fromkeys(_FIG_REF_QUERY_RE.findall(normalize_spoken_figure_refs(text))))
 
 
 def is_chapter_figure_list_ask(question: str) -> bool:

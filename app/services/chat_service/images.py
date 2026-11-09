@@ -207,6 +207,39 @@ def _db_figures_for_numbers(
     )
 
 
+def requested_figure_prompt_block(numbers: list[str], found: list[dict]) -> str:
+    """Ground the answer in the figure the student asked for: real caption and page, already on screen.
+
+    Without it the model said "I can't generate images" and invented a page number.
+    """
+    if not numbers:
+        return ""
+    by_num = {str(f.get("figure_number") or "").strip(): f for f in found}
+    lines = ["STUDENT ASKED FOR A TEXTBOOK FIGURE."]
+    for n in numbers:
+        f = by_num.get(n)
+        if not f:
+            lines.append(
+                f"Fig. {n} is not in this chapter's textbook. Say so plainly and offer the closest "
+                "topic instead — do not describe or invent it."
+            )
+            continue
+        detail = f"Fig. {n} — \"{(f.get('caption') or '').strip()}\" (textbook page {f.get('page')})"
+        about = (f.get("visual_description") or f.get("figure_context") or "").strip()
+        if about:
+            detail += f". What it shows: {about[:240]}"
+        lines.append(detail + ".")
+    if found:
+        pages = ", ".join(str(f.get("page")) for f in found)
+        lines.append(
+            "These figures are ALREADY DISPLAYED on the student's screen right now. Say it is on "
+            "their screen, then briefly explain what it shows using only the details above and the "
+            f"chapter context. If you mention a page, use exactly: {pages}. Never say you cannot "
+            "show, find or generate images, and never send them to look it up elsewhere."
+        )
+    return "\n".join(lines)
+
+
 def _strong_relevance_fallback(candidates: list[dict]) -> list[dict]:
     strong = [
         c for c in candidates if float(c.get("relevance") or 0) >= _STRONG_RELEVANCE

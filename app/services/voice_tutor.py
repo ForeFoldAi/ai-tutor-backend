@@ -350,6 +350,29 @@ def _looks_like_new_question(q: str) -> bool:
     return bool(_NEW_Q.match(q)) or ("?" in q and len(q.split()) >= 4)
 
 
+# Requests to be taught and protests about a misheard turn — never answers to a check question.
+# Keep in sync with TEACH_REQUEST_RE / NOT_AN_ANSWER_RE in reply-intent.ts.
+_TEACH_REQUEST = re.compile(
+    r"\b(?:teach(?:ing)?\s+(?:me|us|this|the|it)|keep\s+(?:on\s+)?(?:teaching|going|explaining)|"
+    r"continue\s+(?:with\s+)?(?:the\s+|this\s+)?(?:lesson|teaching|explaining|explanation|chapter|topic)|"
+    r"(?:start|begin|resume)\s+(?:the\s+|this\s+)?(?:lesson|chapter|teaching|topic)|"
+    r"(?:explain|tell\s+me\s+about)\s+(?:the|this)\s+(?:lesson|chapter|topic)|"
+    r"(?:move|go)\s+on|next\s+(?:topic|part|point|section))\b",
+    re.I,
+)
+_NOT_AN_ANSWER = re.compile(
+    r"\b(?:i\s+(?:did\s*n[o']?t|didn'?t|have\s*n[o']?t|haven'?t|never)\s+"
+    r"(?:say|said|ask|asked|answer|answered|speak|spoke)|"
+    r"(?:that'?s|that\s+is)\s+not\s+what\s+i\s+(?:said|asked))\b",
+    re.I,
+)
+
+
+def is_teach_request(student_text: str) -> bool:
+    q = (student_text or "").strip()
+    return bool(_TEACH_REQUEST.search(q) or _NOT_AN_ANSWER.search(q))
+
+
 def classify_reply_intent(student_text: str, *, quiz_pending: bool) -> ReplyIntent:
     """Zero-latency heuristic classification of the student's last turn —
     NEW_QUESTION / WRONG_ANSWER / DONT_KNOW / CLOSING / UNCLEAR.
@@ -369,6 +392,9 @@ def classify_reply_intent(student_text: str, *, quiz_pending: bool) -> ReplyInte
     if _CONFUSION.search(q):
         return ReplyIntent.DONT_KNOW
 
+    if is_teach_request(q):
+        return ReplyIntent.NEW_QUESTION
+
     # A fresh question is never an "answer" to the pending quiz — otherwise one old
     # check-question hijacks every following turn (the "kinetic energy" drift).
     if quiz_pending and _looks_like_new_question(q):
@@ -386,6 +412,28 @@ _OFFER = re.compile(
     r"does\s+(?:that|this)\s+make\s+sense|got\s+it|right|okay|ok|isn'?t\s+it|na)\b",
     re.I,
 )
+# Questions about the student, not the lesson (incl. the "did you mean X?" mishearing check).
+_NON_CHECK = re.compile(
+    "|".join(
+        [
+            r"\bdid\s+you\s+(?:mean|say)\b",
+            r"\b(?:what|which)\s+(?:part|topic|bit|area|one)s?\b.*\b(?:tricky|confus|stuck|interest|explore|like|want|start|feel|hard|difficult|next)",
+            r"^(?:so|okay|ok|now|great|alright)?[,!]?\s*(?:does|did|is|was)\s+(?:that|this|it)\s+(?:help|give|make|clear|clarify|answer|sound|feel|work)",
+            r"^(?:do|did|can|could)\s+you\s+(?:see|picture|imagine|follow|understand|get)\s+(?:it|that|this|them|now)\b",
+            r"^do\s+you\s+(?:want|need)\b",
+            r"\b(?:what|anything)\s+else\b",
+            r"\bwhat\s+would\s+you\s+like\b",
+            r"\b(?:or|shall\s+we|want\s+to)\s+(?:move|go|try|continue|look)\b",
+            r"\bhow\s+(?:about|does\s+that\s+sound)\b",
+            r"\bany\s+(?:other\s+|more\s+)?(?:doubts?|questions?)\b",
+            # Choices ("Which of these four forms do you want to explore first?") have no right answer.
+            r"\b(?:do|would)\s+you\s+(?:want|like|prefer|wish)\b",
+            r"\b(?:shall|should)\s+(?:we|i)\b",
+            r"\b(?:explore|learn|cover|discuss|start\s+with|begin\s+with|look\s+at)\s+(?:first|next)\b",
+        ]
+    ),
+    re.I,
+)
 
 
 def pending_question(reply: str) -> str:
@@ -397,7 +445,7 @@ def pending_question(reply: str) -> str:
     """
     sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", reply or "") if s.strip()][-2:]
     for s in reversed(sentences):
-        if "?" in s and not _OFFER.match(s):
+        if "?" in s and not _OFFER.match(s) and not _NON_CHECK.search(s):
             return s
     return ""
 

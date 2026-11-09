@@ -1089,6 +1089,9 @@ def _prepare_math_engine_block(
     return result.to_voice_block() if voice else result.to_prompt_block()
 
 
+_NOT_FETCHED = object()
+
+
 def _build_chat_messages(
     query: str,
     context: str,
@@ -1112,6 +1115,7 @@ def _build_chat_messages(
     dialogue_act: str | None = None,
     image_understanding_block: str = "",
     math_engine_override: str = "",
+    turn_guidance: Any = _NOT_FETCHED,
 ) -> list[dict[str, str]]:
     from app.services.section_heading import HeadingScope
 
@@ -1423,7 +1427,7 @@ def _build_chat_messages(
     if student_key and student_key.isdigit():
         from app.services.learning_intelligence.clients.lia_client import get_guidance_for_turn_sync
 
-        lia = get_guidance_for_turn_sync(
+        lia = turn_guidance if turn_guidance is not _NOT_FETCHED else get_guidance_for_turn_sync(
             student_user_id=int(student_key),
             query=q,
             topic=topic,

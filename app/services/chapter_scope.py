@@ -553,6 +553,9 @@ _MISHEARD_TERM_MIN_LEN = 4
 # Only applied to non-English / ASR-exception tokens (known words never enter this path).
 _MISHEARD_MATCH_CUTOFF = 0.6
 _MISHEARD_SHORT_CUTOFF = 0.86
+# Voice: a spoken "did you mean X?" costs the student a whole turn, so only near-certain
+# sound-alikes qualify (muggles→mughals 0.71 passes; postgrease→stress 0.62 does not).
+_MISHEARD_SPOKEN_CUTOFF = 0.7
 _MISHEARD_SKIP_TERMS = frozenset({
     "name", "your", "mine", "same", "some", "come", "have", "will",
     "just", "like", "said", "know", "want", "need", "make", "they",
@@ -643,7 +646,7 @@ def _morphological_variant(a: str, b: str) -> bool:
 
 
 def misheard_term_guess(
-    query: str, *, docs: list, chapter_names: list[str] | None
+    query: str, *, docs: list, chapter_names: list[str] | None, spoken: bool = False
 ) -> str | None:
     """Best-effort ASR mishearing check: does an unrecognized word in the query
     sound close to a real term from this chapter ('muggles' -> 'mughals')?
@@ -654,6 +657,10 @@ def misheard_term_guess(
     on longer terms show up in practice."""
     q = (query or "").strip()
     if not q or len(q.split()) < 2:
+        return None
+    # No word list means every ordinary word ("poetry", "grades") looks garbled and
+    # gets fuzzy-matched to a chapter term ("Tapestry"). Fail closed instead.
+    if not _english_word_set():
         return None
     q_terms = [
         t
@@ -670,6 +677,8 @@ def misheard_term_guess(
         if _is_known_english_word(term):
             continue
         cutoff = _MISHEARD_SHORT_CUTOFF if len(term) <= 4 else _MISHEARD_MATCH_CUTOFF
+        if spoken:
+            cutoff = max(cutoff, _MISHEARD_SPOKEN_CUTOFF)
         match = difflib.get_close_matches(term, vocab, n=1, cutoff=cutoff)
         if match and not _morphological_variant(term, match[0]):
             return match[0]
@@ -687,6 +696,17 @@ def is_misheard_confirmation_prompt(text: str) -> bool:
 def misheard_candidate_from_prompt(text: str) -> str | None:
     m = _MISHEARD_CONFIRM_RE.search(text or "")
     return m.group(1).strip() if m else None
+
+
+def is_misheard_confirmation_reply(query: str, conversation_history: list[dict] | None) -> bool:
+    """'yes' / 'no' to our 'did you mean X?' — must reach chapter awareness, not the ack path."""
+    q = (query or "").strip()
+    if not (_MISHEARD_YES_RE.match(q) or _MISHEARD_NO_RE.match(q)):
+        return False
+    for turn in reversed(conversation_history or []):
+        if (turn.get("role") or "").lower() == "assistant":
+            return bool(misheard_candidate_from_prompt(turn.get("content") or ""))
+    return False
 
 
 def looks_like_math_problem(query: str) -> bool:
@@ -1140,7 +1160,19 @@ def assess_chapter_coverage(
     required_hits = max(1, len(terms))
     selected_set = {str(cid) for cid in chapter_ids}
 
-    other_id, other_hits, other_coverage = _best_other_chapter(
+    # Every term is already in one of this chapter's passages. Hits count distinct terms,
+    # so no other chapter can score higher — the cross-chapter search can't change FULL.
+    if selected_hits >= required_hits and selected_coverage >= 1:
+        return ChapterCoverageAssessment(
+            level=ChapterCoverageLevel.FULL,
+            topic_label=topic_label,
+            current_chapter_label=current_label,
+            selected_hits=selected_hits,
+            required_hits=required_hits,
+            selected_coverage=selected_coverage,
+        )
+
+    other_id, other_hits, _other_coverage = _best_other_chapter(
         terms,
         collection_name=collection_name,
         query=query,
@@ -1159,14 +1191,6 @@ def assess_chapter_coverage(
         required_hits=required_hits,
         selected_coverage=selected_coverage,
     )
-
-    # Strong coverage in selected chapter
-    if selected_hits >= required_hits and selected_coverage >= 1:
-        if other_hits > selected_hits and other_coverage >= 1:
-            base.level = ChapterCoverageLevel.PARTIAL
-            return base
-        base.level = ChapterCoverageLevel.FULL
-        return base
 
     # Another chapter clearly owns the topic
     if other_id and other_hits >= required_hits and other_hits > selected_hits:
@@ -1403,6 +1427,13 @@ async def resolve_chapter_awareness_turn(
             )
             return None, effective_query, None, coverage_guidance
 
+    # "Show me Fig. 2.12" names its own subject: the figure lookup grounds the answer,
+    # so no prior-question swap and no coverage check that could call it off-chapter.
+    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+
+    if figure_numbers_cited_in_text(effective_query):
+        return None, effective_query, None, build_visual_follow_up_guidance()
+
     # "with an image" / "show me a diagram" — reuse prior question, fetch figures
     if is_image_follow_up_request(effective_query):
         prior = prior_user_question(conversation_history)
@@ -1461,7 +1492,7 @@ async def resolve_chapter_awareness_turn(
         # Rule 2: before treating this as off-topic, check for an ASR-style
         # mishearing of a real chapter term ("muggles" -> "Mughals") — ask for
         # confirmation instead of guessing or bluntly redirecting.
-        guess = misheard_term_guess(scope_q, docs=docs, chapter_names=chapter_names)
+        guess = misheard_term_guess(scope_q, docs=docs, chapter_names=chapter_names, spoken=spoken)
         if guess:
             return build_misheard_confirmation_message(guess), effective_query, assessment, ""
         # Math practice using this chapter's concepts → solve even if not a textbook copy

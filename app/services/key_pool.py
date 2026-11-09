@@ -26,8 +26,12 @@ def cool(scope: str, key: str, seconds: float) -> None:
 
 
 def is_cooling(scope: str, key: str) -> bool:
+    return seconds_until_ready(scope, key) > 0
+
+
+def seconds_until_ready(scope: str, key: str) -> float:
     with _lock:
-        return _ready_at.get((scope, key), 0.0) > time.monotonic()
+        return max(0.0, _ready_at.get((scope, key), 0.0) - time.monotonic())
 
 
 def ordered(scope: str, keys: list[str]) -> list[str]:

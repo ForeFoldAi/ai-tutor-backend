@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 
 import httpx
 
@@ -31,6 +32,28 @@ _TIMEOUT = float(os.environ.get("VOICE_CLOUD_STT_TIMEOUT_SEC", "6"))
 
 _SCOPE = "groq-stt"  # Whisper limits are separate from chat limits
 _MAX_KEY_TRIES = 3
+
+
+# Whisper's stock outputs on silence, breath or speaker bleed. Real speech decodes with
+# no_speech_prob near 0, so these only survive when the audio was confidently speech.
+_STOCK_HALLUCINATIONS = frozenset({
+    "thank you", "thank you very much", "thanks", "thanks for watching", "thank you for watching",
+    "bye", "goodbye", "you", "i'm not sure", "please subscribe", "see you next time",
+})
+
+
+def _hallucinated_segment(seg: dict) -> bool:
+    no_speech = float(seg.get("no_speech_prob", 0.0))
+    logprob = float(seg.get("avg_logprob", -0.5))
+    if no_speech > 0.6 or logprob < -1.0:
+        return True
+    if no_speech > 0.3 and logprob < -0.5:
+        return True
+    if float(seg.get("compression_ratio", 1.0)) > 2.4:
+        return True
+    key = re.sub(r"[^a-z' ]+", " ", (seg.get("text") or "").lower()).strip()
+    key = re.sub(r"\s+", " ", key)
+    return key in _STOCK_HALLUCINATIONS and (no_speech > 0.08 or logprob < -0.35)
 
 
 def _keys() -> list[str]:
@@ -99,7 +122,7 @@ async def transcribe_cloud(
     segs = payload.get("segments") or []
     kept, probs = [], []
     for seg in segs:
-        if float(seg.get("no_speech_prob", 0.0)) > 0.6:
+        if _hallucinated_segment(seg):
             continue
         t = (seg.get("text") or "").strip()
         if t:
