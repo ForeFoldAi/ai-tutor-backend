@@ -184,6 +184,11 @@ def _retry_wait_sec(resp: httpx.Response, attempt: int) -> float:
 
 # A parked key is tried last; never make a student wait out a long Retry-After for it.
 _MAX_PACE_WAIT_SEC = float(os.environ.get("LLM_MAX_PACE_WAIT_SEC", "3"))
+# A primary key free again within this many seconds is still tried before the secondary provider.
+_PRIMARY_WAIT_SEC = min(_MAX_PACE_WAIT_SEC, float(os.environ.get("LLM_PRIMARY_WAIT_SEC", "2")))
+# One key rejected (revoked, no access, request over its token limit): try the next key.
+_KEY_FAIL_STATUSES = frozenset({401, 403, 413})
+_BAD_KEY_PARK_SEC = 300.0
 
 
 def _reserve_start(provider: str = "") -> float:
@@ -228,15 +233,15 @@ def _key_targets(base_url: str, keys: list[str], model: str) -> list[dict[str, s
 
 
 def _targets(feature: str) -> list[dict[str, str]]:
-    """Primary provider's keys (rotating), then the secondary provider's keys."""
+    """Every primary key that is usable now or within a moment, then the secondary's keys."""
     primary = _key_targets(llm_base_url_for(feature), llm_key_pool_for(feature), llm_model_for(feature))
-    ready = [t for t in primary if not key_pool.is_cooling(t["scope"], t["key"])]
-    parked = [t for t in primary if t not in ready]
-    out = ready
+    soon = [t for t in primary if key_pool.seconds_until_ready(t["scope"], t["key"]) <= _PRIMARY_WAIT_SEC]
+    parked = [t for t in primary if t not in soon]
+    out = soon
     fb = llm_fallback_for(feature)
     if fb and fb["key"]:
         out = out + _key_targets(fb["base_url"], fb.get("keys") or [fb["key"]], fb["model"])
-    # Rate-limited keys are a last resort: the secondary answers before we retry them.
+    # Long rate-limited keys are a last resort: the secondary answers before we retry them.
     return out + parked
 
 
@@ -265,8 +270,10 @@ async def _send_with_retries(
 ) -> httpx.Response:
     """Send under a concurrency slot with instant provider failover.
 
-    A 429/5xx/timeout on the primary provider switches straight to the fallback
-    provider (no sleeping); we only back off once every provider has failed.
+    Every usable primary key is tried before the fallback provider: a 429/5xx or a
+    rejected key (401/403) moves to the next key. A timeout or a request too large
+    for the provider (413) is the same for all its keys, so the rest are skipped.
+    We only back off once every provider has failed.
     For ``stream=True`` the slot stays held on return; caller must release it.
     """
     client, *_ = _async_state()
@@ -274,8 +281,13 @@ async def _send_with_retries(
     targets = _targets(feature)
     attempts = max(_max_attempts(feature), len(targets))
     last_exc: BaseException | None = None
+    skip_scopes: set[str] = set()
     for attempt in range(attempts):
         target = targets[attempt % len(targets)]
+        scope = target.get("scope", target["base_url"])
+        others_left = any(t.get("scope", t["base_url"]) not in skip_scopes for t in targets)
+        if scope in skip_scopes and others_left and attempt + 1 < attempts:
+            continue
         await slot.acquire()
         try:
             await _pace_async(target["name"])
@@ -292,21 +304,28 @@ async def _send_with_retries(
             last_exc = exc
             logger.warning("LLM feature=%s provider=%s %s — failing over", feature, target["name"], exc.__class__.__name__)
             _park(target, 2.0)
+            skip_scopes.add(scope)
             if attempt + 1 >= attempts:
                 raise
             continue
         except BaseException:
             slot.release()
             raise
-        failed = resp.status_code in _RETRY_STATUSES or resp.status_code >= 500
+        code = resp.status_code
+        failed = code in _RETRY_STATUSES or code in _KEY_FAIL_STATUSES or code >= 500
         if not failed or attempt + 1 >= attempts:
-            if failed:
+            if failed and code != 413:
                 _park(target, _retry_wait_sec(resp, attempt))
             if not stream:
                 slot.release()
             return resp
         wait = _retry_wait_sec(resp, attempt)
-        _park(target, wait)
+        if code == 413:
+            skip_scopes.add(scope)
+        elif code in (401, 403):
+            _park(target, _BAD_KEY_PARK_SEC)
+        else:
+            _park(target, wait)
         if stream:
             await resp.aclose()
         slot.release()

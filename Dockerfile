@@ -58,7 +58,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libavutil-dev \
     libswresample-dev \
     liblept5 \
-    && rm -rf /var/lib/apt/lists/*
+    wamerican \
+    && rm -rf /var/lib/apt/lists/* \
+    && test -s /usr/share/dict/words
 
 COPY --from=tesseract-build /usr/local/bin/tesseract /usr/local/bin/tesseract
 COPY --from=tesseract-build /usr/local/lib/libtesseract.so* /usr/local/lib/

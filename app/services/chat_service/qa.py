@@ -31,10 +31,12 @@ from app.services.chat_service.dialogue import (
     _is_personal_dialogue_response,
 )
 from app.services.chat_service.images import (
+    _db_figures_for_numbers,
     _image_top_n_for_scope,
     _log_image_stage,
     _select_related_images_for_answer,
     figure_hint_block_from_docs,
+    requested_figure_prompt_block,
 )
 from app.services.chat_service.llm import _ensure_mistral_config
 
@@ -186,7 +188,7 @@ async def chapter_aware_qa(
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
     from app.services.conversation_memory import prepare_conversation_inputs
     from app.services.section_retrieval import retrieve_for_tutor_query
-    from app.services.chapter_scope import resolve_chapter_awareness_turn
+    from app.services.chapter_scope import is_misheard_confirmation_reply, resolve_chapter_awareness_turn
     from app.services.section_heading import HeadingScope
     from app.services.voice_ack import resolve_dialogue_act
 
@@ -197,6 +199,8 @@ async def chapter_aware_qa(
     )
 
     dialogue_act_resolved = resolve_dialogue_act(query)
+    if dialogue_act_resolved and is_misheard_confirmation_reply(query, conversation_history):
+        dialogue_act_resolved = None
     skip_retrieval = bool(dialogue_act_resolved)
 
     conv = resolve_conversation_context(
@@ -675,12 +679,14 @@ async def chapter_aware_qa_stream(
     from app.services.voice_ack import resolve_dialogue_act
 
     # LLM-first: closing/ack/intro skip chapter RAG (voice + text) but still call the model.
+    from app.services.chapter_scope import is_misheard_confirmation_reply, resolve_chapter_awareness_turn
+
     dialogue_act_resolved = resolve_dialogue_act(
         query, dialogue_act=dialogue_act, quiz_pending=quiz_pending
     )
+    if dialogue_act_resolved and is_misheard_confirmation_reply(query, conversation_history):
+        dialogue_act_resolved = None
     skip_retrieval = bool(dialogue_act_resolved)
-
-    from app.services.chapter_scope import resolve_chapter_awareness_turn
 
     recent_hist, session_mem = prepare_conversation_inputs(
         conversation_history,
@@ -694,6 +700,11 @@ async def chapter_aware_qa_stream(
     # so they run while retrieval does and are awaited before the prompt is built.
     affect_task: asyncio.Task | None = None
     profile_task: asyncio.Task | None = None
+    # Text: learner profile + understanding; both modes: LIA guidance. Prefetched alongside
+    # retrieval and only used when chapter-awareness keeps the student's question unchanged.
+    mentor_task: asyncio.Task | None = None
+    guidance_task: asyncio.Task | None = None
+    prefetch_query = ""
     if voice_mode:
         last_assistant_pre = ""
         for turn in reversed(recent_hist or []):
@@ -717,7 +728,7 @@ async def chapter_aware_qa_stream(
             profile_task = _observe(asyncio.create_task(load_learner_profile(student_key)))
 
     def _drop_voice_presteps() -> None:
-        for task in (affect_task, profile_task):
+        for task in (affect_task, profile_task, mentor_task, guidance_task):
             if task is not None and not task.done():
                 task.cancel()
 
@@ -798,6 +809,42 @@ async def chapter_aware_qa_stream(
 
     if voice_mode:
         context_budget = voice_context_budget(context_budget, retrieval_query)
+
+    if student_key and student_key.isdigit():
+        prefetch_query = query
+        prefetch_topic = conv.resolved_topic or query
+        if not voice_mode and learner_snapshot is None:
+            mentor_task = _observe(
+                asyncio.create_task(
+                    _mentor_profile_for_turn(student_key, query, recent_hist, prefetch_topic)
+                )
+            )
+
+        async def _turn_guidance() -> dict | None:
+            from app.services.learning_intelligence.clients.lia_client import get_guidance_for_turn_async
+
+            scores = understanding_scores
+            if affect_task is not None:
+                scores = (await affect_task).to_understanding_scores()
+            elif mentor_task is not None:
+                scores = (await mentor_task)[1]
+            return await get_guidance_for_turn_async(
+                student_user_id=int(student_key),
+                query=prefetch_query,
+                topic=prefetch_topic,
+                subject_name=subject_name,
+                chapter=chapter,
+                chapter_ids=chapter_ids,
+                class_level=class_level,
+                board=board,
+                agent_mode=agent_mode,
+                understanding_scores=scores,
+            )
+
+        guidance_task = _observe(asyncio.create_task(_turn_guidance()))
+
+    def _prefetch_valid() -> bool:
+        return bool(prefetch_query) and (effective_query or "").strip() == prefetch_query.strip()
 
     from app.services.section_heading import HeadingScope
 
@@ -973,6 +1020,8 @@ async def chapter_aware_qa_stream(
         dialogue_act_resolved,
     )
 
+    if mentor_task is not None and _prefetch_valid():
+        learner_snapshot, understanding_scores = await mentor_task
     if not voice_live_teaching and student_key and learner_snapshot is None:
         learner_snapshot, understanding_scores = await _mentor_profile_for_turn(
             student_key,
@@ -1065,7 +1114,11 @@ async def chapter_aware_qa_stream(
             mem_block = format_memory_for_prompt(session_mem)
             if mem_block:
                 messages[0]["content"] = messages[0]["content"] + "\n\n" + mem_block
-        if student_key and student_key.isdigit():
+        if guidance_task is not None and _prefetch_valid():
+            lia = await guidance_task
+            if lia and lia.get("prompt_instructions"):
+                messages[0]["content"] = messages[0]["content"] + "\n\n" + lia["prompt_instructions"]
+        elif student_key and student_key.isdigit():
             from app.services.learning_intelligence.clients.lia_client import get_guidance_for_turn_async
 
             lia = await get_guidance_for_turn_async(
@@ -1096,7 +1149,12 @@ async def chapter_aware_qa_stream(
                 + "DIALOGUE: Acknowledge warmly from conversation history only — do not re-teach "
                 "or dump chapter content. Offer one next step (example, quiz, next part, wrap up)."
             )
-        # Thread: prompt building reads LIA guidance from the DB.
+        prefetched: dict[str, Any] = {}
+        if guidance_task is not None and _prefetch_valid():
+            prefetched["turn_guidance"] = await guidance_task
+        elif guidance_task is not None:
+            guidance_task.cancel()
+        # Thread: prompt building reads LIA guidance from the DB unless it was prefetched.
         messages = await asyncio.to_thread(
             _safe_build_chat_messages,
             effective_query,
@@ -1122,6 +1180,7 @@ async def chapter_aware_qa_stream(
             dialogue_act=dialogue_act_resolved,
             image_understanding_block=image_block,
             math_engine_override=math_override,
+            **prefetched,
         )
 
     if messages is None:
@@ -1131,8 +1190,27 @@ async def chapter_aware_qa_stream(
         yield fb
         return
 
+    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+
+    asked_figs = figure_numbers_cited_in_text(query) if chapter_ids else []
+    requested_figs: list[dict] = []
+    if asked_figs:
+        try:
+            requested_figs = await asyncio.to_thread(_db_figures_for_numbers, chapter_ids, asked_figs)
+        except Exception as exc:
+            logger.warning("requested figure lookup failed: %s", exc)
+        block = requested_figure_prompt_block(asked_figs, requested_figs)
+        if block and messages and messages[0].get("role") == "system":
+            messages[0]["content"] = messages[0]["content"] + "\n\n" + block
+
     last_imgs: list[dict] = []
     images_emitted = False
+    # A named figure is shown before the first token — no ranking, no pedagogy gate.
+    if requested_figs and emit_related_images:
+        _log_image_stage("requested_figure", requested_figs)
+        await emit_related_images(requested_figs)
+        last_imgs = requested_figs
+        images_emitted = True
     early_image_min = VOICE_EARLY_IMAGE_MIN_CHARS if voice_live_teaching else EARLY_IMAGE_MIN_CHARS
     answer_type = _resolve_answer_type(
         effective_query,
@@ -1434,6 +1512,8 @@ async def chapter_aware_qa_stream(
             if use_text_format or (voice_mode and _is_science_subject(subject_name)):
                 answer_text = display_answer
         final_imgs = await final_img_task
+        if requested_figs and not final_imgs:
+            final_imgs = requested_figs
         last_imgs = final_imgs
         from app.services.chat_service.images import figure_inventory_text
         from app.services.image_service.image_intent_extractor import is_chapter_figure_list_ask
@@ -1510,14 +1590,14 @@ async def chapter_aware_qa_stream(
                     )
     except FileNotFoundError:
         fb = _best_chunk_fallback(query, docs)
-        last_imgs = await _retrieve_images_for_answer(fb, llm_ok=False)
+        last_imgs = requested_figs or await _retrieve_images_for_answer(fb, llm_ok=False)
         if emit_related_images:
             await emit_related_images(last_imgs)
         yield fb
     except Exception as exc:
         logger.error("Mistral stream failed: %s: %s", type(exc).__name__, exc)
         fb = _best_chunk_fallback(query, docs)
-        last_imgs = await _retrieve_images_for_answer(fb, llm_ok=False)
+        last_imgs = requested_figs or await _retrieve_images_for_answer(fb, llm_ok=False)
         if emit_related_images:
             await emit_related_images(last_imgs)
         yield fb
