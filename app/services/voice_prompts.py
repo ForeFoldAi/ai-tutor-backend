@@ -33,6 +33,8 @@ _WORD_RE = re.compile(r"[a-z0-9']+")
 
 # Per-turn possible speech-to-text mishears (set by the voice websocket before prompting).
 stt_hint_var: ContextVar[str] = ContextVar("stt_hint_var", default="")
+# Per-turn word ceiling from the student's own request ("keep it short", "in 3 sentences").
+voice_word_cap_var: ContextVar[int | None] = ContextVar("voice_word_cap_var", default=None)
 
 VOICE_SYSTEM_PROMPT = """\
 You are a friendly teacher talking OUT LOUD to a child in a live voice lesson.
@@ -98,8 +100,11 @@ reply conversationally only (ack, offer next step, or greet).
 
 MISHEARD WORDS (critical — the student's message is speech-to-text and may swap sound-alike words):
 Typical swaps: a character name vs an ordinary word ("Tricki" the dog vs "tricky"), "vet" vs "wet",
-"hate" vs "help". Always pick the meaning that fits THIS chapter and the tutor's last reply, and
+"hate" vs "help", "terrorists" vs "territories", "density" vs "dynasty", "stats" vs "states",
+"invited" vs "invented", "coronals" vs "chronicles", "inspections" vs "inscriptions", "option T" vs "option D".
+Always pick the meaning that fits THIS chapter and the tutor's last reply, and
 answer that — never build an answer on the odd word, and never switch to an unrelated topic.
+When you swap a word, say it once in a few words ("I think you meant territories") and answer that.
 {speech_hints}
 If the student corrects you ("I said X, not Y", "no, I meant…"): briefly own it ("Sorry, I misheard!"),
 restate what they meant and answer THAT in 1–3 short sentences. A correction is about your hearing,
@@ -117,8 +122,10 @@ Priority: (1) retrieved chapter context, (2) this conversation if it already use
   Never invent a quotation. Never use fixed phrases like "In everyday terms" or "In your chapter".
 - Stay on the chapter and on the student's latest message. Old quiz or earlier topics matter only if
   the student is clearly answering them.
-- If the question is off-chapter or the context is thin: say so in one short line and steer back to
-  what the chapter teaches, or ask what they meant. Do not invent.
+- If the question is from a different subject altogether: say in one short line it's not in this book
+  and steer back. If it is close to the chapter's subject but the context doesn't cover it: one or two
+  accurate sentences starting "This isn't in your chapter, but", then one line linking back. A
+  "CHAPTER COVERAGE: RELATED" or "PARTIAL" block below always allows that labeled line.
 - A request to explain the whole chapter ("start to end") means: a short, ordered walkthrough of the
   chapter's main events/ideas from the context, beginning to end.
 
@@ -275,7 +282,10 @@ def voice_word_limit(
             else VOICE_PROMPT_MAX_WORDS
         )
     ceiling = _context_word_ceiling(context)
-    return min(cap, ceiling) if ceiling else cap
+    if ceiling:
+        cap = min(cap, ceiling)
+    requested = voice_word_cap_var.get()
+    return min(cap, requested) if requested else cap
 
 
 def voice_turn_type_guidance(query: str) -> str:
@@ -727,8 +737,10 @@ def build_voice_user_message(
         )
     else:
         empty_ctx = (
-            "(No matching chapter excerpt. Do not invent facts. "
-            "Say you don't have enough information in this chapter.)"
+            "(No new chapter excerpt for this message. Do not invent facts. "
+            "If the student is following up your last reply (an example, again, simpler, prove it), "
+            "build on that reply from the conversation. Otherwise say in one line that the chapter "
+            "doesn't cover it and steer back. Never say the context or chapter is unavailable.)"
         )
     return VOICE_USER_TEMPLATE.format(
         context=context or empty_ctx,

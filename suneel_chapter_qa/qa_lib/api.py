@@ -138,6 +138,7 @@ def _read_ndjson_stream(session: AuthSession, url: str, body: dict, path: str) -
     math_lesson = None
     science_experiment = None
     err = None
+    meta: dict = {}
     try:
         with session.open_stream(url, body) as r:
             for line in r:
@@ -167,9 +168,12 @@ def _read_ndjson_stream(session: AuthSession, url: str, body: dict, path: str) -
                         clean = ev["clean_answer"]
                 elif typ == "error":
                     err = (ev.get("content") or "stream error")[:300]
+                elif typ == "done":
+                    meta = {k: v for k, v in ev.items() if k != "type"}
     except Exception as e:
         err = str(e)[:300]
     return {
+        "meta": meta,
         "answer": clean or "".join(tokens),
         "related_images": images,
         "math_lesson": math_lesson,
@@ -191,9 +195,12 @@ def chat_tutor(
     subject: str,
     chapter_id,
     chapter: str,
+    extra: dict | None = None,
 ) -> dict:
-    """AI Tutor text chat — same stream endpoint the /ai-tutor page uses."""
+    """AI Tutor text chat — same stream endpoint the /ai-tutor page uses.
+    *extra* carries the per-chat state the page sends back (quiz_state, prefers_short, explained_points)."""
     body = _chapter_body(query, history, board, class_level, subject, chapter_id, chapter)
+    body.update(extra or {})
     return _read_ndjson_stream(session, f"{API}/auth/chat/stream", body, "POST /auth/chat/stream")
 
 
@@ -207,9 +214,11 @@ def chat_voice(
     subject: str,
     chapter_id,
     chapter: str,
+    extra: dict | None = None,
 ) -> dict:
     """Same path Nest rag.client uses: /auth/chat/stream with voice_mode=true."""
     body = _chapter_body(query, history, board, class_level, subject, chapter_id, chapter)
+    body.update(extra or {})
     body["voice_mode"] = True
     return _read_ndjson_stream(
         session, f"{API}/auth/chat/stream", body, "POST /auth/chat/stream voice_mode=true"

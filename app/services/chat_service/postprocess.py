@@ -162,6 +162,19 @@ def _mistral_token_limit_for_answer_type(
     return None
 
 
+def _student_sized_answer(query: str) -> bool:
+    """The student set the length or shape ("in 3 sentences", "keep it short", their own MCQ)."""
+    from app.services.chat_service.turn_rules import (
+        asks_for_short_answers,
+        is_student_posed_question,
+        requested_count,
+    )
+
+    return bool(
+        requested_count(query) or asks_for_short_answers(query) or is_student_posed_question(query)
+    )
+
+
 async def _finalize_direct_answer(
     messages: list[dict[str, str]],
     answer: str,
@@ -190,7 +203,12 @@ async def _finalize_direct_answer(
         # Don't shrink math — required sections + math-lesson JSON look "too long".
         return _finish(answer)
     if _structure_tier(answer_type) != "direct":
-        if not _skip_answer_expansion(query, conversation_history):
+        # Compact / quiz replies are short on purpose; so is any answer the student sized themselves.
+        if (
+            _structure_tier(answer_type) not in ("compact", "quiz")
+            and not _student_sized_answer(query)
+            and not _skip_answer_expansion(query, conversation_history)
+        ):
             answer = await _expand_short_answer(
                 messages, answer, query, heading_scope=heading_scope
             )

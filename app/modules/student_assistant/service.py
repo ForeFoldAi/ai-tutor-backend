@@ -973,11 +973,18 @@ async def chat_stream(
         yield s
     messages = turn.messages
     parts: list[str] = []
-    async for token in _stream_mistral_async(
-        messages, max_tokens=ASSISTANT_MAX_TOKENS, feature="assistant"
-    ):
-        parts.append(token)
-        yield token
+    try:
+        async for token in _stream_mistral_async(
+            messages, max_tokens=ASSISTANT_MAX_TOKENS, feature="assistant"
+        ):
+            parts.append(token)
+            yield token
+    except Exception:
+        # Every provider rate-limited or down: end the turn with a reply, not a broken stream.
+        logger.warning("assistant LLM stream failed", exc_info=True)
+        if not "".join(parts).strip():
+            yield turn.fallback
+        return
     answer = "".join(parts).strip()
     if not answer:
         yield turn.fallback
@@ -988,23 +995,27 @@ async def chat_stream(
     # never gets streamed on top of what the student already sees.
     probe = ""
     checked = False
-    async for token in _stream_mistral_async(
-        _with_continue(messages, answer),
-        max_tokens=ASSISTANT_MAX_TOKENS,
-        feature="assistant",
-    ):
-        if checked:
-            yield token
-            continue
-        probe += token
-        if len(probe.lstrip()) < _CONTINUE_PROBE_CHARS:
-            continue
-        checked = True
-        tail = _continuation_tail(answer, probe)
-        if tail is None:
-            return
-        if tail:
-            yield tail
+    try:
+        async for token in _stream_mistral_async(
+            _with_continue(messages, answer),
+            max_tokens=ASSISTANT_MAX_TOKENS,
+            feature="assistant",
+        ):
+            if checked:
+                yield token
+                continue
+            probe += token
+            if len(probe.lstrip()) < _CONTINUE_PROBE_CHARS:
+                continue
+            checked = True
+            tail = _continuation_tail(answer, probe)
+            if tail is None:
+                return
+            if tail:
+                yield tail
+    except Exception:
+        logger.warning("assistant continuation stream failed", exc_info=True)
+        return
     if not checked:
         tail = _continuation_tail(answer, probe)
         if tail:

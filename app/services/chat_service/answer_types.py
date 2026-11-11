@@ -383,20 +383,16 @@ def _voice_should_use_text_format(
 ) -> bool:
     """Text chat always uses the full tutor format.
 
-    Voice uses live conversational teaching by default. Full written format only
-    when the student explicitly asks for more detail or a complete written solution.
+    Voice stays spoken even for "explain in detail" or a confused student — those get the
+    longer spoken cap, never a Topic / Key Points card read aloud. Only an explicit request
+    for a complete written solution switches format.
     """
     if not voice_mode:
         return True
-    _ = heading_scope
-    from app.services.voice_tutor import voice_expand_requested, voice_wants_full_written_answer
+    _ = heading_scope, understanding_scores
+    from app.services.voice_tutor import voice_wants_full_written_answer
 
-    scores = understanding_scores or {}
-    if scores.get("wants_expansion") or voice_expand_requested(query):
-        return True
-    if voice_wants_full_written_answer(query):
-        return True
-    return False
+    return voice_wants_full_written_answer(query)
 
 
 _MATH_DIALOGUE_TYPES = frozenset({"greeting", "affirmation", "personal-response", "clarification"})
@@ -445,6 +441,9 @@ _COMPACT_TYPES = frozenset({
     "clarification",
     # Keep student summaries short/direct (no structured "Remember/Try This" template).
     "summary",
+    "quiz_feedback",
+    "answer_student_mcq",
+    "cite",
 })
 
 
@@ -496,6 +495,9 @@ _ANSWER_MIN_WORDS: dict[str, int] = {
     "quiz": 80,
     "mcq": 100,
     "summary": 50,
+    "quiz_feedback": 30,
+    "answer_student_mcq": 25,
+    "cite": 40,
 }
 
 
@@ -569,6 +571,22 @@ _ANSWER_INSTRUCTIONS: dict[str, str] = {
     "mcq": (
         "The student asked for multiple-choice questions. Generate chapter-based MCQs in mentor tone. "
         "Use a) b) c) d) options. Do NOT reveal correct answers yet."
+    ),
+    "quiz_feedback": (
+        "The student answered the quiz. Give feedback per question using exactly the verdicts in "
+        "QUIZ GRADES: praise correct ones briefly, credit the right part of partly correct ones and add "
+        "what was missing, give one hint for a first wrong try, and state the answer after a second wrong "
+        "try. Plain prose, no headings."
+    ),
+    "answer_student_mcq": (
+        "The student asked their own multiple-choice or true/false question. Name the correct option "
+        "(or True/False) in the first sentence, then give a one-line reason from the chapter. "
+        "Do not generate new questions."
+    ),
+    "cite": (
+        "The student asked you to prove your answer from the textbook. Quote or closely paraphrase the "
+        "supporting line(s) from the chapter context, introduced with \"Your chapter says:\". "
+        "Never invent page numbers."
     ),
     "affirmation": (
         "The student confirmed they understood, thanked you, or briefly acknowledged "
@@ -694,6 +712,14 @@ def _resolve_answer_type(
         return "affirmation"
 
     q = (query or "").strip()
+    from app.services.chat_service.turn_rules import is_cite_request, is_student_posed_question
+
+    # Before quiz/MCQ mode: "Option A ... Option B ..." from the student is a question to answer,
+    # and "prove it from my textbook" wants a quote, not a step-by-step lesson.
+    if is_student_posed_question(q):
+        return "answer_student_mcq"
+    if is_cite_request(q) and conversation_history:
+        return "cite"
     if conv is None:
         conv = resolve_conversation_context(
             q, conversation_history=conversation_history, chapter=chapter
