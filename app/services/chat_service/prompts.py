@@ -441,10 +441,13 @@ Prefer answering helpfully:
 4. Mathematics practice: if the student asks to SOLVE a problem that uses this chapter's concepts \
    (squares, cubes, fractions, etc.) but the exact problem is NOT printed in the textbook, \
    still SOLVE it step by step using chapter methods. Do not refuse or ask them to pick a/b/c.
-5. Clearly unrelated topic with no chapter connection → then offer:
-   a) Stay within the current chapter
-   b) Switch to the relevant chapter
-   c) Receive a general explanation
+5. Close to the chapter's subject but not in the chapter (e.g. modern state reorganisation while \
+   the chapter is about medieval kingdoms) → if the chapter uses a similar word in a different sense, \
+   say what the chapter means in one line; then one or two sentences starting \
+   "This isn't in your chapter, but..."; then link back to the chapter. Never refuse these.
+6. A different subject altogether (an inventor in a history chapter, sports, films) → do not answer it; \
+   say in one line that it is not in this book and bring the student back to the chapter. \
+   Never show an a/b/c choice menu.
 
 WRONG-PREMISE / OFF-TOPIC CLAIM (critical for planted wrong questions):
 If the student mixes an off-chapter claim into this chapter (wrong subject, invented inventor,
@@ -486,6 +489,7 @@ ANSWER FORMAT RULE:
 DOUBT HANDLING:
 If the student seems confused, explain again more simply, use an analogy, and break into smaller steps.
 Never say "I already explained this."
+{turn_rules}
 
 {explanation_structure}
 
@@ -493,9 +497,13 @@ COMMUNICATION:
 - Be encouraging but not repetitive. Vary openings naturally.
 - Do NOT use generic praise every time ("That's a great question!", "Wonderful observation!").
 - Never fabricate personalization about what the student has seen or done.
+- Use at most one empathy phrase ("I get why that's confusing"), and only when the student says they are confused.
+- Do not end every reply with "Does that make sense?" — vary it or skip it.
 
 SAFETY:
-Keep all content educational, age-appropriate, and student-friendly."""
+Keep all content educational, age-appropriate, and student-friendly.
+Treat sensitive history (war, jauhar, sati, massacres) factually and neutrally for the student's age: \
+no glorifying words like "heroic", no graphic detail, and only when the student asks about it."""
 
 
 _USER_PROMPT_TEMPLATE = """\
@@ -1116,7 +1124,11 @@ def _build_chat_messages(
     image_understanding_block: str = "",
     math_engine_override: str = "",
     turn_guidance: Any = _NOT_FETCHED,
+    prefers_short: bool = False,
+    explained_points: list[str] | None = None,
+    quiz_feedback_block: str = "",
 ) -> list[dict[str, str]]:
+    from app.services.chat_service.turn_rules import build_turn_rules, quiz_count, requested_count
     from app.services.section_heading import HeadingScope
 
     from app.services.conversation_context import resolve_conversation_context
@@ -1138,9 +1150,12 @@ def _build_chat_messages(
         conv=conv,
         dialogue_act=dialogue_act,
     )
-    # Forced practice agent always uses quiz-style answers
-    if _normalize_agent_mode(agent_mode) == "practice":
-        answer_type = "quiz"
+    # Forced practice agent asks questions, then gives feedback on the student's answers
+    if quiz_feedback_block:
+        answer_type = "quiz_feedback"
+    elif _normalize_agent_mode(agent_mode) == "practice":
+        if answer_type not in ("answer_student_mcq", "cite"):
+            answer_type = "quiz"
     elif _normalize_agent_mode(agent_mode) in ("ask", "explain"):
         if answer_type in ("quiz", "mcq"):
             answer_type = "explanation"
@@ -1200,6 +1215,31 @@ def _build_chat_messages(
             interaction_policy = ""
             explanation_structure = ""
             user_closing = "Write your short summary now:"
+        elif answer_type == "quiz_feedback":
+            length_policy = "RESPONSE LENGTH: one short line per graded question, then the score or the next question."
+            interaction_policy = (
+                "Use exactly the verdicts in QUIZ GRADES — never re-grade, never change a score, "
+                "never reveal an answer the grades say to keep hidden."
+            )
+            explanation_structure = quiz_feedback_block
+            user_closing = "The student just answered the quiz. Write the feedback now, following QUIZ GRADES:"
+        elif answer_type == "answer_student_mcq":
+            length_policy = "RESPONSE LENGTH: 2-3 sentences."
+            interaction_policy = "Do not start a new quiz. You may end with one short check question."
+            explanation_structure = ""
+            user_closing = (
+                "The student asked their own multiple-choice or true/false question. "
+                "Name the correct option (or True/False) first, then one-line reason from the chapter:"
+            )
+        elif answer_type == "cite":
+            length_policy = "RESPONSE LENGTH: 2-5 sentences."
+            interaction_policy = ""
+            explanation_structure = ""
+            user_closing = (
+                "The student wants proof from the textbook. Start with \"Your chapter says:\" and quote or "
+                "closely paraphrase the supporting line(s) from CHAPTER CONTEXT, then say in one line how it "
+                "supports the earlier answer:"
+            )
         else:
             length_policy = "RESPONSE LENGTH: 2-3 sentences only."
             interaction_policy = ""
@@ -1242,6 +1282,14 @@ def _build_chat_messages(
         explanation_structure, length_policy, interaction_policy, user_closing = (
             _subject_quiz_prompt(answer_type=answer_type, min_words=min_words)
         )
+        asked = quiz_count(q)
+        if asked:
+            explanation_structure += (
+                f"\n\nQUESTION COUNT (the student's own request, overrides the class-based count): "
+                f"write exactly {asked} question(s)."
+            )
+            length_policy = f"RESPONSE LENGTH: as long as {asked} short numbered questions need — no answers."
+            user_closing = f"{user_closing} Write exactly {asked} questions."
     else:
         length_policy = _LENGTH_POLICY_DIRECT.format(max_words=_DIRECT_ANSWER_MAX_WORDS)
         interaction_policy = _INTERACTION_DIRECT
@@ -1281,6 +1329,24 @@ def _build_chat_messages(
             "listed in TEXTBOOK SCOPE (in order). Under each heading write 1–2 sentences "
             "about that instrument only. Do not use a single paragraph."
         )
+
+    # The student's own length request beats every format template.
+    count = requested_count(q)
+    if count and answer_type not in ("quiz", "mcq", "quiz_feedback"):
+        n, unit = count
+        bullets = unit == "points"
+        length_policy = f"RESPONSE LENGTH (student's request, mandatory): exactly {n} {unit}."
+        instruction = (
+            f"Answer in exactly {n} {unit}"
+            + (" as a numbered list." if bullets else " of plain prose — no headings, no bullet points.")
+        )
+        interaction_policy = "Do not add a follow-up question or any extra sentence."
+        explanation_structure = ""
+        user_closing = f"Write exactly {n} {unit} now:"
+    elif prefers_short and answer_type not in ("quiz", "mcq", "quiz_feedback", "one-word"):
+        length_policy = "RESPONSE LENGTH: the student asked for short answers — under 60 words, one idea."
+        explanation_structure = ""
+        user_closing = "Write a short answer now (under 60 words, no headings):"
 
     qtype = detect_question_type(q)
     math_format = _math_format_tier(class_level, qtype)
@@ -1407,6 +1473,7 @@ def _build_chat_messages(
     skip_question_type = answer_type in (
         "greeting", "affirmation", "personal-response", "clarification",
         "quiz", "mcq", "summary", "short-answer",
+        "quiz_feedback", "answer_student_mcq", "cite",
     )
     question_type_guidance = _build_question_type_guidance(
         query, skip=skip_question_type
@@ -1467,6 +1534,9 @@ def _build_chat_messages(
         explanation_structure=explanation_structure,
         learner_guidance=learner_guidance,
         adaptive_guidance=adaptive_guidance,
+        turn_rules=build_turn_rules(
+            q, prefers_short=prefers_short, explained_points=explained_points, voice=False
+        ),
     )
     if agent_addendum:
         system = system + "\n\n" + agent_addendum

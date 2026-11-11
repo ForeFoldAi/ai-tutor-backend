@@ -25,6 +25,8 @@ _TOPIC_STOPWORDS = frozenset({
     "and", "or", "to", "for", "with", "by", "from", "this", "that", "it",
     "its", "as", "be", "been", "being", "have", "has", "had", "not", "no",
     "explain", "describe", "what", "how", "why", "when", "where", "about",
+    "who", "whom", "whose", "which", "did", "does", "do",  # question words carry no topic
+
     "tell", "give", "can", "you", "me", "please", "define", "meaning",
     "summarize", "summarise", "summary", "overview",
     "some", "any", "another", "other",  # quantifiers — "give me some/another X" carries no topic on its own
@@ -318,26 +320,28 @@ def _chapter_focus_hint(chapter_label: str) -> str:
     return label
 
 
-def build_chapter_awareness_message(assessment: ChapterCoverageAssessment) -> str:
-    """Student-facing message for not-covered topics with a/b/c choices."""
-    topic = assessment.topic_label or "this topic"
+def build_chapter_awareness_message(
+    assessment: ChapterCoverageAssessment, *, spoken: bool = False
+) -> str:
+    """One-line redirect for a question this chapter can't answer — no menu, no echo of the question.
+
+    Unrelated questions are not answered: the student is told where the topic lives
+    (when another chapter of this book owns it) and brought back to the lesson.
+    """
     current = assessment.current_chapter_label
+    focus = _chapter_focus_hint(current) or current
+    bold = (lambda s: s) if spoken else (lambda s: f"**{s}**")
 
     if assessment.other_chapter_label:
         other = assessment.other_chapter_label
-        opener = f"{topic} is in {other}, not in {current}."
-        switch_line = f"b) Switch to {other} — open AI Tutor"
-    else:
-        opener = f"{topic} is not covered in {current}."
-        switch_line = "b) Switch to the right chapter — open AI Tutor"
-
+        return (
+            f"That's covered in {bold(other)}, not in {bold(current)}. "
+            f"You can open that chapter in AI Tutor to learn it. "
+            f"For now, let's get back to {bold(focus)}."
+        )
     return (
-        f"{opener}\n\n"
-        "How would you like to continue?\n"
-        f"a) Stay in {current}\n"
-        f"{switch_line}\n"
-        
-        "Reply a or b."
+        "That's not in this book, so I'll leave it for now. "
+        f"Let's get back to {bold(focus)}. Ask me anything about it!"
     )
 
 
@@ -379,10 +383,13 @@ def build_partial_coverage_guidance(
     if spoken:
         return (
             "CHAPTER COVERAGE: PARTIAL. "
-            "Answer only what the chapter context supports. "
-            "If a detail is missing, say the chapter does not go into that — "
-            "do not fill gaps from general knowledge. "
-            "Do not say 'according to the textbook' or 'beyond this chapter'."
+            "Answer first with what the chapter context supports. "
+            "If the student's question is about something the chapter does not cover "
+            "(for example a modern event while the chapter is about an earlier period), you must "
+            "still answer that part: one or two short sentences of accurate general knowledge that start "
+            "with 'This isn't in your chapter, but', then link it back to the chapter in one line. "
+            "Do not just say the chapter doesn't cover it. "
+            "Never invent chapter facts, page numbers or figure names."
             + extra.replace("**", "")
         )
     return (
@@ -426,13 +433,68 @@ def build_general_explanation_guidance(topic_label: str, *, spoken: bool = False
     )
 
 
+_NOT_A_STATEMENT_RE = re.compile(
+    r"^\s*(?:who|whom|whose|what|which|when|where|why|how|is|are|was|were|do|does|did|can|could|will|"
+    r"would|should|shall|may|tell|explain|give|show|teach|describe|define|list|name|ask|let'?s|please|"
+    r"hi|hello|hey|thanks?|ok(?:ay)?|yes|no|i\s+(?:want|need|would|wanna|don'?t\s+(?:know|understand)))\b",
+    re.I,
+)
+
+
+def is_student_statement(query: str) -> bool:
+    """A declarative claim ("States and districts are exactly the same"), not a question or request."""
+    q = (query or "").strip()
+    return len(q.split()) >= 3 and "?" not in q and not _NOT_A_STATEMENT_RE.match(q)
+
+
+def build_statement_guidance(chapter_label: str, *, spoken: bool = False) -> str:
+    focus = _chapter_focus_hint(chapter_label) or chapter_label or "this chapter"
+    return (
+        "STUDENT STATEMENT: the student stated something as a fact. If it is false, correct it kindly in one "
+        "line with the right fact and one short reason (accurate school-level general knowledge is fine here), "
+        f"then link back to {focus} in one line. If it is true, confirm it briefly. Never refuse, never say it "
+        "is not in the book, never treat it as a quiz answer, and don't claim the chapter covers the fact "
+        "unless the chapter context shows it."
+        + (" At most three short spoken sentences." if spoken else "")
+    )
+
+
+def build_bridge_guidance(
+    topic_label: str, chapter_label: str, *, spoken: bool = False
+) -> str:
+    """Related but off-chapter question: clarify the chapter's meaning, short labeled answer, link back."""
+    focus = _chapter_focus_hint(chapter_label) or chapter_label or "this chapter"
+    topic = (topic_label or "this")[:80]
+    if spoken:
+        return (
+            "CHAPTER COVERAGE: RELATED, NOT IN CHAPTER. "
+            f"The student asked about '{topic}', which is close to the chapter '{focus}' but not covered in it. "
+            "Reply in this order, in at most four short spoken sentences: "
+            "(1) if the chapter uses a similar word in a different sense, say what the chapter means by it in one line; "
+            "(2) one or two sentences of accurate general knowledge that start with 'This isn't in your chapter, but'; "
+            "(3) one line linking back to what the chapter teaches. "
+            "No menu, no page numbers, no figure names, and do not refuse."
+        )
+    return (
+        "CHAPTER COVERAGE: RELATED, NOT IN CHAPTER\n"
+        f"The student asked about **{topic}**, which is close to **{focus}** but not covered in it.\n"
+        "- If the chapter uses a similar word in a different sense, say what the chapter means by it in one line.\n"
+        "- Then give one or two sentences of accurate general knowledge starting with "
+        "**This isn't in your chapter, but...**\n"
+        "- End with one line linking back to what the chapter teaches.\n"
+        "- Keep it short. Do NOT refuse, do NOT show a choice menu, do NOT invent page numbers or figure names."
+    )
+
+
 def build_session_followup_guidance(prior_topic: str) -> str:
     return (
         "SESSION FOLLOW-UP: continue the same topic "
         f"({(prior_topic or '')[:120]}). "
         "Use the chapter context as the source of facts. "
-        "Do not add unsupported names, dates, or events. "
-        "If the chapter does not answer this follow-up, say so in one short sentence."
+        "Do not add unsupported names, dates, or events, and never claim the chapter covers something "
+        "the context doesn't show. If the chapter doesn't answer this but it is close to the chapter's "
+        "subject, give one or two accurate sentences starting with \"This isn't in your chapter, but\", "
+        "then link back to the chapter in one line."
     )
 
 
@@ -818,7 +880,7 @@ def original_question_before_awareness(
 
 
 def other_chapter_from_awareness_prompt(text: str) -> str | None:
-    m = re.search(r"Switch to (.+?) — open Learning Studio", text or "", re.I)
+    m = re.search(r"Switch to (.+?) — open (?:Learning Studio|AI Tutor)", text or "", re.I)
     if m:
         label = m.group(1).strip()
         if label.lower().startswith("the right chapter"):
@@ -880,13 +942,48 @@ def _should_skip_topic_scope_check(
         return True
     if is_image_follow_up_request(q):
         return True
+    if len(q.split()) <= 2 and _SKIP_TOPIC_SCOPE_RE.match(q):
+        return True
+    if _RECALL_QUERY_RE.search(q):
+        return True
+    from app.services.chat_service.turn_rules import (
+        asks_for_short_answers,
+        is_complaint,
+        is_student_posed_question,
+    )
+
+    # Talk about the conversation itself ("stop giving long answers", "you're confusing me"),
+    # or the student's own MCQ — never a topic to scope-check.
+    if asks_for_short_answers(q) or is_complaint(q) or is_student_posed_question(q):
+        return True
+    # "I don't understand why India needed state reorganization, explain it" names a topic of its
+    # own — the follow-up phrasing must not wave it past the scope check.
+    if _names_new_topic(q, conversation_history):
+        return False
     if _DEEPEN_FOLLOWUP_RE.search(q):
         return True
     if conversation_history and is_session_continuation_follow_up(q, conversation_history):
         return True
-    if len(q.split()) <= 2 and _SKIP_TOPIC_SCOPE_RE.match(q):
-        return True
     return bool(_SKIP_TOPIC_SCOPE_RE.match(q))
+
+
+_RECALL_QUERY_RE = re.compile(
+    r"\b(?:what\s+(?:were|was|did|have)\s+(?:we|you|i)\s+(?:discuss|talk|cover|learn|said|say|ask)\w*"
+    r"|our\s+(?:discussion|conversation|chat)|so\s+far|just\s+now|you\s+(?:just\s+)?(?:said|told|mentioned)"
+    r"|(?:the\s+)?(?:previous|last|earlier|second|first|third)\s+(?:point|topic|answer|example|question))\b",
+    re.I,
+)
+
+
+def _names_new_topic(query: str, conversation_history: list[dict] | None) -> bool:
+    """Two or more content words that the recent conversation hasn't mentioned."""
+    terms = content_substantive_terms(query)
+    if len(terms) < 2:
+        return False
+    recent = " ".join(
+        (t.get("content") or "") for t in (conversation_history or [])[-4:]
+    ).lower()
+    return sum(1 for t in terms if not _term_pattern(t).search(recent)) >= 2
 
 
 def is_explicit_chapter_switch_request(query: str) -> bool:
@@ -979,11 +1076,17 @@ def _terms_match_chapter_titles(terms: set[str], chapter_names: list[str] | None
     return bool(title_text) and all(term in title_text for term in terms)
 
 
+@lru_cache(maxsize=4096)
+def _term_pattern(term: str) -> re.Pattern[str]:
+    # Whole word plus common inflections ("desert" -> "deserts"), so "who" never matches "whole".
+    return re.compile(rf"\b{re.escape(term)}(?:s|es|ed|d|ing|al|n|ns)?\b")
+
+
 def _term_hits_in_text(terms: set[str], text: str) -> int:
     if not terms:
         return 0
     lowered = (text or "").lower()
-    return sum(1 for term in terms if term in lowered)
+    return sum(1 for term in terms if _term_pattern(term).search(lowered))
 
 
 def _docs_with_all_terms(terms: set[str], docs: list) -> int:
@@ -1178,6 +1281,10 @@ def assess_chapter_coverage(
         query=query,
         selected_set=selected_set,
     )
+    # Name another chapter only when it matches every term — one shared common word
+    # sent "Who invented the telephone?" to an unrelated civics chapter.
+    if other_hits < required_hits:
+        other_id = ""
     labels = _subject_upload_labels(board, class_level, subject_name)
     other_label = labels.get(other_id) if other_id else None
 
@@ -1281,10 +1388,16 @@ _TOPIC_MISMATCH_LLM_SYSTEM_PROMPT = (
     "\"I don't get it\", \"go on\", \"what about the other one\") that a "
     "keyword search can't match to anything. Read the recent conversation "
     "and their latest message, then decide which case this is.\n"
-    "Reply with ONLY one word: NEWTOPIC if they're clearly asking about "
-    "something unrelated to the conversation so far, or FOLLOWUP if it "
-    "reads like a continuation of what's already being discussed."
+    "Reply with ONLY one word:\n"
+    "FOLLOWUP if it reads like a continuation of what's already being discussed;\n"
+    "RELATED if it is a new question close to this chapter's subject — the same field "
+    "(for example modern state reorganisation while studying medieval kingdoms and "
+    "political maps, or a nearby civics or geography idea) — that a teacher would briefly answer;\n"
+    "UNRELATED if it belongs to a different subject altogether (an inventor, a science fact "
+    "in a history chapter, sports, films, celebrities, personal trivia)."
 )
+
+OffChapterVerdict = str  # "followup" | "related" | "unrelated"
 
 
 def _format_recent_turns(conversation_history: list[dict] | None, limit: int = 4) -> str:
@@ -1300,12 +1413,12 @@ async def _llm_confirms_topic_mismatch(
     query: str,
     conversation_history: list[dict] | None,
     chapter_label: str,
-) -> bool | None:
-    """Second opinion before showing the disruptive stay/switch wall.
+) -> OffChapterVerdict | None:
+    """Second opinion before redirecting the student away from their question.
 
     Only called on the rare branch where every regex/keyword heuristic above
-    already failed to recognize a follow-up. Returns True for NEWTOPIC, False for
-    FOLLOWUP, and None when the model couldn't decide (error, timeout, other reply).
+    already failed to recognize a follow-up. Returns "followup", "related" or
+    "unrelated", and None when the model couldn't decide (error, timeout, other reply).
     """
     from app.services import llm_client
 
@@ -1335,9 +1448,11 @@ async def _llm_confirms_topic_mismatch(
 
     verdict = (raw or "").strip().upper()
     if "FOLLOWUP" in verdict:
-        return False
-    if "NEWTOPIC" in verdict:
-        return True
+        return "followup"
+    if "UNRELATED" in verdict or "NEWTOPIC" in verdict:
+        return "unrelated"
+    if "RELATED" in verdict:
+        return "related"
     return None
 
 
@@ -1508,13 +1623,21 @@ async def resolve_chapter_awareness_turn(
                 assessment,
                 build_related_math_solve_guidance(assessment.current_chapter_label),
             )
-        # Soft miss with some chapter signal, or adjacent topic → explain beyond chapter
+        # "India became independent in 1956": a claim to check, not a topic request — never refuse it.
+        if is_student_statement(scope_q):
+            return (
+                None,
+                effective_query,
+                assessment,
+                build_statement_guidance(current_label, spoken=spoken),
+            )
+        # Soft miss with some chapter signal, or adjacent topic → short labeled answer, link back
         if assessment.selected_hits > 0:
             return (
                 None,
                 effective_query,
                 assessment,
-                build_general_explanation_guidance(assessment.topic_label),
+                build_bridge_guidance(assessment.topic_label, current_label, spoken=spoken),
             )
         # About to interrupt the conversation with the disruptive "a) stay /
         # b) switch chapter" wall — every regex/keyword guard above (session
@@ -1527,11 +1650,34 @@ async def resolve_chapter_awareness_turn(
         # in-scope turns never pay this cost. Errors/unclear replies keep the wall
         # so retrieval misses never slip through silently.
         verdict = await _llm_confirms_topic_mismatch(scope_q, conversation_history, current_label)
-        if verdict is not False:
-            return build_chapter_awareness_message(assessment), effective_query, assessment, ""
-        # Keep the student's actual words as effective_query; prior is guidance only.
-        prior = prior_user_question(conversation_history) or scope_q
-        return None, effective_query, assessment, build_session_followup_guidance(prior)
+        # Nothing to follow up on: the model's FOLLOWUP is a guess.
+        if verdict == "followup" and not conversation_history:
+            verdict = "related"
+        if verdict != "followup" and assessment.other_chapter_label:
+            # Another chapter of this book teaches it — point there instead of answering here.
+            return (
+                build_chapter_awareness_message(assessment, spoken=spoken),
+                effective_query,
+                assessment,
+                "",
+            )
+        if verdict == "followup":
+            # Keep the student's actual words as effective_query; prior is guidance only.
+            prior = prior_user_question(conversation_history) or scope_q
+            return None, effective_query, assessment, build_session_followup_guidance(prior)
+        if verdict == "related":
+            return (
+                None,
+                effective_query,
+                assessment,
+                build_bridge_guidance(assessment.topic_label, current_label, spoken=spoken),
+            )
+        return (
+            build_chapter_awareness_message(assessment, spoken=spoken),
+            effective_query,
+            assessment,
+            "",
+        )
 
     if assessment.level == ChapterCoverageLevel.PARTIAL:
         # Still solve related math practice; don't under-answer as "only partial theory"
@@ -1586,6 +1732,8 @@ def resolve_chapter_scope_with_retrieval(
         return None
     if is_image_follow_up_request(query):
         return None
+    if is_student_statement(query):
+        return None
     if is_concept_related_math_problem(
         scope_q, subject_name=subject_name, chapter_names=chapter_names
     ):
@@ -1616,7 +1764,12 @@ def resolve_chapter_scope_with_retrieval(
         docs=docs,
     ):
         return None
-    # Voice/HTTP early gate: only hard NONE with zero chapter signal
-    if assessment.level == ChapterCoverageLevel.NONE and assessment.selected_hits == 0:
-        return build_chapter_awareness_message(assessment)
+    # Voice/HTTP early gate: only a hard NONE that another chapter of this book owns.
+    # Related and unrelated topics are decided later, where the LLM second opinion runs.
+    if (
+        assessment.level == ChapterCoverageLevel.NONE
+        and assessment.selected_hits == 0
+        and assessment.other_chapter_label
+    ):
+        return build_chapter_awareness_message(assessment, spoken=True)
     return None

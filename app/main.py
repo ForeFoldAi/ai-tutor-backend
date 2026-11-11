@@ -426,6 +426,9 @@ class ChapterChatRequest(BaseModel):
     dialogue_act: str | None = None  # closing | ack | intro — skip chapter RAG
     filler_phrase_played: str | None = None
     affect_trajectory: list[str] | None = None
+    # Standing "keep it short" (both modes) and the text tutor's open quiz, echoed back in "done".
+    prefers_short: bool = False
+    quiz_state: dict | None = None
 
 
 def _fallback_answer_from_docs(query: str):
@@ -713,6 +716,8 @@ async def chapter_chat_stream(
                 voice_metadata_out=voice_meta,
                 image_ids=req.image_ids,
                 student_user_id=int(_current_user.id),
+                prefers_short=req.prefers_short,
+                quiz_state=req.quiz_state,
             )):
                 while pending:
                     yield pending.pop(0)
@@ -738,6 +743,14 @@ async def chapter_chat_stream(
                             "affect_trajectory",
                             "quiz_expected",
                         )
+                        if k in voice_meta
+                    }
+                )
+            elif voice_meta:
+                done_payload.update(
+                    {
+                        k: voice_meta[k]
+                        for k in ("quiz_state", "explained_points", "prefers_short")
                         if k in voice_meta
                     }
                 )

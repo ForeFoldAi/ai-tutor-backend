@@ -70,7 +70,7 @@ def test_mismatch_when_different_chapter():
     assert msg is not None
     assert "Chapter 1" in msg
     assert "Chapter 2" in msg
-    assert "How would you like to continue?" in msg
+    assert "a)" not in msg
 
 
 def test_no_mismatch_when_multiple_chapters_selected():
@@ -112,9 +112,9 @@ def test_topic_mismatch_desert_in_chapter_one(mock_retrieve, mock_labels):
         subject_name="Social",
     )
     assert msg is not None
-    assert "desert" in msg.lower()
     assert "Chapter 1" in msg
-    assert "How would you like to continue?" in msg
+    assert "AI Tutor" in msg
+    assert "How would you like to continue?" not in msg
 
 
 @patch("app.services.chapter_scope._subject_upload_labels")
@@ -474,7 +474,7 @@ def test_misheard_confirmation_yes_answers_the_real_term(mock_other):
 @patch("app.services.chapter_scope._best_other_chapter")
 def test_misheard_confirmation_no_falls_back_to_literal_term(mock_other, mock_llm):
     mock_other.return_value = ("", 0, 0)
-    mock_llm.return_value = True  # genuine mismatch once treated literally
+    mock_llm.return_value = "unrelated"  # genuine mismatch once treated literally
     ch1_id = "11111111-1111-1111-1111-111111111111"
     names = ["Chapter 5 - Reshaping India's Political Map"]
     history = [
@@ -493,10 +493,11 @@ def test_misheard_confirmation_no_falls_back_to_literal_term(mock_other, mock_ll
         class_level="CLASS_7",
         subject_name="Social",
     ))
-    # Falls through to normal scope handling using the literal original term —
-    # the a/b/c wall names the term the student actually said, not "no".
+    # Falls through to normal scope handling using the literal original term ("muggles"),
+    # which this book doesn't cover — a short refusal, not a menu.
     assert early is not None
-    assert "muggles" in early.lower()
+    assert "not in this book" in early
+    assert mock_llm.await_args.args[0] == "tell me about the muggles"
 
 
 def test_related_follow_up_ozone_protection():
@@ -577,7 +578,7 @@ def test_llm_second_opinion_suppresses_false_positive_wall(mock_other, mock_llm)
     LLM second opinion gets one chance to veto the disruptive wall."""
     ch2_id = "22222222-2222-2222-2222-222222222222"
     mock_other.return_value = ("", 0, 0)
-    mock_llm.return_value = False  # "this reads like a follow-up"
+    mock_llm.return_value = "followup"  # "this reads like a follow-up"
 
     early, effective, assessment, guidance = asyncio.run(resolve_chapter_awareness_turn(
         "what is democracy?",
@@ -602,7 +603,7 @@ def test_llm_second_opinion_confirms_real_mismatch(mock_other, mock_llm):
     ever suppresses false positives, never invents new ones."""
     ch2_id = "22222222-2222-2222-2222-222222222222"
     mock_other.return_value = ("", 0, 0)
-    mock_llm.return_value = True  # "this is genuinely a new topic"
+    mock_llm.return_value = "unrelated"  # "this is genuinely a new topic"
 
     early, *_rest = asyncio.run(resolve_chapter_awareness_turn(
         "what is democracy?",
@@ -616,7 +617,93 @@ def test_llm_second_opinion_confirms_real_mismatch(mock_other, mock_llm):
         subject_name="Social",
     ))
     assert early is not None
-    assert "How would you like to continue?" in early
+    assert "not in this book" in early
+    assert "a)" not in early and "How would you like" not in early
+
+
+_CH2_RESHAPING = "Chapter 2 - Reshaping India's Political Map"
+
+
+@patch("app.services.chapter_scope._llm_confirms_topic_mismatch", new_callable=AsyncMock)
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_unrelated_question_is_refused_without_wrong_chapter(mock_other, mock_llm):
+    """'Who invented the telephone?' in a history chapter: refuse, never point at another chapter."""
+    ch_id = "33333333-3333-3333-3333-333333333333"
+    mock_other.return_value = ("", 0, 0)
+    mock_llm.return_value = "unrelated"
+
+    early, *_rest = asyncio.run(resolve_chapter_awareness_turn(
+        "who invented the telephone?",
+        docs=[_doc("The Delhi Sultanate expanded under Alauddin Khalji.", ch_id)],
+        conversation_history=None,
+        collection_name="CBSE_CLASS_7_Social",
+        chapter_ids=[ch_id],
+        chapter_names=[_CH2_RESHAPING],
+        board="CBSE",
+        class_level="CLASS_7",
+        subject_name="Social",
+        spoken=True,
+    ))
+    assert early is not None
+    assert "not in this book" in early
+    assert "Chapter" not in early.split("back to")[0]
+    assert "**" not in early and "a)" not in early
+
+
+@patch("app.services.chapter_scope._llm_confirms_topic_mismatch", new_callable=AsyncMock)
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_related_question_gets_bridge_not_refusal(mock_other, mock_llm):
+    """Close-but-off-chapter (modern state reorganization): short general answer, then link back."""
+    ch_id = "33333333-3333-3333-3333-333333333333"
+    mock_other.return_value = ("", 0, 0)
+    mock_llm.return_value = "related"
+
+    early, _effective, _assessment, guidance = asyncio.run(resolve_chapter_awareness_turn(
+        "why were indian states reorganised on the basis of language in 1956?",
+        docs=[_doc("The Delhi Sultanate expanded under Alauddin Khalji.", ch_id)],
+        conversation_history=None,
+        collection_name="CBSE_CLASS_7_Social",
+        chapter_ids=[ch_id],
+        chapter_names=[_CH2_RESHAPING],
+        board="CBSE",
+        class_level="CLASS_7",
+        subject_name="Social",
+        spoken=True,
+    ))
+    assert early is None
+    assert "This isn't in your chapter, but" in guidance
+
+
+@patch("app.services.chapter_scope._llm_confirms_topic_mismatch", new_callable=AsyncMock)
+@patch("app.services.chapter_scope._best_other_chapter")
+def test_followup_verdict_without_history_becomes_bridge(mock_other, mock_llm):
+    """First message of a session can't be a follow-up — bridge it instead of 'continue the topic'."""
+    ch_id = "33333333-3333-3333-3333-333333333333"
+    mock_other.return_value = ("", 0, 0)
+    mock_llm.return_value = "followup"
+
+    early, _effective, _assessment, guidance = asyncio.run(resolve_chapter_awareness_turn(
+        "why did india need state reorganization after independence?",
+        docs=[_doc("The Delhi Sultanate expanded under Alauddin Khalji.", ch_id)],
+        conversation_history=None,
+        collection_name="CBSE_CLASS_7_Social",
+        chapter_ids=[ch_id],
+        chapter_names=[_CH2_RESHAPING],
+        board="CBSE",
+        class_level="CLASS_7",
+        subject_name="Social",
+        spoken=True,
+    ))
+    assert early is None
+    assert guidance.startswith("CHAPTER COVERAGE: RELATED")
+
+
+def test_other_chapter_needs_minimum_hits():
+    from app.services.chapter_scope import _term_hits_in_text
+
+    # Word boundaries: "state" must not match inside "statement"; plurals still count.
+    assert _term_hits_in_text(["state"], "a statement of fact") == 0
+    assert _term_hits_in_text(["state"], "the states of india") == 1
 
 
 @patch("app.services.chapter_scope._best_other_chapter")

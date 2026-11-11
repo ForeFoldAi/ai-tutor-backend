@@ -61,6 +61,8 @@ _QUIZ_RE = re.compile(
     r"\b("
     r"give\s+(me\s+)?\d+\s+questions?|"
     r"\d+\s+questions?|"
+    r"(?:one|two|three|four|five|six|seven|eight|nine|ten|a\s+few)\s+(?:quick\s+|short\s+)?questions|"
+    r"ask\s+me\s+(?:a\s+)?(?:few\s+|some\s+)?(?:quick\s+)?questions?|"
     r"quiz\s+me|"
     r"practice\s+questions?|"
     r"homework\s+questions?|"
@@ -70,8 +72,11 @@ _QUIZ_RE = re.compile(
     re.I,
 )
 _MCQ_RE = re.compile(r"\b(mcq|multiple\s+choice|objective\s+type)\b", re.I)
+# "in short" / "briefly" ask for a brief answer (answer_types._EXPLICIT_SHORT), not a recap.
 _SUMMARY_RE = re.compile(
-    r"\b(summarize|summary|in\s+short|briefly|tl;?dr|key\s+points?\s+only)\b",
+    r"\b(summarize|summarise|summary|recap|tl;?dr|key\s+points?\s+only|"
+    r"what\s+(?:did|have)\s+we\s+(?:cover(?:ed)?|learn(?:ed|t)?|discuss(?:ed)?|talk(?:ed)?\s+about)|"
+    r"(?:main|key)\s+(?:thing|things|idea|ideas)\s+i\s+learn(?:ed|t))\b",
     re.I,
 )
 _SIMPLIFY_RE = re.compile(
@@ -281,6 +286,11 @@ def classify_followup_regex(query: str) -> FollowupType:
         return FollowupType.SMALL_TALK
     if len(q.split()) <= 6 and _THANKS_ANYWHERE_RE.search(q):
         return FollowupType.SMALL_TALK
+    from app.services.chat_service.turn_rules import is_student_posed_question
+
+    # The student's own "Option A ... Option B ..." question is a new question, not an MCQ request.
+    if is_student_posed_question(q):
+        return FollowupType.NEW_TOPIC
     if _MCQ_RE.search(q):
         return FollowupType.GENERATE_MCQ
     if _QUIZ_RE.search(q):

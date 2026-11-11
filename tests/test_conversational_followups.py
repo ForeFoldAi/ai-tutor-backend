@@ -210,7 +210,7 @@ def test_voice_gate_skips_deepen_follow_up(mock_retrieve):
 @patch("app.services.chapter_scope._subject_upload_labels")
 @patch("app.services.vector_service.retrieve_from_collection")
 def test_true_ooc_still_walls(mock_retrieve, mock_labels):
-    """True out-of-chapter content must still offer Stay/Switch."""
+    """True out-of-chapter content still redirects — to the owning chapter, without a menu."""
     mock_labels.return_value = {CH1_ID: CH1, CH2_ID: CH2}
     mock_retrieve.return_value = [
         _doc("Deserts are dry regions.", CH1_ID),
@@ -229,7 +229,8 @@ def test_true_ooc_still_walls(mock_retrieve, mock_labels):
         subject_name="Social",
     )
     assert msg is not None
-    assert "How would you like to continue?" in msg
+    assert "Chapter 1" in msg and "get back to" in msg
+    assert "How would you like to continue?" not in msg
 
 
 def test_how_many_maps_is_current_lesson_no_wall():

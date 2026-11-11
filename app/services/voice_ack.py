@@ -71,6 +71,11 @@ _PERSONAL_INTRO = re.compile(
 
 _DIALOGUE_ACTS = frozenset({"closing", "ack", "intro"})
 
+_FOLLOWUP_REQUEST = re.compile(
+    r"\b(?:but|can\s+you|could\s+you|will\s+you|give\s+me|tell\s+me|show\s+me|explain|another|example)\b|\?",
+    re.I,
+)
+
 
 def _norm(text: str) -> str:
     t = _PUNCT.sub(" ", (text or "").strip().lower())
@@ -117,6 +122,9 @@ def resolve_dialogue_act(
         return raw
     q = (query or "").strip()
     if not q:
+        return None
+    # "I understood, but can you give me a real-life example?" is a request, not a goodbye.
+    if len(q.split()) > 4 and _FOLLOWUP_REQUEST.search(q):
         return None
     if _CLOSING.search(q):
         return "closing"

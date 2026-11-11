@@ -8,6 +8,35 @@ from collections.abc import Awaitable, Callable
 from typing import Any, AsyncIterator
 
 from app.core.student_messages import ANSWER_NOT_IN_CHAPTER
+
+VOICE_RETRY_LINE = "Sorry, I lost my train of thought for a second. Could you say that again?"
+BRIDGE_LEAD = "This isn't in your chapter, but here's the short answer."
+_BRIDGE_LEAD_ECHO_RE = re.compile(
+    r"^\s*this\s+isn['’]?t\s+in\s+your\s+chapter,?\s*but(?:\s+here['’]?s\s+the\s+short\s+answer)?\s*[.:,]?\s*",
+    re.I,
+)
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _strip_bridge_lead(text: str) -> str:
+    return _BRIDGE_LEAD_ECHO_RE.sub("", text, count=1)
+
+
+def _first_sentences(text: str, n: int) -> str:
+    return " ".join(_SENTENCE_SPLIT_RE.split(text.strip())[:n])
+
+
+def _least_discussed_first(docs: list, history: list[dict] | None) -> list:
+    """Passages sharing the fewest names with what the tutor already said come first."""
+    said = " ".join(
+        (t.get("content") or "") for t in (history or []) if (t.get("role") or "") == "assistant"
+    ).lower()
+
+    def overlap(doc) -> float:
+        names = set(re.findall(r"\b[A-Z][a-z]{3,}\b", getattr(doc, "page_content", "") or ""))
+        return sum(1 for w in names if w.lower() in said) / len(names) if names else 1.0
+
+    return sorted(docs, key=overlap)
 from app.config import (
     CONTEXT_CHAR_BUDGET,
     ENABLE_LLM_IMAGE_SELECT,
@@ -642,6 +671,8 @@ async def chapter_aware_qa_stream(
     image_ids: list[str] | None = None,
     student_user_id: int | None = None,
     emit_status: Callable[[dict], Awaitable[None]] | None = None,
+    prefers_short: bool = False,
+    quiz_state: dict | None = None,
 ) -> AsyncIterator[str]:
     """
     Streaming version of chapter_aware_qa.
@@ -687,6 +718,29 @@ async def chapter_aware_qa_stream(
     if dialogue_act_resolved and is_misheard_confirmation_reply(query, conversation_history):
         dialogue_act_resolved = None
     skip_retrieval = bool(dialogue_act_resolved)
+
+    from app.services.chat_service.turn_rules import asks_for_short_answers, build_turn_rules, is_non_answer
+
+    prefers_short = bool(prefers_short or asks_for_short_answers(query))
+    # Text chat quiz: the client holds the open questions; voice keeps its own quiz in NestJS.
+    quiz_feedback_block = ""
+    quiz_state_out: dict | None = quiz_state if isinstance(quiz_state, dict) else None
+    if not voice_mode and quiz_state_out is not None:
+        from app.services import quiz_grading
+
+        if quiz_grading.has_open_questions(quiz_state_out) and not is_non_answer(query):
+            grades = await quiz_grading.grade_quiz_answer(quiz_state_out, query)
+            if grades and not quiz_grading.is_not_an_answer(grades):
+                quiz_state_out = quiz_grading.apply_grades(quiz_state_out, grades)
+                quiz_feedback_block = quiz_grading.build_feedback_block(quiz_state_out, grades)
+                # A quiz answer ("1-b, 2-a") is not a chapter question: no retrieval, no scope gate.
+                dialogue_act_resolved = None
+                skip_retrieval = True
+                if not quiz_grading.has_open_questions(quiz_state_out):
+                    quiz_state_out = None
+    if voice_metadata_out is not None and not voice_mode:
+        voice_metadata_out["quiz_state"] = quiz_state_out
+        voice_metadata_out["prefers_short"] = prefers_short
 
     recent_hist, session_mem = prepare_conversation_inputs(
         conversation_history,
@@ -763,6 +817,11 @@ async def chapter_aware_qa_stream(
     )
     _apply_agent_mode(conv, agent_mode)
     retrieval_query = conv.retrieval_query or query
+    from app.services.chat_service.turn_rules import wants_new_content
+
+    # "Teach me something new" has no topic words of its own — search the chapter itself.
+    if wants_new_content(query) and (chapter or chapter_names):
+        retrieval_query = chapter or chapter_names[0]
 
     image_block = ""
     math_override = ""
@@ -933,6 +992,9 @@ async def chapter_aware_qa_stream(
             k=retrieval_k,
         )
 
+    if docs and wants_new_content(query):
+        docs = _least_discussed_first(docs, recent_hist)
+
     await _finish_voice_presteps()
 
     use_text_format = _voice_should_use_text_format(
@@ -959,10 +1021,16 @@ async def chapter_aware_qa_stream(
             await emit_related_images([])
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
     if not docs and not coverage_guidance and not skip_retrieval and not image_block:
-        if emit_related_images:
-            await emit_related_images([])
-        yield ANSWER_NOT_IN_CHAPTER
-        return
+        # Nothing retrieved: a follow-up builds on the conversation; a new question is bridged or
+        # politely refused by the model instead of a canned "couldn't find this" line.
+        focus = chapter or ", ".join(chapter_names or []) or "this chapter"
+        coverage_guidance = (
+            "NO CHAPTER EXCERPT MATCHED THIS MESSAGE. If it follows up on the conversation (another example, "
+            "the second point, a recap), answer from the conversation history. If it is a new question closely "
+            "related to the subject of the chapter, answer in at most two sentences starting with "
+            f"\"This isn't in your chapter, but\", then link back to {focus}. If it is unrelated to the subject, "
+            "say in one line that it's not in this book and steer back. Never say the context is unavailable."
+        )
 
     if emit_related_images and not img_allowed:
         await emit_related_images([])
@@ -1008,7 +1076,7 @@ async def chapter_aware_qa_stream(
 
     context = _join_context_within_budget(docs, char_budget=context_budget)
     if skip_retrieval:
-        context = ""
+        context = (quiz_state or {}).get("context", "") if quiz_feedback_block else ""
     logger.info(
         "[VOICE-TURN] mode=%s docs=%d ctx_chars=%d sufficient=%s q=%r rq=%r act=%r",
         "voice" if voice_live_teaching else ("voice-text" if voice_mode else "chat"),
@@ -1072,6 +1140,16 @@ async def chapter_aware_qa_stream(
             if learner_snapshot
             else None
         )
+        from app.services.chat_service.turn_rules import requested_count
+        from app.services.voice_prompts import voice_word_cap_var
+
+        count = requested_count(query)
+        if count:
+            voice_word_cap_var.set(count[0] * (8 if count[1] == "points" else 15))
+        elif prefers_short:
+            voice_word_cap_var.set(40)
+        else:
+            voice_word_cap_var.set(None)
         messages = build_voice_mistral_messages(
             # Always the student's raw utterance — retrieval may use a different
             # string via retrieval_query / scope, but never silently swap this.
@@ -1100,6 +1178,9 @@ async def chapter_aware_qa_stream(
             nest_intent=nest_intent,
             dialogue_act=dialogue_act_resolved,
             filler_phrase_played=filler_phrase_played,
+        )
+        messages[0]["content"] = messages[0]["content"] + "\n\n" + build_turn_rules(
+            query, prefers_short=prefers_short, explained_points=explained_points, voice=True
         )
         if image_block:
             messages[0]["content"] = messages[0]["content"] + "\n\n" + image_block
@@ -1180,6 +1261,9 @@ async def chapter_aware_qa_stream(
             dialogue_act=dialogue_act_resolved,
             image_understanding_block=image_block,
             math_engine_override=math_override,
+            prefers_short=prefers_short,
+            explained_points=explained_points,
+            quiz_feedback_block=quiz_feedback_block,
             **prefetched,
         )
 
@@ -1220,8 +1304,15 @@ async def chapter_aware_qa_stream(
         conv=conv,
         dialogue_act=dialogue_act_resolved,
     )
-    if _normalize_agent_mode(agent_mode) == "practice":
-        answer_type = "quiz"
+    if quiz_feedback_block:
+        answer_type = "quiz_feedback"
+    elif _normalize_agent_mode(agent_mode) == "practice":
+        # Practice alternates: ask, then feedback. A side question while a quiz is open is answered.
+        from app.services.quiz_grading import has_open_questions
+
+        quiz_open = has_open_questions(quiz_state_out)
+        if answer_type not in ("answer_student_mcq", "cite") and not quiz_open:
+            answer_type = "quiz"
     elif _normalize_agent_mode(agent_mode) in ("ask", "explain") and answer_type in ("quiz", "mcq"):
         answer_type = "explanation"
     voice_token_limit = VOICE_MAX_TOKENS if voice_live_teaching else None
@@ -1398,20 +1489,53 @@ async def chapter_aware_qa_stream(
             stage = "thinking" if llm_slot_free("voice" if voice_mode else "chat") else "waiting"
             await emit_status({"type": "status", "stage": stage})
             yield ""
+        # Related-but-off-chapter: the label is spoken verbatim; models kept dropping it, and
+        # when told it was already said they often said it again, so their opening is held back.
+        bridging = (coverage_guidance or "").startswith("CHAPTER COVERAGE: RELATED") and bool(messages)
+        if bridging:
+            messages[0]["content"] += (
+                f'\n\nThe reply already begins with "{BRIDGE_LEAD}" — continue right after it with the '
+                "short general answer, then link back to the chapter. Do not repeat that opening."
+            )
+            full_answer.append(BRIDGE_LEAD + " ")
+            yield BRIDGE_LEAD + " "
+        from app.services.chat_service.turn_rules import requested_count
+
+        count = requested_count(query)
+        # "In three sentences": held and trimmed — a fourth "Does that help?" breaks the request.
+        sentence_cap = count[0] if count and count[1] == "sentences" else 0
+        opening = ""
         async for token in _cs()._stream_mistral_async(
             messages,
             max_tokens=voice_token_limit,
             feature="voice" if voice_mode else "chat",
             temperature=stream_temperature,
         ):
+            if bridging:
+                opening += token
+                if len(opening) < len(BRIDGE_LEAD) + 8:
+                    continue
+                token, bridging = _strip_bridge_lead(opening), False
+                if not token:
+                    continue
             full_answer.append(token)
+            if sentence_cap:
+                continue
             await _maybe_emit_bootstrap_images("".join(full_answer))
             yield token
+        if bridging and opening:
+            rest = _strip_bridge_lead(opening)
+            full_answer.append(rest)
+            if not sentence_cap:
+                yield rest
         answer_text = "".join(full_answer)
-        llm_ok = bool((answer_text or "").strip())
+        if sentence_cap and answer_text.strip():
+            answer_text = _first_sentences(answer_text, sentence_cap)
+            yield answer_text
+        llm_ok = bool((answer_text or "").strip()) and answer_text.strip() != BRIDGE_LEAD
         # Empty LLM stream → textbook snippet so the UI never shows a blank bubble.
         if not llm_ok:
-            fb = _best_chunk_fallback(effective_query, docs)
+            fb = VOICE_RETRY_LINE if voice_mode else _best_chunk_fallback(effective_query, docs)
             if fb.strip():
                 answer_text = fb
                 yield fb
@@ -1569,6 +1693,20 @@ async def chapter_aware_qa_stream(
                     new_state.value,
                     getattr(aff, "source", "n/a"),
                 )
+        if not voice_mode and voice_metadata_out is not None and answer_text:
+            from app.services import quiz_grading
+            from app.services.voice_tutor import topic_key
+
+            if answer_type in ("quiz", "mcq"):
+                fresh = quiz_grading.new_quiz_state(answer_text, context)
+                if fresh:
+                    voice_metadata_out["quiz_state"] = fresh
+            explained_out = list(explained_points or [])
+            if not skip_retrieval and answer_type not in ("quiz", "mcq", "quiz_feedback", "cite"):
+                key = topic_key(effective_query)
+                if key and key not in explained_out:
+                    explained_out.append(key)
+            voice_metadata_out["explained_points"] = explained_out[-20:]
         if answer_text and not voice_live_teaching:
             if student_key and understanding_scores:
                 await _mentor_profile_after_turn(
@@ -1596,6 +1734,12 @@ async def chapter_aware_qa_stream(
         yield fb
     except Exception as exc:
         logger.error("Mistral stream failed: %s: %s", type(exc).__name__, exc)
+        if voice_mode:
+            # A raw textbook chunk read aloud is worse than asking again.
+            if emit_related_images:
+                await emit_related_images([])
+            yield VOICE_RETRY_LINE
+            return
         fb = _best_chunk_fallback(query, docs)
         last_imgs = requested_figs or await _retrieve_images_for_answer(fb, llm_ok=False)
         if emit_related_images:

@@ -154,7 +154,12 @@ def test_voice_live_teaching_vs_full_format():
         "Mathematics",
         voice_mode=True,
         understanding_scores={"wants_expansion": True},
-    ) is True
+    ) is False
+    assert _voice_should_use_text_format(
+        "Social",
+        voice_mode=True,
+        query="I don't understand why India needed state reorganization, explain in detail",
+    ) is False
     assert _voice_should_use_text_format(
         "Mathematics",
         voice_mode=True,
