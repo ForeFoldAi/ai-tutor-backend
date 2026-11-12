@@ -354,11 +354,26 @@ ELEMENTARY_TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str
         "Total ÷ groups = size of each group.",
     ),
     (
+        re.compile(r"\b(fraction|fractions|numerator|denominator)\b", re.I),
+        lambda: _viz(
+            "fractions",
+            "Fraction Pizza",
+            "Cut the pizza into equal slices (denominator) and shade some of them (numerator).",
+            sliders=[
+                {"id": "denominator", "label": "Equal slices (denominator)", "min": 2, "max": 12, "step": 1, "default": 4},
+                {"id": "numerator", "label": "Shaded slices (numerator)", "min": 0, "max": 12, "step": 1, "default": 1},
+            ],
+        ),
+        "Fractions",
+        "A fraction names equal parts of one whole.",
+        "1/4 means the whole is cut into 4 equal parts and 1 part is taken.",
+    ),
+    (
         re.compile(r"\b(decimal|tenth|hundredth|point\s*\d)\b", re.I),
         lambda: _viz(
             "decimal-blocks",
             "Decimal Place Value",
-            "See ones, tenths and hundredths with the decimal slider.",
+            "See wholes and tenths: each strip is one tenth (0.1) of a whole.",
             sliders=[{"id": "d", "label": "Tenths", "min": 0, "max": 99, "step": 1, "default": 35}],
             calcs=[{"id": "val", "label": "Decimal", "formula": "d / 10", "unit": ""}],
         ),
@@ -370,8 +385,8 @@ ELEMENTARY_TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str
         re.compile(r"\b(percent|percentage|\%|out\s*of\s*100)\b", re.I),
         lambda: _viz(
             "percent-circle",
-            "Percentage Circle",
-            "Shade part of 100. See the percent update live.",
+            "Percentage Grid",
+            "Shade squares out of 100. See the percent update live.",
             sliders=[{"id": "pct", "label": "Percent", "min": 0, "max": 100, "step": 1, "default": 25}],
             calcs=[{"id": "frac", "label": "As fraction", "formula": "pct / 100", "unit": ""}],
         ),

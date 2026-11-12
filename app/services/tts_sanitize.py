@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import re
 
+from app.services.chem_speech import chemistry_to_speech
+
 # Fenced code blocks (optional language tag)
 _CODE_FENCE_RE = re.compile(
     r"```[\w-]*\s*[\r\n]+.*?[\r\n]+```|```[\w-]*\s*.*?```",
@@ -181,6 +183,7 @@ def sanitize_for_tts(text: str) -> str:
     t = _replace_code_blocks(t)
     t = _replace_inline_code(t)
     t = _replace_links_and_urls(t)
+    t = chemistry_to_speech(t)
     t = _strip_figure_page_metadata(t)
     t = _strip_markdown_structure(t)
     t = _strip_emphasis(t)
