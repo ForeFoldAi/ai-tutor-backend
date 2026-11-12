@@ -245,6 +245,12 @@ def _extract_math(t: str) -> tuple[str | None, dict[str, float], str]:
             params["length"] = params["sheetLength"] - 2 * params["cut"]
         if "sheetWidth" in params and "cut" in params:
             params["width"] = params["sheetWidth"] - 2 * params["cut"]
+        # The sheet drawing and volume are driven by sheet + cut, so rebuild the
+        # sheet when the problem only states the folded box.
+        if {"length", "width", "height"} <= params.keys() and "sheetLength" not in params:
+            params["cut"] = params["height"]
+            params["sheetLength"] = params["length"] + 2 * params["height"]
+            params["sheetWidth"] = params["width"] + 2 * params["height"]
         vol = _VOLUME.search(t)
         if vol:
             params["volume"] = float(vol.group(1))
@@ -428,8 +434,27 @@ def _shell_for(
     if got != vt and pack == "sqrt_line":
         return _sqrt_number_line_shell(class_level)
     if got != vt:
+        own = _catalog_lesson_for_type(vt, class_level)
+        if own is not None:
+            return own
         lesson.setdefault("visualization", {})["visualizationType"] = vt
     return lesson
+
+
+def _catalog_lesson_for_type(vt: str, class_level: str) -> dict[str, Any] | None:
+    # Relabelling another type's spec leaves its title, description and sliders,
+    # which then describe a different diagram than the one drawn.
+    from app.services.math_lesson.elementary_catalog import ELEMENTARY_TOPIC_RULES
+    from app.services.math_lesson.textbook_catalog import _lesson
+    from app.services.math_lesson.visual_catalog import _TOPIC_RULES, _display_level
+
+    for _pattern, spec_fn, concept, objective, explanation in _TOPIC_RULES + ELEMENTARY_TOPIC_RULES:
+        spec = spec_fn()
+        if str(spec.get("visualizationType") or "") == vt:
+            return copy.deepcopy(
+                _lesson(concept, objective, explanation, spec, _display_level(class_level))
+            )
+    return None
 
 
 def _sqrt_number_line_shell(class_level: str = "") -> dict[str, Any]:

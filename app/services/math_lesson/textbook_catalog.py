@@ -192,10 +192,10 @@ def _factor_rectangle_spec() -> dict[str, Any]:
     return _viz(
         "factor-rectangle",
         "Rectangle Factorisation Model",
-        "Drag the side sliders until the rectangle area matches x² + 7x + 12.",
+        "Change the two sides (x + ?) until the tiles make exactly x² + 7x + 12.",
         sliders=[
-            {"id": "width", "label": "Width factor", "min": 1, "max": 12, "step": 1, "default": 3},
-            {"id": "height", "label": "Height factor", "min": 1, "max": 12, "step": 1, "default": 4},
+            {"id": "width", "label": "Width: x + ?", "min": 1, "max": 12, "step": 1, "default": 1},
+            {"id": "height", "label": "Height: x + ?", "min": 1, "max": 12, "step": 1, "default": 2},
         ],
         calcs=[
             {"id": "product", "label": "Constant term (c)", "formula": "width * height", "unit": ""},
@@ -252,7 +252,7 @@ def _parallel_transversal_spec() -> dict[str, Any]:
         "Parallel Lines & Transversal",
         "Drag the transversal and observe corresponding, alternate and interior angles.",
         sliders=[
-            {"id": "transversal", "label": "Transversal angle", "min": 10, "max": 170, "step": 1, "default": 60},
+            {"id": "transversal", "label": "Transversal angle with the parallel lines (°)", "min": 10, "max": 170, "step": 1, "default": 60},
         ],
         buttons=[
             {"id": "corresponding", "label": "Highlight corresponding", "action": "corresponding"},
@@ -369,12 +369,12 @@ def _compound_interest_spec() -> dict[str, Any]:
 def _heights_distances_spec() -> dict[str, Any]:
     return _viz(
         "heights-distances-scene",
-        "Heights & Distances (3D)",
-        "Set the angle of elevation and distance. See the tower height update in 3D.",
+        "Heights & Distances",
+        "Change the angle of elevation and your distance from the tower. The tower, the ground and your line of sight make a right triangle, so height = distance × tan(angle).",
         render_mode="3d",
         scene=_heights_scene(),
         sliders=[
-            {"id": "angle", "label": "Angle of elevation", "min": 15, "max": 75, "step": 1, "default": 30},
+            {"id": "angle", "label": "Angle of elevation (°)", "min": 15, "max": 75, "step": 1, "default": 30},
             {"id": "distance", "label": "Distance (m)", "min": 10, "max": 100, "step": 5, "default": 40},
         ],
         calcs=[
@@ -421,7 +421,7 @@ def _triangle_angle_sum_spec() -> dict[str, Any]:
     return _viz(
         "triangle-angle-sum",
         "Triangle Angle Sum = 180°",
-        "Press Animate to rearrange the three angles into a straight line.",
+        "Press Show me why to move the three angles onto one straight line (180°). Drag B to try any triangle.",
         buttons=[
             {"id": "animate", "label": "▶ Rearrange angles", "action": "animate"},
             {"id": "reset", "label": "Reset", "action": "reset"},
@@ -465,8 +465,8 @@ def _mensuration_cube_spec() -> dict[str, Any]:
         scene=_cube_scene(),
         sliders=[{"id": "s", "label": "Side length (cm)", "min": 1, "max": 10, "step": 1, "default": 5}],
         calcs=[
-            {"id": "sa", "label": "Surface area", "formula": "6 * s * s", "unit": " cm^2"},
-            {"id": "vol", "label": "Volume", "formula": "s * s * s", "unit": " cm^3"},
+            {"id": "sa", "label": "Surface area = 6s²", "formula": "6 * s * s", "unit": "cm²"},
+            {"id": "vol", "label": "Volume = s³", "formula": "s * s * s", "unit": "cm³"},
         ],
         buttons=[{"id": "rotate", "label": "▶ Rotate", "action": "animate"}],
         class_level="Class 9",
@@ -481,12 +481,12 @@ def _mensuration_cylinder_spec() -> dict[str, Any]:
         render_mode="3d",
         scene=_cylinder_scene(),
         sliders=[
-            {"id": "r", "label": "Radius", "min": 1, "max": 8, "step": 1, "default": 3},
-            {"id": "h", "label": "Height", "min": 1, "max": 12, "step": 1, "default": 5},
+            {"id": "r", "label": "Radius r (cm)", "min": 1, "max": 8, "step": 1, "default": 3},
+            {"id": "h", "label": "Height h (cm)", "min": 1, "max": 12, "step": 1, "default": 5},
         ],
         calcs=[
-            {"id": "vol", "label": "Volume", "formula": "3.14159 * r * r * h", "unit": " cu units"},
-            {"id": "csa", "label": "Curved SA", "formula": "2 * 3.14159 * r * h", "unit": " sq units"},
+            {"id": "vol", "label": "Volume = πr²h", "formula": "3.14159 * r * r * h", "unit": "cm³"},
+            {"id": "csa", "label": "Curved surface area = 2πrh", "formula": "2 * 3.14159 * r * h", "unit": "cm²"},
         ],
         class_level="Class 9",
     )
@@ -498,8 +498,8 @@ def _area_resizer_spec() -> dict[str, Any]:
         "Area Resizer",
         "Resize the rectangle and triangle. Watch areas update in real time.",
         sliders=[
-            {"id": "width", "label": "Rectangle width", "min": 1, "max": 12, "step": 1, "default": 6},
-            {"id": "height", "label": "Rectangle height", "min": 1, "max": 12, "step": 1, "default": 4},
+            {"id": "width", "label": "Rectangle length", "min": 1, "max": 12, "step": 1, "default": 6},
+            {"id": "height", "label": "Rectangle breadth", "min": 1, "max": 12, "step": 1, "default": 4},
             {"id": "base", "label": "Triangle base", "min": 1, "max": 12, "step": 1, "default": 8},
             {"id": "triHeight", "label": "Triangle height", "min": 1, "max": 12, "step": 1, "default": 5},
         ],
@@ -515,7 +515,7 @@ def _open_box_spec() -> dict[str, Any]:
     return _viz(
         "area-resizer",
         "Open Box from a Sheet",
-        "Adjust sheet, cut, and box dimensions; volume updates live (fold animation deferred).",
+        "Cut equal squares from the corners of the sheet and fold up the flaps. The cut becomes the box height.",
         sliders=[
             {"id": "sheetLength", "label": "Sheet length (cm)", "min": 10, "max": 80, "step": 1, "default": 30},
             {"id": "sheetWidth", "label": "Sheet width (cm)", "min": 10, "max": 80, "step": 1, "default": 20},
@@ -525,7 +525,7 @@ def _open_box_spec() -> dict[str, Any]:
             {"id": "height", "label": "Box height (cm)", "min": 1, "max": 20, "step": 1, "default": 5},
         ],
         calcs=[
-            {"id": "volume", "label": "Volume", "formula": "length * width * height", "unit": " cm^3"},
+            {"id": "volume", "label": "Volume", "formula": "(sheetLength - 2 * cut) * (sheetWidth - 2 * cut) * cut", "unit": "cm³"},
             {
                 "id": "baseLength",
                 "label": "Base length check",
@@ -573,14 +573,10 @@ def _circle_tangent_spec() -> dict[str, Any]:
     return _viz(
         "circle-tangent",
         "Circle & Tangent Explorer",
-        "Drag the tangent around the circle. It always touches at exactly one point.",
+        "Move the tangent around the circle. It touches at exactly one point, and the radius to that point always meets it at 90°.",
         sliders=[
-            {"id": "tangentAngle", "label": "Tangent position", "min": 0, "max": 360, "step": 1, "default": 45},
+            {"id": "tangentAngle", "label": "Point of contact (degrees round the circle)", "min": 0, "max": 360, "step": 1, "default": 45},
             {"id": "r", "label": "Radius", "min": 2, "max": 8, "step": 1, "default": 5},
-        ],
-        calcs=[
-            {"id": "circ", "label": "Circumference", "formula": "2 * 3.14159 * r", "unit": ""},
-            {"id": "area", "label": "Area", "formula": "3.14159 * r * r", "unit": ""},
         ],
     )
 

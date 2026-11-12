@@ -109,7 +109,7 @@ def test_should_emit_open_box_from_catalog():
     formulas = " ".join(
         str(c.get("formula") or "") for c in (panel["visualization"].get("liveCalculations") or [])
     )
-    assert "length" in formulas and "width" in formulas and "height" in formulas
+    assert "sheetLength" in formulas and "sheetWidth" in formulas and "cut" in formulas
 
 
 def test_should_emit_pressure_from_catalog():

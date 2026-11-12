@@ -83,7 +83,7 @@ def test_table_row():
 def test_preserve_science():
     out = sanitize_for_tts("Water boils at 100°C and H2O is polar. Growth is ~25%.")
     assert "100" in out
-    assert "H2O" in out
+    assert "H 2 O" in out
     assert "25" in out
 
 
@@ -190,3 +190,18 @@ def test_voice_live_teaching_vs_full_format():
 
 def test_source_labels_not_spoken():
     assert sanitize_for_tts("Beyond your textbook: carbon forms four bonds.") == "carbon forms four bonds."
+
+
+def test_chemical_formulas_keep_subscripts():
+    # Live voice: "H₂O" was spoken as "HO" — Edge drops Unicode subscripts.
+    assert sanitize_for_tts("Water is H₂O.") == "Water is H 2 O."
+    assert sanitize_for_tts("Water is H2O.") == "Water is H 2 O."
+    assert sanitize_for_tts("Ca(OH)₂ turns milky") == "C A O H whole 2 turns milky"
+    assert sanitize_for_tts("2H₂ + O₂ → 2H₂O") == "2 H 2 + O 2 gives 2 H 2 O"
+    assert sanitize_for_tts("SO₄²⁻ and Na⁺") == "S O 4 2 minus and N A plus"
+    assert sanitize_for_tts("NaCl") == "N A C L"
+
+
+def test_formula_lookalikes_untouched():
+    text = "No, it is OK. IS this CBSE Class 10? Use A4 paper, a 5N force and MP3."
+    assert sanitize_for_tts(text) == text
