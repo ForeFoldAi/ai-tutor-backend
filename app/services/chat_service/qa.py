@@ -60,11 +60,14 @@ from app.services.chat_service.dialogue import (
     _is_personal_dialogue_response,
 )
 from app.services.chat_service.images import (
+    _db_activities_for_numbers,
     _db_figures_for_numbers,
     _image_top_n_for_scope,
     _log_image_stage,
+    _merge_cited_image_rows,
     _select_related_images_for_answer,
     figure_hint_block_from_docs,
+    requested_activity_prompt_block,
     requested_figure_prompt_block,
 )
 from app.services.chat_service.llm import _ensure_mistral_config
@@ -152,6 +155,54 @@ def _topics_left_reply(**kwargs: Any) -> str | None:
         return try_topics_left_reply(db, **kwargs)
 
 
+def _chapter_topics_list_reply(**kwargs: Any) -> str | None:
+    from app.core.database import SessionLocal
+    from app.modules.student_learning.topic_progress import try_chapter_topics_list_reply
+
+    with SessionLocal() as db:
+        return try_chapter_topics_list_reply(db, **kwargs)
+
+
+def _chapter_toc_for_overview(
+    *,
+    query: str,
+    chapter_ids: list[str] | None,
+    subject_name: str = "",
+    chapter: str = "",
+    board: str = "",
+    class_level: str = "",
+    docs: list | None = None,
+) -> str:
+    """Ordered topic list injected into context for whole-chapter voice/text walkthroughs."""
+    from app.modules.student_learning.topic_progress import (
+        chapter_toc_context_block,
+        is_chapter_topics_list_query,
+        list_chapter_topics,
+        topics_from_retrieved_docs,
+    )
+    from app.services.voice_chapter_vocab import is_chapter_overview_request
+
+    if not (is_chapter_overview_request(query) or is_chapter_topics_list_query(query)):
+        return ""
+    topics: list[dict] = []
+    if chapter_ids:
+        try:
+            chapter_id = int(str(chapter_ids[0]).strip())
+        except (TypeError, ValueError):
+            chapter_id = 0
+        if chapter_id:
+            topics = list_chapter_topics(
+                chapter_id=chapter_id,
+                board=board,
+                class_level=class_level,
+                subject_name=subject_name,
+                chapter_name=chapter,
+            )
+    if not topics:
+        topics = topics_from_retrieved_docs(docs, chapter_name=chapter)
+    return chapter_toc_context_block(topics)
+
+
 def _section_instruction_with_figures(
     section_instruction: str,
     docs: list,
@@ -230,6 +281,11 @@ async def chapter_aware_qa(
     dialogue_act_resolved = resolve_dialogue_act(query)
     if dialogue_act_resolved and is_misheard_confirmation_reply(query, conversation_history):
         dialogue_act_resolved = None
+    # "Yes" to "Would you like to see how…?" must keep teaching + retrieve chapter context.
+    from app.services.chat_service.dialogue import _is_accepting_tutor_continue_offer as _accept_offer
+
+    if dialogue_act_resolved in ("ack", "closing") and _accept_offer(query, recent_hist):
+        dialogue_act_resolved = None
     skip_retrieval = bool(dialogue_act_resolved)
 
     conv = resolve_conversation_context(
@@ -305,6 +361,25 @@ async def chapter_aware_qa(
                 return left_reply, [], None, None
         except Exception:
             logger.exception("topics-left reply failed")
+
+    # Full topic inventory — deterministic list (text or spoken), no LLM menu/experiment.
+    if not skip_retrieval and not prefer_image_over_rag:
+        try:
+            topics_reply = await asyncio.to_thread(
+                _chapter_topics_list_reply,
+                query=query,
+                chapter_ids=chapter_ids,
+                subject_name=subject_name,
+                chapter=chapter,
+                board=board,
+                class_level=class_level,
+                docs=docs,
+                spoken=False,
+            )
+            if topics_reply:
+                return topics_reply, [], None, None
+        except Exception:
+            logger.exception("chapter topics list reply failed")
 
     if skip_retrieval:
         early, effective_query, coverage_guidance = None, query, ""
@@ -415,6 +490,17 @@ async def chapter_aware_qa(
         )
 
     context = "" if skip_retrieval else _join_context_within_budget(docs)
+    toc_block = _chapter_toc_for_overview(
+        query=effective_query,
+        chapter_ids=chapter_ids,
+        subject_name=subject_name,
+        chapter=chapter,
+        board=board,
+        class_level=class_level,
+        docs=docs,
+    )
+    if toc_block:
+        context = f"{toc_block}\n\n{context}".strip() if context else toc_block
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
     text_coverage = coverage_guidance
     if dialogue_act_resolved == "intro":
@@ -558,6 +644,7 @@ async def chapter_aware_qa(
             # Don't burn quota on image_select when the answer LLM already failed,
             # unless the student asked for Fig N / a chapter figure list (DB path).
             from app.services.image_service.image_intent_extractor import (
+                activity_numbers_cited_in_text,
                 figure_numbers_cited_in_text,
                 is_chapter_figure_list_ask,
             )
@@ -566,6 +653,8 @@ async def chapter_aware_qa(
                 is_chapter_figure_list_ask(effective_query)
                 or bool(figure_numbers_cited_in_text(effective_query))
                 or bool(figure_numbers_cited_in_text(answer))
+                or bool(activity_numbers_cited_in_text(effective_query))
+                or bool(activity_numbers_cited_in_text(answer))
             )
             if llm_ok or cite_or_list:
                 related = await _select_related_images_for_answer(
@@ -716,6 +805,13 @@ async def chapter_aware_qa_stream(
         query, dialogue_act=dialogue_act, quiz_pending=quiz_pending
     )
     if dialogue_act_resolved and is_misheard_confirmation_reply(query, conversation_history):
+        dialogue_act_resolved = None
+    # "Yes" to a specific tutor offer continues the lesson — do not skip chapter retrieval.
+    from app.services.chat_service.dialogue import _is_accepting_tutor_continue_offer as _accept_offer
+
+    if dialogue_act_resolved in ("ack", "closing") and _accept_offer(
+        query, conversation_history
+    ):
         dialogue_act_resolved = None
     skip_retrieval = bool(dialogue_act_resolved)
 
@@ -958,6 +1054,28 @@ async def chapter_aware_qa_stream(
         except Exception:
             logger.exception("topics-left reply failed (stream)")
 
+    if not skip_retrieval and not prefer_image_over_rag:
+        try:
+            topics_reply = await asyncio.to_thread(
+                _chapter_topics_list_reply,
+                query=query,
+                chapter_ids=chapter_ids,
+                subject_name=subject_name,
+                chapter=chapter,
+                board=board,
+                class_level=class_level,
+                docs=docs,
+                spoken=bool(voice_mode),
+            )
+            if topics_reply:
+                _drop_voice_presteps()
+                if emit_related_images:
+                    await emit_related_images([])
+                yield topics_reply
+                return
+        except Exception:
+            logger.exception("chapter topics list reply failed (stream)")
+
     if skip_retrieval:
         early, effective_query, coverage_guidance = None, query, ""
     else:
@@ -1077,6 +1195,17 @@ async def chapter_aware_qa_stream(
     context = _join_context_within_budget(docs, char_budget=context_budget)
     if skip_retrieval:
         context = (quiz_state or {}).get("context", "") if quiz_feedback_block else ""
+    toc_block = _chapter_toc_for_overview(
+        query=effective_query,
+        chapter_ids=chapter_ids,
+        subject_name=subject_name,
+        chapter=chapter,
+        board=board,
+        class_level=class_level,
+        docs=docs,
+    )
+    if toc_block:
+        context = f"{toc_block}\n\n{context}".strip() if context else toc_block
     logger.info(
         "[VOICE-TURN] mode=%s docs=%d ctx_chars=%d sufficient=%s q=%r rq=%r act=%r",
         "voice" if voice_live_teaching else ("voice-text" if voice_mode else "chat"),
@@ -1274,10 +1403,15 @@ async def chapter_aware_qa_stream(
         yield fb
         return
 
-    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+    from app.services.image_service.image_intent_extractor import (
+        activity_numbers_cited_in_text,
+        figure_numbers_cited_in_text,
+    )
 
     asked_figs = figure_numbers_cited_in_text(query) if chapter_ids else []
+    asked_acts = activity_numbers_cited_in_text(query) if chapter_ids else []
     requested_figs: list[dict] = []
+    requested_acts: list[dict] = []
     if asked_figs:
         try:
             requested_figs = await asyncio.to_thread(_db_figures_for_numbers, chapter_ids, asked_figs)
@@ -1286,14 +1420,25 @@ async def chapter_aware_qa_stream(
         block = requested_figure_prompt_block(asked_figs, requested_figs)
         if block and messages and messages[0].get("role") == "system":
             messages[0]["content"] = messages[0]["content"] + "\n\n" + block
+    if asked_acts:
+        try:
+            requested_acts = await asyncio.to_thread(
+                _db_activities_for_numbers, chapter_ids, asked_acts
+            )
+        except Exception as exc:
+            logger.warning("requested activity lookup failed: %s", exc)
+        act_block = requested_activity_prompt_block(asked_acts, requested_acts)
+        if act_block and messages and messages[0].get("role") == "system":
+            messages[0]["content"] = messages[0]["content"] + "\n\n" + act_block
 
     last_imgs: list[dict] = []
     images_emitted = False
-    # A named figure is shown before the first token — no ranking, no pedagogy gate.
-    if requested_figs and emit_related_images:
-        _log_image_stage("requested_figure", requested_figs)
-        await emit_related_images(requested_figs)
-        last_imgs = requested_figs
+    # A named figure / activity is shown before the first token — no ranking, no pedagogy gate.
+    requested_assets = _merge_cited_image_rows(requested_figs, requested_acts)
+    if requested_assets and emit_related_images:
+        _log_image_stage("requested_figure_activity", requested_assets)
+        await emit_related_images(requested_assets)
+        last_imgs = requested_assets
         images_emitted = True
     early_image_min = VOICE_EARLY_IMAGE_MIN_CHARS if voice_live_teaching else EARLY_IMAGE_MIN_CHARS
     answer_type = _resolve_answer_type(
@@ -1330,6 +1475,7 @@ async def chapter_aware_qa_stream(
         if not chapter_ids or not img_allowed:
             return []
         from app.services.image_service.image_intent_extractor import (
+            activity_numbers_cited_in_text,
             figure_numbers_cited_in_text,
             is_chapter_figure_list_ask,
         )
@@ -1338,9 +1484,11 @@ async def chapter_aware_qa_stream(
             is_chapter_figure_list_ask(query)
             or bool(figure_numbers_cited_in_text(query))
             or bool(figure_numbers_cited_in_text(answer_text))
+            or bool(activity_numbers_cited_in_text(query))
+            or bool(activity_numbers_cited_in_text(answer_text))
         )
         # ChatGPT-style select needs a real tutor answer; don't burn quota after LLM 429.
-        # Fig N / list-ask still resolve from the chapter DB without LLM image select.
+        # Fig N / Activity N / list-ask still resolve from the chapter DB without LLM image select.
         if ENABLE_LLM_IMAGE_SELECT and not llm_ok and not cite_or_list:
             return []
         try:
@@ -1632,6 +1780,10 @@ async def chapter_aware_qa_stream(
             display_answer = (clean_answer or "").strip() or streamed_prose
             if science_experiment and emit_science_experiment:
                 await emit_science_experiment(science_experiment, display_answer)
+                yield ""
+            elif emit_clean_answer and display_answer and display_answer != streamed_prose:
+                # Fence stripped but no panel — replace streamed JSON dump with prose.
+                await emit_clean_answer(display_answer)
                 yield ""
             if use_text_format or (voice_mode and _is_science_subject(subject_name)):
                 answer_text = display_answer

@@ -494,6 +494,18 @@ def finalize_math_answer(
         if allow_fallback
         else None
     )
+    # The answer often ties the topic back to the chapter ("triangles help us understand
+    # quadrilaterals"); when the question names its own topic, the question picks the visual.
+    query_led = False
+    if catalog is not None:
+        from app.services.math_lesson.visual_catalog import match_query_topic_visualization
+
+        asked = match_query_topic_visualization(query, class_level)
+        asked_type = ((asked or {}).get("visualization") or {}).get("visualizationType")
+        if asked_type and asked_type != (catalog.get("visualization") or {}).get("visualizationType"):
+            catalog, query_led = asked, True
+            if lesson is not None and (lesson.get("visualization") or {}).get("visualizationType") != asked_type:
+                lesson = None
     # Soft-merge only when first fence is weak — resolve_grounded_panel is source of truth.
     if lesson is not None and catalog is not None:
         lesson = merge_catalog_visualization(lesson, catalog)
@@ -506,6 +518,7 @@ def finalize_math_answer(
         first_panel=lesson,
         catalog_panel=catalog,
         allow_llm_pass2=allow_llm_pass2 and allow_fallback,
+        prefer_catalog=query_led,
     )
     if grounded is None:
         return clean, None

@@ -412,6 +412,9 @@ MENTOR TEACHING STYLE:
 - After teaching, naturally guide what to explore next (example, quiz, deeper dive, practice).
 - When the student struggles, simplify with empathy — never make them feel bad.
 - Celebrate real progress briefly; avoid empty praise on every message.
+- Prefer everyday wording. Avoid stock phrases like "According to the chapter..." on every turn;
+  cite the book only when grounding a precise fact. Do not dump formulas (Snell's law, sin i / sin r)
+  unless the student asked for the formula.
 
 {learner_guidance}
 
@@ -798,7 +801,9 @@ def _build_adaptive_guidance(
     if scores.get("confusion", 0) >= 0.55 or scores.get("wants_expansion"):
         parts.append(
             "ADAPTIVE MODE — SIMPLIFY: The student seems confused or asked for more help. "
-            "Use the simplest words, one analogy, and smaller steps. Do not add new topics."
+            "Start with a warm reassurance. Use the simplest words, one analogy, and "
+            "at most 3 small steps (under ~110 words). Do not add new topics, formula names, "
+            "or a science-experiment JSON block."
         )
     elif any(w.lower() in topic_l or topic_l in w.lower() for w in weak[-8:] if w):
         parts.append(
@@ -986,6 +991,7 @@ _INTERACTION_CLARIFICATION = """\
 INTERACTIVE TEACHING (student is confused):
 - Re-explain your PREVIOUS answer only — do not introduce a new textbook activity or page.
 - Use simpler words, smaller steps, and one everyday analogy.
+- Never say "according to the chapter" / "as per the textbook". Never dump Snell's law or sin i / sin r unless they asked for the formula.
 - End with ONE short check question to see if they follow now."""
 
 
@@ -1198,12 +1204,23 @@ def _build_chat_messages(
                 "Acknowledge their story, connect it briefly to the lesson, then offer next steps:"
             )
         elif answer_type == "clarification":
-            length_policy = "RESPONSE LENGTH: About 80-140 words. Plain prose, step by step."
+            length_policy = (
+                "RESPONSE LENGTH: About 60–110 words. Plain prose, step by step. "
+                "Short sentences (under 14 words)."
+            )
             interaction_policy = _INTERACTION_CLARIFICATION
-            explanation_structure = ""
+            explanation_structure = (
+                "STRUGGLE MODE (mandatory):\n"
+                "- Open with one warm line (e.g. \"It's okay to be stuck on this.\").\n"
+                "- Use everyday words only. Ban formula names (Snell's law, sin i / sin r) "
+                "unless the student asked for the formula.\n"
+                "- One tiny analogy. Max 3 short steps. No long markdown dump.\n"
+                "- Do NOT append a science-experiment JSON block.\n"
+                "- End with ONE yes/no check question."
+            )
             user_closing = (
-                "The student did not understand your last reply. Re-explain that SAME answer "
-                "more simply — do not switch to a different activity or page:"
+                "The student is confused or asked for a simpler explanation. "
+                "Re-explain simply with empathy — no jargon dump, no experiment JSON:"
             )
         elif answer_type in ("brief", "one-word"):
             length_policy = _LENGTH_POLICY_BRIEF
@@ -1347,6 +1364,37 @@ def _build_chat_messages(
         length_policy = "RESPONSE LENGTH: the student asked for short answers — under 60 words, one idea."
         explanation_structure = ""
         user_closing = "Write a short answer now (under 60 words, no headings):"
+
+    # Bare "yes" after "Would you like to see how…?" — teach that offer, not the quiz menu.
+    from app.services.chat_service.dialogue import (
+        _chapter_meta_prompt_override,
+        _continue_offer_prompt_override,
+        _struggle_simplify_prompt_override,
+    )
+
+    continue_offer = _continue_offer_prompt_override(q, conversation_history)
+    if continue_offer:
+        instruction = continue_offer["instruction"]
+        length_policy = continue_offer["length_policy"]
+        interaction_policy = continue_offer["interaction_policy"]
+        explanation_structure = continue_offer["explanation_structure"]
+        user_closing = continue_offer["user_closing"]
+    else:
+        struggle = _struggle_simplify_prompt_override(q)
+        if struggle:
+            instruction = struggle["instruction"]
+            length_policy = struggle["length_policy"]
+            interaction_policy = struggle["interaction_policy"]
+            explanation_structure = struggle["explanation_structure"]
+            user_closing = struggle["user_closing"]
+        else:
+            chapter_meta = _chapter_meta_prompt_override(q)
+            if chapter_meta:
+                instruction = chapter_meta["instruction"]
+                length_policy = chapter_meta["length_policy"]
+                interaction_policy = chapter_meta["interaction_policy"]
+                explanation_structure = chapter_meta["explanation_structure"]
+                user_closing = chapter_meta["user_closing"]
 
     qtype = detect_question_type(q)
     math_format = _math_format_tier(class_level, qtype)

@@ -58,6 +58,11 @@ _CHAPTER_META_QUERY_RE = re.compile(
     r"|(?:(?:this|the|current)\s+chapter)\s+(?:is\s+)?about\b"
     r"|what(?:'s|\s+(?:is|does|will|are))\s+(?:in|this|the)\s+chapter\b"
     r"|topics?\s+(?:in|of|from|covered\s+in)\s+(?:(?:this|the|current)\s+)?chapter\b"
+    # "What topics are present/covered in this chapter?"
+    r"|topics?\s+(?:are\s+)?(?:present|covered|included|there)\s+in\s+(?:(?:this|the|current)\s+)?chapter\b"
+    r"|what\s+topics?\s+(?:are\s+)?(?:present|covered|there|included|in)\b"
+    r"|(?:list|name|give)\s+(?:me\s+)?(?:all\s+)?(?:the\s+)?topics?\b"
+    r"|table\s+of\s+contents|chapter\s+contents?\b"
     r")",
     re.I,
 )
@@ -1542,11 +1547,17 @@ async def resolve_chapter_awareness_turn(
             )
             return None, effective_query, None, coverage_guidance
 
-    # "Show me Fig. 2.12" names its own subject: the figure lookup grounds the answer,
-    # so no prior-question swap and no coverage check that could call it off-chapter.
-    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+    # "Show me Fig. 2.12" / "Activity 9.10" names its own subject: the image lookup
+    # grounds the answer, so no prior-question swap and no coverage check that could
+    # call it off-chapter.
+    from app.services.image_service.image_intent_extractor import (
+        activity_numbers_cited_in_text,
+        figure_numbers_cited_in_text,
+    )
 
-    if figure_numbers_cited_in_text(effective_query):
+    if figure_numbers_cited_in_text(effective_query) or activity_numbers_cited_in_text(
+        effective_query
+    ):
         return None, effective_query, None, build_visual_follow_up_guidance()
 
     # "with an image" / "show me a diagram" — reuse prior question, fetch figures

@@ -239,6 +239,21 @@ def match_math_visualization(
     return _grade_band_default(class_num, class_level)
 
 
+def match_query_topic_visualization(query: str, class_level: str = "") -> dict[str, Any] | None:
+    """The visual the student's own words ask for, or None when they name no topic ("why?", "yes")."""
+    from app.services.math_lesson.topic_ontology import pick_ontology_topic
+    from app.services.math_lesson.visual_matcher import pick_best_visualization_rule
+
+    q = (query or "").strip()
+    if not q:
+        return None
+    if not pick_ontology_topic(q, class_level) and not pick_best_visualization_rule(
+        q, _TOPIC_RULES + ELEMENTARY_TOPIC_RULES
+    ):
+        return None
+    return match_math_visualization(q, class_level)
+
+
 def match_textbook_visualization(query: str, class_level: str = "") -> dict[str, Any] | None:
     """Backward-compatible: returns None only for empty query."""
     q = (query or "").strip()

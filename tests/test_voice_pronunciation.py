@@ -39,3 +39,16 @@ def test_ui_and_sanitize_keep_wind():
     assert sanitize_chunk_for_tts(src) == src
     assert apply_voice_prosody(src) == src
     assert prepare_speech_delivery(src).text == src
+
+
+def test_angles_not_spoken_as_angels():
+    # en-IN Neerja reads plural "angles" as "angels"; singular and compounds are fine.
+    from app.services.voice_pronunciation import prepare_text_for_tts
+
+    assert prepare_text_for_tts("Vertically opposite angles are equal.") == (
+        "Vertically opposite anggles are equal."
+    )
+    assert prepare_text_for_tts("Angles A and B") == "Anggles A and B"
+    assert prepare_text_for_tts("Each angle of the triangles and rectangles.") == (
+        "Each angle of the triangles and rectangles."
+    )

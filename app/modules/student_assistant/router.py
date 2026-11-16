@@ -55,6 +55,7 @@ async def assistant_chat(
             conversation_history=_history(payload),
             agent_mode=payload.agent_mode,
             image_ids=payload.image_ids,
+            voice_mode=payload.voice_mode,
         )
     except ImageUnderstandingError as exc:
         raise HTTPException(status_code=400, detail=exc.user_message) from None
@@ -78,6 +79,7 @@ async def assistant_chat_stream(
                 conversation_history=history,
                 agent_mode=payload.agent_mode,
                 image_ids=payload.image_ids,
+                voice_mode=payload.voice_mode,
             ):
                 if isinstance(token, str) and token.startswith("\0STATUS:"):
                     rest = token[len("\0STATUS:") :]

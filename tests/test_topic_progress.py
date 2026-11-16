@@ -47,6 +47,9 @@ def test_noise_topic_filter():
     assert _is_usable_topic_title("The Monsoons")
     assert _is_usable_topic_title("Climate Change")
     assert not _is_usable_topic_title("The Big")  # too vague / incomplete
+    assert not _is_usable_topic_title("Exercises")
+    assert not _is_usable_topic_title("Questions")
+    assert not _is_usable_topic_title("Summary")
 
 
 def test_topics_left_answer_lists_remaining():

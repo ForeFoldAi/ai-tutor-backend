@@ -48,7 +48,9 @@ def guidance_to_prompt_sections(
         adaptive_parts.append(
             "ADAPTIVE MODE — SIMPLIFY: The student seems confused or asked for more help. "
             f"Use {guidance.preferred_explanation.replace('_', ' ')}, pace={guidance.teaching_pace}, "
-            f"hint_level={guidance.hint_level}. Do not add new topics."
+            f"hint_level={guidance.hint_level}. Start with warm reassurance; everyday words only; "
+            "max ~110 words and 3 short steps. No formula-name dump, no science-experiment JSON. "
+            "Do not add new topics."
         )
     elif topic and any(
         w.lower() in topic.lower() or topic.lower() in w.lower()

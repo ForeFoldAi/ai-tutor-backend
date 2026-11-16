@@ -563,8 +563,15 @@ def resolve_grounded_panel(
     first_panel: dict[str, Any] | None = None,
     catalog_panel: dict[str, Any] | None = None,
     allow_llm_pass2: bool = True,
+    prefer_catalog: bool = False,
 ) -> dict[str, Any] | None:
-    """Tiered resolve: typed extract→template first; pass-2 only if incomplete."""
+    """Tiered resolve: typed extract→template first; pass-2 only if incomplete.
+
+    prefer_catalog: the catalog panel came from the student's own question, so the
+    answer's wording must not swap it for a different visual.
+    """
+    if prefer_catalog and catalog_panel:
+        return should_emit_panel(catalog_panel, answer, kind=kind, query=query) or catalog_panel
     from app.services.interactive_templates import (
         PRODUCTION_TYPES,
         build_template_panel,

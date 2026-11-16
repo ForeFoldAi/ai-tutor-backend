@@ -73,9 +73,18 @@ def _classify_wind(sentence: str) -> str:
     return "air"
 
 
+# Neerja reads the plural "angles" as "angels" (the singular "angle" is fine).
+_RESPELL = {"angles": "anggles"}
+_RESPELL_RE = re.compile(r"\b(?:" + "|".join(_RESPELL) + r")\b", re.I)
+
+
+def _respell(text: str) -> str:
+    return _RESPELL_RE.sub(lambda m: _match_case(m.group(0), _RESPELL[m.group(0).lower()]), text)
+
+
 def prepare_text_for_tts(text: str) -> str:
     """Internal TTS string only. Do not use for chat / speech_unit / RAG."""
-    raw = text or ""
+    raw = _respell(text or "")
     if "wind" not in raw.lower():
         return raw
 
@@ -108,4 +117,6 @@ if __name__ == "__main__":
     assert prepare_text_for_tts("The wind is blowing.") == "The wihnd is blowing."
     assert prepare_text_for_tts("Wind the clock.") == "Wind the clock."
     assert prepare_text_for_tts("Open the window.") == "Open the window."
+    assert prepare_text_for_tts("Angles A and B are equal angles.") == "Anggles A and B are equal anggles."
+    assert prepare_text_for_tts("Each angle in triangles.") == "Each angle in triangles."
     print("voice_pronunciation self-check ok")

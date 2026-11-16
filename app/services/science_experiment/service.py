@@ -105,6 +105,24 @@ def should_use_interactive_science_experiment(
         return False
     if answer_type in _SKIP_TYPES:
         return False
+    # Chapter meta asks (topic list / whole-chapter overview) are inventories — not labs.
+    from app.modules.student_learning.topic_progress import is_chapter_topics_list_query
+    from app.services.conversation_intent_classifier import FollowupType, classify_followup_regex
+    from app.services.voice_chapter_vocab import is_chapter_overview_request
+
+    if is_chapter_topics_list_query(query) or is_chapter_overview_request(query):
+        return False
+    # Confused / "explain simply" turns need plain prose — no lab JSON.
+    act = classify_followup_regex(query)
+    if act in (FollowupType.SIMPLIFY, FollowupType.CLARIFICATION):
+        return False
+    if re.search(
+        r"\b(confus(?:ed|ing)|i\s+don'?t\s+get|still\s+stuck|explain\s+like|"
+        r"keep\s+forgetting|what\s+is\s+that)\b",
+        query or "",
+        re.I,
+    ):
+        return False
     from app.services.section_heading import HeadingScope
 
     if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
@@ -239,13 +257,31 @@ def extract_science_experiment_from_answer(answer: str) -> tuple[str, dict[str, 
 
 
 def strip_science_experiment_block(answer: str) -> tuple[str, dict[str, Any] | None]:
-    match = _SCIENCE_EXPERIMENT_FENCE_RE.search(answer or "")
+    text = answer or ""
+    match = _SCIENCE_EXPERIMENT_FENCE_RE.search(text)
     if not match:
-        return clean_tutor_answer_text(answer or ""), None
+        # Incomplete / unfenced dump — never leave JSON in student-visible prose.
+        text = _INCOMPLETE_SCIENCE_EXPERIMENT_RE.sub("", text)
+        text = re.sub(
+            r"\n?```(?:science-experiment|science-lesson|json:science-experiment|"
+            r"science_experiment|science_lesson)[\s\S]*$",
+            "",
+            text,
+            flags=re.I,
+        )
+        # Bare JSON object that starts mid-answer after a lab cue.
+        text = re.sub(
+            r"\n\s*\{\s*\"(?:conceptName|experiment|experimentType)\"[\s\S]*$",
+            "",
+            text,
+        )
+        return clean_tutor_answer_text(text), None
     try:
         raw = json.loads(match.group(1).strip())
     except json.JSONDecodeError:
-        return clean_tutor_answer_text(answer or ""), None
-    clean = (answer[: match.start()] + answer[match.end() :]).strip()
+        clean = (text[: match.start()] + text[match.end() :]).strip()
+        clean = _INCOMPLETE_SCIENCE_EXPERIMENT_RE.sub("", clean)
+        return clean_tutor_answer_text(clean), None
+    clean = (text[: match.start()] + text[match.end() :]).strip()
     clean = clean_tutor_answer_text(clean)
     return clean, raw if isinstance(raw, dict) else None

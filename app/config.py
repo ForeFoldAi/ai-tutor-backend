@@ -383,6 +383,8 @@ VOICE_EARLY_IMAGE_MIN_CHARS = int(os.environ.get("VOICE_EARLY_IMAGE_MIN_CHARS", 
 # 110 words is ~40 s of speech with stacked questions; a listener can answer one thing at a time.
 VOICE_PROMPT_MAX_WORDS = int(os.environ.get("VOICE_PROMPT_MAX_WORDS", "70"))
 VOICE_PROMPT_EXPAND_WORDS = int(os.environ.get("VOICE_PROMPT_EXPAND_WORDS", "120"))
+# Whole-chapter / topic-list spoken turns need more room than a single-concept answer.
+VOICE_PROMPT_CHAPTER_WORDS = int(os.environ.get("VOICE_PROMPT_CHAPTER_WORDS", "220"))
 # Phase 6 — cold-start overlap + HTTP fallback TTS prefetch
 VOICE_EMBEDDING_WARMUP = os.environ.get("VOICE_EMBEDDING_WARMUP", "true").lower() in (
     "1",

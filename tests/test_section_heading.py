@@ -5,6 +5,7 @@ from langchain_core.documents import Document
 from app.services.section_heading import (
     enrich_chunks_with_section_metadata,
     extract_subtopics_from_scope,
+    normalize_heading_line,
     parse_heading_line,
     parse_section_hint,
     resolve_heading_scope,
@@ -13,6 +14,23 @@ from app.services.section_heading import (
     HeadingScope,
     HeadingInfo,
 )
+
+
+def test_normalize_ocr_repeated_heading():
+    raw = (
+        "# 9.2 SPHERIC 9.2 SPHERIC 9.2 SPHERIC 9.2 SPHERIC "
+        "9.2 SPHERICAL MIRRORS AL MIRRORS AL MIRRORS AL MIRRORS AL MIRRORS "
+        "9.2 SPHERIC"
+    )
+    cleaned = normalize_heading_line(raw)
+    assert cleaned.startswith("9.2")
+    assert "SPHERICAL MIRRORS" in cleaned.upper()
+    assert cleaned.upper().count("MIRRORS") == 1
+    parsed = parse_heading_line(cleaned)
+    assert parsed is not None
+    assert parsed[0] == "9.2"
+    assert "spherical" in parsed[1].lower()
+    assert "mirror" in parsed[1].lower()
 
 
 def test_parse_numbered_heading():

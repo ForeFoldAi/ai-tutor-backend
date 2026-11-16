@@ -80,8 +80,13 @@ _SUMMARY_RE = re.compile(
     re.I,
 )
 _SIMPLIFY_RE = re.compile(
-    r"\b(simplify|simpler|easier|in\s+simple\s+words|eli5|like\s+i'?m\s+\d+|"
-    r"explain\s+like\s+i'?m)\b",
+    r"\b("
+    r"simplify|simpler|easier|in\s+simple\s+(?:words|terms)|eli5|"
+    r"like\s+i'?m\s+\d+|explain\s+like\s+i'?m(?:\s+\w+)?|"
+    r"like\s+i(?:'?m|\s+am)\s+(?:dumb|stupid|five|a\s+kid)|"
+    r"explain\s+(?:simply|slowly)|keep\s+it\s+simple|"
+    r"i\s+keep\s+forgetting|for\s+dummies|in\s+plain\s+(?:words|english)"
+    r")\b",
     re.I,
 )
 _CONTINUE_RE = re.compile(
@@ -137,10 +142,10 @@ _CONCEPTUAL_RE = re.compile(
 _CONFUSION_RE = re.compile(
     r"\b("
     r"don'?t\s+understand|do\s+not\s+understand|didn'?t\s+understand|did\s+not\s+understand|"
-    r"i\s+don'?t\s+get|don'?t\s+get\s+the|not\s+clear|confused|what\s+do\s+you\s+mean|"
-    r"no\s+idea|still\s+confused|too\s+hard|explain\s+again|say\s+that\s+again|"
+    r"i\s+don'?t\s+get|don'?t\s+get\s+the|not\s+clear|confus(?:ed|ing)|what\s+do\s+you\s+mean|"
+    r"no\s+idea|still\s+confused|still\s+stuck|too\s+hard|explain\s+again|say\s+that\s+again|"
     r"can\s+you\s+explain\s+(?:that|this|it)\s+again|lost\s+me|didn'?t\s+follow|"
-    r"what\s+does\s+(?:that|this|it)\s+mean"
+    r"what\s+does\s+(?:that|this|it)\s+mean|i\s+keep\s+forgetting|make\s+it\s+clear"
     r")\b",
     re.I,
 )

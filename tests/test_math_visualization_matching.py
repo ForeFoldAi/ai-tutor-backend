@@ -184,3 +184,28 @@ def test_merge_catalog_overrides_wrong_locked_shape():
     objs = merged["visualization"]["interactiveObjects"]
     assert objs[0]["type"] == "square"
     assert not any(s.get("id") == "sides" for s in merged["visualization"]["sliders"])
+
+
+def test_question_topic_beats_chapter_words_in_answer():
+    # Quadrilaterals chapter: "draw a triangle?" got Quadrilateral Shape Morph because the
+    # answer related triangles back to quadrilaterals.
+    from app.services.math_lesson.service import finalize_math_answer
+
+    answer = (
+        "In your chapter, triangles are used to understand quadrilaterals. If you draw a "
+        "quadrilateral SOME and its diagonal SM, it splits the quadrilateral into two triangles. "
+        "To draw a triangle, mark a point A, draw a segment to B, then to C, and join C back to A. "
+        "Joining two triangles can make quadrilaterals like a rhombus or a kite."
+    )
+    _, lesson = finalize_math_answer(
+        answer, "draw a triangle?", class_level="CLASS_8",
+        subject_name="Mathematics", allow_llm_pass2=False,
+    )
+    assert lesson["visualization"]["visualizationType"] == "triangle-explorer"
+
+
+@pytest.mark.parametrize("q", ["why?", "yes", "explain more"])
+def test_topicless_followups_do_not_pick_a_visual(q):
+    from app.services.math_lesson.visual_catalog import match_query_topic_visualization
+
+    assert match_query_topic_visualization(q, "CLASS_8") is None

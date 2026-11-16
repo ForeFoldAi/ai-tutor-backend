@@ -1171,6 +1171,34 @@ def _resolved_figure_number(im: TextbookImage) -> str:
     return (extract_figure_number(im.caption or "") or "").strip()
 
 
+_ACTIVITY_NUM_RE = re.compile(r"(?i)\bactivity\s*[\.\s:#-]*\s*(\d+(?:\.\d+)*)")
+
+
+def _resolved_activity_number(im: TextbookImage) -> str:
+    """Activity N from caption / title / nearby text — never from Fig. N alone."""
+    for text in (
+        getattr(im, "caption", None) or "",
+        getattr(im, "title", None) or "",
+        getattr(im, "figure_context", None) or "",
+        getattr(im, "page_text_snippet", None) or "",
+        getattr(im, "generated_caption", None) or "",
+    ):
+        m = _ACTIVITY_NUM_RE.search(text)
+        if m:
+            return m.group(1).strip()
+    return ""
+
+
+def _activity_match_rank(im: TextbookImage) -> tuple[int, int]:
+    """Prefer explicit activity role / caption over a diagram that only mentions Activity N nearby."""
+    role = (_get_educational_role(im) or "").strip().lower()
+    cap = (getattr(im, "caption", None) or "").lower()
+    title = (getattr(im, "title", None) or "").lower()
+    in_label = 1 if _ACTIVITY_NUM_RE.search(f"{cap} {title}") else 0
+    role_hit = 1 if role == "activity" else 0
+    return (in_label, role_hit)
+
+
 def chapter_figures_by_number(
     chapter_ids: list[str] | None,
     numbers: list[str],
@@ -1212,6 +1240,63 @@ def chapter_figures_by_number(
             if im is None:
                 continue
             out.append(_payload_row(im, 100.0))
+            if len(out) >= max_n:
+                break
+        return out
+
+
+def chapter_activities_by_number(
+    chapter_ids: list[str] | None,
+    numbers: list[str],
+    *,
+    max_n: int = 8,
+) -> list[dict]:
+    """
+    Load chapter activity diagrams by Activity N (caption / nearby text).
+
+    Distinct from Fig. N — NCERT Activity 9.10 is not Fig. 9.10.
+    Used when the student or tutor cites Activity N so the image can appear on screen.
+    """
+    wanted = [str(n).strip() for n in (numbers or []) if str(n).strip()]
+    if not chapter_ids or not wanted or max_n <= 0:
+        return []
+    wanted_set = set(wanted)
+    with SessionLocal() as db:
+        uploads = _load_uploads(db, chapter_ids)
+        if not uploads:
+            return []
+        images = _list_images(db, list(uploads.keys()))
+        _attach_upload_refs(images, uploads)
+        best: dict[str, tuple[tuple[int, int], TextbookImage]] = {}
+        for im in images:
+            from app.services.image_service.content_kind_retrieval import get_content_kind
+
+            if get_content_kind(im) != "figure":
+                continue
+            num = _resolved_activity_number(im)
+            if num not in wanted_set:
+                continue
+            disk = image_disk_path(
+                im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None)
+            )
+            if not image_has_visible_content(disk):
+                continue
+            rank = _activity_match_rank(im)
+            prev = best.get(num)
+            if prev is None or rank > prev[0]:
+                best[num] = (rank, im)
+        out: list[dict] = []
+        for n in wanted:
+            hit = best.get(n)
+            if hit is None:
+                continue
+            im = hit[1]
+            row = _payload_row(im, 100.0)
+            row["activity_number"] = n
+            cap = (row.get("caption") or "").strip()
+            if not _ACTIVITY_NUM_RE.search(cap):
+                row["caption"] = f"Activity {n}" + (f". {cap}" if cap else "")
+            out.append(row)
             if len(out) >= max_n:
                 break
         return out
