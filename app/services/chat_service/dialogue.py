@@ -138,6 +138,141 @@ def _is_accepting_tutor_continue_offer(
     return len(q.split()) <= 7
 
 
+def _continue_offer_prompt_override(
+    query: str, conversation_history: list[dict] | None
+) -> dict[str, str] | None:
+    """Prompt bits when the student said yes to a specific tutor offer (not a choice menu)."""
+    if not _is_accepting_tutor_continue_offer(query, conversation_history):
+        return None
+    last = _last_assistant_text(conversation_history)
+    offer = ""
+    if last and "?" in last:
+        # Prefer the last question the tutor asked — that is what "yes" accepts.
+        parts = re.split(r"(?<=[?])\s*", last)
+        for part in reversed(parts):
+            s = (part or "").strip()
+            if s.endswith("?") and _TUTOR_CONTINUE_OFFER_RE.search(s):
+                offer = s
+                break
+        if not offer:
+            offer = parts[-1].strip() if parts else ""
+    offer_line = f' Their yes accepts: "{offer}"' if offer else ""
+    return {
+        "instruction": (
+            "The student accepted YOUR specific yes/no offer from the previous message."
+            f"{offer_line} "
+            "Teach that exact next step now using the chapter context. "
+            "Do NOT open a choice menu (real-life example / quick quiz / other topics / wrap up). "
+            "Do NOT ask again whether they want that topic."
+        ),
+        "length_policy": (
+            "RESPONSE LENGTH: about 80-140 words. Plain prose — no multi-choice menu."
+        ),
+        "interaction_policy": (
+            "End with ONE short check question on what you just taught — "
+            "not a quiz offer and not a menu of options."
+        ),
+        "explanation_structure": "",
+        "user_closing": (
+            "The student said yes to your offer. Deliver that next explanation now "
+            "(the topic you just offered) — do not offer a quiz or choice menu:"
+        ),
+    }
+
+
+def _struggle_simplify_prompt_override(query: str) -> dict[str, str] | None:
+    """When the student asks to simplify / says they're confused — short plain teaching."""
+    from app.services.conversation_intent_classifier import FollowupType, classify_followup_regex
+
+    q = (query or "").strip()
+    if not q:
+        return None
+    act = classify_followup_regex(q)
+    explicit = bool(
+        re.search(
+            r"\b(confus(?:ed|ing)|explain\s+like|i\s+keep\s+forgetting|still\s+stuck|"
+            r"like\s+i(?:'?m|\s+am)\s+(?:dumb|stupid)|keep\s+it\s+simple|in\s+simple\s+words)\b",
+            q,
+            re.I,
+        )
+    )
+    if act not in (FollowupType.SIMPLIFY, FollowupType.CLARIFICATION) and not explicit:
+        return None
+    return {
+        "instruction": (
+            "The student is struggling or asked for a simpler explanation. "
+            "Open with one warm line (\"It's okay to be stuck\"). "
+            "Use everyday words only — no Snell's law, no sin i / sin r, no long formula dump "
+            "unless they asked for the formula. Never say \"according to the chapter\". "
+            "One analogy. Max 3 short steps. "
+            "About 60–110 words. Do NOT append science-experiment JSON. "
+            "End with ONE yes/no check."
+        ),
+        "length_policy": "RESPONSE LENGTH: 60–110 words. Short sentences under 14 words.",
+        "interaction_policy": (
+            "Warm + tiny steps + one check question. No quiz menu. No experiment JSON."
+        ),
+        "explanation_structure": "",
+        "user_closing": (
+            "Write a simple, kind explanation now (no jargon dump, no experiment JSON):"
+        ),
+    }
+
+
+def _chapter_meta_prompt_override(query: str) -> dict[str, str] | None:
+    """Prompt bits for topic-list / whole-chapter asks (text chat)."""
+    from app.modules.student_learning.topic_progress import is_chapter_topics_list_query
+    from app.services.voice_chapter_vocab import is_chapter_overview_request
+
+    q = (query or "").strip()
+    if not q:
+        return None
+    if is_chapter_topics_list_query(q):
+        return {
+            "instruction": (
+                "The student wants the FULL topic list for this chapter. "
+                "List EVERY main topic from the CHAPTER TOPICS list / chapter context in order "
+                "as a numbered list (include section numbers like 9.1 when present). "
+                "Do NOT teach the content yet. Do NOT open a quiz/example menu. "
+                "Do NOT invent topics missing from the context."
+            ),
+            "length_policy": "RESPONSE LENGTH: as long as the topic list needs — plain numbered list.",
+            "interaction_policy": (
+                "After the list, ask ONE short question: which topic to start with. "
+                "No quiz offer, no multi-choice menu."
+            ),
+            "explanation_structure": "",
+            "user_closing": (
+                "Write the complete numbered topic list now, then ask which topic to start with:"
+            ),
+        }
+    if is_chapter_overview_request(q):
+        return {
+            "instruction": (
+                "The student wants the WHOLE chapter explained. "
+                "Walk through EVERY main topic from the CHAPTER TOPICS list / chapter context "
+                "in order. For each topic use a short bold heading (section number + title when "
+                "present) and 1–2 sentences of what it covers. Do not stop after 2–3 topics. "
+                "Do NOT invent facts outside the context. Do NOT attach a science-experiment block. "
+                "Do NOT open a quiz/example choice menu."
+            ),
+            "length_policy": (
+                "RESPONSE LENGTH: cover every listed topic (about 180–320 words). "
+                "Short headings + 1–2 sentences each."
+            ),
+            "interaction_policy": (
+                "End with ONE invite to dive deeper into the first topic — "
+                "not a quiz menu and not multiple options."
+            ),
+            "explanation_structure": "",
+            "user_closing": (
+                "Write the full ordered chapter walkthrough now (every topic), "
+                "then invite them to start with the first topic:"
+            ),
+        }
+    return None
+
+
 def _is_affirmation_followup(query: str, conversation_history: list[dict] | None) -> bool:
     """True when the student gives a short bare acknowledgment (not a story or answer)."""
     if not conversation_history:

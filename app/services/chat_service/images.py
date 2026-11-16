@@ -83,20 +83,35 @@ def _docs_text(docs: list[Any] | None) -> str:
 
 def figure_hint_block_from_docs(docs: list[Any] | None) -> str:
     """Short prompt block so the tutor only names figures present in RAG."""
-    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+    from app.services.image_service.image_intent_extractor import (
+        activity_numbers_cited_in_text,
+        figure_numbers_cited_in_text,
+    )
 
-    nums = figure_numbers_cited_in_text(_docs_text(docs))[:8]
-    if not nums:
+    docs_text = _docs_text(docs)
+    nums = figure_numbers_cited_in_text(docs_text)[:8]
+    acts = activity_numbers_cited_in_text(docs_text)[:8]
+    if not nums and not acts:
         return (
-            "TEXTBOOK FIGURES: If the student asks to show Fig./Figure N, acknowledge it is "
-            "being shown — never say you cannot see textbook figures. Do not invent figure numbers. "
-            "If they ask to list chapter figures, say the figures are shown below — do not invent a list."
+            "TEXTBOOK FIGURES: If the student asks to show Fig./Figure N or Activity N, acknowledge "
+            "it is being shown — never say you cannot see textbook figures. Do not invent figure or "
+            "activity numbers. If they ask to list chapter figures, say the figures are shown below "
+            "— do not invent a list."
         )
-    listed = ", ".join(f"Fig. {n}" for n in nums)
+    parts: list[str] = []
+    if nums:
+        listed = ", ".join(f"Fig. {n}" for n in nums)
+        parts.append(f"figures: {listed}")
+    if acts:
+        listed_acts = ", ".join(f"Activity {n}" for n in acts)
+        parts.append(f"activities: {listed_acts}")
+    listed_all = "; ".join(parts)
     return (
-        f"TEXTBOOK FIGURES IN CONTEXT (app shows matching images automatically): {listed}. "
-        "You may name only these. If the student asks to show one of them, acknowledge briefly — "
-        "never say you cannot see it. Do not invent other figure numbers. "
+        f"TEXTBOOK FIGURES / ACTIVITIES IN CONTEXT (app shows matching images automatically): "
+        f"{listed_all}. You may name only these. If the student asks to show one of them, "
+        "acknowledge briefly — never say you cannot see it. When you name an Activity N, the "
+        "diagram is shown on their screen — say so and describe what they see; do not send them "
+        "to the book for the picture. Do not invent other figure or activity numbers. "
         "If they ask to list chapter figures, say the figures are shown below."
     )
 
@@ -207,6 +222,37 @@ def _db_figures_for_numbers(
     )
 
 
+def _db_activities_for_numbers(
+    chapter_ids: list[str] | None,
+    numbers: list[str],
+) -> list[dict]:
+    if not chapter_ids or not numbers:
+        return []
+    from app.services.image_service.textbook_image_retrieval import chapter_activities_by_number
+
+    return chapter_activities_by_number(
+        chapter_ids,
+        numbers,
+        max_n=min(_MAX_CITED_FIGURES, max(1, len(numbers))),
+    )
+
+
+def _merge_cited_image_rows(*batches: list[dict]) -> list[dict]:
+    """Dedupe by url / file_name while preserving cite order."""
+    out: list[dict] = []
+    seen: set[str] = set()
+    for batch in batches:
+        for row in batch or []:
+            key = str(row.get("url") or row.get("file_name") or id(row))
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(row)
+            if len(out) >= _MAX_CITED_FIGURES:
+                return out
+    return out
+
+
 def requested_figure_prompt_block(numbers: list[str], found: list[dict]) -> str:
     """Ground the answer in the figure the student asked for: real caption and page, already on screen.
 
@@ -236,6 +282,40 @@ def requested_figure_prompt_block(numbers: list[str], found: list[dict]) -> str:
             "their screen, then briefly explain what it shows using only the details above and the "
             f"chapter context. If you mention a page, use exactly: {pages}. Never say you cannot "
             "show, find or generate images, and never send them to look it up elsewhere."
+        )
+    return "\n".join(lines)
+
+
+def requested_activity_prompt_block(numbers: list[str], found: list[dict]) -> str:
+    """Ground the reply in the Activity diagram already shown on the student's screen."""
+    if not numbers:
+        return ""
+    by_num = {str(f.get("activity_number") or "").strip(): f for f in found}
+    lines = ["STUDENT ASKED FOR A TEXTBOOK ACTIVITY."]
+    for n in numbers:
+        f = by_num.get(n)
+        if not f:
+            lines.append(
+                f"Activity {n} is not in this chapter's textbook images. Say so plainly and "
+                "describe the activity from chapter context only — do not invent a diagram."
+            )
+            continue
+        detail = (
+            f"Activity {n} — \"{(f.get('caption') or '').strip()}\" "
+            f"(textbook page {f.get('page')})"
+        )
+        about = (f.get("visual_description") or f.get("figure_context") or "").strip()
+        if about:
+            detail += f". What it shows: {about[:240]}"
+        lines.append(detail + ".")
+    if found:
+        pages = ", ".join(str(f.get("page")) for f in found)
+        lines.append(
+            "These activity diagrams are ALREADY DISPLAYED on the student's screen right now. "
+            "Say it is on their screen, then walk through the activity in plain words using only "
+            "the details above and the chapter context — do not assume they have the book open. "
+            f"If you mention a page, use exactly: {pages}. Never say you cannot show, find or "
+            "generate images, and never send them to look it up elsewhere."
         )
     return "\n".join(lines)
 
@@ -292,8 +372,9 @@ async def _select_related_images_for_answer(
     retrieved_docs: list[Any] | None = None,
     chapter_ids: list[str] | None = None,
 ) -> list[dict]:
-    """Prefer exact Fig N (DB) / list-ask catalog; else candidates + LLM pick."""
+    """Prefer exact Fig N / Activity N (DB) / list-ask catalog; else candidates + LLM pick."""
     from app.services.image_service.image_intent_extractor import (
+        activity_numbers_cited_in_text,
         figure_numbers_cited_in_text,
         is_chapter_figure_list_ask,
     )
@@ -310,19 +391,27 @@ async def _select_related_images_for_answer(
 
     q_cited = figure_numbers_cited_in_text(question)
     a_cited = figure_numbers_cited_in_text(answer)
+    q_acts = activity_numbers_cited_in_text(question)
+    a_acts = activity_numbers_cited_in_text(answer)
 
-    # Exact Fig N asks / answer cites are returned alone: padding them with ranked
-    # candidates shows figures the answer never talks about.
-    if chapter_ids and q_cited:
-        found = _db_figures_for_numbers(chapter_ids, q_cited)
+    # Exact Fig N / Activity N asks / answer cites are returned alone: padding them with
+    # ranked candidates shows figures the answer never talks about.
+    if chapter_ids and (q_cited or q_acts):
+        found = _merge_cited_image_rows(
+            _db_figures_for_numbers(chapter_ids, q_cited) if q_cited else [],
+            _db_activities_for_numbers(chapter_ids, q_acts) if q_acts else [],
+        )
         if found:
-            _log_image_stage("question_fig_db", found)
+            _log_image_stage("question_fig_activity_db", found)
             return found[:_MAX_CITED_FIGURES]
 
-    if chapter_ids and a_cited:
-        found = _db_figures_for_numbers(chapter_ids, a_cited)
+    if chapter_ids and (a_cited or a_acts):
+        found = _merge_cited_image_rows(
+            _db_figures_for_numbers(chapter_ids, a_cited) if a_cited else [],
+            _db_activities_for_numbers(chapter_ids, a_acts) if a_acts else [],
+        )
         if found:
-            _log_image_stage("answer_fig_db", found)
+            _log_image_stage("answer_fig_activity_db", found)
             return found[:_MAX_CITED_FIGURES]
 
     cited = _prefer_cited_figure_candidates(

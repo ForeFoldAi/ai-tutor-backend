@@ -59,6 +59,68 @@ def normalize_title(text: str) -> str:
     return t.strip(" .:;-")
 
 
+def _collapse_ocr_title_echo(title: str) -> str:
+    """Clean OCR echoes like ``SPHERICAL MIRRORS AL MIRRORS AL MIRRORS`` → ``SPHERICAL MIRRORS``."""
+    words = [w for w in (title or "").split() if w]
+    if not words:
+        return ""
+    out: list[str] = []
+    seen: set[str] = set()
+    i = 0
+    while i < len(words):
+        w = words[i]
+        key = w.upper()
+        # Short OCR fragment before a word we already saw ("AL" before second "MIRRORS").
+        if (
+            i + 1 < len(words)
+            and len(w) <= 3
+            and words[i + 1].upper() in seen
+        ):
+            break
+        if key in seen:
+            break
+        seen.add(key)
+        out.append(w)
+        i += 1
+    return " ".join(out).strip()
+
+
+def normalize_heading_line(line: str) -> str:
+    """Strip markdown ``#``, collapse spaced caps (``E X E R C I S E S``), dedupe repeats."""
+    line = (line or "").strip()
+    line = re.sub(r"^#+\s*", "", line).strip()
+    # Leading OCR junk before a numbered heading ("? 9.2.3 Title")
+    line = re.sub(r"^[^\w]*(\d+(?:\.\d+)+\b)", r"\1", line).strip()
+    # OCR / PDF dumps sometimes space every letter of a header.
+    if re.fullmatch(r"(?:[A-Za-z]\s+){2,}[A-Za-z]", line):
+        line = re.sub(r"\s+", "", line)
+    # Repeated "9.2 TITLE 9.2 TITLE…" — pick the longest title candidate, then collapse echoes.
+    cands = re.findall(
+        r"(\d+(?:\.\d+)+)\s+([A-Za-z][^0-9]*?)(?=\s+\d+(?:\.\d+)+\b|$)",
+        line,
+    )
+    if len(cands) >= 2:
+        number = cands[0][0]
+        same = [t.strip() for n, t in cands if n == number and t.strip()]
+        if same:
+            title = _collapse_ocr_title_echo(max(same, key=len))
+            if title:
+                return f"{number} {title}".strip()
+    # "9.1 TITLE 9.1 TITLE 9.1 TITLE" → keep one copy
+    m = re.match(
+        r"^(\d+(?:\.\d+)+)\s+(.+?)\s+\1\b",
+        line,
+        re.I,
+    )
+    if m:
+        title = _collapse_ocr_title_echo(m.group(2).strip())
+        # Title may still contain another copy of itself before the next number.
+        title = re.split(rf"\s+{re.escape(m.group(1))}\b", title, maxsplit=1)[0].strip()
+        title = _collapse_ocr_title_echo(title)
+        line = f"{m.group(1)} {title}".strip()
+    return line
+
+
 def parse_heading_line(line: str) -> tuple[str, str, int] | None:
     """
     Parse one heading line.
@@ -66,7 +128,7 @@ def parse_heading_line(line: str) -> tuple[str, str, int] | None:
     Returns (section_number, title, level) or None.
     level: 0 = chapter (``2 Title``), 1 = section (``2.3``), 2+ = subsection.
     """
-    line = (line or "").strip()
+    line = normalize_heading_line(line or "")
     if not line or len(line) > 160 or line.endswith("."):
         return None
     # Pedagogy / signal boxes (e.g. "No Warning", "Watch (Be Updated)") are not section topics.

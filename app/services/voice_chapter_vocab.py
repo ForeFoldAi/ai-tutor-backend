@@ -194,7 +194,8 @@ _OVERVIEW = re.compile(
     r"\b(explain|tell|teach|summari[sz]e|walk\s+me\s+through|go\s+through)\b.{0,40}"
     r"\b(whole|entire|full|complete|this)?\s*(chapter|story|lesson|topic)\b|"
     r"\bstart(?:ing)?\s+(?:to|till|until)\s+(?:the\s+)?end\b|\bfrom\s+(?:the\s+)?(?:start|beginning)\b|"
-    r"\bwhat\s+is\s+(?:this|the)\s+(?:chapter|story|lesson)\s+(?:all\s+)?about\b",
+    r"\bwhat\s+is\s+(?:this|the)\s+(?:chapter|story|lesson)\s+(?:all\s+)?about\b|"
+    r"\b(?:whole|entire|full)\s+chapter\b",
     re.I,
 )
 

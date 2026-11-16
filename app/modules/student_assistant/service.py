@@ -7,14 +7,15 @@ import logging
 import re
 from collections.abc import AsyncIterator
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
 from app.modules.student_assistant.context import build_student_context, build_suggested_prompts
+from app.modules.student_assistant.list_requests import ListTurnPlan, plan_list_turn
 from app.modules.student_learning import service as learning_service
 from app.modules.users.models import User
-from app.config import ASSISTANT_MAX_TOKENS, ASSISTANT_RAG_CHUNK_CHARS, ASSISTANT_RAG_CHUNKS
+from app.config import ASSISTANT_RAG_CHUNK_CHARS, ASSISTANT_RAG_CHUNKS
 from app.core.student_messages import ANSWER_NOT_IN_CHAPTER, CHAT_ANSWER_FAILED
 from app.services.chapter_scope import extract_mentioned_chapter_numbers
 from app.services.chat_service import (
@@ -207,11 +208,13 @@ def _looks_incomplete(text: str) -> bool:
     return False
 
 
-def _with_continue(messages: list[dict[str, str]], partial: str) -> list[dict[str, str]]:
+def _with_continue(
+    messages: list[dict[str, str]], partial: str, prompt: str = ""
+) -> list[dict[str, str]]:
     return [
         *messages,
         {"role": "assistant", "content": partial},
-        {"role": "user", "content": _CONTINUE_USER},
+        {"role": "user", "content": prompt or _CONTINUE_USER},
     ]
 
 
@@ -769,6 +772,12 @@ class _Turn:
     messages: list[dict[str, str]]
     overview: object
     fallback: str
+    plan: ListTurnPlan = field(default_factory=ListTurnPlan)
+
+    def incomplete(self, answer: str) -> bool:
+        if self.plan.expected_items:
+            return self.plan.list_incomplete(answer)
+        return _looks_incomplete(answer)
 
 
 async def _understand_images_for_turn(user: User, overview, query: str, image_ids: list[str]):
@@ -855,6 +864,7 @@ async def _start_turn(
     mode: str,
     image_ids: list[str] | None,
     on_image_status=None,
+    voice_mode: bool = False,
 ) -> _Turn:
     overview = await asyncio.to_thread(learning_service.get_overview, db, user)
     image_block = ""
@@ -889,7 +899,10 @@ async def _start_turn(
         image_block=image_block,
         math_block=math_block,
     )
-    return _Turn(query=query, messages=messages, overview=overview, fallback=fallback)
+    plan = plan_list_turn(query, conversation_history, voice_mode=voice_mode)
+    if plan.prompt_block:
+        messages[0]["content"] += f"\n\n{plan.prompt_block}"
+    return _Turn(query=query, messages=messages, overview=overview, fallback=fallback, plan=plan)
 
 
 async def chat(
@@ -900,6 +913,7 @@ async def chat(
     conversation_history: list[dict[str, str]] | None = None,
     agent_mode: str = "free",
     image_ids: list[str] | None = None,
+    voice_mode: bool = False,
 ) -> tuple[str, list[str]]:
     mode = normalize_agent_mode(agent_mode)
     turn = await _start_turn(
@@ -909,22 +923,23 @@ async def chat(
         conversation_history=conversation_history,
         mode=mode,
         image_ids=image_ids,
+        voice_mode=voice_mode,
     )
     messages = turn.messages
     answer = (
         await _call_mistral_async(
             messages,
-            max_tokens=ASSISTANT_MAX_TOKENS,
+            max_tokens=turn.plan.max_tokens,
             feature="assistant",
             empty_fallback=turn.fallback,
         )
         or ""
     ).strip() or turn.fallback
-    if answer != turn.fallback and _looks_incomplete(answer):
+    if answer != turn.fallback and turn.incomplete(answer):
         more = (
             await _call_mistral_async(
-                _with_continue(messages, answer),
-                max_tokens=ASSISTANT_MAX_TOKENS,
+                _with_continue(messages, answer, turn.plan.continue_prompt),
+                max_tokens=turn.plan.max_tokens,
                 feature="assistant",
                 empty_fallback="",
             )
@@ -933,7 +948,7 @@ async def chat(
         tail = _continuation_tail(answer, more)
         if tail is None:
             # Model restarted instead of continuing; keep the restart if it is the complete one.
-            if not _looks_incomplete(more):
+            if not turn.incomplete(more):
                 answer = more
         elif tail:
             answer = (answer.rstrip() + tail).strip()
@@ -949,6 +964,7 @@ async def chat_stream(
     conversation_history: list[dict[str, str]] | None = None,
     agent_mode: str = "free",
     image_ids: list[str] | None = None,
+    voice_mode: bool = False,
 ) -> AsyncIterator[str]:
     mode = normalize_agent_mode(agent_mode)
     # Sent before any setup so the client (and proxies) get bytes immediately.
@@ -968,6 +984,7 @@ async def chat_stream(
         mode=mode,
         image_ids=image_ids,
         on_image_status=_queue_status,
+        voice_mode=voice_mode,
     )
     for s in statuses:
         yield s
@@ -975,7 +992,7 @@ async def chat_stream(
     parts: list[str] = []
     try:
         async for token in _stream_mistral_async(
-            messages, max_tokens=ASSISTANT_MAX_TOKENS, feature="assistant"
+            messages, max_tokens=turn.plan.max_tokens, feature="assistant"
         ):
             parts.append(token)
             yield token
@@ -989,7 +1006,7 @@ async def chat_stream(
     if not answer:
         yield turn.fallback
         return
-    if not _looks_incomplete(answer):
+    if not turn.incomplete(answer):
         return
     # One continuation pass — buffer its start so an echoed overlap or a full restart
     # never gets streamed on top of what the student already sees.
@@ -997,8 +1014,8 @@ async def chat_stream(
     checked = False
     try:
         async for token in _stream_mistral_async(
-            _with_continue(messages, answer),
-            max_tokens=ASSISTANT_MAX_TOKENS,
+            _with_continue(messages, answer, turn.plan.continue_prompt),
+            max_tokens=turn.plan.max_tokens,
             feature="assistant",
         ):
             if checked:

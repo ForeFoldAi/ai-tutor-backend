@@ -13,6 +13,8 @@ class StudentAssistantChatRequest(BaseModel):
     conversation_history: list[ConversationTurn] | None = None
     agent_mode: str = "free"
     image_ids: list[str] | None = None
+    # Set by the RTC voice server: long lists become a spoken one-question-at-a-time quiz.
+    voice_mode: bool = False
 
     @model_validator(mode="after")
     def _require_query_or_image(self) -> StudentAssistantChatRequest:

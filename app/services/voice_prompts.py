@@ -11,7 +11,11 @@ import re
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Any
 
-from app.config import VOICE_PROMPT_EXPAND_WORDS, VOICE_PROMPT_MAX_WORDS
+from app.config import (
+    VOICE_PROMPT_CHAPTER_WORDS,
+    VOICE_PROMPT_EXPAND_WORDS,
+    VOICE_PROMPT_MAX_WORDS,
+)
 from app.services.chat_service import (
     _CLASS_BAND_RULES,
     _GRADE_COMPLEXITY,
@@ -126,13 +130,17 @@ Priority: (1) retrieved chapter context, (2) this conversation if it already use
   and steer back. If it is close to the chapter's subject but the context doesn't cover it: one or two
   accurate sentences starting "This isn't in your chapter, but", then one line linking back. A
   "CHAPTER COVERAGE: RELATED" or "PARTIAL" block below always allows that labeled line.
-- A request to explain the whole chapter ("start to end") means: a short, ordered walkthrough of the
-  chapter's main events/ideas from the context, beginning to end.
+- A request to explain the whole chapter ("start to end") means: an ordered walkthrough of EVERY
+  main topic in the CHAPTER TOPICS list / context from beginning to end. For each topic: say its
+  name (and section number if given), then one short sentence of what it covers. Do not stop after
+  two or three ideas. End by inviting them to pick the first topic to go deeper.
+- A request for topics / contents of the chapter: name EVERY topic in order with spoken numbering
+  ("Topic 1: …"). Do not teach the full content yet — inventory only, then ask which to start with.
 
 ANSWER SHAPE (spoken, not a template to read aloud):
 - Simple fact: 1–2 short sentences.
 - Normal explanation: 2–5 short sentences.
-- Broad question: big picture, then the major points that ARE in the context, then a brief close.
+- Broad / whole-chapter question: ordered walkthrough of every main topic in the context, then a brief close.
   Name only people, places, and events that appear in the context.
 - "Explain simply": simpler words, same meaning.
 - Follow-up ("why?", "did it…?", "where did they…?"): stay on that topic; use the context.
@@ -147,6 +155,8 @@ TTS OUTPUT (your text goes straight to speech synthesis):
 - Speak in Indian classroom English — warm, clear, conversational.
 - Latin script only: light markers like "na?", "isn't it?", "right?" — no Devanagari.
 - Plain spoken sentences only — no markdown, bullets, headers, or emoji.
+- Exception for chapter overview / topic list: you MAY number topics aloud
+  ("Topic 1:", "Next,", "nine point one") so the student can follow — still no markdown.
 - Write how you'd talk: contractions, short clauses, natural commas for breath.
 - End each teaching step with a period (not a comma) so the voice can pause naturally.
 - Teach in small spoken sections: introduce → explain → emphasize → check-in.
@@ -156,6 +166,15 @@ TTS OUTPUT (your text goes straight to speech synthesis):
 - Avoid textbook voice: no "Chapter 3 discusses", "According to the chapter",
   "the first point is", "in conclusion".
 - Say math aloud: "x squared", "five over three", "2 times 3" — never raw symbols, * or LaTeX.
+- Textbook activities: a number alone ("Activity 9.10") means nothing to a listening student. Never
+  open with the number. First say in plain words what the activity does and why ("there's an activity
+  where you trace light through a glass slab to see how it bends"), then what they need (a glass slab,
+  paper, four pins). Mention the number at most once. When you name an Activity, the app shows its
+  diagram on their screen if available — say it is on their screen and describe what they see; do not
+  send them to the book for the picture. Then walk through ONE or TWO steps and check they're
+  following before going on.
+- Never use a diagram's point labels (pins E, F, G, H; points A, B, O) without saying what each one
+  is ("two pins on your side of the slab"), since the student may not have the figure open.
 - If the student questions or quotes something you just said (a number, a step), it refers to
   your last reply: say what it should be, correct any slip, then finish that same example."""
 
@@ -190,8 +209,10 @@ SCIENCE / SOCIAL VOICE:
 - State the idea in plain talk — do not invent a story around it.
 - If the chapter has a map or diagram for this, invite them to look at it in one
   short line ("have a look at the map") — do not read a list of figure numbers aloud.
-  Never claim you have put something on their screen; you cannot see their screen.
-- Only name a figure number if it is in the chapter context and you need one pointer.
+- When you name Fig. N or Activity N, the app shows that image on their screen — say
+  it is on their screen and describe what they see. Do not invent images that are not
+  in the chapter context, and never send them to look it up elsewhere.
+- Only name a figure or activity number if it is in the chapter context and you need one pointer.
 - Use a real-world hook only if that hook is in the chapter context."""
 
 VOICE_USER_TEMPLATE = """\
@@ -268,9 +289,17 @@ def voice_word_limit(
     Also tightened to what the retrieved context can support: a word target the
     context cannot fill is an instruction to invent.
     """
+    from app.modules.student_learning.topic_progress import is_chapter_topics_list_query
+    from app.services.voice_chapter_vocab import is_chapter_overview_request
+
+    chapter_meta = bool(
+        query and (is_chapter_overview_request(query) or is_chapter_topics_list_query(query))
+    )
     turn_cap = _VOICE_TURN_WORD_CAPS.get(answer_type)
     if turn_cap is not None:
         cap = min(turn_cap, VOICE_PROMPT_MAX_WORDS)
+    elif chapter_meta:
+        cap = VOICE_PROMPT_CHAPTER_WORDS
     elif expand_deep:
         cap = VOICE_PROMPT_EXPAND_WORDS
     else:
@@ -283,13 +312,51 @@ def voice_word_limit(
         )
     ceiling = _context_word_ceiling(context)
     if ceiling:
-        cap = min(cap, ceiling)
+        # Whole-chapter turns need room to name every topic; keep at least the chapter cap
+        # when the retrieved context is rich enough to support it.
+        if chapter_meta and ceiling >= VOICE_PROMPT_EXPAND_WORDS:
+            cap = min(max(cap, VOICE_PROMPT_CHAPTER_WORDS), max(ceiling, VOICE_PROMPT_CHAPTER_WORDS))
+        else:
+            cap = min(cap, ceiling)
     requested = voice_word_cap_var.get()
     return min(cap, requested) if requested else cap
 
 
 def voice_turn_type_guidance(query: str) -> str:
     """Inject answer-type-specific speaking behavior (greeting vs teach vs brief)."""
+    from app.modules.student_learning.topic_progress import is_chapter_topics_list_query
+    from app.services.voice_chapter_vocab import is_chapter_overview_request
+
+    if is_chapter_topics_list_query(query):
+        return (
+            "TOPIC LIST REQUEST: Name EVERY main topic from the CHAPTER TOPICS list / context "
+            "in order. Speak each as 'Topic N: [section number if any], [title]'. "
+            "Do not skip topics. Do not teach the full content yet. "
+            "End by asking which topic to start with."
+        )
+    if is_chapter_overview_request(query):
+        return (
+            "WHOLE-CHAPTER REQUEST: Walk through EVERY main topic in the CHAPTER TOPICS list / "
+            "context from start to end. For each: say the name (and section number if given), "
+            "then one short sentence of what it covers. Do not stop after 2–3 ideas. "
+            "End by inviting them to dive into the first topic."
+        )
+    from app.services.conversation_intent_classifier import FollowupType, classify_followup_regex
+
+    struggle_act = classify_followup_regex(query or "")
+    if struggle_act in (FollowupType.SIMPLIFY, FollowupType.CLARIFICATION) or re.search(
+        r"\b(confus(?:ed|ing)|explain\s+like|i\s+keep\s+forgetting|still\s+stuck|"
+        r"like\s+i(?:'?m|\s+am)\s+(?:dumb|stupid)|keep\s+it\s+simple)\b",
+        query or "",
+        re.I,
+    ):
+        return (
+            "STRUGGLE / SIMPLIFY: The student is confused or asked for simpler words. "
+            "Start with one warm line (\"It's okay to be stuck\"). "
+            "Everyday words only — no formula names (Snell's law, sin i / sin r) unless asked. "
+            "One tiny analogy. Max 3 short steps. About 60–90 spoken words. "
+            "No science-experiment JSON. End with ONE yes/no check."
+        )
     atype = detect_answer_type(query)
     mapping = {
         "greeting": (

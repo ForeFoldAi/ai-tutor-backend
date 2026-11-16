@@ -131,6 +131,7 @@ _CONTENT_KIND_RULES: list[tuple[str, list[str]]] = [
 _TABLE_REF_QUERY_RE = re.compile(r"(?i)\b(?:table|tbl\.?)\s*(\d+(?:\.\d+)*)")
 _FORMULA_REF_QUERY_RE = re.compile(r"(?i)\b(?:formula|equation|eq\.?)\s*(\d+(?:\.\d+)*)")
 _FIG_REF_QUERY_RE = re.compile(r"(?i)\b(?:fig(?:ure)?\.?)\s*(\d+(?:\.\d+)*)")
+_ACTIVITY_REF_QUERY_RE = re.compile(r"(?i)\bactivity\s*[\.\s:#-]*\s*(\d+(?:\.\d+)*)")
 
 # Patterns to extract divergent examples from RAG text
 _EXAMPLE_PATTERNS = re.compile(
@@ -557,6 +558,9 @@ def _extract_referenced_asset(question: str) -> tuple[str | None, str | None]:
     m = _FORMULA_REF_QUERY_RE.search(question)
     if m:
         return m.group(1), "formula"
+    m = _ACTIVITY_REF_QUERY_RE.search(question)
+    if m:
+        return m.group(1), "figure"
     m = _FIG_REF_QUERY_RE.search(question)
     if m:
         return m.group(1), "figure"
@@ -576,6 +580,11 @@ _SPOKEN_FIG_RE = re.compile(
     rf"(?i)\b(fig(?:ure)?\.?)\s*({_NUM_TOKEN})"
     rf"(?:\s*(?:point|dot)\s+((?:{_NUM_TOKEN})(?:\s+{_NUM_TOKEN})*)|\s*[,\-]\s*(\d+))\b"
 )
+# Same spoken forms for textbook activities: "activity 9 point 10", "activity nine point one zero".
+_SPOKEN_ACTIVITY_RE = re.compile(
+    rf"(?i)\b(activity)\s*[\.\s:#-]*\s*({_NUM_TOKEN})"
+    rf"(?:\s*(?:point|dot)\s+((?:{_NUM_TOKEN})(?:\s+{_NUM_TOKEN})*)|\s*[,\-]\s*(\d+))\b"
+)
 
 
 def _spoken_number(tokens: str) -> str:
@@ -590,16 +599,31 @@ def normalize_spoken_figure_refs(text: str) -> str:
     )
 
 
+def normalize_spoken_activity_refs(text: str) -> str:
+    """'activity nine point one zero' → 'activity 9.10' so Activity N lookups work on voice."""
+    return _SPOKEN_ACTIVITY_RE.sub(
+        lambda m: f"{m.group(1)} {_spoken_number(m.group(2))}.{_spoken_number(m.group(3) or m.group(4))}",
+        text or "",
+    )
+
+
 def figure_numbers_cited_in_text(text: str) -> list[str]:
     """Ordered unique Fig./Figure N citations from question or answer prose."""
     return list(dict.fromkeys(_FIG_REF_QUERY_RE.findall(normalize_spoken_figure_refs(text))))
 
 
+def activity_numbers_cited_in_text(text: str) -> list[str]:
+    """Ordered unique Activity N citations from question or answer prose."""
+    return list(
+        dict.fromkeys(_ACTIVITY_REF_QUERY_RE.findall(normalize_spoken_activity_refs(text)))
+    )
+
+
 def is_chapter_figure_list_ask(question: str) -> bool:
     """Student wants an inventory of textbook figures for the current chapter."""
     q = question or ""
-    # Exact Fig./Figure N asks are not inventory requests.
-    if figure_numbers_cited_in_text(q):
+    # Exact Fig./Figure N or Activity N asks are not inventory requests.
+    if figure_numbers_cited_in_text(q) or activity_numbers_cited_in_text(q):
         return False
     return bool(_CHAPTER_FIGURE_LIST_ASK_RE.search(q))
 

@@ -713,7 +713,9 @@ _TOPIC_RULES: list[tuple[re.Pattern[str], Callable[[], dict], str, str, str]] = 
     ),
     (
         re.compile(
-            r"\b(?:tell\s+me\s+about|explain|describe|what\s+(?:is|are)|about)\b.*\b(?:the\s+)?(?:triangle|triangles)\b",
+            r"\b(?:tell\s+me\s+about|explain|describe|what\s+(?:is|are)|about|draw|drawing|construct|"
+            r"make|build|sketch|types?|kinds?|classify|classification)\b.*\b(?:the\s+)?(?:triangle|triangles)\b|"
+            r"\b(?:scalene|isosceles|equilateral|obtuse|acute|right[\s-]angled)\s+triangles?\b",
             re.I,
         ),
         _triangle_explorer_spec,

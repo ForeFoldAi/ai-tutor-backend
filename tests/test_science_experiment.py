@@ -42,6 +42,36 @@ def test_strip_science_experiment_block():
     assert exp["conceptName"] == "Photosynthesis"
 
 
+def test_strip_bare_and_incomplete_science_json():
+    bare = (
+        "Light bends in glass.\n"
+        '{"conceptName":"Refraction","experiment":{"experimentType":"light-optics-bench"}}'
+    )
+    clean, exp = strip_science_experiment_block(bare)
+    assert "conceptName" not in clean
+    assert exp is None
+    assert "bends" in clean.lower()
+
+    incomplete = "Prose first.\n```science-experiment\n{\"conceptName\": \"X\""
+    clean2, exp2 = strip_science_experiment_block(incomplete)
+    assert "science-experiment" not in clean2
+    assert "conceptName" not in clean2
+    assert exp2 is None
+
+
+def test_skip_experiment_on_simplify_and_confusion():
+    assert not should_use_interactive_science_experiment(
+        subject_name="Science",
+        answer_type="paragraph",
+        query="glass slab thing is confusing explain like im dumb",
+    )
+    assert not should_use_interactive_science_experiment(
+        subject_name="Science",
+        answer_type="clarification",
+        query="wait what is refraction i keep forgetting",
+    )
+
+
 def test_extract_validates_experiment():
     answer = f"Explain photosynthesis.\n\n```science-experiment\n{SAMPLE_JSON}\n```"
     clean, exp = extract_science_experiment_from_answer(answer)

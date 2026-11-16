@@ -705,14 +705,19 @@ def _resolve_answer_type(
     )
     from app.services.conversation_intent_classifier import FollowupType
 
+    q = (query or "").strip()
+    from app.services.chat_service.turn_rules import is_cite_request, is_student_posed_question
+
+    # "Yes" to a specific tutor offer ("Would you like to see how…?") continues teaching —
+    # do not let bare-ack dialogue_act force the affirmation/quiz menu.
+    if _is_accepting_tutor_continue_offer(q, conversation_history):
+        return "paragraph"
+
     act = (dialogue_act or "").strip().lower()
     if act == "intro":
         return "greeting"
     if act in ("closing", "ack"):
         return "affirmation"
-
-    q = (query or "").strip()
-    from app.services.chat_service.turn_rules import is_cite_request, is_student_posed_question
 
     # Before quiz/MCQ mode: "Option A ... Option B ..." from the student is a question to answer,
     # and "prove it from my textbook" wants a quote, not a step-by-step lesson.
@@ -734,8 +739,6 @@ def _resolve_answer_type(
         return detect_answer_type(q)
     if _is_personal_dialogue_response(q, conversation_history):
         return "personal-response"
-    if _is_accepting_tutor_continue_offer(q, conversation_history):
-        return "paragraph"
     if _is_affirmation_followup(q, conversation_history):
         return "affirmation"
     if mapped := answer_type_for_followup(FollowupType(conv.followup_type)):
