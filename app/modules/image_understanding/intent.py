@@ -7,7 +7,13 @@ import re
 from app.modules.image_understanding.schemas import ImageUnderstandingResult, coerce_intent
 
 _PATTERNS: list[tuple[re.Pattern[str], str]] = [
-    (re.compile(r"\b(check|correct|is\s+my\s+answer|did\s+i\s+get|verify)\b", re.I), "check_answer"),
+    (
+        re.compile(
+            r"\b(check|correct|grade|evaluate|mark|score|is\s+my\s+answer|did\s+i\s+get|verify)\b",
+            re.I,
+        ),
+        "check_answer",
+    ),
     (re.compile(r"\b(solve|find\s+x|calculate|compute|work\s+out)\b", re.I), "solve"),
     (re.compile(r"\b(summarize|summarise|summary|in\s+brief|in\s+short)\b", re.I), "summarize"),
     (re.compile(r"\b(simplif(?:y|ied|ication)|make\s+it\s+easier)\b", re.I), "simplify"),
@@ -22,6 +28,15 @@ _PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\b(explain|why|how|what\s+is|describe|mean|simple\s+words)\b", re.I), "explain"),
     (re.compile(r"\b(answer|what\s+is\s+the\s+answer)\b", re.I), "answer"),
 ]
+
+_HELP_WITH_IMAGE_RE = re.compile(
+    r"\b(help\s+me\s+with\s+this\s+(image|photo|picture)|look\s+at\s+(this|my)\s+(image|photo|work|homework))\b",
+    re.I,
+)
+
+_HOMEWORK_TYPES = frozenset(
+    {"answer_sheet", "handwritten_homework", "handwritten_notes", "math_problem", "question_paper"}
+)
 
 
 def detect_intent(student_message: str, result: ImageUnderstandingResult) -> str:
@@ -42,12 +57,21 @@ def detect_intent(student_message: str, result: ImageUnderstandingResult) -> str
 
     t = result.image_type
     if t in ("math_problem",) or result.mathematical_content.detected:
+        # "Help with this image" of student work → grade; bare math photo → solve.
+        if msg and _HELP_WITH_IMAGE_RE.search(msg) and (
+            result.handwriting_detected or t in _HOMEWORK_TYPES
+        ):
+            return "check_answer"
         return "solve"
     if t in ("diagram", "science_diagram"):
         return "explain_diagram"
     if t in ("graph", "chart"):
         return "explain_graph"
     if t in ("answer_sheet", "handwritten_homework") and result.question_detected:
+        return "check_answer"
+    if msg and _HELP_WITH_IMAGE_RE.search(msg) and (
+        result.handwriting_detected or t in _HOMEWORK_TYPES or result.question_detected
+    ):
         return "check_answer"
     if result.question_detected:
         return "answer"

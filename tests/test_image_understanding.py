@@ -76,6 +76,8 @@ def test_sanitize_questions_strings():
         ("Solve this", "solve"),
         ("Explain in simple words", "explain"),
         ("Is my answer correct?", "check_answer"),
+        ("Please grade my work", "check_answer"),
+        ("Evaluate this worksheet", "check_answer"),
         ("Summarize this page", "summarize"),
         ("What does this diagram mean?", "explain_diagram"),
     ],
@@ -83,6 +85,16 @@ def test_sanitize_questions_strings():
 def test_intent_from_message(msg, expected):
     result = ImageUnderstandingResult(image_type="textbook_question", confidence=0.8)
     assert detect_intent(msg, result) == expected
+
+
+def test_help_with_image_grades_handwritten_homework():
+    result = ImageUnderstandingResult(
+        image_type="handwritten_homework",
+        handwriting_detected=True,
+        question_detected=True,
+        confidence=0.85,
+    )
+    assert detect_intent("Please help me with this image.", result) == "check_answer"
 
 
 def test_intent_from_math_image_when_no_message():

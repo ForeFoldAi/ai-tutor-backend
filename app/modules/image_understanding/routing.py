@@ -51,8 +51,9 @@ _MESSAGE_VISUAL: list[tuple[re.Pattern[str], Task]] = [
     ),
     (
         re.compile(
-            r"\b(my\s+(answer|work|solution|notes?|handwriting|homework)|check|verify|"
-            r"is\s+(this|it|my\s+\w+)\s+(right|correct)|did\s+i)\b",
+            r"\b(my\s+(answer|work|solution|notes?|handwriting|homework)|check|verify|grade|evaluate|mark|"
+            r"is\s+(this|it|my\s+\w+)\s+(right|correct)|did\s+i|"
+            r"help\s+me\s+with\s+this\s+(image|photo|picture))\b",
             re.I,
         ),
         Task.HANDWRITING,

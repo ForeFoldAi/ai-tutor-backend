@@ -26,13 +26,18 @@ _NUMBER_WORDS = {
 _NUM = r"(\d{1,3}|" + "|".join(sorted(map(re.escape, _NUMBER_WORDS), key=len, reverse=True)) + r")"
 
 _QUESTION_NOUN = r"questions?|mcqs?|quiz(?:zes)?|q\s*&\s*as?|q\s*and\s*as?|qnas?"
-_OTHER_NOUN = r"facts?|examples?|items?|points?|words?|names?|tips?|things?|ideas?|sentences?|lines?"
+_OTHER_NOUN = (
+    r"facts?|examples?|items?|points?|words?|names?|tips?|things?|ideas?|sentences?|lines?|"
+    r"comparisons?|problems?|exercises?|pairs?|sums?|fractions?"
+)
 
 _COUNT_RE = re.compile(
     rf"\b{_NUM}\s+(?:[a-z'-]+\s+){{0,4}}?({_QUESTION_NOUN}|{_OTHER_NOUN})\b",
     re.I,
 )
 _LIST_N_RE = re.compile(rf"\blist(?:ing)?\s+{_NUM}\b", re.I)
+# "give me twenty more" / "20 more please" — same list shape as the last assistant list.
+_MORE_RE = re.compile(rf"\b{_NUM}\s+more\b", re.I)
 _REQUEST_VERB_RE = re.compile(
     r"\b(?:give|list|listing|generate|write|tell|share|make|create|prepare|ask|need|want|"
     r"show|provide|send|quiz|test|can\s+you|could\s+you|please)\b",
@@ -43,6 +48,7 @@ _LENGTH_ONLY_RE = re.compile(rf"\b(?:in|within|using|into)\s+(?:just\s+|only\s+)
 
 _QUIZ_PROGRESS_RE = re.compile(r"\bQuestion\s+(\d{1,3})\s+of\s+(\d{1,3})\b", re.I)
 _STOP_RE = re.compile(r"\b(?:stop|enough|that'?s\s+all|no\s+more|end\s+(?:the\s+)?quiz|quit)\b", re.I)
+_NUMBERED_ITEM_RE = re.compile(r"(?m)^\s*(\d{1,3})[.)]\s+\S")
 
 
 @dataclass(frozen=True)
@@ -50,12 +56,15 @@ class ListTurnPlan:
     prompt_block: str = ""
     max_tokens: int = ASSISTANT_MAX_TOKENS
     continue_prompt: str = ""
-    # Text lists only: complete once item N is written (list lines rarely end in a full stop).
+    # Text lists only: complete once items 1..N are all present (gaps count as incomplete).
     expected_items: int = 0
 
     def list_incomplete(self, answer: str) -> bool:
-        numbers = [int(x) for x in re.findall(r"(?m)^\s*(\d{1,3})[.)]\s+\S", answer or "")]
-        return not numbers or max(numbers) < self.expected_items
+        if self.expected_items <= 0:
+            return False
+        numbers = {int(x) for x in _NUMBERED_ITEM_RE.findall(answer or "")}
+        needed = set(range(1, self.expected_items + 1))
+        return not needed.issubset(numbers)
 
 
 def _to_int(tok: str) -> int | None:
@@ -65,7 +74,25 @@ def _to_int(tok: str) -> int | None:
     return _NUMBER_WORDS.get(t)
 
 
-def requested_list(query: str) -> tuple[int, bool] | None:
+def _last_assistant_was_questions(history: list[dict[str, str]] | None) -> bool:
+    for turn in reversed(history or []):
+        if (turn.get("role") or "") != "assistant":
+            continue
+        content = turn.get("content") or ""
+        if _QUIZ_PROGRESS_RE.search(content):
+            return True
+        if re.search(r"(?i)\b(?:question|mcq|q\s*&\s*a|answer\s*:)", content):
+            return True
+        if _NUMBERED_ITEM_RE.search(content):
+            return False
+        return False
+    return False
+
+
+def requested_list(
+    query: str,
+    conversation_history: list[dict[str, str]] | None = None,
+) -> tuple[int, bool] | None:
     """(count, is_questions) when the student asks for a list of more than 3 items."""
     q = query or ""
     if _LENGTH_ONLY_RE.search(q) or not _REQUEST_VERB_RE.search(q):
@@ -76,10 +103,15 @@ def requested_list(query: str) -> tuple[int, bool] | None:
         is_questions = bool(re.fullmatch(_QUESTION_NOUN, m.group(2), re.I))
     else:
         m = _LIST_N_RE.search(q)
-        if not m:
-            return None
-        n = _to_int(m.group(1))
-        is_questions = bool(re.search(_QUESTION_NOUN, q, re.I))
+        if m:
+            n = _to_int(m.group(1))
+            is_questions = bool(re.search(_QUESTION_NOUN, q, re.I))
+        else:
+            m = _MORE_RE.search(q)
+            if not m:
+                return None
+            n = _to_int(m.group(1))
+            is_questions = _last_assistant_was_questions(conversation_history)
     if not n or n <= 3:
         return None
     return n, is_questions
@@ -103,7 +135,7 @@ def plan_list_turn(
     *,
     voice_mode: bool,
 ) -> ListTurnPlan:
-    asked = requested_list(query)
+    asked = requested_list(query, conversation_history)
     if asked:
         requested, is_questions = asked
         n = min(requested, LIST_CAP)
@@ -140,7 +172,7 @@ def plan_list_turn(
         return ListTurnPlan(
             prompt_block=(
                 "LIST REQUEST (overrides the length and bullet limits above for this reply):\n"
-                f"- The student asked for {n} items. Give all {n}, numbered 1 to {n}, one per line.\n"
+                f"- The student asked for {n} items. Give all {n}, numbered 1 to {n} with no gaps, one per line.\n"
                 f"- Each item: {item}. Keep each item short and right for their grade.\n"
                 "- At most one short intro line and one short closing line. No extra explanation.\n"
                 "- Never say you cannot list that many in one message."
@@ -148,8 +180,8 @@ def plan_list_turn(
             ),
             max_tokens=min(_LIST_MAX_TOKENS, max(ASSISTANT_MAX_TOKENS, 150 + n * _TOKENS_PER_ITEM)),
             continue_prompt=(
-                f"Continue the numbered list exactly where you left off and finish it up to item {n}. "
-                "Do not repeat items you already wrote."
+                f"Continue the numbered list and fill any missing numbers so the final list is "
+                f"contiguous 1 to {n} with no gaps. Do not repeat items you already wrote correctly."
             ),
             expected_items=n,
         )
