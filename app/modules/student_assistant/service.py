@@ -79,6 +79,12 @@ Academic / out-of-book help:
 - Never add source labels such as "Beyond your textbook:", "Beyond this chapter" or "Additional context:" — just answer naturally.
 - For deeper chapter-locked tutoring, you may mention Chapter AI Tutor or AI Voice after picking a subject/chapter.
 
+Images:
+- Students can attach a photo with the + button. When IMAGE UNDERSTANDING is present below,
+  use it as the primary source and grade or help with that work.
+- If they refer to an image/photo but there is no IMAGE UNDERSTANDING block, ask them to
+  attach it again with + — you cannot see images that were not attached on this turn.
+
 Rules:
 - Never reveal other students' data or admin-only information.
 - Keep answers clear, friendly, and age-appropriate.
@@ -976,16 +982,27 @@ async def chat_stream(
     async def _queue_status(s: str) -> None:
         statuses.append(s)
 
-    turn = await _start_turn(
-        db,
-        user,
-        query=query,
-        conversation_history=conversation_history,
-        mode=mode,
-        image_ids=image_ids,
-        on_image_status=_queue_status,
-        voice_mode=voice_mode,
+    # Vision can take up to IMAGE_ANALYSIS_TIMEOUT (~45s). Voice clients abort
+    # after ~20s of silence, so keep sending status lines while _start_turn runs.
+    turn_task = asyncio.create_task(
+        _start_turn(
+            db,
+            user,
+            query=query,
+            conversation_history=conversation_history,
+            mode=mode,
+            image_ids=image_ids,
+            on_image_status=_queue_status,
+            voice_mode=voice_mode,
+        )
     )
+    while not turn_task.done():
+        try:
+            await asyncio.wait_for(asyncio.shield(turn_task), timeout=5.0)
+        except asyncio.TimeoutError:
+            if image_ids:
+                yield "\0STATUS:image_processing"
+    turn = turn_task.result()
     for s in statuses:
         yield s
     messages = turn.messages

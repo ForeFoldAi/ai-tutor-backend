@@ -14,6 +14,9 @@ from app.modules.student_assistant.list_requests import plan_list_turn, requeste
         ("give me 20 MCQs on fractions", (20, True)),
         ("quiz me with fifty geography questions", (50, True)),
         ("list 10 facts about the moon", (10, False)),
+        ("give me twenty fraction comparisons", (20, False)),
+        ("Can you give me twenty more?", (20, False)),
+        ("give me 20 more comparisons", (20, False)),
     ],
 )
 def test_detects_list_requests(query, expected):
@@ -28,14 +31,32 @@ def test_ignores_non_list_messages(query):
     assert requested_list(query) is None
 
 
+def test_twenty_more_inherits_questions_from_history():
+    history = [
+        {"role": "assistant", "content": "1. What is 2+2? — Answer: 4\n2. What is 3+3? — Answer: 6"},
+    ]
+    assert requested_list("Can you give me twenty more?", history) == (20, True)
+
+
 def test_text_list_gets_room_for_every_item():
     plan = plan_list_turn("give me 50 gk questions", None, voice_mode=False)
     assert plan.expected_items == 50
     assert plan.max_tokens > ASSISTANT_MAX_TOKENS
     assert "Give all 50" in plan.prompt_block
+    assert "no gaps" in plan.prompt_block
     full = "\n".join(f"{i}. Q{i}? — Answer: A{i}" for i in range(1, 51))
     assert not plan.list_incomplete(full)
     assert plan.list_incomplete("1. Q1? — Answer: A1\n2. Q2? — Answer: A2")
+
+
+def test_list_incomplete_when_a_middle_number_is_missing():
+    plan = plan_list_turn("give me 10 fraction comparisons", None, voice_mode=False)
+    # 1..6, 8..10 — max is 10 but 7 is missing (the screenshot bug).
+    gappy = "\n".join(
+        f"{i}. {i}/2 ? {i}/4" for i in [1, 2, 3, 4, 5, 6, 8, 9, 10]
+    )
+    assert plan.list_incomplete(gappy)
+    assert "contiguous" in plan.continue_prompt
 
 
 def test_requests_over_the_cap_are_trimmed():
