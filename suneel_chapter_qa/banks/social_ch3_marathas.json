@@ -1,0 +1,287 @@
+{
+  "slug": "social_ch3_marathas",
+  "subject": "Social",
+  "chapter_id": "34",
+  "chapter": "Chapter 3 - The Rise of the Marathas",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "So3-01",
+      "query": "who was shivaji and why are the marathas important?",
+      "label": "normal",
+      "expect_keywords": [
+        "shivaji",
+        "maratha"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-02",
+      "query": "how did the marathas rise?",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha",
+        "rise"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-03",
+      "query": "where did maratha power grow geographically?",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha",
+        "maharashtra",
+        "deccan",
+        "region"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-04",
+      "query": "show a map or figure about marathas if available",
+      "label": "diagram",
+      "expect_keywords": [
+        "maratha",
+        "map",
+        "figure"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-05",
+      "query": "what strategies did shivaji use?",
+      "label": "normal",
+      "expect_keywords": [
+        "shivaji",
+        "guerrilla",
+        "fort",
+        "strategy"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-06",
+      "query": "who opposed the marathas?",
+      "label": "normal",
+      "expect_keywords": [
+        "mughal",
+        "maratha",
+        "oppose"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-07",
+      "query": "quiz me one easy maratha question",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha",
+        "shivaji",
+        "?"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-08",
+      "query": "what is a fort's role in maratha history?",
+      "label": "normal",
+      "expect_keywords": [
+        "fort",
+        "maratha",
+        "shivaji"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-09",
+      "query": "why is this rise important for india's history?",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha",
+        "history"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-10",
+      "query": "any other leaders after shivaji mentioned?",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha",
+        "peshwa",
+        "leader"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-11",
+      "query": "explain guerilla warfare simply",
+      "label": "normal",
+      "expect_keywords": [
+        "guerrilla",
+        "guerilla",
+        "hit",
+        "war",
+        "shivaji"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-12",
+      "query": "how did administration or revenue work roughly?",
+      "label": "normal",
+      "expect_keywords": [
+        "admin",
+        "revenue",
+        "maratha",
+        "tax"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-13",
+      "query": "give 3 key points on rise of marathas",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-14",
+      "query": "what challenges did they face?",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha",
+        "challenge",
+        "mughal"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-15",
+      "query": "compare marathas briefly with mughals if chapter does",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha",
+        "mughal"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-16",
+      "query": "who was shivaji and the marathas risee?",
+      "label": "typo",
+      "expect_keywords": [
+        "shivaji",
+        "maratha"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-17",
+      "query": "did the marathas invent the steam engine in this chapter?",
+      "label": "wrong",
+      "expect_keywords": [
+        "maratha"
+      ],
+      "forbidden": [
+        "steam"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-18",
+      "query": "is this chapter about perfect cubes in math?",
+      "label": "wrong",
+      "expect_keywords": [
+        "maratha",
+        "not"
+      ],
+      "forbidden": [
+        "cube"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-19",
+      "query": "tell me one more thing about how the marathas rose",
+      "label": "normal",
+      "expect_keywords": [
+        "maratha",
+        "rise"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So3-20",
+      "query": "who was shivajii again briefly?",
+      "label": "typo",
+      "expect_keywords": [
+        "shivaji",
+        "maratha"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    }
+  ]
+}

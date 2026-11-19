@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Session reminder — {{ app_name }}{% endblock %}
+{% block body %}
+<p>Hi {{ student_name }},</p>
+<p>You have a live session today:</p>
+<p>
+  <strong>{{ title }}</strong><br />
+  <strong>Subject:</strong> {{ subject }}<br />
+  <strong>Starts:</strong> {{ starts_at }}<br />
+  <strong>Duration:</strong> {{ duration_minutes }} minutes
+  {% if meeting_link %}<br /><strong>Join:</strong> <a href="{{ meeting_link }}">{{ meeting_link }}</a>{% endif %}
+</p>
+{% endblock %}

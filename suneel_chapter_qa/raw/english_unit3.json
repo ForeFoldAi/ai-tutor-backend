@@ -1,0 +1,2422 @@
+{
+  "generated_at": "2026-09-11 18:24:24 +0530",
+  "meta": {
+    "slug": "english_unit3",
+    "subject": "English",
+    "chapter_id": "28",
+    "chapter": "Unit 3 - Mystery and Magic",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "E3-01",
+        "query": "is Mystery and Magic a story unit? what happens in it?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-02",
+        "query": "what is mysterious in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-03",
+        "query": "is there real magic or just tricks/stories?",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "mystery"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-04",
+        "query": "who are the main characters?",
+        "label": "normal",
+        "expect_keywords": [
+          "character",
+          "story"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-05",
+        "query": "can you summarize the plot in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "story",
+          "mystery"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-06",
+        "query": "why do people love mystery stories?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-07",
+        "query": "quiz me with one easy question on this unit",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "?"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-08",
+        "query": "show any figure or illustration from mystery and magic",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "shown"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-09",
+        "query": "what lesson should i take from this unit?",
+        "label": "normal",
+        "expect_keywords": [
+          "lesson",
+          "mystery",
+          "magic"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-10",
+        "query": "is there suspense? where?",
+        "label": "normal",
+        "expect_keywords": [
+          "suspense",
+          "mystery"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-11",
+        "query": "explain one magical moment from the text",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "mystery"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-12",
+        "query": "how does the mystery get solved if it does?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "solve"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-13",
+        "query": "what new words related to mystery?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "word"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-14",
+        "query": "would you call this fantasy? why?",
+        "label": "normal",
+        "expect_keywords": [
+          "fantasy",
+          "magic",
+          "mystery"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-15",
+        "query": "give me 3 bulletts about mistery unit",
+        "label": "typo",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-16",
+        "query": "whats mistery and magik about lol",
+        "label": "typo",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-17",
+        "query": "did harry potter write this CBSE chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "chapter",
+          "not"
+        ],
+        "forbidden": [
+          "harry potter"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-18",
+        "query": "is photosynthesis the theme of Mystery and Magic?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "not"
+        ],
+        "forbidden": [
+          "photosynthesis"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-19",
+        "query": "i got confused \u2014 is magic real in the story world?",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "story"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "E3-20",
+        "query": "end with a short recap please",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": true,
+    "health": {
+      "status": "ok",
+      "voice": "ws-pcm",
+      "instanceId": "Maniths-MacBook-Air.local:50443",
+      "draining": false,
+      "liveSessions": 0,
+      "redis": "down"
+    },
+    "session_id": "a4a027f2-5baa-4bd0-8067-37950afeef0f",
+    "query_ok": true,
+    "note": "REST ok only; scored via voice_mode stream"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "E3-01",
+        "query": "is Mystery and Magic a story unit? what happens in it?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "**\"Mystery and Magic\" is a short story about a clever eighth-grader named Encyclopedia (Leroy) who helps his father, Chief Brown, solve a long-unsolved crime.** The chapter follows a jewellery robbery from years ago, where two men\u2014Tim Nolan and Daniel Davenport\u2014were linked but never convicted. When Nolan dies, he leaves a cryptic four-word message (*Nom Utes Sweden Hurts*) on his will, which Encyclopedia decodes to uncover the hidden treasure. T\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11372,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-02",
+        "query": "what is mysterious in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Mystery**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 521,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 6.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-03",
+        "query": "is there real magic or just tricks/stories?",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "mystery"
+        ],
+        "answer_clip": "The chapter asks whether magic is real or just clever tricks. It shows that magic often feels magical because it surprises us\u2014like the disappearing sea at Chandipur Beach or the riddles that seem impossible to solve. The chapter also introduces famous magicians like P.C. Sorcar Sr., whose performances made people believe in the impossible.  - Magic tricks rely on hidden techniques or clever storytelling. - Some \"magic\" comes from natural phenome\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12756,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-04",
+        "query": "who are the main characters?",
+        "label": "normal",
+        "expect_keywords": [
+          "character",
+          "story"
+        ],
+        "answer_clip": "The main characters in **Unit 3 \u2013 Mystery and Magic** are the people or figures who drive the story forward. The chapter shows how a **central character**\u2014like Gopi, who uses her magic brush\u2014stands out with special abilities or qualities, while **supporting characters** (such as the Zamindar or villagers) add conflict or help shape the plot. Their actions create the story\u2019s mood and reveal its deeper meaning.  For instance, Gopi\u2019s kindness contr\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10641,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-05",
+        "query": "can you summarize the plot in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "story",
+          "mystery"
+        ],
+        "answer_clip": "Let\u2019s break down the story **\"Mystery and Magic\"** in the simplest way possible\u2014like explaining a fun puzzle!  Imagine this: A girl named **Poorvi** finds a **magic paintbrush** hidden in her village. It\u2019s not just any brush\u2014it can draw *real* things! A picture of water becomes a river, a picture of a beast becomes a real animal, and so on.  One day, a mysterious man (who turns out to be a painter named **Gopi**) warns her to keep the brush a se\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 24614,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-06",
+        "query": "why do people love mystery stories?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery"
+        ],
+        "answer_clip": "Mystery stories are like puzzles wrapped in excitement\u2014they make us curious and eager to uncover answers, just as the chapter\u2019s detective stories do. Readers love them because they keep us guessing, create suspense, and let our brains work to solve the mystery, making the moment of discovery feel rewarding. The chapter even mentions how clues and suspense keep us engaged, much like the disappearing sea at Chandipur Beach.  - They turn ordinary m\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10011,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-07",
+        "query": "quiz me with one easy question on this unit",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "?"
+        ],
+        "answer_clip": "**Quiz Time** Great! Let\u2019s test your understanding of **Unit 3 \u2013 Mystery and Magic** with a simple but thoughtful question. You\u2019ve got this!  ---  **Questions** 1. In the chapter, we learned how to convert **direct speech** into **indirect speech** for interrogative sentences (Wh- questions and Yes/No questions). If someone says:    *\"Where did you hide the key?\"* (direct speech),    what would be the correct **indirect speech** version using th\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7456,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E3-08",
+        "query": "show any figure or illustration from mystery and magic",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "shown"
+        ],
+        "answer_clip": "The story *Mystery and Magic* doesn\u2019t show numbered figures in the text you shared, but it describes important scenes like the **calendar with the coded words** or the **palm-tree nursery** where the jewellery was hidden. If illustrations exist, they\u2019d likely include: - **Chief Brown\u2019s notebook** with the mysterious four words. - **Encyclopedia solving the puzzle** with a thoughtful expression.  The chapter\u2019s action is so clear you can picture i\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 9,
+            "caption": "Illustration showing unit 3 - mystery and magic",
+            "file": "figures/p8_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10115,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-09",
+        "query": "what lesson should i take from this unit?",
+        "label": "normal",
+        "expect_keywords": [
+          "lesson",
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "This unit **\"Mystery and Magic\"** teaches us that **observation and curiosity are powerful tools**\u2014both in solving puzzles and in everyday life. The chapter shows how paying close attention (like slowing down, using all your senses, or asking questions) helps you notice details others miss. It also explores how imagination and creativity (like the \"magic brush\" or optical illusions) can reveal hidden truths or spark joy. The lesson? **Stay curio\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10001,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E3-10",
+        "query": "is there suspense? where?",
+        "label": "normal",
+        "expect_keywords": [
+          "suspense",
+          "mystery"
+        ],
+        "answer_clip": "The chapter\u2019s detective stories use **suspense** to keep readers engaged by leaving questions unanswered\u2014like *\"Is there a young fir tree?\"*\u2014which makes them curious. The word **\"where\"** fits the blank because it highlights a mystery tied to a place (e.g., the disappearing sea at Chandipur Beach). Suspense builds when clues are hidden or answers are delayed, making the story exciting.  The chapter also shows suspense through questions like *\"Ho\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11598,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-11",
+        "query": "explain one magical moment from the text",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "mystery"
+        ],
+        "answer_clip": "The most magical moment in the poem is when Gopi paints a bowl of khichdi with her magic brush, and it *actually appears*\u2014real enough for the villagers to eat. The chapter shows how her creativity solves hunger in the village, proving that art can bring life and hope. This moment stands out because it blends imagination with generosity, turning a simple drawing into something powerful.  What do you think makes this moment more magical\u2014the fact t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9190,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-12",
+        "query": "how does the mystery get solved if it does?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "solve"
+        ],
+        "answer_clip": "**Topic** How the mystery is solved in *Mystery and Magic* using clues and logic.  **In Simple Words** The story shows how a detective (Chief Brown) and a clever kid (Encyclopedia) solve a puzzle by carefully looking at small details\u2014like words, places, and hints. Instead of guessing, they use clues to find the truth step by step.  ---  **Steps** Step 1: **Find the Clues**    - The detective notices a strange sheet clipped to a legal document (t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 21461,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-13",
+        "query": "what new words related to mystery?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "word"
+        ],
+        "answer_clip": "In **Unit 3 \u2013 Mystery and Magic**, you\u2019ll discover new words that help describe puzzles, clues, and clever thinking. The chapter introduces **phrasal verbs** like *figure out* (to solve a problem) and *got away with* (to escape punishment), which detectives often use. You\u2019ll also learn **synonyms** for mystery-related ideas, such as *enigmatic* (puzzling) or *spectacular* (stunning), which describe how clues appear. The chapter even teaches **bi\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 26526,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-14",
+        "query": "would you call this fantasy? why?",
+        "label": "normal",
+        "expect_keywords": [
+          "fantasy",
+          "magic",
+          "mystery"
+        ],
+        "answer_clip": "Yes, this is a **fantasy** because it includes magical elements like Gopi\u2019s paintbrush, which has real-world effects but also defies logic. The chapter explains that fantasy stories often use magic to explore deeper themes\u2014here, it shows how imagination can challenge greed (the Zamindar\u2019s demands) and promote kindness (Gopi\u2019s celebration with villagers).  - The magic brush is a fantasy tool, but its moral purpose feels relatable. - The chapter h\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14956,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-15",
+        "query": "give me 3 bulletts about mistery unit",
+        "label": "typo",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Mystery**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 662,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-16",
+        "query": "whats mistery and magik about lol",
+        "label": "typo",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Magic**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 963,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-17",
+        "query": "did harry potter write this CBSE chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "chapter",
+          "not"
+        ],
+        "answer_clip": "The chapter *Mystery and Magic* in your textbook is **not** written by J.K. Rowling or based on *Harry Potter*. Instead, it draws from traditional folk tales and detective-style stories, like the poem about Gopi\u2019s magic brush or the puzzle of the coded words. The chapter teaches observation skills and imagination through simple mysteries and moral lessons.  The chapter\u2019s focus is on storytelling techniques\u2014such as arranging events or solving puz\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 26551,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [
+            "forbidden content mentioned: harry potter"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "E3-18",
+        "query": "is photosynthesis the theme of Mystery and Magic?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "not"
+        ],
+        "answer_clip": "No, photosynthesis is not the theme of *Mystery and Magic*. This story is about solving a **mystery**\u2014a hidden clue left by a dying man to reveal where stolen jewellery was hidden. The chapter focuses on **logic, observation, and clever thinking**, like how Encyclopedia decodes the four words (*Nom Utes Sweden Hurts*) to uncover the secret hiding place. The key idea is how facts and clues help solve puzzles, not science like photosynthesis.  Wou\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6863,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [
+            "forbidden content mentioned: photosynthesis"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E3-19",
+        "query": "i got confused \u2014 is magic real in the story world?",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "story"
+        ],
+        "answer_clip": "Let\u2019s break this down step by step, Suneel.  In the story **\"Poorvi\"** (from *Mystery and Magic*), magic is **not real in the usual sense**\u2014it\u2019s a *tool* the characters use to create wonder and solve problems. Think of it like a **superpower in a movie or game**: the magic brush isn\u2019t real magic like in fairy tales. Instead, it\u2019s a **special ability** that Gopi uses to paint things that *seem* magical (like a fortress or jewels) but are actually\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8519,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-20",
+        "query": "end with a short recap please",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "Transforming direct speech into indirect speech means changing words to fit a new speaker\u2019s perspective. For example, *\"Why did you stop talking to me?\"* becomes *\"Rohan questioned why I had stopped talking to him.\"* The chapter shows how pronouns and tenses shift\u2014like \"you\" becoming \"him\" and past tense turning into past perfect.  - **Pronouns change:** \"I\" \u2192 \"he/she,\" \"you\" \u2192 \"him/her.\" - **Tenses adjust:** Past simple \u2192 past perfect (e.g., \"s\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11330,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "E3-01",
+        "source_query": "is Mystery and Magic a story unit? what happens in it?",
+        "query": "hold on, what do you mean by Mystery and Magic?",
+        "derived": true,
+        "answer_clip": "**\"Mystery and Magic\"** is about **a hidden puzzle inside a real-life crime**\u2014like a detective story where clues are hidden in plain sight!  Here\u2019s the simple breakdown: 1. **The Crime**: Five years ago, two men robbed a jewellery store in Idaville. One man, **Tim Nolan**, was questioned but never arrested. His partner, **Daniel Davenport**, vanished after the robbery. 2. **The Clue**: When Nolan dies, he leaves a **mysterious 4-word note** (*No\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11858,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E3-02",
+        "source_query": "what is mysterious in this chapter?",
+        "query": "ok but can you explain Mystery in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** Mystery in this chapter refers to puzzling, unexplained, or hidden things that create curiosity and require clever thinking to solve.  **In Simple Words** Mystery means something that is unclear or secretive\u2014like a puzzle that makes you wonder, \"How did this happen?\" or \"What does this mean?\" In this chapter, mysteries are stories or clues that seem confusing at first but can be solved with observation, logic, or imagination. Think of \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 20629,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-03",
+        "source_query": "is there real magic or just tricks/stories?",
+        "query": "is Sorcar Sr actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The chapter does **not** mention P.C. Sorcar Sr. directly\u2014he\u2019s not part of this story. Instead, the chapter focuses on Leroy (Encyclopedia) solving mysteries like the coded message *\"Nom Utes Sweden Hurts\"* and Chief Brown\u2019s detective work. The chapter explains how clues, like hidden words or suspicious behavior, help uncover the truth in cases like Nolan\u2019s will or the stolen jewels.  - The chapter uses **Leroy\u2019s intelligence** and **Chief Brown\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10082,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-04",
+        "source_query": "who are the main characters?",
+        "query": "quiz me with one easy question just about Unit",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of *Mystery and Magic* with a quick question! You\u2019ve been thinking about the characters and events\u2014now let\u2019s see how well you remember them.  **Questions** 1. In the poem, what *unique trait* does Gopi have that makes her special in the village? (Hint: Think about the magic she uses.)  **How to Answer** Reply with your answer, and I\u2019ll guide you through it step by step.  **Encouragement** You\u2019ve been p\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5450,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-05",
+        "source_query": "can you summarize the plot in simple words?",
+        "query": "show me a figure or example related to Gopi",
+        "derived": true,
+        "answer_clip": "Let\u2019s retell the story **step by step**, like a simple story you\u2019d hear from a friend:  --- **1. The Magic Brush** A girl named **Gopi** gets a special paintbrush that can draw *real* things! When she draws a bowl of food, it becomes *real* and fills the village with happiness. The villagers love it\u2014food, music, and celebrations appear just by her brush.  **2. The Greedy Zamindar** But a rich landlord (called the **Zamindar**) hears about the br\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9017,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-06",
+        "source_query": "why do people love mystery stories?",
+        "query": "wait why is Mystery important here?",
+        "derived": true,
+        "answer_clip": "Mystery plays a key role in this chapter because it turns ordinary moments into thrilling experiences, just like the detective stories and natural wonders it describes. The chapter explains that mysteries\u2014whether in solving crimes or discovering unusual phenomena like the Chandipur Beach\u2014keep readers engaged by making them curious and encouraging them to think deeply. This helps us understand how stories and real-life observations can be both fu\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9919,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-07",
+        "source_query": "quiz me with one easy question on this unit",
+        "query": "can you give one more real-life example of indirect speech?",
+        "derived": true,
+        "answer_clip": "Here\u2019s a real-life example of indirect speech: If someone says, *\"What time does the movie start?\"* (direct), you could report it as *\"She asked me **what time the movie started**.\"* Notice how the tense changes from present (*does*) to past (*started*), and the question mark disappears.  The chapter explains that indirect speech often uses **reporting verbs** like *asked* or *wondered*, and **Wh-words** stay in their correct place after the ver\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11410,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-08",
+        "source_query": "show any figure or illustration from mystery and magic",
+        "query": "i still don't get Encyclopedia \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Encyclopedia is a clever boy named Leroy who lives with his parents and helps his father, Chief Brown, solve mysteries. The chapter explains that everyone calls him *Encyclopedia* because he knows so many facts\u2014like an encyclopedia\u2014and solves puzzles easily. His parents only call him Leroy, but others tease him with the nickname because he\u2019s so smart.  His nickname is like being called \"Super Brain\" if someone knew all the answers to every quest\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 6,
+            "caption": "\u201cRight,\u201d Encyclopedia said. \u201cTh",
+            "file": "figures/p5_6.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7131,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.2,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E3-09",
+        "source_query": "what lesson should i take from this unit?",
+        "query": "ok so what should i remember about magic brush for a test?",
+        "derived": true,
+        "answer_clip": "The magic brush in this unit is a powerful symbol of **creativity, choice, and moral responsibility**. The chapter shows how Gopi uses it to bring joy and help others (like painting a feast for the poor), while the Zamindar wants to exploit it for greed. Remember that the brush\u2019s magic isn\u2019t just in what it *draws*, but in **who decides how to use it**\u2014Gopi\u2019s kindness and refusal to serve the powerful make her the true hero.  What\u2019s one lesson f\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10784,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E3-10",
+        "source_query": "is there suspense? where?",
+        "query": "that part about Chandipur Beach sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "You heard it correctly! The chapter explains that Chandipur Beach in Odisha\u2019s Balasore district has a **mysterious disappearing sea**\u2014not a real vanishing act, but a natural one. During low tide, the water retreats **2\u20135 km** from the shore, leaving the beach dry. Then, at high tide, the sea rushes back. The chapter calls this *\"playing hide-and-seek with visitors\"* because it looks like the sea vanishes. The reason (R) is true, but it\u2019s not *ex\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 41,
+            "caption": "7. The Invisible Chandipur Beach, Odis",
+            "file": "figures/p40_31.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9722,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.2,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E3-11",
+        "source_query": "explain one magical moment from the text",
+        "query": "hold on, what do you mean by Gopi?",
+        "derived": true,
+        "answer_clip": "Let\u2019s start with the simplest idea:  **Gopi is a kind girl from the village** who gets a special gift\u2014a *magic paintbrush*\u2014from a mysterious man. This brush can make whatever she paints come to life. For example, when she draws a bowl of khichdi (a dish), it becomes real food for the villagers.  Think of it like this: If you had a crayon that could draw *anything* and it would appear in real life, what would you draw first? Gopi uses hers to hel\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7967,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-12",
+        "source_query": "how does the mystery get solved if it does?",
+        "query": "ok but can you explain hurts in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** How the word *Hurts* helps solve the mystery in *Mystery and Magic*.  **In Simple Words** The word *Hurts* in the coded message *Nom Utes Sweden Hurts* isn\u2019t about pain\u2014it\u2019s a clever trick to point to a *fir tree* in Mr. Nolan\u2019s nursery. Encyclopedia uses his knowledge of languages and logic to decode the words, and *Hurts* hints at the location where the stolen jewellery might be hidden.  ---  **Key Points** \u2022 **Hidden Meaning**: *Hur\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 23035,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E3-13",
+        "source_query": "what new words related to mystery?",
+        "query": "is Unit actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The chapter **clearly explains** that *wit* and *wisdom* are **two separate qualities**\u2014it doesn\u2019t guess! The textbook shows this in the story about Encyclopedia, who uses **wit** (clever thinking, like solving the coded message) and **wisdom** (judgment, like trusting his instincts). The chapter even contrasts them: wit is quick, playful logic (like Encyclopedia\u2019s joke about the fir tree), while wisdom is deeper understanding (like knowing when\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 67359,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-14",
+        "source_query": "would you call this fantasy? why?",
+        "query": "quiz me with one easy question just about Gopi",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of Gopi\u2019s story\u2014just one question to start!  **Questions** 1. Why does the Zamindar want Gopi to paint a *grand fortress* and *jewels*? What does this reveal about his character?  **How to Answer** Reply with your answer, and I\u2019ll guide you through it step by step.  **Encouragement** You\u2019ve thought about this before\u2014let\u2019s see how your perspective has grown!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7749,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E3-15",
+        "source_query": "give me 3 bulletts about mistery unit",
+        "query": "show me a figure or example related to Mystery",
+        "derived": true,
+        "answer_clip": "The **Mystery and Magic** unit is all about uncovering hidden truths through observation and clever thinking\u2014like solving puzzles or decoding clues. It introduces **tricky optical illusions** that play with your eyes, **language games** where hints lead to answers, and **detective-style stories** that teach how clues reveal the truth.  - The chapter shows how **illusions trick our brains** into seeing things differently. - **Games like \"Name the\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10858,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E3-16",
+        "source_query": "whats mistery and magik about lol",
+        "query": "wait why is Magic important here?",
+        "derived": true,
+        "answer_clip": "Magic in this chapter isn\u2019t about real tricks\u2014it\u2019s about **sparking curiosity** and showing how wonder works in both stories and real life. The chapter blends magical ideas (like the \"Magic Brush\" or P.C. Sorcar\u2019s illusions) with natural mysteries (like Chandipur Beach\u2019s disappearing sea or Rainbow Mountain\u2019s colors). The chapter explains that magic helps us **see the unusual side of nature** and imagine possibilities, just like how Gopi\u2019s brush\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10875,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-17",
+        "source_query": "did harry potter write this CBSE chapter?",
+        "query": "can you give one more real-life example of Magic?",
+        "derived": true,
+        "answer_clip": "The chapter doesn\u2019t mention *Harry Potter*, but real-life \"magic\" often comes from clever problem-solving or hidden skills. For example, **a magician\u2019s sleight of hand** (like making a coin disappear) uses quick hand movements and misdirection\u2014just like Gopi\u2019s magic brush creates things with imagination. Another example is **a locksmith\u2019s tools**, which seem magical because they unlock doors with precision. Even **a photographer\u2019s editing skills\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7486,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "forbidden content mentioned: harry potter"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E3-18",
+        "source_query": "is photosynthesis the theme of Mystery and Magic?",
+        "query": "i still don't get Magic \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "The chapter *Mystery and Magic* is about **solving puzzles and using clues** to uncover hidden truths\u2014like a detective story! The chapter explains how Encyclopedia decodes four strange words (*Nom Utes Sweden Hurts*) to find where stolen jewels are hidden. It also teaches us how to **observe carefully**, think logically, and even play games like \"Name the Mystery Object\" where hints help guess an unknown thing.  Would you like me to break down h\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8715,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E3-19",
+        "source_query": "i got confused \u2014 is magic real in the story world?",
+        "query": "ok so what should i remember about \"Poorvi\" for a test?",
+        "derived": true,
+        "answer_clip": "The story *Poorvi* centers on Gopi\u2019s **magic paintbrush**, which isn\u2019t real magic but a tool for creativity and protection. The chapter shows how Gopi uses it wisely to help herself and others, while the Zamindar wants to misuse it for power. This contrast teaches that **choices matter more than abilities**.  - The brush represents **imagination and courage**. - Gopi\u2019s kindness vs. the Zamindar\u2019s greed drives the lesson. - The story\u2019s world trea\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12454,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E3-20",
+        "source_query": "end with a short recap please",
+        "query": "that part about he/she, sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "When you change direct speech to indirect speech, pronouns like *you* become *him/her/them* to show whose words you\u2019re reporting. For example, *\"You should leave\"* becomes *\"She advised him to leave.\"* The chapter shows this happens because the new speaker\u2019s perspective replaces the original one.  - **Pronouns shift:** *You* \u2192 *him/her/them*, *I/me* \u2192 *he/she/them*. - **Tenses may change:** Past tense often shifts to past perfect (e.g., *stopped\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12544,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "E3-01",
+        "query": "is Mystery and Magic a story unit? what happens in it?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "Oh, this is a great question! Let me explain.  This *is* a story unit\u2014it\u2019s a real-life mystery story. It\u2019s not fantasy or magic like Harry Potter. Instead, it\u2019s about a real town, Idaville, where a man named Tim Nolan dies suddenly. His death leaves behind a big puzzle.  Here\u2019s what happens: Nolan was involved in a jewellery robbery years ago. He had a friend, Daniel Davenport, who disappeared after the crime. Now, Nolan\u2019s will leaves everything\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5780,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-02",
+        "query": "what is mysterious in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Mystery**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 879,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 6.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-03",
+        "query": "is there real magic or just tricks/stories?",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "mystery"
+        ],
+        "answer_clip": "This chapter isn\u2019t about real magic\u2014it\u2019s about *real* mysteries and tricks.  The chapter talks about P. C. Sorcar Sr., a famous magician who did real magic shows. But it also shows how words and nature can create *illusions*\u2014like riddles or Chandipur Beach\u2019s disappearing sea. Those aren\u2019t magic, but they *feel* magical.  So, no ghosts or spells here. Just clever tricks, nature\u2019s surprises, and stories that make us wonder. Like a magician\u2019s sleig\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5579,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-04",
+        "query": "who are the main characters?",
+        "label": "normal",
+        "expect_keywords": [
+          "character",
+          "story"
+        ],
+        "answer_clip": "This chapter doesn\u2019t name the main characters directly. It\u2019s about mystery stories\u2014like a detective solving puzzles. The focus is on *how* the story is built: the setting, clues, and suspense.  Think of it like a puzzle box. The \"characters\" are really the *roles*: - The sleuth (detective) - The suspect (who might be guilty) - The reader (who tries to solve it too)  The story\u2019s magic isn\u2019t spells\u2014it\u2019s the *thinking* behind the clues.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6236,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-05",
+        "query": "can you summarize the plot in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "story",
+          "mystery"
+        ],
+        "answer_clip": "Okay, let\u2019s keep it simple.  This story is about a girl named Poorvi. She finds a magic paintbrush in a village. The brush can create anything she paints\u2014 but only if she uses it for good.  A greedy Zamindar also wants the brush. He tries to take it by force. Poorvi outsmarts him by painting a fortress that traps him inside.  The story ends with Poorvi using the brush to help others, showing how magic should be used wisely.  It\u2019s not about real \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6858,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-06",
+        "query": "why do people love mystery stories?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery"
+        ],
+        "answer_clip": "People love mystery stories because they make us *think hard* till the end. The chapter says clues are hidden\u2014readers love figuring out *who\u2019s guilty*. When the truth pops up, everything clicks. It\u2019s like solving a puzzle.  The Chandipur Beach example shows how *real-life mysteries* grab us. Even small things\u2014like the sea disappearing\u2014make us curious. That\u2019s why these stories stay exciting. They\u2019re not just fun; they\u2019re *brain games*!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7345,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-07",
+        "query": "quiz me with one easy question on this unit",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "?"
+        ],
+        "answer_clip": "Okay, let\u2019s try this!  Here\u2019s your easy question: *\"Mrs. Brown asked, \u2018Where were you yesterday?\u2019* Now, rewrite it in indirect speech using the steps we learned.\"  Take your time. Just follow the rules\u2014 replace \"said\" with \"asked,\" change the tense, and add \"if\" or \"whether\" if it\u2019s a yes/no question.  You\u2019ve got this!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11005,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-08",
+        "query": "show any figure or illustration from mystery and magic",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "picture",
+          "image",
+          "shown"
+        ],
+        "answer_clip": "Oh, I see you\u2019re asking about figures or illustrations!  This chapter doesn\u2019t actually have any pictures or drawings in the text. It\u2019s all about the mystery in Idaville\u2014Chief Brown, Nolan\u2019s will, and that strange note.  But if you\u2019re looking for something visual, you could imagine the scene: Chief Brown staring at his soup, the kitchen table with the will, or Encyclopedia thinking hard. The story is more about clues than pictures.  Want me to he\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10299,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 5.7,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-09",
+        "query": "what lesson should i take from this unit?",
+        "label": "normal",
+        "expect_keywords": [
+          "lesson",
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "This unit is all about **paying attention** and **seeing the world clearly**.  First, you learn how to **observe better**\u2014like slowing down, using your senses, and noting details. The podcast says that\u2019s how you spot things others miss.  Then, there\u2019s the idea of **magic as creativity**\u2014like the \"Magic Brush\" story. It\u2019s not real magic, but it shows how imagination can turn ordinary things into something special.  So the lesson? **Notice details\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5997,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-10",
+        "query": "is there suspense? where?",
+        "label": "normal",
+        "expect_keywords": [
+          "suspense",
+          "mystery"
+        ],
+        "answer_clip": "Oh, yes\u2014this story *has* suspense!  The writer starts with a question\u2014*\"Have you seen things disappear?\"*\u2014then drops a wild fact: a beach where the sea *actually* hides. That\u2019s suspense right there. The reader wonders: *How?* *When?* *Why?* And the chapter even says the writer uses questions to *draw you in*\u2014just like a real mystery.  So yes, the suspense is in the *what* and *how*\u2014the beach\u2019s secret trick. The \"where\" is Chandipur Beach, Odisha\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6781,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-11",
+        "query": "explain one magical moment from the text",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "mystery"
+        ],
+        "answer_clip": "Oh, I see you\u2019re asking about a magical moment!  The story *The Magic Brush of Dreams* has a wonderful one\u2014when Gopi paints a **bowl of khichdi** in the sand, and it *actually comes to life* for the villagers. They\u2019re amazed because it\u2019s real food, not just a drawing!  Even better? Later, she paints a **wide river** to stop the Zamindar\u2019s men. That\u2019s pure magic\u2014just by drawing, she creates obstacles and solutions.  Both moments show how her brus\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9081,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-12",
+        "query": "how does the mystery get solved if it does?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "solve"
+        ],
+        "answer_clip": "Oh, this is a great question!  In mystery stories, the detective finds answers by looking for **clues** left behind. The truth comes out when everything fits together\u2014like solving a puzzle.  The chapter mentions that clues are small but important. The detective connects them to reveal the truth. It\u2019s not magic\u2014just careful thinking!  Would you like to see how clues help in the story?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5312,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-13",
+        "query": "what new words related to mystery?",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "word"
+        ],
+        "answer_clip": "Oh, great question! The chapter has some *fantastic* mystery-related words.  First, there\u2019s **\"enigmatic\"**\u2014it means something *mysterious or puzzling*. Like a riddle you can\u2019t solve right away.  Then, **\"spectacular\"** fits too\u2014it\u2019s *amazing or breathtaking*, but also can hint at something hidden or surprising.  And don\u2019t forget **\"optical illusions\"**\u2014those tricks that *fool your eyes* into seeing things differently.  The chapter also mentions\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5722,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-14",
+        "query": "would you call this fantasy? why?",
+        "label": "normal",
+        "expect_keywords": [
+          "fantasy",
+          "magic",
+          "mystery"
+        ],
+        "answer_clip": "This story isn\u2019t fantasy\u2014it\u2019s about a *real* magic brush with a special power. Gopi\u2019s brush doesn\u2019t make monsters or flying cars. It *draws dreams* into reality\u2014like the bowl of khichdi that came alive for the villagers.  The magic here is tied to kindness and imagination. It\u2019s not like Harry Potter\u2019s spells\u2014it\u2019s more like a wish-fulfilling tool for good. The Zamindar wants jewels and a fortress, but Gopi refuses because magic should help people\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5383,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-15",
+        "query": "give me 3 bulletts about mistery unit",
+        "label": "typo",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Mystery**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1783,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-16",
+        "query": "whats mistery and magik about lol",
+        "label": "typo",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Magic**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1857,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "E3-17",
+        "query": "did harry potter write this CBSE chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "chapter",
+          "not"
+        ],
+        "answer_clip": "Oh, this is a great question!  No, Harry Potter didn\u2019t write this chapter. It\u2019s not from a fantasy story at all. This is a **folk tale**\u2014an old, traditional story passed down through generations. The chapter mixes two very different things: 1. A real-life mystery (the *Nom Utes Sweden Hurts* puzzle). 2. A magical folk tale about Gopi and her brush.  The chapter *doesn\u2019t* say who wrote the folk tale\u2014just that it\u2019s inspired by one. So no wands or \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 150230,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [
+            "forbidden content mentioned: harry potter"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "E3-18",
+        "query": "is photosynthesis the theme of Mystery and Magic?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mystery",
+          "magic",
+          "not"
+        ],
+        "answer_clip": "Oh, that\u2019s a great question! No, photosynthesis isn\u2019t the theme here at all.  This story is all about a *real-life mystery*\u2014a town called Idaville where a man named Tim Nolan just died. He was mixed up in a big jewellery robbery years ago. The chief is trying to figure out if Nolan\u2019s death is connected to that old case. There\u2019s a will, a missing friend named Davenport, and even some strange words on a calendar that Encyclopedia (the kid detectiv\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5878,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [
+            "forbidden content mentioned: photosynthesis"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "E3-19",
+        "query": "i got confused \u2014 is magic real in the story world?",
+        "label": "normal",
+        "expect_keywords": [
+          "magic",
+          "story"
+        ],
+        "answer_clip": "Let\u2019s break this down in the simplest way:  In the story **\"Poorvi\"** (from *Mystery and Magic*), magic is **not real in the real world**\u2014but it *is* real in the **story\u2019s world**. Think of it like this:  - **Real world**: You can\u2019t *actually* draw a beast with a brush or make jewels appear. That\u2019s impossible in our everyday life. - **Story world**: The poem treats magic as *true* for its characters. Gopi\u2019s brush *does* create things (like a bea\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8755,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "E3-20",
+        "query": "end with a short recap please",
+        "label": "normal",
+        "expect_keywords": [
+          "mystery",
+          "magic"
+        ],
+        "answer_clip": "Okay, let\u2019s wrap this up nicely.  This chapter has two big parts you should remember. First, **reporting speech**\u2014how to change direct speech into indirect. Like, *\"Why did you stop talking to me?\"* becomes *\"Rohan questioned why I had stopped talking to him.\"*  Second, **nature and wonder**\u2014the rainbow mountain story. The brother was surprised by the mountain\u2019s colors and snow. The sister explained how nature makes it beautiful.  For the test, \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6918,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "E3-01",
+        "source_query": "is Mystery and Magic a story unit? what happens in it?",
+        "query": "hold on, what do you mean by Tim Nolan dies suddenly?",
+        "derived": true,
+        "answer_clip": "Oh, I love that you\u2019re thinking about how stories unfold! When the chapter says Tim Nolan \"dies suddenly,\" it means his death was unexpected\u2014like when a friend suddenly falls ill without warning, or when a character in a movie dies in a shocking moment that changes everything.  In this story, Nolan\u2019s death isn\u2019t just random\u2014it\u2019s tied to the mystery. His sudden passing leaves behind clues (like the note with Davenport\u2019s name and those strange wor\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8761,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-02",
+        "source_query": "what is mysterious in this chapter?",
+        "query": "ok but can you explain Mystery in simpler words?",
+        "derived": true,
+        "answer_clip": "Mystery here means something *unsolved*\u2014like a puzzle.  In the story, Chief Brown finds a note with words like *\"Nom Utes Sweden Hurts\"*\u2014no one knows what they mean at first. That\u2019s the mystery! Even Encyclopedia struggles until he figures it out. It\u2019s like a real-life detective story.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6122,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-03",
+        "source_query": "is there real magic or just tricks/stories?",
+        "query": "is Those actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, I see why this is confusing! Let me check the chapter first.  The chapter *does* have those words\u2014**\"Nom Utes Sweden Hurts\"**\u2014right there on page 5. They\u2019re part of the mystery! Chief Brown copied them from Nolan\u2019s desk calendar. So no guessing here\u2014it\u2019s all in the story.  The words *do* seem random at first, but Encyclopedia figures out they\u2019re a clue. He asks about a young fir tree in Nolan\u2019s nursery, and Chief Brown confirms it\u2019s there. T\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6495,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-04",
+        "source_query": "who are the main characters?",
+        "query": "quiz me with one easy question just about Think",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy quiz question:  *\"In mystery stories, what word fits here?* **\u2018The detective always finds answers. Readers often wonder ___ about the clues.\u2019* *Is it \u2018who,\u2019 \u2018what,\u2019 \u2018how,\u2019 or \u2018why\u2019?\"*  Think: What question would *you* ask about clues?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4303,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E3-05",
+        "source_query": "can you summarize the plot in simple words?",
+        "query": "show me a figure or example related to Poorvi",
+        "derived": true,
+        "answer_clip": "I don\u2019t see a direct *figure* or *image* of Poorvi in this chapter. But here\u2019s what we *do* have:  The chapter mentions **words to draw**\u2014like a *paintbrush*, *fortress*, or *joy*\u2014 to help you visualize Poorvi\u2019s story. You could sketch: - The **magic paintbrush** she finds. - The **fortress** she paints to trap the Zamindar. - Poorvi herself, holding the brush.  The textbook asks you to *draw* these words\u2014 so grab a pencil and try it! That\u2019s you\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14210,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-06",
+        "source_query": "why do people love mystery stories?",
+        "query": "wait why is The Chandipur Beach important here?",
+        "derived": true,
+        "answer_clip": "Ah, Chandipur Beach is *key* here because it\u2019s not just any beach. The chapter says the sea *actually disappears*\u2014like magic, right? But it\u2019s science: tides pull water back 2\u20135 km during low tide. That\u2019s why it\u2019s called \"invisible\" for a while.  The writer starts with a question\u2014*\"what if a sea disappears?\"*\u2014to grab attention. It\u2019s like a real-life mystery. That\u2019s why it\u2019s important in this story. The beach makes the whole chapter feel *unusual*\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 41,
+            "caption": "7. The Invisible Chandipur Beach, Odis",
+            "file": "figures/p40_31.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12299,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-07",
+        "source_query": "quiz me with one easy question on this unit",
+        "query": "can you give one more real-life example of Take your time. Just follow the rules\u2014\nreplace?",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s a real-life example from the chapter:  Imagine your friend says: *\"Where did you go yesterday?\"*  In indirect speech, it would be: *\"She asked me where I had gone the day before.\"*  See how we replaced \"said\" with \"asked,\" changed the tense, and added \"the day before\" for time shift? That\u2019s the rule in action! Try another one yourself.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7577,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-08",
+        "source_query": "show any figure or illustration from mystery and magic",
+        "query": "i still don't get Encyclopedia \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Oh, I hear you\u2014Encyclopedia is confusing. Let me explain slowly.  Encyclopedia isn\u2019t his real name. His parents call him Leroy. But everyone else calls him Encyclopedia because he knows *so much*\u2014like a book full of facts.  He doesn\u2019t like it. The story says he\u2019s stuck with the nickname. He doesn\u2019t want to seem different from other kids. That\u2019s why he never tells people he helps his dad solve mysteries.  Think of it like this: if someone called \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7322,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 2.0,
+          "bugs": [
+            "missing expected keywords",
+            "wanted images but got none"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E3-09",
+        "source_query": "what lesson should i take from this unit?",
+        "query": "ok so what should i remember about Magic Brush for a test?",
+        "derived": true,
+        "answer_clip": "For your test, remember **three key things** about the Magic Brush.  First, it\u2019s a **symbol**\u2014not real magic, but it shows how art can change lives. The poem says it helps others, unlike the Zamindar who wants it for himself.  Second, the brush is tied to **Gopi\u2019s kindness**. She uses it to protect her village, while the Zamindar wants power.  Last, the poem uses **imagery**\u2014like the \"grand fortress\" and \"river and beast\"\u2014to show how the brush c\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5666,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-10",
+        "source_query": "is there suspense? where?",
+        "query": "that part about Have you seen things disappear? sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, no need to worry\u2014you heard it *perfectly*!  That line\u2014*\"Have you seen things disappear?\"*\u2014isn\u2019t confusing at all. It\u2019s just the writer asking a *big* question to grab your attention. Like when someone says, *\"Ever seen a magic trick where a coin vanishes?\"*\u2014you pause and think, *\"Wait, how?\"*  The chapter even says this question is to *draw you in*. It\u2019s not about real magic\u2014it\u2019s about the *real* mystery of Chandipur Beach, where the sea *ac\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6175,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-11",
+        "source_query": "explain one magical moment from the text",
+        "query": "hold on, what do you mean by The Magic Brush?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  The **Magic Brush** is a special paintbrush that can **turn drawings into real things**. Imagine if you drew a bowl of food, and suddenly\u2014it appears in front of you! That\u2019s what happens in the story.  In the poem, a man gives this brush to Gopi with one rule: *\"Paint only for the poor.\"* So when Gopi draws a **bowl of khichdi** in the sand, it becomes real food for the villagers. Later, she draws a **river** to stop \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7679,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-12",
+        "source_query": "how does the mystery get solved if it does?",
+        "query": "ok but can you explain clues in simpler words?",
+        "derived": true,
+        "answer_clip": "Clues are like tiny **hints** left behind\u2014 something small but important. For example, in the story, the words *\"Nom Utes Sweden Hurts\"* weren\u2019t random. Encyclopedia figured out they meant a **young fir tree** in Nolan\u2019s nursery. That\u2019s how clues help solve mysteries!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5948,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-13",
+        "source_query": "what new words related to mystery?",
+        "query": "is \"enigmatic\" actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, I see why you\u2019re asking\u2014that\u2019s a great catch!  No, **\"enigmatic\"** isn\u2019t *directly* in the chapter text. But the story *does* have words that *feel* mysterious\u2014like the four coded words: **\"Nom Utes Sweden Hurts.\"** Those were *puzzling* for Chief Brown and Mrs. Brown.  The chapter focuses on *solving* the mystery, not naming the word \"enigmatic.\" But the *idea* of something confusing? That\u2019s everywhere\u2014like the calendar sheet or Encyclopedi\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5315,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "E3-14",
+        "source_query": "would you call this fantasy? why?",
+        "query": "quiz me with one easy question just about Harry Potter",
+        "derived": true,
+        "answer_clip": "Okay, here\u2019s your easy question: If you had a magic paintbrush like Gopi\u2019s, what *one* thing would you draw for yourself? And why?  Think simple\u2014like food, a toy, or something that makes you happy. No need for a long answer!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4272,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-15",
+        "source_query": "give me 3 bulletts about mistery unit",
+        "query": "show me a figure or example related to Mystery",
+        "derived": true,
+        "answer_clip": "Ah, I see you want to see the **optical illusion images** from the chapter! They\u2019re right there on page 121\u2014those pictures that trick your eyes. For example, one might look like a vase or two faces hiding in the same shape.  The chapter shows them with labels like \"two things in one\" to explain how they work. You can find them in the \"I Work in pairs\" section with the words and images.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6426,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 5.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.3,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E3-16",
+        "source_query": "whats mistery and magik about lol",
+        "query": "wait why is Magic important here?",
+        "derived": true,
+        "answer_clip": "Ah, I see! Magic here isn\u2019t like spells or fairies\u2014it\u2019s about **real-life wonders** that feel impossible.  In *The Magic Brush of Dreams*, the brush makes Gopi\u2019s paintings come true. That\u2019s magic *in the story*\u2014but in real life? It\u2019s like Chandipur Beach\u2019s disappearing sea. Both feel mysterious and amazing, right? The story uses magic to show how special things can happen when we\u2019re open to surprises.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6173,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-17",
+        "source_query": "did harry potter write this CBSE chapter?",
+        "query": "can you give one more real-life example of Nom Utes Sweden Hurts?",
+        "derived": true,
+        "answer_clip": "Oh, I see you\u2019re asking about the *real-life* mystery part!  The \"Nom Utes Sweden Hurts\" example is from the **Idaville case**\u2014 the detective Encyclopedia solved it by decoding the words. Here\u2019s how it worked in the story: The four words *hinted* at a young fir tree on the south side of Nolan\u2019s nursery. That\u2019s the real-life example\u2014no magic, just clever clues!  The chapter shows how puzzles can be solved with logic, just like in the folk tale.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6386,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "E3-18",
+        "source_query": "is photosynthesis the theme of Mystery and Magic?",
+        "query": "i still don't get Idaville \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s break it down slowly.  Idaville is a small town where a man named **Tim Nolan** just died. He used to live there and ran a tiny **palm-tree nursery**\u2014it wasn\u2019t very successful. Five years ago, two masked men robbed a jewellery store called **Diamond Mart**. One of those robbers was Nolan. The other was his friend, **Daniel Davenport**, who lived with Nolan for a week before the robbery.  Chief Brown thinks Nolan and Davenport worked \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5254,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "E3-19",
+        "source_query": "i got confused \u2014 is magic real in the story world?",
+        "query": "ok so what should i remember about \"Poorvi\" for a test?",
+        "derived": true,
+        "answer_clip": "For your test on **\"Poorvi\"**, focus on **three key things**:  1. **The poem\u2019s magic brush**: It\u2019s a symbol of **art and imagination**. Gopi uses it to create things (like a beast or fortress) to help others. The Zamindar wants it for himself\u2014this shows the **contrast between kindness and greed**.  2. **Imagery and repetition**: The poem has **vivid pictures** (like the beast or river) and repeats *\"On you, and you and you!\"* to show the magic\u2019s\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8519,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "E3-20",
+        "source_query": "end with a short recap please",
+        "query": "that part about nature and wonder sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Ah, I see what you mean!  The \"nature and wonder\" part isn\u2019t about magic spells\u2014it\u2019s about real, mind-blowing things nature does. Like the **Rainbow Mountain**\u2014the brother and sister talk about its colors. The sister says, *\"It\u2019s like nature painted the mountain!\"* That\u2019s the wonder part\u2014nature\u2019s creativity surprises us.  And **Chandipur Beach**? The sea \"disappears\" mysteriously. The writer uses questions like *\"Have you seen things disappearin\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6187,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ]
+  },
+  "tutor_avg": 7.87,
+  "voice_avg": 7.35
+}

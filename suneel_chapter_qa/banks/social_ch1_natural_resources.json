@@ -1,0 +1,280 @@
+{
+  "slug": "social_ch1_natural_resources",
+  "subject": "Social",
+  "chapter_id": "32",
+  "chapter": "Chapter 1 - Natural Resources and Their Use",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "So1-01",
+      "query": "what are natural resources? give easy examples",
+      "label": "normal",
+      "expect_keywords": [
+        "resource",
+        "natural"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-02",
+      "query": "why should we use them carefully?",
+      "label": "normal",
+      "expect_keywords": [
+        "resource",
+        "care",
+        "sustain"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-03",
+      "query": "difference between renewable and non-renewable?",
+      "label": "normal",
+      "expect_keywords": [
+        "renewable",
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-04",
+      "query": "show me a map or picture about natural resources from the book",
+      "label": "diagram",
+      "expect_keywords": [
+        "resource",
+        "map",
+        "figure",
+        "image"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-05",
+      "query": "what is water as a resource?",
+      "label": "normal",
+      "expect_keywords": [
+        "water",
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-06",
+      "query": "what about forests and wildlife?",
+      "label": "normal",
+      "expect_keywords": [
+        "forest",
+        "resource",
+        "wildlife"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-07",
+      "query": "how do humans overuse resources?",
+      "label": "normal",
+      "expect_keywords": [
+        "resource",
+        "use",
+        "over"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-08",
+      "query": "quiz me one question on natural resources",
+      "label": "normal",
+      "expect_keywords": [
+        "resource",
+        "?"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-09",
+      "query": "what is conservation in this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "conserv",
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-10",
+      "query": "examples of minerals as resources",
+      "label": "normal",
+      "expect_keywords": [
+        "mineral",
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-11",
+      "query": "why is soil important?",
+      "label": "normal",
+      "expect_keywords": [
+        "soil",
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-12",
+      "query": "can air be a natural resource?",
+      "label": "normal",
+      "expect_keywords": [
+        "air",
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-13",
+      "query": "what happens if we waste resources?",
+      "label": "normal",
+      "expect_keywords": [
+        "resource",
+        "waste"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-14",
+      "query": "how can students help save resources?",
+      "label": "normal",
+      "expect_keywords": [
+        "resource",
+        "save",
+        "student"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-15",
+      "query": "give 4 bullets of key points",
+      "label": "normal",
+      "expect_keywords": [
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-16",
+      "query": "what are naturall resorces used for?",
+      "label": "typo",
+      "expect_keywords": [
+        "resource",
+        "natural"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-17",
+      "query": "did shivaji discover coal in this chapter?",
+      "label": "wrong",
+      "expect_keywords": [
+        "resource",
+        "not"
+      ],
+      "forbidden": [
+        "shivaji"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-18",
+      "query": "is this chapter only about mughal maps?",
+      "label": "wrong",
+      "expect_keywords": [
+        "resource",
+        "natural",
+        "not"
+      ],
+      "forbidden": [
+        "mughal"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-19",
+      "query": "i mixed renewable \u2014 explain again slowly",
+      "label": "normal",
+      "expect_keywords": [
+        "renewable",
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "So1-20",
+      "query": "what is conservasion of resorces?",
+      "label": "typo",
+      "expect_keywords": [
+        "conserv",
+        "resource"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    }
+  ]
+}

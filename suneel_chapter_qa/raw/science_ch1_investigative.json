@@ -1,0 +1,2516 @@
+{
+  "generated_at": "2026-09-11 20:46:37 +0530",
+  "meta": {
+    "slug": "science_ch1_investigative",
+    "subject": "Science",
+    "chapter_id": "35",
+    "chapter": "Chapter 1 - Exploring the Investigative World of Science",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "S1-01",
+        "query": "what is this chapter exploring the investigative world of science about?",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-02",
+        "query": "why do scientists investigate things?",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "science"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-03",
+        "query": "what is observation in science?",
+        "label": "normal",
+        "expect_keywords": [
+          "observation",
+          "science"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-04",
+        "query": "what is a hypothesis in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "hypothesis"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-05",
+        "query": "how does an experiment help us learn?",
+        "label": "interactive",
+        "expect_keywords": [
+          "experiment",
+          "science"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-06",
+        "query": "can you show a diagram or figure from this science chapter?",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "diagram",
+          "image"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-07",
+        "query": "what skills do young scientists need?",
+        "label": "normal",
+        "expect_keywords": [
+          "skill",
+          "science",
+          "curious"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-08",
+        "query": "quiz me one question on scientific investigation",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "?",
+          "investigat"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-09",
+        "query": "what is the difference between guessing and investigating?",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "guess"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-10",
+        "query": "give a real life example of investigation around me",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "example"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-11",
+        "query": "why ask questions in science?",
+        "label": "normal",
+        "expect_keywords": [
+          "question",
+          "science"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-12",
+        "query": "what is data or evidence in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "data",
+          "evidence",
+          "science"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-13",
+        "query": "steps of investigating something \u2014 list them",
+        "label": "interactive",
+        "expect_keywords": [
+          "step",
+          "observ",
+          "experiment"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-14",
+        "query": "how is curiosity useful?",
+        "label": "normal",
+        "expect_keywords": [
+          "curious",
+          "science"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-15",
+        "query": "what should i write as notes from this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-16",
+        "query": "explain fotosyntesis from this chapter pls",
+        "label": "typo",
+        "expect_keywords": [
+          "chapter",
+          "science",
+          "not",
+          "investigat"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-17",
+        "query": "does this chapter say the earth is flat?",
+        "label": "wrong",
+        "expect_keywords": [
+          "science",
+          "not",
+          "investigat"
+        ],
+        "forbidden": [
+          "flat"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "S1-18",
+        "query": "is health the only topic here?",
+        "label": "wrong",
+        "expect_keywords": [
+          "investigat",
+          "science"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-19",
+        "query": "i'm lost \u2014 restart with what investigasion means",
+        "label": "typo",
+        "expect_keywords": [
+          "investigat"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S1-20",
+        "query": "short summary of the investigative world chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": true,
+    "health": {
+      "status": "ok",
+      "voice": "ws-pcm",
+      "instanceId": "Maniths-MacBook-Air.local:50443",
+      "draining": false,
+      "liveSessions": 0,
+      "redis": "down"
+    },
+    "session_id": "bb1d68b7-b6c0-44d4-b636-816fdc7901dc",
+    "query_ok": true,
+    "note": "REST ok only; scored via voice_mode stream"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "S1-01",
+        "query": "what is this chapter exploring the investigative world of science about?",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "answer_clip": "This chapter teaches you to explore science like a detective\u2014asking questions, testing ideas, and discovering answers through careful observation. The textbook shows how even everyday things, like why a puri puffs up, can become exciting experiments when you think scientifically. It emphasizes balancing real-world observations with creative thinking to solve puzzles, whether it\u2019s why dough rises or how the Moon changes phases.  The chapter intro\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 4,
+            "caption": "Textbook illustration",
+            "file": "figures/p3_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 65276,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-02",
+        "query": "why do scientists investigate things?",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "science"
+        ],
+        "answer_clip": "Scientists investigate things because they want to understand how the world works, just like you might wonder why a puri puffs up or why the moon changes shape. The chapter shows that science begins with curiosity\u2014asking questions like \"Why does this happen?\" or \"How can we solve this?\"\u2014and then testing ideas through careful observation and experiments. This helps us find answers to everyday mysteries or even big challenges like keeping the envi\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 35459,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-03",
+        "query": "what is observation in science?",
+        "label": "normal",
+        "expect_keywords": [
+          "observation",
+          "science"
+        ],
+        "answer_clip": "Observation in science is when you carefully watch, listen, or measure something in the world to gather information. The chapter shows how this helps you notice details\u2014like why a puri puffs up when fried\u2014by using your senses and recording what you see. It\u2019s the first step to asking questions and solving mysteries.  - Observations can be simple (like watching the Moon\u2019s phases) or detailed (like measuring how dough expands). - Writing down what \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 28288,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-04",
+        "query": "what is a hypothesis in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "hypothesis"
+        ],
+        "answer_clip": "Let\u2019s break down **hypothesis** in the simplest way, using something you already know.  Imagine you\u2019re playing a game of *guess the number* with a friend. You think the number is **7**, but you\u2019re not sure. So, you say: *\"I think the number is 7 because it\u2019s between 5 and 10, and 7 is the middle number.\"*  That\u2019s your **hypothesis**\u2014a smart guess based on what you already know. In science, a hypothesis is like that guess, but it\u2019s written in a w\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 31570,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-05",
+        "query": "how does an experiment help us learn?",
+        "label": "interactive",
+        "expect_keywords": [
+          "experiment",
+          "science"
+        ],
+        "answer_clip": "**Topic** How experiments help us learn in science \u2014 turning questions into answers.  **In Simple Words** An experiment is like a detective\u2019s toolkit for science. Instead of guessing, you test ideas in a controlled way to see what really happens. For example, if you wonder why a puri puffs up when fried, you don\u2019t just watch\u2014you change one thing at a time (like oil temperature or dough thickness) and observe the results. This way, you don\u2019t just\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 44078,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-06",
+        "query": "can you show a diagram or figure from this science chapter?",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "diagram",
+          "image"
+        ],
+        "answer_clip": "The chapter begins by inviting you to explore science like a detective, asking questions that spark curiosity\u2014like why a puri has uneven sides or how calendars connect to the Moon. The textbook uses a **root symbol** to remind you to start with careful observations and a **kite symbol** to encourage your ideas to take flight with creative thinking.  - The chapter shows how science grows from simple \"why?\" questions to designing experiments and e\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 35106,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 2.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 2.5,
+          "bugs": [
+            "missing expected keywords",
+            "wanted images but got none",
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "S1-07",
+        "query": "what skills do young scientists need?",
+        "label": "normal",
+        "expect_keywords": [
+          "skill",
+          "science",
+          "curious"
+        ],
+        "answer_clip": "Young scientists need curiosity to ask questions like *\"Why does dough rise?\"* and the skills to explore answers. The chapter shows that science isn\u2019t just facts\u2014it\u2019s about **observing carefully**, **testing ideas**, and **explaining what you see**. For example, you might measure the thickness of a puri or test how baking changes its shape.  - **Asking focused questions** (not just \"Why?\" but \"How can I test this?\"). - **Designing simple experim\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 50717,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.2,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-08",
+        "query": "quiz me one question on scientific investigation",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "?",
+          "investigat"
+        ],
+        "answer_clip": "**Quiz Time** Let\u2019s see how well you\u2019ve absorbed the spirit of scientific investigation! The chapter shows us that science isn\u2019t just about memorizing facts\u2014it\u2019s about asking questions, testing ideas, and observing carefully. Ready to test your understanding?  **Questions** 1. The chapter mentions a simple kitchen experiment with puris to illustrate scientific investigation. What are *two* things you can **control** (change) when testing how a p\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 42230,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S1-09",
+        "query": "what is the difference between guessing and investigating?",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "guess"
+        ],
+        "answer_clip": "Guessing is a quick, random idea\u2014like thinking *\"the puri puffs because it\u2019s hot!\"*\u2014without testing it. Investigating, however, is like a scientist\u2019s method: you ask a clear question (*\"Why does the puri puff?\"*), plan a fair test (like frying dough of different sizes), and observe carefully to find answers. The chapter shows that investigation is all about **careful, step-by-step exploration**, not just guessing.  - Guessing relies on hunches; \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 27336,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-10",
+        "query": "give a real life example of investigation around me",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "example"
+        ],
+        "answer_clip": "Everyday investigation is like solving a puzzle using your senses and simple tests. For example, if you wonder why your bike chain gets rusty faster after rainy days, you could observe the chain before and after rain, compare it to dry days, and even try wiping it with oil to see if that helps. The chapter shows how even small questions\u2014like why a puri puffs\u2014can lead to careful experiments. You\u2019d record what happens, ask follow-up questions, and\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 23099,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-11",
+        "query": "why ask questions in science?",
+        "label": "normal",
+        "expect_keywords": [
+          "question",
+          "science"
+        ],
+        "answer_clip": "Asking questions in science is how we start exploring the world around us. The chapter shows that every great discovery begins with curiosity\u2014like wondering why a puri puffs up or why one side is thinner. These questions help us notice details we might miss, such as how heat or dough thickness changes the outcome of an experiment.  - Questions help us **observe carefully** what happens in real life. - They guide us to **test ideas** by designing\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 25850,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-12",
+        "query": "what is data or evidence in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "data",
+          "evidence",
+          "science"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Science**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1083,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 6.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 5.5,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-13",
+        "query": "steps of investigating something \u2014 list them",
+        "label": "interactive",
+        "expect_keywords": [
+          "step",
+          "observ",
+          "experiment"
+        ],
+        "answer_clip": "**Topic** The Steps of Investigating Something in Science A systematic way to ask questions, test ideas, and discover answers through careful observation and experiments.  **In Simple Words** Investigating in science is like solving a puzzle. You start with a question, plan how to test it, do experiments carefully, record what you see, and then think about what your results mean. It\u2019s not just guessing\u2014it\u2019s following steps to find real answers. \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 34827,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S1-14",
+        "query": "how is curiosity useful?",
+        "label": "normal",
+        "expect_keywords": [
+          "curious",
+          "science"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Careful**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1426,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 2.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 3.5,
+          "bugs": [
+            "missing expected keywords",
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "S1-15",
+        "query": "what should i write as notes from this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "answer_clip": "Your notes should capture the chapter\u2019s core message: **science is about asking questions and exploring carefully**. Write down your own curious questions (like the ones on page 1) and how you\u2019d investigate them\u2014just like the puri experiment on page 7. The chapter also shows how tiny things (like microbes) and big ideas (like Earth\u2019s perfect distance from the Sun) connect. Jot down one observation you made today and how it relates to what you le\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 27883,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-16",
+        "query": "explain fotosyntesis from this chapter pls",
+        "label": "typo",
+        "expect_keywords": [
+          "chapter",
+          "science",
+          "not",
+          "investigat"
+        ],
+        "answer_clip": "explain fotosyntesis from this chapter pls is not covered in Chapter 1 - Exploring the Investigative World of Science.  How would you like to continue? a) Stay in Chapter 1 - Exploring the Investigative World of Science b) Switch to the right chapter \u2014 open AI Tutor Reply a or b.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 3208,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "S1-17",
+        "query": "does this chapter say the earth is flat?",
+        "label": "wrong",
+        "expect_keywords": [
+          "science",
+          "not",
+          "investigat"
+        ],
+        "answer_clip": "The chapter never suggests the Earth is flat\u2014it actually explains why Earth is *perfect* for life. According to the textbook, Earth sits at the ideal distance from the Sun, keeping water liquid and its atmosphere rich in oxygen while blocking harmful rays. The chapter describes Earth\u2019s balanced environment, not its shape.  - It focuses on Earth\u2019s **unique conditions** (temperature, atmosphere) that support life. - The chapter also warns about ho\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 25947,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 7.0,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "unexpected interactive panel",
+          "overall": 6.6,
+          "bugs": [
+            "forbidden content mentioned: flat"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-18",
+        "query": "is health the only topic here?",
+        "label": "wrong",
+        "expect_keywords": [
+          "investigat",
+          "science"
+        ],
+        "answer_clip": "No, health isn\u2019t the only topic here\u2014this chapter is like a big science adventure! The textbook starts with tiny microbes and how they affect our bodies, but then it zooms out to show how electricity powers our world, how forces make things move (like why a ball falls when you throw it up), and even how living things depend on their surroundings. It\u2019s all about seeing how science helps us understand everything from the smallest drop of water to \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 27565,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-19",
+        "query": "i'm lost \u2014 restart with what investigasion means",
+        "label": "typo",
+        "expect_keywords": [
+          "investigat"
+        ],
+        "answer_clip": "Hello Suneel! Let\u2019s start fresh\u2014what do you think of when you hear the word **\"investigation\"**? Maybe you\u2019ve seen detectives solving a mystery or scientists testing something in a lab. Both are forms of investigation! In science, it\u2019s all about asking questions, looking for clues, and testing ideas to understand how the world works. Ready to explore what makes a good scientific investigation?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5024,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-20",
+        "query": "short summary of the investigative world chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "answer_clip": "This chapter introduces you to the exciting world of science by encouraging curiosity and observation. It starts with simple, everyday questions\u2014like why a puri puffs or how many grains of sand exist\u2014to spark your interest in exploring nature. The chapter highlights how science helps us understand tiny unseen worlds (like microbes in water) and big challenges (like climate change). It also shows how forces, pressure, and electricity work in our \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "a picture of a plant with a magni and a magni on it. Science textbook figure, C\u2026",
+            "file": "figures/p0_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 36998,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "S1-01",
+        "source_query": "what is this chapter exploring the investigative world of science about?",
+        "query": "hold on, what do you mean by systematic investigation?",
+        "derived": true,
+        "answer_clip": "This chapter teaches you how to **think like a scientist** by turning everyday questions into investigations. The textbook explains that science isn\u2019t just about memorizing facts\u2014it\u2019s about asking curious questions (like *\"Why does a puri puff up?\"*), testing ideas carefully, and observing what happens. It introduces the **root-and-kite symbol** as a reminder to stay grounded in real-world observations while letting your imagination soar with ne\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 4,
+            "caption": "Textbook illustration",
+            "file": "figures/p3_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 74391,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-02",
+        "source_query": "why do scientists investigate things?",
+        "query": "ok but can you explain How can we solve this? in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** How scientists solve everyday mysteries like why a puri puffs up or why one side is thinner.  **In Simple Words** Scientists solve problems by asking clear questions, testing ideas step-by-step, and keeping notes. For example, if you wonder why a puri puffs up, you might try frying different dough thicknesses or oil temperatures. Each test gives clues, and careful observations help find the answer.  **Key Points** \u2022 **Ask a focused que\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 52482,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-03",
+        "source_query": "what is observation in science?",
+        "query": "is Moon actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The Moon is *not* the main focus of this chapter, but the textbook does mention it as an example of how humans observe natural patterns\u2014like its phases\u2014to create calendars. This shows how early scientists used simple observations to understand time and the world around them.  - The Moon\u2019s movements helped people track days, months, and years. - It\u2019s one of many natural clues (like sunrises or plant growth) that inspire scientific questions.  Wha\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 31516,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 6.4,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-04",
+        "source_query": "what is a hypothesis in simple words?",
+        "query": "quiz me with one easy question just about tentative answer",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s see how well you remember the key idea of a **tentative answer** in science!  **Questions** 1. In science, what do we call a **tentative answer** or a smart guess that can be tested with experiments? (Hint: It\u2019s the first step in solving a puzzle!)  **How to Answer** Reply with your answer, and I\u2019ll guide you through it like a mentor.  **Encouragement** Great job asking for a quiz\u2014this is how real scientists start! Let\u2019s see \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 23868,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords",
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S1-05",
+        "source_query": "how does an experiment help us learn?",
+        "query": "show me a figure or example related to Puris puff because they\u2019re fried,",
+        "derived": true,
+        "answer_clip": "**Experiments help us learn by turning curiosity into proof.**  An experiment is like a scientist\u2019s superpower\u2014it lets you answer questions *without guessing*. The chapter uses the puri example to show how even simple observations can become powerful lessons. When you fry a puri, you notice it puffs up, but why? Instead of just saying, \u201cIt puffs because it\u2019s hot,\u201d you can test it: *What if I use thicker dough? What if I fry it slower?* Each test\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 39212,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-06",
+        "source_query": "can you show a diagram or figure from this science chapter?",
+        "query": "wait why is why? important here?",
+        "derived": true,
+        "answer_clip": "Asking **\"why?\"** is how science begins\u2014it turns curiosity into discovery. The chapter starts with questions like *\"Why is one side of a puri thinner?\"* to show how observation and experimentation work together. The **root symbol** keeps us grounded in facts, while the **kite symbol** lets our ideas take flight. Every question, no matter how simple, can lead to testing and learning.  - It helps us move from guessing to testing ideas. - The chapt\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 30299,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 2.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 3.8,
+          "bugs": [
+            "missing expected keywords",
+            "wanted images but got none"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S1-07",
+        "source_query": "what skills do young scientists need?",
+        "query": "can you give one more real-life example of Asking focused questions?",
+        "derived": true,
+        "answer_clip": "Asking focused questions means turning broad curiosity into something you can test. For example, instead of just wondering *\"Why does bread puff up?\"*, you could ask *\"Does adding yeast make the bread rise faster?\"* The chapter shows that good questions help you plan experiments\u2014like testing how different ingredients change dough. This turns curiosity into actionable science.  - Focused questions start with *\"How?\"* or *\"Does?\"* to guide testing\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 35956,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 6.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-08",
+        "source_query": "quiz me one question on scientific investigation",
+        "query": "i still don't get Encouragement \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Encouragement in science means trusting your curiosity and celebrating every step of your thinking\u2014not just the final answer. It\u2019s about noticing when you ask a good question, like *\"Why does one side of the puri get thinner?\"* or when you figure out something new, like how changing the oil temperature affects the puffing. It\u2019s also about knowing it\u2019s okay to get stuck\u2014even scientists do! The chapter reminds us that science is a journey of quest\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16202,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.2,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-09",
+        "source_query": "what is the difference between guessing and investigating?",
+        "query": "ok so what should i remember about the puri puffs because it\u2019s hot! for a test?",
+        "derived": true,
+        "answer_clip": "The puri puffs because hot oil heats the inside dough, trapping air that expands like a balloon. According to the chapter, scientists investigate this by **changing one factor at a time** (like oil temperature) and **observing carefully**\u2014not guessing. For example, if you fry puris in cold vs hot oil, you\u2019ll see which puffs more.  - **Heat expands trapped air** inside the dough. - **Control one variable** (e.g., oil temperature) to compare resul\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 47666,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-10",
+        "source_query": "give a real life example of investigation around me",
+        "query": "that part about Notice sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "When the chapter says *\"Notice that these are things we can control,\"* it means pay attention to what you can change in an experiment\u2014like how thick the dough is or how hot the oil is. The next part, *\"what we can observe,\"* refers to what you watch or measure, such as whether the puri puffs up or how long it takes. For example, if you fry two puris in oil at different temperatures, you\u2019d control the temperature and observe which one puffs more.\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 54117,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 6.4,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-11",
+        "source_query": "why ask questions in science?",
+        "query": "hold on, what do you mean by new questions?",
+        "derived": true,
+        "answer_clip": "**Why Do We Keep Asking New Questions in Science?**  The chapter explains that science is not just about memorizing facts\u2014it\u2019s about **exploring and discovering**. When you ask a question like *\"Why does a puri puff up?\"*, you start with one idea. But after testing it (like frying puris with different dough thickness), you notice new things:  - *\"What if we use different flours?\"* - *\"Does the oil temperature change how much it puffs?\"* - *\"Why \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 6,
+            "caption": "Why is one side of a puri thinner",
+            "file": "figures/p5_14.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 34623,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-12",
+        "source_query": "what is data or evidence in this chapter?",
+        "query": "ok but can you explain Science in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** What is **data or evidence** in science? How do we collect it?  **In Simple Words** In science, **data** is like the notes you write down when you do an experiment\u2014it\u2019s everything you observe, measure, or notice during your investigation. For example, if you\u2019re testing why a puri puffs up, your data could be whether the puri puffed (yes/no), how long it took to puff (in seconds), or how thick the dough was. **Evidence** is the proof or\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 39784,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "S1-13",
+        "source_query": "steps of investigating something \u2014 list them",
+        "query": "is Ask a Clear Question actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "You\u2019re absolutely right to check\u2014that\u2019s a great way to learn! The chapter *does* include these steps, but it uses slightly different words to explain the process. For example, it might call the first step **\"Observing a Problem\"** or **\"Identifying a Question\"** instead of \"Asking a Clear Question.\"  Now that you\u2019re curious about how the chapter phrases it\u2026 would you like to: - See a **real-life example** of how this looks in the textbook\u2019s lang\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 27799,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-14",
+        "source_query": "how is curiosity useful?",
+        "query": "quiz me with one easy question just about Careful",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of how **careful observation** helps in science! Remember, curiosity and precision go hand in hand\u2014just like how a scientist notices tiny details in a puri puffing up or the way oil splatters. Ready to try?  **Questions** 1. The textbook mentions that when investigating why a puri puffs up, you should **keep notes of everything you see and sense**. What *two* things should you record during your experi\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 32751,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-15",
+        "source_query": "what should i write as notes from this chapter?",
+        "query": "show me a figure or example related to 1",
+        "derived": true,
+        "answer_clip": "This chapter shows that science begins with curiosity\u2014asking questions like *\"Why is one side of a puri thinner?\"* and testing ideas step by step. It teaches that every experiment has two parts: **what you can change** (like oil heat or dough size) and **what you can observe** (like puffing time or thickness). The root and kite symbols remind you to stay grounded in facts while exploring new ideas fearlessly.  - The puri experiment proves you do\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 34972,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 6.4,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-16",
+        "source_query": "explain fotosyntesis from this chapter pls",
+        "query": "wait why is Investigative World important here?",
+        "derived": true,
+        "answer_clip": "The **Investigative World of Science** is important because it turns curiosity into real discovery. This chapter shows you how to ask questions\u2014like why dough rises or how microbes affect health\u2014and then explore answers through observation and simple experiments. It connects tiny details (such as a drop of water) to big ideas (like Earth\u2019s climate), teaching you to think like a scientist in everyday life.  - The chapter blends *observation* (not\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "a picture of a plant with a magni and a magni on it. Science textbook figure, C\u2026",
+            "file": "figures/p0_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 40795,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 9.5,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "source_id": "S1-17",
+        "source_query": "does this chapter say the earth is flat?",
+        "query": "can you give one more real-life example of unique conditions?",
+        "derived": true,
+        "answer_clip": "Earth\u2019s tilt is another perfect condition for life\u2014it creates seasons that help plants grow at the right time and guide animals\u2019 survival. Imagine if one side of Earth always baked in heat while the other froze: no seasons, no balance. The chapter shows how this tilt, along with the right distance from the Sun, makes Earth just right for life.  - The tilt causes **warm summers and cool winters**, helping plants grow in cycles. - Animals like bea\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 63534,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-18",
+        "source_query": "is health the only topic here?",
+        "query": "i still don't get Earth \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Earth is like a carefully balanced home in space. The chapter explains that it\u2019s just the right distance from the Sun, so water stays liquid\u2014neither frozen nor boiling. Its atmosphere acts like a protective blanket, giving us oxygen and shielding us from harmful rays.  - The atmosphere keeps Earth warm enough for life. - Water exists in all three forms (solid, liquid, gas) because of Earth\u2019s perfect temperature.  What do you think would happen i\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 28745,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 5.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 9.0,
+          "interactive_note": "",
+          "overall": 5.5,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S1-19",
+        "source_query": "i'm lost \u2014 restart with what investigasion means",
+        "query": "ok so what should i remember about Maybe for a test?",
+        "derived": true,
+        "answer_clip": "Investigation in science is asking questions, testing ideas, and observing carefully\u2014like how a puri puffs up in oil. The chapter explains that it starts with curiosity and balances real-world observations with creative thinking. You change one thing at a time (like oil temperature) and record what happens.  - Always ask *what if?* and test one variable. - Note everything you see or measure. - Even simple questions can lead to big discoveries.  \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 28945,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-20",
+        "source_query": "short summary of the investigative world chapter",
+        "query": "that part about Science sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Science in this chapter isn\u2019t about memorizing facts\u2014it\u2019s about **asking questions and exploring answers**. Imagine you\u2019re curious why a puri puffs up when fried. The chapter teaches you to observe, test ideas (like changing dough thickness or oil temperature), and record what happens. It\u2019s like being a detective in your own world, using simple experiments\u2014even at home\u2014to understand how things work. Science isn\u2019t just about labs; it\u2019s about **wo\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 45568,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "S1-01",
+        "query": "what is this chapter exploring the investigative world of science about?",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "answer_clip": "This chapter is all about **how science works**\u2014not just memorizing facts.  It starts by saying science isn\u2019t just about knowing things. It\u2019s about **asking smart questions**\u2014like why puris have thin sides, or how tiny microbes affect our health. The chapter shows how to **investigate**\u2014observe, experiment, and find answers yourself.  You\u2019ll learn to ask focused questions, test ideas, and use evidence to understand the world. From tiny microbes \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 4,
+            "caption": "Textbook illustration",
+            "file": "figures/p3_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 45878,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-02",
+        "query": "why do scientists investigate things?",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "science"
+        ],
+        "answer_clip": "Scientists investigate things because they love asking questions. Like why puris have thin sides\u2014it\u2019s not just about eating! They want to understand how the world works\u2014from tiny microbes to big winds.  The chapter says science isn\u2019t just facts\u2014it\u2019s about exploring. They mix careful watching with wild ideas, like a kite flying high but staying grounded. That\u2019s how they find answers no one knew before.  Curiosity drives them\u2014just like your questi\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "a picture of a plant with a magni and a magni on it. Science textbook figure, C\u2026",
+            "file": "figures/p0_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 31947,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-03",
+        "query": "what is observation in science?",
+        "label": "normal",
+        "expect_keywords": [
+          "observation",
+          "science"
+        ],
+        "answer_clip": "Observation in science is like **paying close attention** to what\u2019s happening around you.  It\u2019s not just looking\u2014it\u2019s **noticing details** carefully. Like how the Moon changes shape each night. Or how sugar disappears in tea but makes it sweet.  Science uses observations to **find answers** to questions. For example, why puris have thin sides\u2014 that\u2019s something you\u2019d notice and wonder about.  So observation helps us **see patterns** and start ask\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 19432,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-04",
+        "query": "what is a hypothesis in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "hypothesis"
+        ],
+        "answer_clip": "Oh, a great question!  A hypothesis is like a **smart guess** you make. You see something\u2014like dough rising\u2014and think, *\"Maybe yeast makes it grow!\"* It\u2019s not just a wild idea\u2014it\u2019s a **focused prediction** you can test.  The chapter says science isn\u2019t just facts\u2014it\u2019s about asking, *\"How does this work?\"* and trying to prove it. A hypothesis helps you plan experiments to find answers.  So it\u2019s your **starting idea** before you check if it\u2019s true.\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 23544,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-05",
+        "query": "how does an experiment help us learn?",
+        "label": "interactive",
+        "expect_keywords": [
+          "experiment",
+          "science"
+        ],
+        "answer_clip": "Experiments help us learn by turning questions into answers. You ask, *\"Why does dough puff up?\"* or *\"Why is one side of a puri thinner?\"* Then you test it\u2014like changing oil temperature or dough thickness.  Each test gives you **proof**\u2014not just guesses. If the puri puffs more in hotter oil, you\u2019ve found a pattern. That\u2019s how science builds knowledge step by step.  It\u2019s not just memorizing facts\u2014it\u2019s **discovering** them yourself.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 31820,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-06",
+        "query": "can you show a diagram or figure from this science chapter?",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "diagram",
+          "image"
+        ],
+        "answer_clip": "Oh, I see you want to look at something visual!  This chapter doesn\u2019t have big diagrams or figures\u2014it\u2019s all about *ideas*. But you\u2019ll find two cool symbols on every page: - A **root** on left pages (for solid facts). - A **kite** on right pages (for curiosity to fly).  The book\u2019s design itself is like a science lesson\u2014roots keep us grounded, kites help us explore! Maybe check the first page\u2019s questions for inspiration? They\u2019re like little puzzle\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 18374,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.2,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-07",
+        "query": "what skills do young scientists need?",
+        "label": "normal",
+        "expect_keywords": [
+          "skill",
+          "science",
+          "curious"
+        ],
+        "answer_clip": "Young scientists need a few key skills to explore science well. First, they must **ask focused questions**\u2014not just \"why?\" but \"how can I test this?\" Next, they learn to **observe carefully**\u2014like noticing why a puri\u2019s side is thinner.  Then, they **design simple experiments** to answer those questions. Finally, they **share their findings clearly**\u2014explaining what they saw.  This chapter says science isn\u2019t just memorizing facts. It\u2019s about **as\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 41177,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-08",
+        "query": "quiz me one question on scientific investigation",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "?",
+          "investigat"
+        ],
+        "answer_clip": "Got it! Let\u2019s start with this:  *\"Why does one side of a puri puff more than the other?\"*  That\u2019s a real question from the chapter. To answer it scientifically, you\u2019d need to: 1. Observe the puri carefully before and after frying. 2. Check if one side has thinner dough\u2014does that puff more? 3. Try repeating it with the same dough thickness.  The chapter says this is how *systematic investigation* works. Ready to think like a scientist? What do yo\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 21508,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-09",
+        "query": "what is the difference between guessing and investigating?",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "guess"
+        ],
+        "answer_clip": "Guessing is like saying, *\"I think puris puff because of magic!\"*\u2014just a wild thought. Investigating? That\u2019s like asking, *\"What if I fry puris with holes? What happens?\"* You plan, test, and note what you see\u2014like the chapter says with dough circles.  Guessing stops at *\"I don\u2019t know.\"* Investigating keeps asking: *\"Why? What if?\"* That\u2019s how science grows\u2014step by step, not just luck.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 34891,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-10",
+        "query": "give a real life example of investigation around me",
+        "label": "normal",
+        "expect_keywords": [
+          "investigat",
+          "example"
+        ],
+        "answer_clip": "Right! Let\u2019s look right here in your book.  The chapter asks: *Why is one side of a puri thinner than the other?* That\u2019s a real-life investigation! Someone noticed puris puff differently. They might test: *Does the thinner side puff more?* Or try frying puris with different shapes\u2014just like scientists do.  Even simple things like this are investigations. You can do it too\u2014pick something around you. *Why does my water bottle sweat in summer?* Obs\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 19443,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-11",
+        "query": "why ask questions in science?",
+        "label": "normal",
+        "expect_keywords": [
+          "question",
+          "science"
+        ],
+        "answer_clip": "Science isn\u2019t just about knowing answers\u2014it\u2019s about asking the right questions. Look at the puri example on page 1. Why is one side thinner? That\u2019s a real question scientists start with.  Questions help us explore. They turn curiosity into action. Like, why does dough puff up? Or why are leaves different shapes? Each question is a clue to dig deeper.  Science grows when we ask, \"What if?\" or \"Why does this happen?\" That\u2019s how we learn\u2014not just f\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 25416,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S1-12",
+        "query": "what is data or evidence in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "data",
+          "evidence",
+          "science"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Science**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1510,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 6.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 5.9,
+          "bugs": [
+            "voice transcript thin for interactive topic"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-13",
+        "query": "steps of investigating something \u2014 list them",
+        "label": "interactive",
+        "expect_keywords": [
+          "step",
+          "observ",
+          "experiment"
+        ],
+        "answer_clip": "Right, let\u2019s break it down simply.  First, you **ask a clear question**\u2014like why puris puff or why one side is thinner. Then, you **make careful observations**\u2014watch, note smells, sounds, or changes.  Next, you **plan your experiment**\u2014use the same puri dough, same frying method. After that, you **do the experiment** and record everything you see.  Finally, you **think of new questions**\u2014like if stored dough puffs better. That\u2019s how science inve\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 20047,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S1-14",
+        "query": "how is curiosity useful?",
+        "label": "normal",
+        "expect_keywords": [
+          "curious",
+          "science"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Careful**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 823,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 2.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 3.3,
+          "bugs": [
+            "missing expected keywords",
+            "voice transcript thin for interactive topic"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "S1-15",
+        "query": "what should i write as notes from this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "answer_clip": "For notes, focus on **two big ideas** from this chapter.  First, science isn\u2019t just facts\u2014it\u2019s about **asking questions**. Like why puris have thin sides or how many stars exist. Write that down.  Second, the chapter shows **how Earth supports life**. It\u2019s just the right distance from the Sun, has air we breathe, and protects us from harmful rays. That\u2019s why life exists here.  Keep it simple: **questions + Earth\u2019s perfect conditions**. That\u2019s yo\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 20994,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-16",
+        "query": "explain fotosyntesis from this chapter pls",
+        "label": "typo",
+        "expect_keywords": [
+          "chapter",
+          "science",
+          "not",
+          "investigat"
+        ],
+        "answer_clip": "explain fotosyntesis from this chapter pls is not covered in Chapter 1 - Exploring the Investigative World of Science.  How would you like to continue? a) Stay in Chapter 1 - Exploring the Investigative World of Science b) Switch to the right chapter \u2014 open AI Tutor Reply a or b.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 3612,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "S1-17",
+        "query": "does this chapter say the earth is flat?",
+        "label": "wrong",
+        "expect_keywords": [
+          "science",
+          "not",
+          "investigat"
+        ],
+        "answer_clip": "No, this chapter doesn\u2019t say anything about the Earth being flat. It actually talks about how Earth is *just right* for life. The chapter mentions Earth\u2019s perfect distance from the Sun. It also says Earth has an atmosphere that keeps us safe. But it doesn\u2019t discuss flat Earth theories at all.  This chapter is more about how science works\u2014asking questions and exploring nature.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6429,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.0,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.1,
+          "bugs": [
+            "forbidden content mentioned: flat"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-18",
+        "query": "is health the only topic here?",
+        "label": "wrong",
+        "expect_keywords": [
+          "investigat",
+          "science"
+        ],
+        "answer_clip": "No, health isn\u2019t the *only* topic here\u2014this chapter is about **how science works**. We start small\u2014like microbes in water\u2014then zoom out to big challenges. Electricity, forces, even weather? All connected to science\u2019s tools: observing, measuring, experimenting. It\u2019s not just about health\u2014it\u2019s about *solving problems* with curiosity.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7042,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-19",
+        "query": "i'm lost \u2014 restart with what investigasion means",
+        "label": "typo",
+        "expect_keywords": [
+          "investigat"
+        ],
+        "answer_clip": "Oh, I totally get it\u2014let\u2019s start fresh. Science isn\u2019t about memorizing facts. It\u2019s about **digging deeper**\u2014asking why things work the way they do. Like why your puri has one thin side. That\u2019s the start of investigation! Want to try a question together?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 22117,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S1-20",
+        "query": "short summary of the investigative world chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "science",
+          "investigat"
+        ],
+        "answer_clip": "This chapter is all about **how science works**\u2014not just memorizing facts.  It starts with big questions: *Why is one side of a puri thinner?* or *How does Earth stay just right for life?* Science isn\u2019t about knowing answers\u2014it\u2019s about **asking smart questions** and exploring tiny things like microbes or big things like ecosystems.  You\u2019ll learn how forces and pressure work\u2014like why a ball falls or how winds form. And yes, it even touches on how\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "a picture of a plant with a magni and a magni on it. Science textbook figure, C\u2026",
+            "file": "figures/p0_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 29319,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "S1-01",
+        "source_query": "what is this chapter exploring the investigative world of science about?",
+        "query": "hold on, what do you mean by how science works?",
+        "derived": true,
+        "answer_clip": "This chapter is all about **how to explore science like a real investigator**, not just memorizing facts.  The chapter starts by inviting you to ask big questions\u2014like why puris have uneven sides or how many stars exist in our galaxy. It explains that science isn\u2019t just about knowing things; it\u2019s about **asking smart questions, testing ideas, and finding answers yourself**. The chapter uses two powerful symbols\u2014a **root** (for solid observations\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 4,
+            "caption": "Textbook illustration",
+            "file": "figures/p3_7.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 36289,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-02",
+        "source_query": "why do scientists investigate things?",
+        "query": "ok but can you explain They in simpler words?",
+        "derived": true,
+        "answer_clip": "Ah, \"they\" here means **scientists**\u2014the people asking questions! The chapter calls them \"investigators\" who mix curiosity with careful watching. Like how you\u2019d test why puris puff\u2014**they** do that too, but for bigger mysteries!",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "a picture of a plant with a magni and a magni on it. Science textbook figure, C\u2026",
+            "file": "figures/p0_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 32038,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-03",
+        "source_query": "what is observation in science?",
+        "query": "is find answers actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "No, I\u2019m not guessing\u2014this chapter **shows exactly how**!  It says science isn\u2019t just about knowing facts. It\u2019s about **asking questions** like \"Why is one side of a puri thinner?\" And then **figuring out answers** through careful steps\u2014 observing, experimenting, and thinking.  The chapter even calls it **\"finding new facts\"**\u2014 not memorizing, but **discovering** them yourself. So yes, the chapter teaches how to find answers!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8414,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-04",
+        "source_query": "what is a hypothesis in simple words?",
+        "query": "quiz me with one easy question just about focused prediction",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your quiz question:  *\"If you notice that a plant grows taller when watered with milk instead of water, what\u2019s your **focused prediction** about why this might happen?\"*  Think: Is it about the milk\u2019s nutrients? Or something else? (Just name one possible guess\u2014no experiment needed!)",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9624,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S1-05",
+        "source_query": "how does an experiment help us learn?",
+        "query": "show me a figure or example related to Experiments",
+        "derived": true,
+        "answer_clip": "Look at **Figure 1.1** on page 6\u2014it shows the puri experiment! You\u2019ll see circles of dough with different thicknesses. That\u2019s how the chapter shows what we can **change** in an experiment.  Or check **Figure 1.2** on page 7\u2014it might show notes on oil temperature. That\u2019s what scientists record to compare results.  The chapter uses puris and oil to teach: **control one thing at a time** (like dough thickness) and observe the change. That\u2019s a real-\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 34712,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-06",
+        "source_query": "can you show a diagram or figure from this science chapter?",
+        "query": "wait why is kite important here?",
+        "derived": true,
+        "answer_clip": "Ah, the kite isn\u2019t just a picture\u2014it\u2019s a *reminder*! The book says curiosity needs to *fly* to explore new ideas. Like a kite, your questions should rise above just facts\u2014 they should help you discover things you didn\u2019t know before.  The root keeps you steady with real observations. But the kite? That\u2019s for asking bold questions\u2014 like why puris puff up or why one side is thinner. Without that kite, science stays stuck on the ground.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 18541,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 2.0,
+          "bugs": [
+            "missing expected keywords",
+            "wanted images but got none"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S1-07",
+        "source_query": "what skills do young scientists need?",
+        "query": "can you give one more real-life example of asking, testing, and explaining?",
+        "derived": true,
+        "answer_clip": "Got it! Let\u2019s try this:  **Asking:** *\"Why does a balloon stick to a woolen sweater?\"* **Testing:** Rub the balloon on the sweater, then bring it near tiny paper bits. **Explaining:** The balloon picks up tiny charges\u2014like how static clings to hair!  This chapter says science is about real puzzles. You can test anything\u2014even why your phone screen glows!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 21387,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-08",
+        "source_query": "quiz me one question on scientific investigation",
+        "query": "i still don't get Observe \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s break it down slowly.  When we say *observe*, we mean **paying close attention** to something. Like when you fry a puri\u2014you don\u2019t just watch it. You check: - Does one side puff up more than the other? - Is the dough thinner on that side? - How long does it take to puff?  It\u2019s not just looking\u2014it\u2019s **noticing details** and maybe even writing them down. Like, \"Yes, the left side puffed up\" or \"It took 30 seconds to puff.\" That\u2019s how sc\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9023,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-09",
+        "source_query": "what is the difference between guessing and investigating?",
+        "query": "ok so what should i remember about I don\u2019t know. for a test?",
+        "derived": true,
+        "answer_clip": "For your test, remember this: Science isn\u2019t just facts\u2014it\u2019s **asking smart questions** like *\"Why is one side of a puri thinner?\"* The chapter says you\u2019ll learn to **plan small experiments**\u2014not just guess. Look for the **root and kite** symbols: roots mean *solid observations*, kites mean *creative ideas*. Write down: *\"Investigation = questions + careful testing + clear answers.\"* That\u2019s the core.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 23960,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-10",
+        "source_query": "give a real life example of investigation around me",
+        "query": "that part about Does sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I see what\u2019s confusing you!  That part isn\u2019t saying *\"Does\"* like a question word. It\u2019s showing how scientists ask questions in a simple way\u2014 like *\"Does the puri puff up?\"* (yes/no) or *\"How long does it take?\"* (seconds).  It\u2019s just a way to check things\u2014like testing if oil temperature changes how fast a puri puffs. No big word here, just a clear *\"yes/no\"* or *\"number\"* check.  Think of it like asking: *\"Does this lightbulb glow?\"* (yes/n\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 20520,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S1-11",
+        "source_query": "why ask questions in science?",
+        "query": "hold on, what do you mean by Science?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break down what **science** really means\u2014using the puri example from your textbook to make it clear.  ---  ### **What is Science?** Science is **not just a subject in school**\u2014it\u2019s a way of **asking questions, testing ideas, and finding answers** about how the world works. Think of it like a detective game where you: 1. **Notice something strange** (e.g., *\"Why is one side of a puri thinner?\"*). 2. **Ask \"Why?\" or \"What if?\"** (e.g., *\"Wha\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 6,
+            "caption": "Why is one side of a puri thinner",
+            "file": "figures/p5_14.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 46977,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S1-12",
+        "source_query": "what is data or evidence in this chapter?",
+        "query": "ok but can you explain Science in simpler words?",
+        "derived": true,
+        "answer_clip": "Science isn\u2019t just facts\u2014it\u2019s **asking questions** and **noticing details**. Like why puris puff or one side is thinner. You **observe**, **test**, and **record** what happens. That\u2019s how we learn\u2014step by step!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16474,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-13",
+        "source_query": "steps of investigating something \u2014 list them",
+        "query": "is think of new questions actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, that\u2019s a great question!  Yes, this chapter **does** talk about thinking of new questions. Look at page 1\u2014it starts with questions like *why is one side of a puri thinner?* And page 2 says science isn\u2019t just about knowing answers\u2014it\u2019s about asking better questions. When you do experiments, you\u2019ll see new things and think of *more* questions. That\u2019s how science grows\u2014one question leads to another!  Want me to show you how that works with the \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 19996,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-14",
+        "source_query": "how is curiosity useful?",
+        "query": "quiz me with one easy question just about Careful",
+        "derived": true,
+        "answer_clip": "Got it! Let\u2019s quiz you on **\"Careful\"**\u2014the chapter\u2019s big idea.  Here\u2019s your question: *Why does the textbook say science needs **both** careful observation *and* creative thinking?*  Hint: Think about the **root** and **kite** symbols on the pages.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 12731,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-15",
+        "source_query": "what should i write as notes from this chapter?",
+        "query": "show me a figure or example related to Second",
+        "derived": true,
+        "answer_clip": "The **\"Second\" part** you\u2019re asking about is likely the **second big idea** in this chapter.  Look at **page 6**\u2014it shows how to **design simple experiments**. The puri example is perfect. See how it asks: *\"Does the puri puff up?\"* or *\"How long does it take?\"* That\u2019s a **clear question** with a way to test it.  The chapter also mentions **controlling one thing at a time**\u2014like changing oil temperature but keeping dough the same. That\u2019s how rea\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 24157,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-16",
+        "source_query": "explain fotosyntesis from this chapter pls",
+        "query": "wait why is Investigative World important here?",
+        "derived": true,
+        "answer_clip": "This chapter isn\u2019t just about facts\u2014it\u2019s about **how science works**. See those questions on page 1? They\u2019re not for tests\u2014they\u2019re to make you *think*. Like why puris have one thin side? That\u2019s a real question scientists start with.  The whole year, you\u2019ll explore tiny things\u2014like microbes in water\u2014and big challenges. You\u2019ll ask questions, test ideas, and find answers *yourself*. That\u2019s the investigative world\u2014asking, observing, and discovering.\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 1,
+            "caption": "a picture of a plant with a magni and a magni on it. Science textbook figure, C\u2026",
+            "file": "figures/p0_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 31005,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "source_id": "S1-17",
+        "source_query": "does this chapter say the earth is flat?",
+        "query": "can you give one more real-life example of Earth?",
+        "derived": true,
+        "answer_clip": "Here\u2019s a real-life example from the chapter: The chapter talks about **ecosystems**\u2014like forests or oceans. Trees, insects, and even tiny plants all depend on Earth\u2019s air, water, and sunlight. That\u2019s how Earth supports *all* living things, from whales to grass.  Want another? Think of **calendars**\u2014they\u2019re based on Earth\u2019s orbit around the Sun. That\u2019s how we track time too!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 20092,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.9,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-18",
+        "source_query": "is health the only topic here?",
+        "query": "i still don't get Electricity \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Oh, I see why this feels tricky! Let me try again\u2014electricity isn\u2019t just *one* thing. The chapter says it\u2019s **how we use electric current** to make things happen.  Think of it like this: when you plug in a heater, the electricity *heats* it up\u2014that\u2019s the **heating effect**. When a fan spins, that\u2019s the **magnetic effect** working behind the scenes. Both are just electricity doing different jobs, like how water can be cold *or* hot depending on h\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 26840,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 5.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.3,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S1-19",
+        "source_query": "i'm lost \u2014 restart with what investigasion means",
+        "query": "ok so what should i remember about digging deeper for a test?",
+        "derived": true,
+        "answer_clip": "Got it! For your test, remember this: Investigation means **asking smart questions**\u2014not just \"why?\" but \"how can I test this?\" Like the puri example: *why does one side puff more?* You\u2019d try experiments\u2014same dough, same drop, note what happens.  Key steps: 1. **Observe carefully** (like watching oil splatter). 2. **Test ideas** (like pricking a puri hole). 3. **Keep notes** (smell? smoke? puff size?). Even big mysteries\u2014like Earth warming\u2014start\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 30260,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S1-20",
+        "source_query": "short summary of the investigative world chapter",
+        "query": "that part about Science sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I hear you! That part *does* sound a little tricky at first.  The chapter isn\u2019t saying science is about memorizing facts\u2014it\u2019s saying science is about **asking questions** and exploring things around you. Like why puris puff up or why one side is thinner. That\u2019s how scientists start\u2014with curiosity!  It\u2019s not about knowing everything right away. It\u2019s about trying small experiments, like changing how you fry a puri or what kind of flour you use\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": true,
+        "ms": 21463,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ]
+  },
+  "tutor_avg": 7.45,
+  "voice_avg": 7.56
+}

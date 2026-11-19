@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}New signup awaiting approval — {{ app_name }}{% endblock %}
+{% block body %}
+<p>A new {{ role_label }} account is awaiting approval on <strong>{{ app_name }}</strong>:</p>
+<p>
+  <strong>Name:</strong> {{ full_name }}<br />
+  <strong>User ID:</strong> {{ username }}<br />
+  <strong>Email:</strong> {{ email }}<br />
+  <strong>Phone:</strong> {{ phone or "-" }}
+  {% if school_name %}<br /><strong>School:</strong> {{ school_name }}{% endif %}
+</p>
+<p>Approve it from the master admin Users page.</p>
+{% endblock %}

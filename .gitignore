@@ -29,18 +29,31 @@ wheels/
 # Environment and secrets
 .env
 .env.local
+.env.production
 *.pem
 
 # Chroma DB
 chroma_db/
 
-# Model files (large GGUF binaries)
+# Hugging Face / local model cache
+.cache/
+
+# Model files (large binaries — not committed)
 models/*.gguf
 models/*.bin
+models/**/*.pt
 
 # Temp / uploads
 temp_*.pdf
 *.tmp
+uploads/_layout_validation/
+uploads/_extraction_test/
+uploads/_extraction_reports/
+uploads/_audit_extraction_report.json
+uploads/
+
+# Local dev PDFs at repo root (canonical copies live under uploads/)
+/*.pdf
 
 # IDE
 .idea/
@@ -59,3 +72,21 @@ Thumbs.db
 .coverage
 htmlcov/
 .mypy_cache/
+
+debug_figure_detection/
+
+# Eval run outputs / local temp (keep evaluation source + goldens)
+evaluation/artifacts/
+evaluation/reports/*
+!evaluation/reports/.gitkeep
+evaluation/baselines/*.json
+!evaluation/baselines/.gitkeep
+
+# Local exports / scratch / celery beat db
+exports/
+tmp/
+celerybeat-schedule
+celerybeat-schedule-*
+over-all-test/*.pdf
+
+.env.worker

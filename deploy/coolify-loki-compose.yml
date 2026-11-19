@@ -1,0 +1,68 @@
+# Coolify → + New → Docker Compose → paste this whole file → Deploy
+# Then set on API app: LOKI_URL=http://loki:3100
+# Keep this stack private (no public domain / no force HTTPS needed).
+
+services:
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: learnmestro-loki
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3100/ready || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    container_name: learnmestro-promtail
+    command: ["-config.file=/etc/promtail/config.yml"]
+    configs:
+      - source: promtail_config
+        target: /etc/promtail/config.yml
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+configs:
+  promtail_config:
+    content: |
+      server:
+        http_listen_port: 9080
+        grpc_listen_port: 0
+
+      positions:
+        filename: /tmp/positions.yaml
+
+      clients:
+        - url: http://loki:3100/loki/api/v1/push
+
+      scrape_configs:
+        - job_name: docker
+          docker_sd_configs:
+            - host: unix:///var/run/docker.sock
+              refresh_interval: 5s
+          relabel_configs:
+            - source_labels: ['__meta_docker_container_name']
+              regex: '/(.*)'
+              target_label: 'container'
+            - source_labels: ['__meta_docker_container_log_stream']
+              target_label: 'stream'
+            - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+              target_label: 'service'
+            - target_label: 'env'
+              replacement: 'production'
+            - target_label: 'job'
+              replacement: 'learnmestro'
+
+volumes:
+  loki-data:

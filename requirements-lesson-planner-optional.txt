@@ -1,0 +1,3 @@
+# Optional: PydanticAI + Mistral SDK for structured artifact generation.
+# Requires compatible pydantic 2.x (already in requirements.txt).
+pydantic-ai-slim[mistral]==0.2.4

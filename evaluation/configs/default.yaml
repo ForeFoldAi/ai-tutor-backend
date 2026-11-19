@@ -1,0 +1,47 @@
+# AI Tutor Evaluation Framework — defaults
+# Override via EVAL_* env vars or extra YAML paths to EvalConfig.load()
+
+datasets:
+  root: evaluation/datasets
+  pdfs:
+    - chapter-1.pdf
+    - chapter-2.pdf
+  board: CBSE
+  class_level: CLASS_9
+  subject_name: Social
+  collection_prefix: eval
+
+phases:
+  enabled:
+    - pdf_extraction
+    - images
+    - tables
+    - ocr
+    - chunking
+    - embeddings
+    - retrieval
+    - topics
+    - captions
+    - ai_tutor
+    - voice_tutor
+    - lesson_planner
+    - worksheet
+    - quiz
+    - homework
+    - science_experiments
+    - monitoring
+    - pipeline
+    - regression
+    - reporting
+  skip_llm: false
+  skip_heavy_ml: false
+
+runtime:
+  save_artifacts: true
+  bootstrap_goldens: false
+
+llm_judge:
+  enabled: true
+  feature: chat
+  max_tokens: 512
+  temperature: 0.0

@@ -1,0 +1,35 @@
+thresholds:
+  retrieval_top1: 0.6
+  retrieval_top3: 0.8
+  retrieval_mrr: 0.7
+  retrieval_ndcg: 0.7
+  hallucination_rate_max: 0.15
+  groundedness_min: 0.45
+  faithfulness_min: 0.65
+  chunk_quality_min: 0.75
+  image_quality_min: 0.8
+  table_quality_min: 0.7
+  caption_accuracy_min: 0.7
+  lesson_quality_min: 0.7
+  tutor_quality_min: 0.7
+  embedding_dim: 768
+  chunk_size_tokens_max: 1200
+  chunk_size_tokens_min: 50
+  latency_ms_warn: 30000
+  latency_ms_fail: 120000
+  blank_image_std_max: 8.0
+  min_image_side_px: 40
+  min_image_area_px: 2500
+  crop_edge_margin_ratio: 0.02
+
+regression:
+  enabled: true
+  max_score_drop: 0.05
+  max_latency_increase_ratio: 1.5
+  max_retrieval_drop: 0.05
+  max_hallucination_increase: 0.05
+
+ci:
+  fail_on_critical: true
+  fail_on_regression: true
+  fail_on_overall_below: 0.85

@@ -1,0 +1,17 @@
+settings_version: 0.0.4
+datasets_dir: /Applications/ForeFold/virtual tutor/ai-tutor-backend/datasets
+weights_dir: /Applications/ForeFold/virtual tutor/ai-tutor-backend/weights
+runs_dir: /Applications/ForeFold/virtual tutor/ai-tutor-backend/runs
+uuid: 4349973dac4d0bc40955af5de1ebe7cab51e38b35265bbf6510df88b5fb237fd
+sync: true
+api_key: ''
+openai_api_key: ''
+clearml: true
+comet: true
+dvc: true
+hub: true
+mlflow: true
+neptune: true
+raytune: true
+tensorboard: true
+wandb: true

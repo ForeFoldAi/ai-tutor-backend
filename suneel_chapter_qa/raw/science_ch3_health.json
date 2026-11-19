@@ -1,0 +1,2045 @@
+{
+  "generated_at": "2026-09-09 16:33:54 +0530",
+  "meta": {
+    "slug": "science_ch3_health",
+    "subject": "Science",
+    "chapter_id": "37",
+    "chapter": "Chapter 3 - Health: The Ultimate Treasure",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "S3-01",
+        "query": "why do they call health the ultimate treasure?",
+        "label": "normal",
+        "expect_keywords": [
+          "health"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-02",
+        "query": "what things keep us healthy according to the chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "health"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-03",
+        "query": "how does disease spread? explain like steps",
+        "label": "interactive",
+        "expect_keywords": [
+          "disease",
+          "health",
+          "spread"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-04",
+        "query": "why should i wash my hands?",
+        "label": "normal",
+        "expect_keywords": [
+          "hand",
+          "wash",
+          "hygiene",
+          "germ"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-05",
+        "query": "what is hygiene in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "hygiene",
+          "health"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-06",
+        "query": "show a figure about health or disease from the book",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "health",
+          "image"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-07",
+        "query": "what foods help us stay healthy?",
+        "label": "normal",
+        "expect_keywords": [
+          "food",
+          "health"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-08",
+        "query": "quiz me on health with one easy question",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "?"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-09",
+        "query": "what is immunity roughly?",
+        "label": "normal",
+        "expect_keywords": [
+          "immun",
+          "health",
+          "body"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-10",
+        "query": "difference between healthy and disease-free life?",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "disease"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-11",
+        "query": "how does exercise help?",
+        "label": "normal",
+        "expect_keywords": [
+          "exercise",
+          "health"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-12",
+        "query": "why sleep matters for health",
+        "label": "normal",
+        "expect_keywords": [
+          "sleep",
+          "health"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-13",
+        "query": "can stress affect health in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "stress",
+          "mental",
+          "emotion"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-14",
+        "query": "prevention vs cure \u2014 what does the chapter say?",
+        "label": "normal",
+        "expect_keywords": [
+          "prevent",
+          "health",
+          "disease"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-15",
+        "query": "give 3 healthy habits from the chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "habit"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-16",
+        "query": "what is hygene and why it matter?",
+        "label": "typo",
+        "expect_keywords": [
+          "hygiene",
+          "health"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-17",
+        "query": "did marathas invent vaccines in this health chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "health",
+          "not"
+        ],
+        "forbidden": [
+          "maratha"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "S3-18",
+        "query": "is health only about medicines?",
+        "label": "wrong",
+        "expect_keywords": [
+          "health",
+          "habit",
+          "food",
+          "not"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-19",
+        "query": "explain how germs enter the body simply",
+        "label": "interactive",
+        "expect_keywords": [
+          "germ",
+          "body",
+          "disease"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      },
+      {
+        "id": "S3-20",
+        "query": "why is helth called ultimat tresure?",
+        "label": "typo",
+        "expect_keywords": [
+          "health"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": true
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": true,
+    "health": {
+      "status": "ok",
+      "voice": "ws-pcm",
+      "instanceId": "Maniths-MacBook-Air.local:68746",
+      "draining": false,
+      "liveSessions": 0,
+      "redis": "up"
+    },
+    "session_id": "7a088717-6022-40cd-9ef1-d8cdeceee770",
+    "query_ok": true,
+    "note": "REST ok only; scored via voice_mode stream"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "S3-01",
+        "query": "why do they call health the ultimate treasure?",
+        "label": "normal",
+        "expect_keywords": [
+          "health"
+        ],
+        "answer_clip": "The chapter explains that health is called the *ultimate treasure* because it\u2019s the most valuable thing we have\u2014far beyond money or possessions. A healthy body and mind let you learn, play, and face life\u2019s challenges with energy and confidence, like the student who felt better after improving his habits. Without health, even the best opportunities feel impossible to enjoy.  - It\u2019s the foundation for happiness and success. - It helps us connect w\u2026",
+        "images": [
+          {
+            "figure": "3.3",
+            "page": 4,
+            "caption": "Two different playgrounds",
+            "file": "figures/fig_3_3.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 34490,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S3-02",
+        "query": "what things keep us healthy according to the chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "health"
+        ],
+        "answer_clip": "The chapter says health isn\u2019t just about not getting sick\u2014it\u2019s about feeling good in your **body, mind, and relationships**. To stay healthy, you need a mix of good habits like eating fresh, nutritious food, exercising regularly, and getting enough restful sleep. Keeping your surroundings clean and avoiding harmful habits like too much screen time or junk food also matters. Even your emotions and social connections play a big role\u2014loneliness or \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 28125,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S3-03",
+        "query": "how does disease spread? explain like steps",
+        "label": "interactive",
+        "expect_keywords": [
+          "disease",
+          "health",
+          "spread"
+        ],
+        "answer_clip": "**Topic** How diseases spread \u2014 the step-by-step journey of pathogens.  **In Simple Words** Diseases spread when tiny harmful germs (pathogens) move from one person or place to another. Think of them like invisible spies sneaking into our bodies through air, food, water, or even tiny insects. By understanding these steps, we can stop them before they cause illness.  ---  **Steps** **Step 1: Pathogens enter the body** Pathogens (like viruses, bac\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16696,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.2,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-04",
+        "query": "why should i wash my hands?",
+        "label": "normal",
+        "expect_keywords": [
+          "hand",
+          "wash",
+          "hygiene",
+          "germ"
+        ],
+        "answer_clip": "Washing your hands is one of the simplest yet most powerful ways to protect your health, and the chapter explains why it\u2019s so important. Your hands touch many surfaces throughout the day\u2014doorknobs, food, toys, or even your face\u2014and they can easily pick up tiny invisible germs called *pathogens* (like bacteria or viruses). When you don\u2019t wash them, these germs can enter your body through your mouth, nose, or eyes, making you sick. The textbook hi\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 20109,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S3-05",
+        "query": "what is hygiene in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "hygiene",
+          "health"
+        ],
+        "answer_clip": "Let\u2019s break down **hygiene** in the simplest way possible\u2014like keeping your room or body clean to stay healthy.  Imagine you have a favorite toy. If you don\u2019t clean it after playing, dirt and germs build up, and it might make you sick if you touch your face. **Hygiene is just like that for your body!** It means:  1. **Washing your hands** with soap after touching dirty things (like after using the toilet or before eating). 2. **Keeping your body\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10220,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-06",
+        "query": "show a figure about health or disease from the book",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "health",
+          "image"
+        ],
+        "answer_clip": "The textbook shows several figures about health and diseases, including images of common diseases like cold, flu, typhoid, diabetes, asthma, and chickenpox. One key figure groups diseases into **communicable** (spread by pathogens like viruses or bacteria) and **non-communicable** (caused by lifestyle or environment). Another figure likely illustrates how diseases affect the body, showing symptoms (like fever or fatigue) and signs (like rashes o\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 18486,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 2.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 6.5,
+          "bugs": [
+            "wanted images but got none",
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S3-07",
+        "query": "what foods help us stay healthy?",
+        "label": "normal",
+        "expect_keywords": [
+          "food",
+          "health"
+        ],
+        "answer_clip": "The chapter says healthy foods are the ones that keep your body strong and full of energy, like fruits, vegetables, and whole grains. These foods give you important vitamins and minerals that help you grow and stay active. For instance, eating an apple gives you fiber and vitamin C, while whole grains like brown rice provide energy for your day.  - **Eat colorful foods**\u2014different colors mean different nutrients. - **Limit junk food** because it\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 19099,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-08",
+        "query": "quiz me on health with one easy question",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "?"
+        ],
+        "answer_clip": "**Quiz Time** Great! Let\u2019s test your understanding of health concepts\u2014just one easy question to start. You\u2019ve got this!  **Questions** 1. According to the chapter, what is the **main difference** between a *sign* and a *symptom* of a disease? Give one example of each.  **How to Answer** Reply with your answer, and I\u2019ll guide you through it step by step.  **Encouragement** Think about what you *feel* (symptom) vs. what others *notice* (sign)\u2014this\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8901,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-09",
+        "query": "what is immunity roughly?",
+        "label": "normal",
+        "expect_keywords": [
+          "immun",
+          "health",
+          "body"
+        ],
+        "answer_clip": "Immunity is how your body fights off diseases\u2014like a shield against harmful germs. The chapter says your immune system recognizes and attacks pathogens (like viruses or bacteria) to keep you healthy. For example, if you catch a cold once, your body remembers how to fight it better the next time.  - It can be **natural** (built over time) or **boosted** by vaccines. - A strong immune system helps you stay healthy longer.  Would you like an exampl\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12565,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S3-10",
+        "query": "difference between healthy and disease-free life?",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "disease"
+        ],
+        "answer_clip": "A healthy life means more than just not getting sick\u2014it\u2019s about feeling strong, happy, and connected. The chapter explains that health includes physical well-being, a positive mindset, and good relationships, not just the absence of diseases. For example, someone might avoid germs (disease-free) but still feel lonely or tired (not healthy).  The difference lies in: - **Disease-free** = No illnesses (like no colds or infections). - **Healthy** = \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10975,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-11",
+        "query": "how does exercise help?",
+        "label": "normal",
+        "expect_keywords": [
+          "exercise",
+          "health"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Helps**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1402,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 2.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 3.5,
+          "bugs": [
+            "missing expected keywords",
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "S3-12",
+        "query": "why sleep matters for health",
+        "label": "normal",
+        "expect_keywords": [
+          "sleep",
+          "health"
+        ],
+        "answer_clip": "Sleep matters for health because it helps your body and mind recover and recharge after a long day. The chapter explains that getting enough sleep is one of the key habits for staying healthy\u2014it supports your immune system, helps your brain work better, and keeps your mood stable. Without proper sleep, you might feel tired, irritable, or even get sick more easily.  - Sleep helps your body repair itself and grow stronger. - It also improves your \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12223,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-13",
+        "query": "can stress affect health in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "stress",
+          "mental",
+          "emotion"
+        ],
+        "answer_clip": "Stress definitely impacts health, and the chapter highlights this by showing how emotions like worry or loneliness can harm our well-being. The boy in Activity 3.1 felt stressed due to loneliness, which led to headaches, weight loss, and poor sleep\u2014all signs of poor health. Stress weakens our body\u2019s ability to fight infections and disrupts our daily balance, making it harder to stay healthy.  - Stress can cause physical symptoms like headaches o\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 24071,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "S3-14",
+        "query": "prevention vs cure \u2014 what does the chapter say?",
+        "label": "normal",
+        "expect_keywords": [
+          "prevent",
+          "health",
+          "disease"
+        ],
+        "answer_clip": "Health is the most valuable treasure we have, and this chapter teaches that it depends on three key parts: your body, your mind, and the people around you. The textbook explains that staying healthy means eating balanced meals, exercising regularly, and avoiding harmful habits like smoking or too much screen time. It also shows how diseases spread\u2014through air, dirty water, or insects like mosquitoes\u2014and how simple habits like washing hands can k\u2026",
+        "images": [
+          {
+            "figure": "3.2",
+            "page": 3,
+            "caption": "Health: The Ultimate Treasure\b",
+            "file": "figures/fig_3_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 37806,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-15",
+        "query": "give 3 healthy habits from the chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "habit"
+        ],
+        "answer_clip": "The chapter shares three simple but powerful habits to stay healthy. One is **eating fresh, whole foods** like fruits, vegetables, and whole grains\u2014this fuels your body naturally. Another is **moving regularly**, whether by walking, playing sports, or doing simple exercises\u2014it keeps your heart strong and your energy up. The third is **prioritizing sleep** (about 8 hours for you) so your body can rest and repair itself.  The chapter also warns ag\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 15059,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-16",
+        "query": "what is hygene and why it matter?",
+        "label": "typo",
+        "expect_keywords": [
+          "hygiene",
+          "health"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Water**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1847,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 3.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 3.8,
+          "bugs": [
+            "missing expected keywords",
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "S3-17",
+        "query": "did marathas invent vaccines in this health chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "health",
+          "not"
+        ],
+        "answer_clip": "The chapter doesn\u2019t say the Marathas invented vaccines. It does explain India\u2019s **old practice of variolation**, where people used smallpox pus to build immunity\u2014done by skilled workers called *teekedaars* long before modern vaccines. This was a natural way to protect against diseases like smallpox.  The textbook also highlights Indian scientists like Maharaj Kishan Bhan, who created the Rotavirus vaccine, and Kamal Ranadive, who studied cancer \u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 12,
+            "caption": "Ever heard of",
+            "file": "figures/p11_17.jpg"
+          },
+          {
+            "figure": null,
+            "page": 12,
+            "caption": "Ever heard of",
+            "file": "figures/p11_17.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 17905,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 2.5,
+          "expect_score": 0.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 4.9,
+          "bugs": [
+            "missing expected keywords",
+            "forbidden content mentioned: maratha"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "S3-18",
+        "query": "is health only about medicines?",
+        "label": "wrong",
+        "expect_keywords": [
+          "health",
+          "habit",
+          "food",
+          "not"
+        ],
+        "answer_clip": "Health isn\u2019t just about medicines\u2014it\u2019s about feeling your best in body, mind, and social life. The chapter explains that health means more than just being free from sickness; it includes happiness, strong relationships, and good habits like eating well and exercising. Medicines help when you\u2019re already unwell, but preventing diseases through cleanliness, vaccines, and healthy routines keeps you strong too.  - Medicines treat illnesses, but habit\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 19991,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S3-19",
+        "query": "explain how germs enter the body simply",
+        "label": "interactive",
+        "expect_keywords": [
+          "germ",
+          "body",
+          "disease"
+        ],
+        "answer_clip": "Germs enter our body like tiny invaders slipping through different doors. The chapter explains that they can come in through the air when someone coughs or sneezes, or by eating contaminated food or drinking unclean water. They can also sneak in through tiny cuts or bites from infected animals or insects like mosquitoes.  - Washing hands regularly helps wash away germs that might be on your skin. - Sharing personal items like towels or utensils \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13632,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.2,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-20",
+        "query": "why is helth called ultimat tresure?",
+        "label": "typo",
+        "expect_keywords": [
+          "health"
+        ],
+        "answer_clip": "Health is called the *ultimate treasure* because it gives us the strength to live fully and happily. The chapter explains that true health isn\u2019t just being free from diseases\u2014it also means feeling good in body, mind, and relationships. Just like a treasure protects and supports us, health lets us play, learn, and enjoy life without limits. Without health, even the best things in life feel impossible to enjoy.  - It helps us do everything we love\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 24008,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "S3-02",
+        "source_query": "what things keep us healthy according to the chapter?",
+        "query": "hold on, what do you mean by body, mind, and relationships?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down step by step, just like how you\u2019d explain it to a friend:  1. **Body**: This means taking care of your physical health. Think of it like a car\u2014if you don\u2019t eat well, don\u2019t move enough, or don\u2019t sleep, your body gets tired, just like a car runs poorly if you don\u2019t fill it with good fuel or oil. The chapter says things like eating fresh food, exercising, and sleeping well keep your body strong.  2. **Mind**: This is about how y\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11024,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S3-03",
+        "source_query": "how does disease spread? explain like steps",
+        "query": "ok but can you explain In Simple Words in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** How diseases spread \u2014 the invisible chain of infection.  **In Simple Words** Diseases spread when tiny, harmful germs (called pathogens) move from one person or place to another. Imagine these germs like invisible spies that sneak into our bodies through air, food, water, or even tiny insects like mosquitoes. The chapter explains that these germs can jump from an infected person to a healthy one in simple ways\u2014like coughing, touching d\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16188,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "S3-04",
+        "source_query": "why should i wash my hands?",
+        "query": "is Think actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "The chapter doesn\u2019t use the phrase *\"I think\"* as a lesson\u2014it\u2019s just a heading for your own reflections at the end. Instead, the textbook teaches about health by explaining how germs spread, why hygiene matters, and how habits (like washing hands) keep you healthy. It shows examples like the boy who felt sick because of poor habits, and it defines health as more than just being free from disease.  - The chapter focuses on **facts** (like how ger\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13553,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "source_id": "S3-05",
+        "source_query": "what is hygiene in simple words?",
+        "query": "quiz me with one easy question just about Keeping your body clean",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of how keeping your body clean helps you stay healthy! Remember, hygiene is your first line of defense against germs.  **Questions** 1. According to the chapter, what are *two* simple ways to keep your body clean that help prevent diseases? 2. The textbook mentions that a clean environment (like the playground in **Fig. 3.3a**) is healthier than a dirty one. Why do you think flies and mosquitoes are a \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6904,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S3-06",
+        "source_query": "show a figure about health or disease from the book",
+        "query": "show me a figure or example related to non-communicable",
+        "derived": true,
+        "answer_clip": "The textbook shows a figure grouping diseases into **communicable** (like chickenpox) and **non-communicable** (like diabetes and asthma). You\u2019ll see examples like diabetes, heart disease, and cancer listed under non-communicable diseases, with notes about their causes\u2014such as poor diet, smoking, or pollution\u2014rather than germs. Another figure might illustrate how lifestyle choices (e.g., eating junk food or not exercising) contribute to these di\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 15,
+            "caption": "non-communicable",
+            "file": "figures/p14_19.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12001,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 9.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 6.2,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S3-13",
+        "source_query": "can stress affect health in this chapter?",
+        "query": "wait why is Activity important here?",
+        "derived": true,
+        "answer_clip": "Activities in this chapter make learning *personal* by showing how health works in real life. For instance, Activity 3.1 uses a student\u2019s story to prove that stress, loneliness, and bad habits\u2014like too much screen time\u2014can harm health, not just diseases. The chapter explains that health includes our *mind* and *social life*, too. Activities like listing good habits (Activity 3.2) or comparing playgrounds (Activity 3.3) help us *apply* what we le\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 15,
+            "caption": "non-communicable",
+            "file": "figures/p14_19.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 20197,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S3-14",
+        "source_query": "prevention vs cure \u2014 what does the chapter say?",
+        "query": "can you give one more real-life example of Health?",
+        "derived": true,
+        "answer_clip": "The chapter explains that **prevention is always better than cure**\u2014it\u2019s the best way to stay healthy! The textbook shows that diseases can be *communicable* (spread by germs like colds or dengue) or *non-communicable* (like diabetes, caused by bad habits). To prevent diseases, the chapter highlights simple steps: **eating balanced food, washing hands, avoiding junk food, exercising, and keeping your surroundings clean**. It also warns that harm\u2026",
+        "images": [
+          {
+            "figure": "3.2",
+            "page": 3,
+            "caption": "Health: The Ultimate Treasure\b",
+            "file": "figures/fig_3_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14364,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.2,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "S3-17",
+        "source_query": "did marathas invent vaccines in this health chapter?",
+        "query": "i still don't get old practice of variolation \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Variolation was India\u2019s ancient way to fight smallpox. Instead of waiting for the disease to strike, people used a tiny amount of smallpox pus to create a controlled, mild infection. This taught the body to recognize and fight the germ later\u2014like a training session for your immune system. The chapter says skilled workers called *teekedaars* did this carefully to avoid serious illness.  This method was used long before modern vaccines. It worked \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12658,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 5.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.2,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S3-18",
+        "source_query": "is health only about medicines?",
+        "query": "ok so what should i remember about Health for a test?",
+        "derived": true,
+        "answer_clip": "Health isn\u2019t just about being free from illness\u2014it\u2019s about feeling strong, happy, and connected. The chapter shows health has three parts: physical (like eating well and exercising), mental (a calm mind and good sleep), and social (friendships and family). Remember that small habits\u2014like washing hands, avoiding junk food, and spending time outdoors\u2014make a big difference.  - The WHO says health means more than just not being sick. - Ayurveda high\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12044,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 8.0,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "source_id": "S3-20",
+        "source_query": "why is helth called ultimat tresure?",
+        "query": "that part about Just sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Health isn\u2019t just about not getting sick\u2014it\u2019s the *ultimate treasure* because it lets you live fully and happily. The chapter compares it to a treasure that protects and supports you, just like health helps you play, learn, and enjoy life without limits. Even a clean playground (like Fig. 3.3a) shows how good surroundings keep us healthy, just as dirty ones (like Fig. 3.3b) can make us feel unwell.  - It includes feeling good in body, mind, and \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11761,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 4.0,
+          "interactive_note": "",
+          "overall": 7.9,
+          "bugs": [
+            "expected science_experiment missing"
+          ],
+          "keyword_hits": 1
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "S3-01",
+        "query": "why do they call health the ultimate treasure?",
+        "label": "normal",
+        "expect_keywords": [
+          "health"
+        ],
+        "answer_clip": "Health isn\u2019t just about not getting sick\u2014it\u2019s about feeling strong in **body, mind, and relationships**.  The chapter says health is like a treasure because it helps you do everything better. A healthy person handles stress, makes friends easily, and even works harder. Think of that boy in the story\u2014he felt lonely, used his phone too much, and got sick. His health was broken because he ignored his mind and body.  The WHO says health is more than\u2026",
+        "images": [
+          {
+            "figure": "3.2",
+            "page": 3,
+            "caption": "Health: The Ultimate Treasure\b",
+            "file": "figures/fig_3_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10944,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S3-02",
+        "query": "what things keep us healthy according to the chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "health"
+        ],
+        "answer_clip": "Oh, great question! The chapter says health isn\u2019t just about not getting sick\u2014it\u2019s about feeling good in **three big areas**.  First, **physical health**: eat fresh food, exercise, sleep well, and stay clean. Second, **mental health**: keep your mind calm, try yoga or meditation, and avoid too much screen time. Third, **social health**: stay connected with friends and family.  The chapter even mentions Ayurveda\u2014it says balance in your body, mind\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8377,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S3-03",
+        "query": "how does disease spread? explain like steps",
+        "label": "interactive",
+        "expect_keywords": [
+          "disease",
+          "health",
+          "spread"
+        ],
+        "answer_clip": "Got it! Let\u2019s break it down like a simple chain.  First, diseases spread when tiny germs\u2014called **pathogens**\u2014move from one person to another. They can travel in **four main ways**:  1. **Through the air**\u2014when someone coughs or sneezes. 2. **By touching**\u2014like shaking hands or sharing things. 3. **Through food or water**\u2014if it\u2019s not clean. 4. **Via insects**\u2014like mosquitoes or flies.  The chapter even shows this in **Figure 3.4**\u2014have a look at\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9330,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-04",
+        "query": "why should i wash my hands?",
+        "label": "normal",
+        "expect_keywords": [
+          "hand",
+          "wash",
+          "hygiene",
+          "germ"
+        ],
+        "answer_clip": "Oh, that\u2019s a great question!  Washing hands with soap and water is like a shield against tiny invisible enemies\u2014**pathogens**\u2014that can make you sick. When you touch things like doorknobs, money, or even your face, these germs can stick to your hands. If you don\u2019t wash them off, you might accidentally put them in your mouth, nose, or eyes\u2014then *whoosh*\u2014they can enter your body and cause diseases like colds or stomach bugs.  The chapter says it\u2019s \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6979,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S3-05",
+        "query": "what is hygiene in simple words?",
+        "label": "normal",
+        "expect_keywords": [
+          "hygiene",
+          "health"
+        ],
+        "answer_clip": "Hygiene is all about keeping yourself and your surroundings clean. It means washing hands before eating, brushing teeth, taking baths, and cleaning your living space.  The chapter says it helps stop germs from spreading. Like washing hands stops diseases from entering your body. Cleanliness is part of staying healthy\u2014just like eating right or sleeping well.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5355,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-06",
+        "query": "show a figure about health or disease from the book",
+        "label": "diagram",
+        "expect_keywords": [
+          "figure",
+          "health",
+          "image"
+        ],
+        "answer_clip": "Look at **Figure 1** on page 15\u2014it shows diseases grouped into two types. The first box has cold, flu, typhoid, chickenpox\u2014those are **communicable** (spread by germs). The second box has diabetes and asthma\u2014those are **non-communicable** (no germs involved).  Want to see how they\u2019re connected? The chapter says signs like fever or rash are visible, while symptoms like pain are felt. That figure helps you spot the difference.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7761,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.6,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S3-07",
+        "query": "what foods help us stay healthy?",
+        "label": "normal",
+        "expect_keywords": [
+          "food",
+          "health"
+        ],
+        "answer_clip": "Oh, great question! The chapter says to stay healthy, eat lots of fruits, veggies, and whole grains. Think apples, carrots, and brown rice\u2014foods your body loves.  Avoid the sugary, fatty snacks or processed junk. Your body runs best on fresh, natural fuel.  And don\u2019t forget\u2014balance is key! A little of everything keeps you strong and happy.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6293,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-08",
+        "query": "quiz me on health with one easy question",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "?"
+        ],
+        "answer_clip": "Got it! Here\u2019s your easy quiz question:  *\"What are the two main types of diseases mentioned in the chapter?\"*  Think of them like two groups\u2014one spreads through germs, the other doesn\u2019t. Ready to guess? Or should I give a hint?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5835,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S3-09",
+        "query": "what is immunity roughly?",
+        "label": "normal",
+        "expect_keywords": [
+          "immun",
+          "health",
+          "body"
+        ],
+        "answer_clip": "Immunity is like your body\u2019s superhero team. It\u2019s the natural way your body fights off germs\u2014 viruses or bacteria\u2014that can make you sick.  When germs enter, your immune system recognizes them. The first time it\u2019s slower, but next time? It remembers and attacks faster\u2014like a trained soldier.  Vaccines help train this team ahead of time. They use weakened or harmless parts of germs so your body learns to fight without getting sick.  So immunity is\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7064,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-10",
+        "query": "difference between healthy and disease-free life?",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "disease"
+        ],
+        "answer_clip": "A healthy life isn\u2019t just about not getting sick\u2014it\u2019s about feeling good all around.  A **disease-free life** means your body isn\u2019t fighting germs or illnesses. But **health** is bigger\u2014it includes feeling strong physically, happy mentally, and connected socially, like the boy in the story who felt lonely.  The chapter says health is a balance of body, mind, and relationships. You can have no diseases but still feel tired or sad\u2014still not fully \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8802,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-11",
+        "query": "how does exercise help?",
+        "label": "normal",
+        "expect_keywords": [
+          "exercise",
+          "health"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Helps**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 2900,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 2.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 3.3,
+          "bugs": [
+            "missing expected keywords",
+            "voice transcript thin for interactive topic"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "S3-12",
+        "query": "why sleep matters for health",
+        "label": "normal",
+        "expect_keywords": [
+          "sleep",
+          "health"
+        ],
+        "answer_clip": "Sleep isn\u2019t just about resting\u2014it\u2019s how your body and mind *recharge*.  Think of it like charging a phone. If you skip sleep, your body can\u2019t heal, your brain can\u2019t think clearly, and you feel tired all day. The chapter says sleep helps your body *recover* from everything you do\u2014like studying, playing, or even thinking.  Without enough sleep, you get headaches, feel grumpy, and even struggle to make friends. That\u2019s why the textbook lists it as a\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7650,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-13",
+        "query": "can stress affect health in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "stress",
+          "mental",
+          "emotion"
+        ],
+        "answer_clip": "Yes, stress *absolutely* affects health\u2014this chapter shows how.  Look at the boy in the story. He moved to a new school, felt lonely, and spent too much time on his phone. His stress made him feel worse\u2014headaches, weight loss, no sleep. His *mind* and *body* both suffered.  The chapter says health isn\u2019t just about not getting sick. It\u2019s about feeling good *physically, mentally, and socially*. Stress messes with all three. Even Ayurveda says bala\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7363,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S3-14",
+        "query": "prevention vs cure \u2014 what does the chapter say?",
+        "label": "normal",
+        "expect_keywords": [
+          "prevent",
+          "health",
+          "disease"
+        ],
+        "answer_clip": "Ah, great question!  The chapter says **prevention is always better than cure**. Look at how it talks about diseases\u2014like diabetes or heart problems. These are called *non-communicable diseases* (NCDs). They don\u2019t spread like colds, but they\u2019re linked to bad habits\u2014 eating junk food, not moving enough, or polluted air.  The chapter shows **how small steps stop big problems**. Like washing hands cuts infections by half. Or yoga reduces stress\u2014bot\u2026",
+        "images": [
+          {
+            "figure": "3.2",
+            "page": 3,
+            "caption": "Health: The Ultimate Treasure\b",
+            "file": "figures/fig_3_2.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9330,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S3-15",
+        "query": "give 3 healthy habits from the chapter",
+        "label": "normal",
+        "expect_keywords": [
+          "health",
+          "habit"
+        ],
+        "answer_clip": "Right, let\u2019s pick three clear habits from the chapter.  First, **eat a balanced diet**\u2014lots of fruits, veggies, and whole grains. Second, **stay active**\u2014play outside, walk, or exercise regularly. Third, **get enough sleep**\u2014it helps your body and mind recover.  These are simple but powerful ways to stay healthy. Want me to explain any one in more detail?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9992,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-16",
+        "query": "what is hygene and why it matter?",
+        "label": "typo",
+        "expect_keywords": [
+          "hygiene",
+          "health"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **After**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 1119,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 3.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 3.7,
+          "bugs": [
+            "missing expected keywords",
+            "voice transcript thin for interactive topic"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "id": "S3-17",
+        "query": "did marathas invent vaccines in this health chapter?",
+        "label": "wrong",
+        "expect_keywords": [
+          "health",
+          "not"
+        ],
+        "answer_clip": "No, the chapter doesn\u2019t say the Marathas invented vaccines. It does mention India\u2019s role in vaccines today\u2014like making them for COVID-19. And it talks about an old practice called *variolation*\u2014scratching skin with smallpox pus to build immunity. That was India\u2019s way long ago, but not the same as modern vaccines.  The chapter focuses on how vaccines work now\u2014like the polio or tetanus shots you might have had. It also names scientists like Mahara\u2026",
+        "images": [
+          {
+            "figure": null,
+            "page": 12,
+            "caption": "Ever heard of",
+            "file": "figures/p11_17.jpg"
+          },
+          {
+            "figure": null,
+            "page": 12,
+            "caption": "Ever heard of",
+            "file": "figures/p11_17.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9271,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 7.0,
+          "expect_score": 5.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.0,
+          "bugs": [
+            "forbidden content mentioned: maratha"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "S3-18",
+        "query": "is health only about medicines?",
+        "label": "wrong",
+        "expect_keywords": [
+          "health",
+          "habit",
+          "food",
+          "not"
+        ],
+        "answer_clip": "No, health isn\u2019t *just* about medicines. The chapter says it\u2019s about so much more.  Health means feeling good **physically, mentally, and socially**\u2014not just not being sick. Think of that boy in the story who moved schools. He wasn\u2019t sick, but he felt lonely, stressed, and tired. His health was suffering because of his habits and mood.  Medicines help when you\u2019re sick, but health is also about eating well, sleeping right, staying active, and eve\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8595,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "S3-19",
+        "query": "explain how germs enter the body simply",
+        "label": "interactive",
+        "expect_keywords": [
+          "germ",
+          "body",
+          "disease"
+        ],
+        "answer_clip": "Got it! Let\u2019s break it down simply.  Germs enter our body in a few easy ways. First, through the **air**\u2014when someone coughs or sneezes, tiny germs float around. You breathe them in.  Second, through **food or water**\u2014if it\u2019s not clean, germs can hide there.  Third, **direct contact**\u2014like shaking hands with someone sick.  Fourth, **insects**\u2014like mosquitoes or flies can carry germs to you.  Fifth, **shared items**\u2014like towels or utensils from s\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10111,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "S3-20",
+        "query": "why is helth called ultimat tresure?",
+        "label": "typo",
+        "expect_keywords": [
+          "health"
+        ],
+        "answer_clip": "Health isn\u2019t just about not getting sick\u2014it\u2019s about feeling good in **body, mind, and relationships**. The chapter says it\u2019s called the *ultimate treasure* because it helps you do everything better.  Think of it like this: a clean playground (Fig. 3.3a) keeps you healthy. But health also means having friends, feeling happy, and even sleeping well. The WHO says health is more than just being free from disease\u2014it\u2019s about balance.  When you\u2019re heal\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8214,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "S3-01",
+        "source_query": "why do they call health the ultimate treasure?",
+        "query": "hold on, what do you mean by body, mind, and relationships?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down like this:  1. **Body** = Your physical self. This means:    - Eating healthy food (like fruits, vegetables, and grains).    - Moving your body (like walking, playing, or doing yoga).    - Getting enough sleep (like 8-10 hours for your age).    - Keeping yourself clean (like washing hands and brushing teeth).  2. **Mind** = Your thoughts and feelings. This means:    - Feeling happy and calm, not always stressed or sad.    - L\u2026",
+        "images": [
+          {
+            "figure": "3.3",
+            "page": 4,
+            "caption": "Two different playgrounds",
+            "file": "figures/fig_3_3.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10433,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S3-02",
+        "source_query": "what things keep us healthy according to the chapter?",
+        "query": "ok but can you explain physical health in simpler words?",
+        "derived": true,
+        "answer_clip": "Physical health means your body feels strong and works well. The chapter says it\u2019s about **eating fresh food**, **exercising** (like walking or playing outside), **sleeping enough**, and **staying clean**\u2014no junk food or too much screen time. Even Ayurveda says balance in your daily routine keeps you healthy. Simple, right?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6055,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S3-03",
+        "source_query": "how does disease spread? explain like steps",
+        "query": "is Through the air actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Ah, good question! Yes, it\u2019s **right there in the chapter**\u2014page 5 says it clearly. Diseases *do* spread through the air. The chapter even mentions it: *\"Pathogens can enter our body through the air we breathe...\"* And **Figure 3.4** shows \"By air\" as one way germs jump from an infected person to a healthy one.  I wasn\u2019t guessing\u2014this is exactly what the textbook explains. The chapter also lists other ways (like food, contact, or insects), but a\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8150,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "S3-04",
+        "source_query": "why should i wash my hands?",
+        "query": "quiz me with one easy question just about Pretty",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy quiz question:  **\"Which of these helps stop mosquitoes from spreading malaria?** A) Wearing short sleeves B) Using mosquito nets C) Eating sweets D) Watching TV\"  Pick the right answer\u2014it\u2019s in the chapter!",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5926,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "S3-12",
+        "source_query": "why sleep matters for health",
+        "query": "show me a figure or example related to Think",
+        "derived": true,
+        "answer_clip": "The chapter doesn\u2019t show a *figure* for \"Think\" directly\u2014it\u2019s more about *habits* and *health choices*.  But look at **Activity 3.2** on page 3. It lists good habits like: - Sleeping well - Eating healthy - Staying active  And bad habits like: - Skipping sleep - Eating junk food  The chapter *doesn\u2019t* have a picture for \"Think,\" but it *does* ask you to *list* habits\u2014maybe that\u2019s what you\u2019re looking for? Try writing down your own examples of hea\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8714,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S3-13",
+        "source_query": "can stress affect health in this chapter?",
+        "query": "wait why is Even Ayurveda important here?",
+        "derived": true,
+        "answer_clip": "Ah, good question! Ayurveda is here because it shows *how* to keep the body, mind, and surroundings balanced.  The chapter says Ayurveda teaches that health isn\u2019t just about medicine\u2014it\u2019s about routines. Like eating fresh food for your body type, sleeping well, and staying calm. Even the boy in the story could\u2019ve used Ayurveda\u2019s tips\u2014less screen time, more friends, and a calm mind.  It\u2019s like a guide to *prevent* problems before they start. Just\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9119,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 2.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 6.3,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S3-14",
+        "source_query": "prevention vs cure \u2014 what does the chapter say?",
+        "query": "can you give one more real-life example of They?",
+        "derived": true,
+        "answer_clip": "Ah, you\u2019re asking about **\"They\"**\u2014 the chapter mentions *non-communicable diseases* (NCDs) like diabetes. Here\u2019s a real-life example: **Air pollution**\u2014 the chapter says it\u2019s a top risk factor for heart disease. In cities, smog from vehicles and factories fills the air. People with asthma or lung problems get worse. That\u2019s how pollution *silently* harms health over time\u2014 just like how fast food leads to diabetes.  So \"They\" = diseases tied to h\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8705,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "S3-17",
+        "source_query": "did marathas invent vaccines in this health chapter?",
+        "query": "i still don't get Maharaj Kishan Bhan \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Okay, let\u2019s break it down slowly.  Maharaj Kishan Bhan was a doctor and scientist in India. He worked in the *Department of Biotechnology*\u2014that\u2019s a government group that helps science grow here. His big job? Helping make the *Rotavirus vaccine*\u2014that\u2019s the shot that stops kids from getting bad diarrhea.  He believed in two things: 1. Using science to make healthcare *affordable*\u2014so everyone can get it. 2. Making India strong in *biotechnology*\u2014th\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9181,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "S3-18",
+        "source_query": "is health only about medicines?",
+        "query": "ok so what should i remember about physically, mentally, and socially for a test?",
+        "derived": true,
+        "answer_clip": "Got it! For your test, remember this simple breakdown:  **Physical health** means eating well\u2014fruits, veggies, whole grains. Avoid junk food. Stay clean, exercise, and sleep enough.  **Mental health** is about a calm mind. Meditate, relax, and avoid stress.  **Social health** is friends, family, and good vibes. Spend time with loved ones.  Look at **Figure 3.1**\u2014it shows these three parts clearly. Good habits like hygiene, sleep, and play keep y\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11407,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 8.5,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "S3-19",
+        "source_query": "explain how germs enter the body simply",
+        "query": "that part about food or water sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I see why that part might sound confusing\u2014let\u2019s clear it up!  You\u2019re right to think about food and water. The chapter isn\u2019t *directly* explaining how germs enter through food or water here. But what it *does* say is that **bad habits**\u2014like eating unhealthy food or drinking unclean water\u2014can make you sick *over time*. For example, if you eat too much junk food or drink dirty water, your body might not get the right nutrients. That can lead t\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8973,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A (voice)",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      }
+    ]
+  },
+  "tutor_avg": 7.23,
+  "voice_avg": 7.98
+}

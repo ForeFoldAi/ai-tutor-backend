@@ -1,0 +1,295 @@
+{
+  "slug": "english_unit1",
+  "subject": "English",
+  "chapter_id": "26",
+  "chapter": "Unit 1 - Wit and Wisdom",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "E1-01",
+      "query": "hey what is this unit Wit and Wisdom even about?",
+      "label": "normal",
+      "expect_keywords": [
+        "wit",
+        "wisdom"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-02",
+      "query": "who is tenali or the witty person in this unit?",
+      "label": "normal",
+      "expect_keywords": [
+        "tenali",
+        "rama",
+        "wit"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-03",
+      "query": "what does wit mean here in simple words?",
+      "label": "normal",
+      "expect_keywords": [
+        "wit",
+        "clever"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-04",
+      "query": "can you tell the main story briefly?",
+      "label": "normal",
+      "expect_keywords": [
+        "king",
+        "queen",
+        "story"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-05",
+      "query": "why did the king get angry at the queen?",
+      "label": "normal",
+      "expect_keywords": [
+        "king",
+        "queen"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-06",
+      "query": "how did clever words fix the problem?",
+      "label": "normal",
+      "expect_keywords": [
+        "wit",
+        "clever"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-07",
+      "query": "is there a poem or tricky writing in this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "poem",
+        "king",
+        "wit"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-08",
+      "query": "what should i learn from this unit for life?",
+      "label": "normal",
+      "expect_keywords": [
+        "wit",
+        "wisdom",
+        "learn"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-09",
+      "query": "quiz me with one easy question on wit",
+      "label": "normal",
+      "expect_keywords": [
+        "wit",
+        "question",
+        "quiz",
+        "?"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-10",
+      "query": "show me any picture or figure from this unit if there is one",
+      "label": "diagram",
+      "expect_keywords": [
+        "figure",
+        "picture",
+        "image",
+        "illustration",
+        "shown"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-11",
+      "query": "what is wisdom different from wit?",
+      "label": "normal",
+      "expect_keywords": [
+        "wisdom",
+        "wit"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-12",
+      "query": "can you give one funny moment from the chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "laugh",
+        "funny",
+        "wit",
+        "yawn"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-13",
+      "query": "why is listening important in the story?",
+      "label": "normal",
+      "expect_keywords": [
+        "listen",
+        "king",
+        "queen",
+        "wit"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-14",
+      "query": "explain the misunderstanding in simpler words",
+      "label": "normal",
+      "expect_keywords": [
+        "misunderstand",
+        "king",
+        "queen"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-15",
+      "query": "whats the theeem of wit and wisdum?",
+      "label": "typo",
+      "expect_keywords": [
+        "theme",
+        "wit",
+        "wisdom"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-16",
+      "query": "who was tenali ramakrisna again?",
+      "label": "typo",
+      "expect_keywords": [
+        "tenali",
+        "rama",
+        "wit"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-17",
+      "query": "who invented photosynthesis in Wit and Wisdom?",
+      "label": "wrong",
+      "expect_keywords": [
+        "wit",
+        "wisdom",
+        "chapter",
+        "not"
+      ],
+      "forbidden": [
+        "photosynthesis"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-18",
+      "query": "did this unit teach gravity formulas?",
+      "label": "wrong",
+      "expect_keywords": [
+        "wit",
+        "wisdom",
+        "english",
+        "not"
+      ],
+      "forbidden": [
+        "gravity",
+        "formula"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-19",
+      "query": "i still dont get why the king stopped talking \u2014 explain again",
+      "label": "normal",
+      "expect_keywords": [
+        "king",
+        "queen"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E1-20",
+      "query": "ok summarize the whole unit in 4 short bullets",
+      "label": "normal",
+      "expect_keywords": [
+        "wit",
+        "wisdom"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    }
+  ]
+}

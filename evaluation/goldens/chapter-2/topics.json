@@ -1,0 +1,5 @@
+{
+  "topics": ["Weather", "Understanding the Weather"],
+  "forbidden_topics": [],
+  "require_numbered_hierarchy": false
+}

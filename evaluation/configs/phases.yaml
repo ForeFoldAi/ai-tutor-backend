@@ -1,0 +1,50 @@
+# Phase enablement presets
+presets:
+  smoke:
+    - voice_tutor
+    - science_experiments
+    - monitoring
+    - pipeline
+    - regression
+    - reporting
+  extraction:
+    - pdf_extraction
+    - images
+    - tables
+    - ocr
+    - captions
+    - reporting
+  rag:
+    - chunking
+    - embeddings
+    - retrieval
+    - topics
+    - ai_tutor
+    - reporting
+  teacher:
+    - lesson_planner
+    - worksheet
+    - quiz
+    - homework
+    - reporting
+  full:
+    - pdf_extraction
+    - images
+    - tables
+    - ocr
+    - chunking
+    - embeddings
+    - retrieval
+    - topics
+    - captions
+    - ai_tutor
+    - voice_tutor
+    - lesson_planner
+    - worksheet
+    - quiz
+    - homework
+    - science_experiments
+    - monitoring
+    - pipeline
+    - regression
+    - reporting

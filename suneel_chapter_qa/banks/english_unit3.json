@@ -1,0 +1,280 @@
+{
+  "slug": "english_unit3",
+  "subject": "English",
+  "chapter_id": "28",
+  "chapter": "Unit 3 - Mystery and Magic",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "E3-01",
+      "query": "is Mystery and Magic a story unit? what happens in it?",
+      "label": "normal",
+      "expect_keywords": [
+        "mystery",
+        "magic"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-02",
+      "query": "what is mysterious in this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "mystery"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-03",
+      "query": "is there real magic or just tricks/stories?",
+      "label": "normal",
+      "expect_keywords": [
+        "magic",
+        "mystery"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-04",
+      "query": "who are the main characters?",
+      "label": "normal",
+      "expect_keywords": [
+        "character",
+        "story"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-05",
+      "query": "can you summarize the plot in simple words?",
+      "label": "normal",
+      "expect_keywords": [
+        "story",
+        "mystery"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-06",
+      "query": "why do people love mystery stories?",
+      "label": "normal",
+      "expect_keywords": [
+        "mystery"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-07",
+      "query": "quiz me with one easy question on this unit",
+      "label": "normal",
+      "expect_keywords": [
+        "mystery",
+        "magic",
+        "?"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-08",
+      "query": "show any figure or illustration from mystery and magic",
+      "label": "diagram",
+      "expect_keywords": [
+        "figure",
+        "picture",
+        "image",
+        "shown"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-09",
+      "query": "what lesson should i take from this unit?",
+      "label": "normal",
+      "expect_keywords": [
+        "lesson",
+        "mystery",
+        "magic"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-10",
+      "query": "is there suspense? where?",
+      "label": "normal",
+      "expect_keywords": [
+        "suspense",
+        "mystery"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-11",
+      "query": "explain one magical moment from the text",
+      "label": "normal",
+      "expect_keywords": [
+        "magic",
+        "mystery"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-12",
+      "query": "how does the mystery get solved if it does?",
+      "label": "normal",
+      "expect_keywords": [
+        "mystery",
+        "solve"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-13",
+      "query": "what new words related to mystery?",
+      "label": "normal",
+      "expect_keywords": [
+        "mystery",
+        "word"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-14",
+      "query": "would you call this fantasy? why?",
+      "label": "normal",
+      "expect_keywords": [
+        "fantasy",
+        "magic",
+        "mystery"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-15",
+      "query": "give me 3 bulletts about mistery unit",
+      "label": "typo",
+      "expect_keywords": [
+        "mystery",
+        "magic"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-16",
+      "query": "whats mistery and magik about lol",
+      "label": "typo",
+      "expect_keywords": [
+        "mystery",
+        "magic"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-17",
+      "query": "did harry potter write this CBSE chapter?",
+      "label": "wrong",
+      "expect_keywords": [
+        "mystery",
+        "magic",
+        "chapter",
+        "not"
+      ],
+      "forbidden": [
+        "harry potter"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-18",
+      "query": "is photosynthesis the theme of Mystery and Magic?",
+      "label": "wrong",
+      "expect_keywords": [
+        "mystery",
+        "magic",
+        "not"
+      ],
+      "forbidden": [
+        "photosynthesis"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-19",
+      "query": "i got confused \u2014 is magic real in the story world?",
+      "label": "normal",
+      "expect_keywords": [
+        "magic",
+        "story"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "E3-20",
+      "query": "end with a short recap please",
+      "label": "normal",
+      "expect_keywords": [
+        "mystery",
+        "magic"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    }
+  ]
+}

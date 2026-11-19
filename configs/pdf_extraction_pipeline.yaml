@@ -1,0 +1,43 @@
+# Native multi-model PDF extraction pipeline (ai-tutor-backend)
+# Download weights into models/ (see docs/PDF_EXTRACTION_SETUP.md)
+
+dpi: 144
+
+stages:
+  layout: true
+  formula_detection: true
+  formula_recognition: true
+  ocr: true
+  table_vlm: false   # requires CUDA + struct-eqtable; set PDF_EXTRACTION_ENABLE_TABLE_VLM=true
+
+layout_detection:
+  img_size: 1024
+  conf_thres: 0.25
+  iou_thres: 0.45
+  model_path: models/Layout/YOLO/doclayout_yolo_ft.pt
+  hf_pretrained: juliozhao/DocLayout-YOLO-DocStructBench
+
+formula_detection:
+  img_size: 1280
+  conf_thres: 0.25
+  iou_thres: 0.45
+  model_path: models/MFD/YOLO/yolo_v8_ft.pt
+
+formula_recognition:
+  batch_size: 32
+  model_path: models/MFR/unimernet_tiny
+  cfg_path: configs/unimernet.yaml
+
+ocr:
+  lang: en
+  use_angle_cls: false
+  show_log: false
+  det_model_dir: models/OCR/PaddleOCR/det/en_PP-OCRv4_det
+  rec_model_dir: models/OCR/PaddleOCR/rec/en_PP-OCRv4_rec
+
+table_vlm:
+  model_path: U4R/StructTable-InternVL2-1B
+  output_format: markdown
+  batch_size: 1
+  max_new_tokens: 1024
+  max_time: 30

@@ -1,0 +1,5 @@
+Hi {{ full_name }},
+
+Your {{ app_name }} account has been approved. You can now sign in and open your dashboard.
+
+— {{ app_name }}

@@ -1,0 +1,456 @@
+"""Related textbook image fetch helpers for chat turns."""
+from __future__ import annotations
+
+import logging
+import re
+from typing import Any
+
+from app.config import (
+    ENABLE_LLM_IMAGE_SELECT,
+    LLM_IMAGE_SELECT_CANDIDATES,
+    TOP_RELATED_IMAGES,
+)
+
+logger = logging.getLogger(__name__)
+
+# ponytail: relevance floor for fail-open when LLM select returns []; raise if noise returns
+_STRONG_RELEVANCE = 80.0
+_MAX_CITED_FIGURES = 8
+
+
+def _log_image_stage(stage: str, images: list[dict]) -> None:
+    """Structured per-stage image trace for debugging pipeline leaks."""
+    try:
+        summary = [
+            f"{x.get('file_name') or x.get('image_url', '?')}:"
+            f"{(x.get('caption') or '')[:60]}"
+            for x in (images or [])
+        ]
+    except Exception:
+        summary = ["<unserializable>"]
+    logger.debug("[IMAGE-STAGE] stage=%s count=%d images=%s", stage, len(images or []), summary)
+
+
+def _image_top_n_for_scope(scope, *, docs: list | None = None) -> int:
+    from app.services.section_heading import HeadingScope, subtopics_for_main_section
+
+    if ENABLE_LLM_IMAGE_SELECT:
+        return max(TOP_RELATED_IMAGES, LLM_IMAGE_SELECT_CANDIDATES)
+
+    if isinstance(scope, HeadingScope) and scope.is_main_section:
+        n = len(subtopics_for_main_section(scope, docs or []))
+        if n == 0:
+            n = len(scope.child_headings or [])
+        return min(12, max(TOP_RELATED_IMAGES, n + 1))
+    return TOP_RELATED_IMAGES
+
+
+def _fetch_related_images(
+    scope,
+    *,
+    collection_name: str,
+    chapter_ids: list[str],
+    chapter_names: list[str],
+    chapter: str,
+    query: str,
+    docs: list,
+    conversation_history: list[dict] | None,
+    top_n: int,
+) -> list[dict]:
+    from app.services.section_retrieval import related_images_for_heading_scope
+
+    return related_images_for_heading_scope(
+        scope,
+        collection_name=collection_name,
+        chapter_ids=chapter_ids,
+        chapter_names=chapter_names,
+        chapter_single=chapter,
+        query=query,
+        retrieved_docs=docs,
+        conversation_history=conversation_history,
+        fallback_top_n=top_n,
+    )
+
+
+def _docs_text(docs: list[Any] | None) -> str:
+    parts: list[str] = []
+    for d in docs or []:
+        t = getattr(d, "page_content", None) or ""
+        if t:
+            parts.append(t)
+    return "\n".join(parts)
+
+
+def figure_hint_block_from_docs(docs: list[Any] | None) -> str:
+    """Short prompt block so the tutor only names figures present in RAG."""
+    from app.services.image_service.image_intent_extractor import (
+        activity_numbers_cited_in_text,
+        figure_numbers_cited_in_text,
+    )
+
+    docs_text = _docs_text(docs)
+    nums = figure_numbers_cited_in_text(docs_text)[:8]
+    acts = activity_numbers_cited_in_text(docs_text)[:8]
+    if not nums and not acts:
+        return (
+            "TEXTBOOK FIGURES: If the student asks to show Fig./Figure N or Activity N, acknowledge "
+            "it is being shown — never say you cannot see textbook figures. Do not invent figure or "
+            "activity numbers. If they ask to list chapter figures, say the figures are shown below "
+            "— do not invent a list."
+        )
+    parts: list[str] = []
+    if nums:
+        listed = ", ".join(f"Fig. {n}" for n in nums)
+        parts.append(f"figures: {listed}")
+    if acts:
+        listed_acts = ", ".join(f"Activity {n}" for n in acts)
+        parts.append(f"activities: {listed_acts}")
+    listed_all = "; ".join(parts)
+    return (
+        f"TEXTBOOK FIGURES / ACTIVITIES IN CONTEXT (app shows matching images automatically): "
+        f"{listed_all}. You may name only these. If the student asks to show one of them, "
+        "acknowledge briefly — never say you cannot see it. When you name an Activity N, the "
+        "diagram is shown on their screen — say so and describe what they see; do not send them "
+        "to the book for the picture. Do not invent other figure or activity numbers. "
+        "If they ask to list chapter figures, say the figures are shown below."
+    )
+
+
+def figure_inventory_text(images: list[dict]) -> str:
+    """Deterministic short list for chapter figure inventory asks."""
+    if not images:
+        return "I couldn't find textbook figures for this chapter right now."
+    lines = ["Here are the textbook figures from this chapter:"]
+    for im in images:
+        num = str(im.get("figure_number") or "").strip()
+        cap = (im.get("caption") or "").strip()
+        if num and cap:
+            lines.append(f"Fig. {num} — {cap}")
+        elif num:
+            lines.append(f"Fig. {num}")
+        elif cap:
+            lines.append(cap)
+    lines.append("The matching images are shown below.")
+    return "\n".join(lines)
+
+
+def _match_cited(
+    cited: list[str],
+    candidates: list[dict],
+) -> list[dict]:
+    by_num: dict[str, dict] = {}
+    for c in candidates:
+        num = str(c.get("figure_number") or "").strip()
+        if num and num not in by_num:
+            by_num[num] = c
+    return [by_num[n] for n in cited if n in by_num]
+
+
+def _prefer_cited_figure_candidates(
+    question: str,
+    answer: str,
+    candidates: list[dict],
+    *,
+    retrieved_docs: list[Any] | None = None,
+    rag_short_circuit: bool = True,
+) -> list[dict] | None:
+    """Prefer Fig N cites on ranked candidates: question → RAG → answer (trusted).
+
+    rag_short_circuit=False: a figure merely mentioned in retrieved passages is not
+    returned on its own (it may be unrelated to the answer); RAG cites still mark
+    answer cites as trusted.
+    """
+    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+
+    if not candidates:
+        return None
+
+    q_cited = figure_numbers_cited_in_text(question)
+    hit = _match_cited(q_cited, candidates)
+    if hit:
+        return hit
+
+    rag_cited = figure_numbers_cited_in_text(_docs_text(retrieved_docs))
+    if rag_short_circuit:
+        hit = _match_cited(rag_cited, candidates)
+        if hit:
+            return hit
+
+    a_cited = figure_numbers_cited_in_text(answer)
+    if not a_cited:
+        return None
+    rag_set = set(rag_cited)
+    trusted: list[str] = []
+    by_num = {
+        str(c.get("figure_number") or "").strip(): c
+        for c in candidates
+        if c.get("figure_number")
+    }
+    for n in a_cited:
+        c = by_num.get(n)
+        if not c:
+            continue
+        if n in rag_set or float(c.get("relevance") or 0) >= _STRONG_RELEVANCE:
+            trusted.append(n)
+    return _match_cited(trusted, candidates) or None
+
+
+def _rag_cited_first(candidates: list[dict], retrieved_docs: list[Any] | None) -> list[dict]:
+    """Figures cited in the retrieved passages go to the front of the LLM pool."""
+    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+
+    cited = set(figure_numbers_cited_in_text(_docs_text(retrieved_docs)))
+    if not cited:
+        return list(candidates)
+    first = [c for c in candidates if str(c.get("figure_number") or "").strip() in cited]
+    rest = [c for c in candidates if str(c.get("figure_number") or "").strip() not in cited]
+    return first + rest
+
+
+def _db_figures_for_numbers(
+    chapter_ids: list[str] | None,
+    numbers: list[str],
+) -> list[dict]:
+    if not chapter_ids or not numbers:
+        return []
+    from app.services.image_service.textbook_image_retrieval import chapter_figures_by_number
+
+    return chapter_figures_by_number(
+        chapter_ids,
+        numbers,
+        max_n=min(_MAX_CITED_FIGURES, max(1, len(numbers))),
+    )
+
+
+def _db_activities_for_numbers(
+    chapter_ids: list[str] | None,
+    numbers: list[str],
+) -> list[dict]:
+    if not chapter_ids or not numbers:
+        return []
+    from app.services.image_service.textbook_image_retrieval import chapter_activities_by_number
+
+    return chapter_activities_by_number(
+        chapter_ids,
+        numbers,
+        max_n=min(_MAX_CITED_FIGURES, max(1, len(numbers))),
+    )
+
+
+def _merge_cited_image_rows(*batches: list[dict]) -> list[dict]:
+    """Dedupe by url / file_name while preserving cite order."""
+    out: list[dict] = []
+    seen: set[str] = set()
+    for batch in batches:
+        for row in batch or []:
+            key = str(row.get("url") or row.get("file_name") or id(row))
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(row)
+            if len(out) >= _MAX_CITED_FIGURES:
+                return out
+    return out
+
+
+def requested_figure_prompt_block(numbers: list[str], found: list[dict]) -> str:
+    """Ground the answer in the figure the student asked for: real caption and page, already on screen.
+
+    Without it the model said "I can't generate images" and invented a page number.
+    """
+    if not numbers:
+        return ""
+    by_num = {str(f.get("figure_number") or "").strip(): f for f in found}
+    lines = ["STUDENT ASKED FOR A TEXTBOOK FIGURE."]
+    for n in numbers:
+        f = by_num.get(n)
+        if not f:
+            lines.append(
+                f"Fig. {n} is not in this chapter's textbook. Say so plainly and offer the closest "
+                "topic instead — do not describe or invent it."
+            )
+            continue
+        detail = f"Fig. {n} — \"{(f.get('caption') or '').strip()}\" (textbook page {f.get('page')})"
+        about = (f.get("visual_description") or f.get("figure_context") or "").strip()
+        if about:
+            detail += f". What it shows: {about[:240]}"
+        lines.append(detail + ".")
+    if found:
+        pages = ", ".join(str(f.get("page")) for f in found)
+        lines.append(
+            "These figures are ALREADY DISPLAYED on the student's screen right now. Say it is on "
+            "their screen, then briefly explain what it shows using only the details above and the "
+            f"chapter context. If you mention a page, use exactly: {pages}. Never say you cannot "
+            "show, find or generate images, and never send them to look it up elsewhere."
+        )
+    return "\n".join(lines)
+
+
+def requested_activity_prompt_block(numbers: list[str], found: list[dict]) -> str:
+    """Ground the reply in the Activity diagram already shown on the student's screen."""
+    if not numbers:
+        return ""
+    by_num = {str(f.get("activity_number") or "").strip(): f for f in found}
+    lines = ["STUDENT ASKED FOR A TEXTBOOK ACTIVITY."]
+    for n in numbers:
+        f = by_num.get(n)
+        if not f:
+            lines.append(
+                f"Activity {n} is not in this chapter's textbook images. Say so plainly and "
+                "describe the activity from chapter context only — do not invent a diagram."
+            )
+            continue
+        detail = (
+            f"Activity {n} — \"{(f.get('caption') or '').strip()}\" "
+            f"(textbook page {f.get('page')})"
+        )
+        about = (f.get("visual_description") or f.get("figure_context") or "").strip()
+        if about:
+            detail += f". What it shows: {about[:240]}"
+        lines.append(detail + ".")
+    if found:
+        pages = ", ".join(str(f.get("page")) for f in found)
+        lines.append(
+            "These activity diagrams are ALREADY DISPLAYED on the student's screen right now. "
+            "Say it is on their screen, then walk through the activity in plain words using only "
+            "the details above and the chapter context — do not assume they have the book open. "
+            f"If you mention a page, use exactly: {pages}. Never say you cannot show, find or "
+            "generate images, and never send them to look it up elsewhere."
+        )
+    return "\n".join(lines)
+
+
+def _strong_relevance_fallback(candidates: list[dict]) -> list[dict]:
+    strong = [
+        c for c in candidates if float(c.get("relevance") or 0) >= _STRONG_RELEVANCE
+    ]
+    if not strong:
+        return []
+    strong.sort(key=lambda c: float(c.get("relevance") or 0), reverse=True)
+    return strong[: max(1, TOP_RELATED_IMAGES)]
+
+
+def _any_candidate_fallback(candidates: list[dict]) -> list[dict]:
+    """Soft fail-open when the student explicitly asked to see a figure."""
+    if not candidates:
+        return []
+    ranked = sorted(
+        candidates, key=lambda c: float(c.get("relevance") or 0), reverse=True
+    )
+    return ranked[: max(1, TOP_RELATED_IMAGES)]
+
+
+def _explicit_show_image_ask(question: str) -> bool:
+    from app.services.chapter_scope import is_image_follow_up_request
+    from app.services.image_service.image_intent_extractor import (
+        _IMAGE_REQUEST_RE,
+        is_chapter_figure_list_ask,
+    )
+
+    q = question or ""
+    if (
+        is_image_follow_up_request(q)
+        or _IMAGE_REQUEST_RE.search(q)
+        or is_chapter_figure_list_ask(q)
+    ):
+        return True
+    return bool(
+        re.search(
+            r"\b(?:show|see|display|open|bring|get|fetch)\b.{0,48}\b"
+            r"(?:images?|pictures?|figures?|diagrams?|maps?|illustrations?)\b",
+            q,
+            re.I,
+        )
+    )
+
+
+async def _select_related_images_for_answer(
+    question: str,
+    answer: str,
+    candidates: list[dict],
+    *,
+    retrieved_docs: list[Any] | None = None,
+    chapter_ids: list[str] | None = None,
+) -> list[dict]:
+    """Prefer exact Fig N / Activity N (DB) / list-ask catalog; else candidates + LLM pick."""
+    from app.services.image_service.image_intent_extractor import (
+        activity_numbers_cited_in_text,
+        figure_numbers_cited_in_text,
+        is_chapter_figure_list_ask,
+    )
+
+    if is_chapter_figure_list_ask(question) and chapter_ids:
+        from app.services.image_service.textbook_image_retrieval import (
+            chapter_figures_catalog,
+        )
+
+        catalog = chapter_figures_catalog(chapter_ids)
+        if catalog:
+            _log_image_stage("chapter_figure_catalog", catalog)
+            return catalog
+
+    q_cited = figure_numbers_cited_in_text(question)
+    a_cited = figure_numbers_cited_in_text(answer)
+    q_acts = activity_numbers_cited_in_text(question)
+    a_acts = activity_numbers_cited_in_text(answer)
+
+    # Exact Fig N / Activity N asks / answer cites are returned alone: padding them with
+    # ranked candidates shows figures the answer never talks about.
+    if chapter_ids and (q_cited or q_acts):
+        found = _merge_cited_image_rows(
+            _db_figures_for_numbers(chapter_ids, q_cited) if q_cited else [],
+            _db_activities_for_numbers(chapter_ids, q_acts) if q_acts else [],
+        )
+        if found:
+            _log_image_stage("question_fig_activity_db", found)
+            return found[:_MAX_CITED_FIGURES]
+
+    if chapter_ids and (a_cited or a_acts):
+        found = _merge_cited_image_rows(
+            _db_figures_for_numbers(chapter_ids, a_cited) if a_cited else [],
+            _db_activities_for_numbers(chapter_ids, a_acts) if a_acts else [],
+        )
+        if found:
+            _log_image_stage("answer_fig_activity_db", found)
+            return found[:_MAX_CITED_FIGURES]
+
+    cited = _prefer_cited_figure_candidates(
+        question,
+        answer,
+        candidates,
+        retrieved_docs=retrieved_docs,
+        rag_short_circuit=not ENABLE_LLM_IMAGE_SELECT,
+    )
+    if cited:
+        _log_image_stage("cited_figure_short_circuit", cited)
+        return cited[: max(1, TOP_RELATED_IMAGES)]
+    if not ENABLE_LLM_IMAGE_SELECT:
+        if _explicit_show_image_ask(question) and candidates:
+            picked = _strong_relevance_fallback(candidates) or _any_candidate_fallback(
+                candidates
+            )
+            _log_image_stage("explicit_show_no_llm", picked)
+            return picked
+        return candidates
+    from app.services.image_service.llm_image_select import select_images_for_qa_status
+
+    pool = _rag_cited_first(candidates, retrieved_docs)
+    selected, decided = await select_images_for_qa_status(question, answer, pool)
+    if selected:
+        _log_image_stage("llm_select", selected)
+        return selected
+    if decided:
+        # The LLM saw the answer and judged no candidate depicts it — don't override
+        # that with heuristic picks.
+        _log_image_stage("llm_select_none_fit", [])
+        return []
+    fallback = _strong_relevance_fallback(candidates)
+    if fallback:
+        _log_image_stage("llm_select_fail_open", fallback)
+        return fallback
+    if _explicit_show_image_ask(question):
+        soft = _any_candidate_fallback(candidates)
+        if soft:
+            _log_image_stage("explicit_show_soft_fail_open", soft)
+        return soft
+    return []

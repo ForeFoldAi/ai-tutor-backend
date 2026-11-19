@@ -1,0 +1,4 @@
+{
+  "must_find_phrases": ["India", "Desert", "Plateau"],
+  "notes": "Phrases checked against chunk corpus (RAG text), not ML markdown alone"
+}

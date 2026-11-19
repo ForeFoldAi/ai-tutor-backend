@@ -1,0 +1,13 @@
+A new {{ role_label }} account is awaiting approval on {{ app_name }}:
+
+Name: {{ full_name }}
+User ID: {{ username }}
+Email: {{ email }}
+Phone: {{ phone or "-" }}
+{% if school_name %}
+School: {{ school_name }}
+{% endif %}
+
+Approve it from the master admin Users page.
+
+— {{ app_name }}

@@ -1,0 +1,630 @@
+{
+  "rows": [
+    {
+      "id": "M-open-box",
+      "channel": "tutor",
+      "query": "A rectangular sheet of paper is 30 cm long and 20 cm wide. Four squares of side 5 cm are cut from its four corners. The remaining sheet is folded upwards to make an open box. Find the volume of the box with steps.",
+      "ms": 24701,
+      "error": null,
+      "answer_clip": "**To Find** We need to find the volume of the open box formed by cutting squares from the corners of a rectangular sheet and folding up the sides.  **Given Information** - Original sheet dimensions: length = 30 cm, width = 20 cm - Squares cut from each corner: side = 5 cm (four squares total) - The remaining flaps are folded up to form an open box  **Concept Behind It** The volume of a box is cal\u2026",
+      "panel": {
+        "has": true,
+        "type": "area-resizer",
+        "title": "Open Box from a Sheet",
+        "sliders": [
+          {
+            "id": "sheetLength",
+            "default": 30.0,
+            "min": 10.0,
+            "max": 200.0
+          },
+          {
+            "id": "sheetWidth",
+            "default": 20.0,
+            "min": 10.0,
+            "max": 200.0
+          },
+          {
+            "id": "cut",
+            "default": 4.0,
+            "min": 1.0,
+            "max": 200.0
+          },
+          {
+            "id": "length",
+            "default": 30.0,
+            "min": 1.0,
+            "max": 200.0
+          },
+          {
+            "id": "width",
+            "default": 20.0,
+            "min": 1.0,
+            "max": 200.0
+          },
+          {
+            "id": "height",
+            "default": 4.0,
+            "min": 1.0,
+            "max": 200.0
+          }
+        ],
+        "calcs": [
+          {
+            "id": "volume",
+            "formula": "length * width * height"
+          },
+          {
+            "id": "baseLength",
+            "formula": "sheetLength - 2 * cut"
+          },
+          {
+            "id": "baseWidth",
+            "formula": "sheetWidth - 2 * cut"
+          }
+        ]
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": 4,
+        "type": "area-resizer",
+        "defaults": [
+          30.0,
+          20.0,
+          4.0,
+          30.0,
+          20.0,
+          4.0
+        ]
+      }
+    },
+    {
+      "id": "M-open-box",
+      "channel": "voice",
+      "query": "A rectangular sheet of paper is 30 cm long and 20 cm wide. Four squares of side 5 cm are cut from its four corners. The remaining sheet is folded upwards to make an open box. Find the volume of the box with steps.",
+      "ms": 7213,
+      "error": null,
+      "answer_clip": "Okay, let\u2019s break this down step by step.  First, the sheet is 30 cm long and 20 cm wide. Four squares of 5 cm are cut from the corners.  So, the length after cutting is 30 minus 5 minus 5 = 20 cm. The width after cutting is 20 minus 5 minus 5 = 10 cm.  Now, when you fold up the sides, the height of the box will be 5 cm. That\u2019s because the squares we cut are folded up.  Volume of a box is length \u2026",
+      "panel": {
+        "has": true,
+        "type": "area-resizer",
+        "title": "Open Box from a Sheet",
+        "sliders": [
+          {
+            "id": "sheetLength",
+            "default": 30.0,
+            "min": 10.0,
+            "max": 1000.0
+          },
+          {
+            "id": "sheetWidth",
+            "default": 20.0,
+            "min": 10.0,
+            "max": 1000.0
+          },
+          {
+            "id": "cut",
+            "default": 5.0,
+            "min": 1.0,
+            "max": 1000.0
+          },
+          {
+            "id": "length",
+            "default": 20.0,
+            "min": 1.0,
+            "max": 1000.0
+          },
+          {
+            "id": "width",
+            "default": 10.0,
+            "min": 1.0,
+            "max": 1000.0
+          },
+          {
+            "id": "height",
+            "default": 5.0,
+            "min": 1.0,
+            "max": 1000.0
+          }
+        ],
+        "calcs": [
+          {
+            "id": "volume",
+            "formula": "length * width * height"
+          },
+          {
+            "id": "baseLength",
+            "formula": "sheetLength - 2 * cut"
+          },
+          {
+            "id": "baseWidth",
+            "formula": "sheetWidth - 2 * cut"
+          }
+        ]
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": 5,
+        "type": "area-resizer",
+        "defaults": [
+          30.0,
+          20.0,
+          5.0,
+          20.0,
+          10.0,
+          5.0
+        ]
+      }
+    },
+    {
+      "id": "M-powers",
+      "channel": "tutor",
+      "query": "ok explain 2 to the power 5 slowly with the expanded form and final value",
+      "ms": 11349,
+      "error": null,
+      "answer_clip": "Let\u2019s break down **2 to the power of 5** (written as 2\u2075) step by step, just like building a tower of blocks.  Imagine you have 2 identical blocks, and you stack them together 5 times in a row. Each time you multiply the previous total by 2 again. So: - Start with **1 block** (this is like 2\u2070 = 1, though we don\u2019t need it here). - After the **first multiplication**: 2 \u00d7 1 = **2** (this is 2\u00b9). - Af\u2026",
+      "panel": {
+        "has": true,
+        "type": "concept-explorer",
+        "title": "Power Play",
+        "sliders": [
+          {
+            "id": "base",
+            "default": 2.0,
+            "min": 1.0,
+            "max": 32.0
+          },
+          {
+            "id": "exponent",
+            "default": 5.0,
+            "min": 0.0,
+            "max": 32.0
+          },
+          {
+            "id": "result",
+            "default": 32.0,
+            "min": 1.0,
+            "max": 100000.0
+          }
+        ],
+        "calcs": [
+          {
+            "id": "check",
+            "formula": "base ** exponent"
+          }
+        ]
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": 3,
+        "type": "concept-explorer",
+        "defaults": [
+          2.0,
+          5.0,
+          32.0
+        ]
+      }
+    },
+    {
+      "id": "M-powers",
+      "channel": "voice",
+      "query": "ok explain 2 to the power 5 slowly with the expanded form and final value",
+      "ms": 7038,
+      "error": null,
+      "answer_clip": "Okay, let\u2019s break this down together.  When we say **2 to the power 5**, it means **2 multiplied by itself 5 times**. So, the expanded form is: **2 \u00d7 2 \u00d7 2 \u00d7 2 \u00d7 2**  Now, let\u2019s multiply step by step: - First, **2 \u00d7 2 = 4** - Then, **4 \u00d7 2 = 8** - Next, **8 \u00d7 2 = 16** - Finally, **16 \u00d7 2 = 32**  So, the final value is **32**.  Does that make sense so far? We just kept multiplying by 2 five times.",
+      "panel": {
+        "has": true,
+        "type": "concept-explorer",
+        "title": "Power Play",
+        "sliders": [
+          {
+            "id": "base",
+            "default": 2.0,
+            "min": 1.0,
+            "max": 32.0
+          },
+          {
+            "id": "exponent",
+            "default": 5.0,
+            "min": 0.0,
+            "max": 32.0
+          },
+          {
+            "id": "result",
+            "default": 32.0,
+            "min": 1.0,
+            "max": 100000.0
+          }
+        ],
+        "calcs": [
+          {
+            "id": "check",
+            "formula": "base ** exponent"
+          }
+        ]
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": 3,
+        "type": "concept-explorer",
+        "defaults": [
+          2.0,
+          5.0,
+          32.0
+        ]
+      }
+    },
+    {
+      "id": "M-square-81",
+      "channel": "tutor",
+      "query": "explain with steps how to check if 81 is a perfect square",
+      "ms": 17061,
+      "error": null,
+      "answer_clip": "**To Find** How to determine whether the number **81** is a perfect square using step-by-step reasoning based on the chapter\u2019s methods.  ---  **Given Information** - The number to check: **81** - Definition of a perfect square: A number that can be expressed as the square of an integer (e.g., \\( n^2 \\) where \\( n \\) is an integer). - From the textbook, we know that prime factorization can help id\u2026",
+      "panel": {
+        "has": true,
+        "type": "concept-explorer",
+        "title": "Power Play",
+        "sliders": [
+          {
+            "id": "base",
+            "default": 9.0,
+            "min": 1.0,
+            "max": 81.0
+          },
+          {
+            "id": "exponent",
+            "default": 2.0,
+            "min": 0.0,
+            "max": 81.0
+          },
+          {
+            "id": "result",
+            "default": 81.0,
+            "min": 1.0,
+            "max": 100000.0
+          }
+        ],
+        "calcs": [
+          {
+            "id": "check",
+            "formula": "base ** exponent"
+          }
+        ]
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": 2,
+        "type": "concept-explorer",
+        "defaults": [
+          9.0,
+          2.0,
+          81.0
+        ]
+      }
+    },
+    {
+      "id": "M-square-81",
+      "channel": "voice",
+      "query": "explain with steps how to check if 81 is a perfect square",
+      "ms": 7437,
+      "error": null,
+      "answer_clip": "Okay, let\u2019s check if 81 is a perfect square.  First, we\u2019ll find its prime factors. 81 can be broken down like this: 81 \u00f7 3 = 27 27 \u00f7 3 = 9 9 \u00f7 3 = 3 3 \u00f7 3 = 1  So, 81 = 3 \u00d7 3 \u00d7 3 \u00d7 3.  Now, group these factors into pairs: (3 \u00d7 3) \u00d7 (3 \u00d7 3).  Each group is the same\u2014both are 3 \u00d7 3.  Since we can split the prime factors into two identical groups, 81 is a perfect square.  The square root is 9, becaus\u2026",
+      "panel": {
+        "has": true,
+        "type": "factor-tree",
+        "title": "Perfect Square \u2014 Division Method",
+        "sliders": [
+          {
+            "id": "x",
+            "default": 81,
+            "min": 2.0,
+            "max": 20000.0
+          },
+          {
+            "id": "y",
+            "default": 81,
+            "min": 2.0,
+            "max": 20000.0
+          }
+        ],
+        "calcs": []
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": 2,
+        "type": "factor-tree",
+        "defaults": [
+          81.0,
+          81.0
+        ]
+      }
+    },
+    {
+      "id": "S-pressure",
+      "channel": "tutor",
+      "query": "A rectangular wooden block weighs 40 N. It is placed on a table in two positions. Position A: area 200 cm\u00b2. Position B: area 100 cm\u00b2. Calculate the pressure in each position and say which is greater. Explain with formula P=F/A.",
+      "ms": 10894,
+      "error": null,
+      "answer_clip": "Pressure tells us how much force is spread over an area, and the chapter shows how this matters in everyday situations. For your wooden block weighing 40 N, when placed on **200 cm\u00b2**, the pressure is **0.2 N/cm\u00b2**, but when placed on **100 cm\u00b2**, the pressure doubles to **0.4 N/cm\u00b2**. The smaller the area, the greater the pressure because the same force is concentrated over less space.  Would yo\u2026",
+      "panel": {
+        "has": true,
+        "type": "force-pressure-lab",
+        "title": "Force, pressure & friction",
+        "sliders": [
+          {
+            "id": "force",
+            "default": 40.0,
+            "min": 1.0,
+            "max": 200.0
+          },
+          {
+            "id": "area",
+            "default": 200.0,
+            "min": 1.0,
+            "max": 500.0
+          },
+          {
+            "id": "friction",
+            "default": 3,
+            "min": 0.0,
+            "max": 100.0
+          }
+        ],
+        "calcs": [
+          {
+            "id": "pressure",
+            "formula": "force / area"
+          }
+        ],
+        "equation": "P = F / A"
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": 5,
+        "type": "force-pressure-lab",
+        "defaults": [
+          40.0,
+          200.0,
+          3.0
+        ]
+      }
+    },
+    {
+      "id": "S-pressure",
+      "channel": "voice",
+      "query": "A rectangular wooden block weighs 40 N. It is placed on a table in two positions. Position A: area 200 cm\u00b2. Position B: area 100 cm\u00b2. Calculate the pressure in each position and say which is greater. Explain with formula P=F/A.",
+      "ms": 5513,
+      "error": null,
+      "answer_clip": "Oh, this is a great question about pressure!  The formula you gave is right: **Pressure = Force \u00f7 Area** (P = F/A). Here, the force is the weight of the block\u2014**40 N**\u2014in both cases.  For **Position A** (200 cm\u00b2): Pressure = 40 N \u00f7 200 cm\u00b2 = **0.2 N/cm\u00b2**.  For **Position B** (100 cm\u00b2): Pressure = 40 N \u00f7 100 cm\u00b2 = **0.4 N/cm\u00b2**.  So, the pressure is **greater in Position B** because the same forc\u2026",
+      "panel": {
+        "has": true,
+        "type": "force-pressure-lab",
+        "title": "Force, pressure & friction",
+        "sliders": [
+          {
+            "id": "force",
+            "default": 40.0,
+            "min": 1.0,
+            "max": 200.0
+          },
+          {
+            "id": "area",
+            "default": 200.0,
+            "min": 1.0,
+            "max": 500.0
+          },
+          {
+            "id": "friction",
+            "default": 3,
+            "min": 0.0,
+            "max": 100.0
+          }
+        ],
+        "calcs": [
+          {
+            "id": "pressure",
+            "formula": "force / area"
+          }
+        ],
+        "equation": "P = F / A"
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": 5,
+        "type": "force-pressure-lab",
+        "defaults": [
+          40.0,
+          200.0,
+          3.0
+        ]
+      }
+    },
+    {
+      "id": "S-disease",
+      "channel": "tutor",
+      "query": "how does disease spread? explain like steps and how washing hands helps",
+      "ms": 16889,
+      "error": null,
+      "answer_clip": "**Topic** How diseases spread \u2014 step-by-step pathways and the role of handwashing.  **In Simple Words** Diseases spread when tiny harmful germs (called pathogens) move from one person or place to another. This can happen through air, touch, food, water, or even insects like mosquitoes. Washing hands with soap is one of the simplest ways to stop these germs from spreading because soap breaks them \u2026",
+      "panel": {
+        "has": true,
+        "type": "disease-transmission-simulator",
+        "title": "Health & disease spread",
+        "sliders": [
+          {
+            "id": "mode",
+            "default": 1.0,
+            "min": 0.0,
+            "max": 4.0
+          }
+        ],
+        "calcs": [],
+        "equation": ""
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": null,
+        "type": "disease-transmission-simulator",
+        "defaults": [
+          1.0
+        ]
+      }
+    },
+    {
+      "id": "S-disease",
+      "channel": "voice",
+      "query": "how does disease spread? explain like steps and how washing hands helps",
+      "ms": 6467,
+      "error": null,
+      "answer_clip": "Got it! Let\u2019s break this down simply.  Diseases spread in a few key ways\u2014just like how a whisper travels. First, through **air**: When someone coughs or sneezes, tiny germs fly out. You breathe them in\u2014*whoosh*\u2014and that\u2019s how colds or flu jump to you.  Second, **direct contact**: Shaking hands with an infected person? Germs transfer right onto your skin. Third, **indirect contact**: Touching a do\u2026",
+      "panel": {
+        "has": true,
+        "type": "disease-transmission-simulator",
+        "title": "Health & disease spread",
+        "sliders": [
+          {
+            "id": "mode",
+            "default": 0,
+            "min": 0,
+            "max": 2
+          }
+        ],
+        "calcs": [],
+        "equation": ""
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": null,
+        "type": "disease-transmission-simulator",
+        "defaults": [
+          0.0
+        ]
+      }
+    },
+    {
+      "id": "S-photosynthesis",
+      "channel": "tutor",
+      "query": "Even if not the main chapter focus, explain photosynthesis as an experiment: what goes in, what comes out, and show an interactive lab if you can.",
+      "ms": 10145,
+      "error": null,
+      "answer_clip": "Photosynthesis is how plants use sunlight to create food\u2014like a kitchen inside their leaves. The chapter shows how science starts with simple questions, and this process is a perfect example. Plants take in sunlight, water, and carbon dioxide, then release glucose (their food) and oxygen (for us to breathe).  - **What goes in:** Sunlight, water, and carbon dioxide. - **What comes out:** Glucose a\u2026",
+      "panel": {
+        "has": true,
+        "type": "plant-anatomy-lab",
+        "title": "Plant parts & photosynthesis",
+        "sliders": [
+          {
+            "id": "light",
+            "default": 70,
+            "min": 0,
+            "max": 100
+          },
+          {
+            "id": "water",
+            "default": 60,
+            "min": 0,
+            "max": 100
+          },
+          {
+            "id": "co2",
+            "default": 50,
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "calcs": [
+          {
+            "id": "rate",
+            "formula": "light * water * co2 / 10000"
+          }
+        ],
+        "equation": "6CO\u2082 + 6H\u2082O \u2192 C\u2086H\u2081\u2082O\u2086 + 6O\u2082"
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": null,
+        "type": "plant-anatomy-lab",
+        "defaults": [
+          70.0,
+          60.0,
+          50.0
+        ]
+      }
+    },
+    {
+      "id": "S-photosynthesis",
+      "channel": "voice",
+      "query": "Even if not the main chapter focus, explain photosynthesis as an experiment: what goes in, what comes out, and show an interactive lab if you can.",
+      "ms": 6809,
+      "error": null,
+      "answer_clip": "Oh, this is a great question!  The chapter shows us how to do simple experiments\u2014 like the puri one\u2014where we change things and observe.  For photosynthesis, imagine this: **What goes in?** Sunlight, water, and carbon dioxide. **What comes out?** Oxygen and glucose (plant food).  Now, let\u2019s pretend we\u2019re doing a mini lab. Take a potted plant, cover half its leaves with black paper. After a few day\u2026",
+      "panel": {
+        "has": true,
+        "type": "plant-anatomy-lab",
+        "title": "Plant parts & photosynthesis",
+        "sliders": [
+          {
+            "id": "light",
+            "default": 70,
+            "min": 0,
+            "max": 100
+          },
+          {
+            "id": "water",
+            "default": 60,
+            "min": 0,
+            "max": 100
+          },
+          {
+            "id": "co2",
+            "default": 50,
+            "min": 0,
+            "max": 100
+          }
+        ],
+        "calcs": [
+          {
+            "id": "rate",
+            "formula": "light * water * co2 / 10000"
+          }
+        ],
+        "equation": "6CO\u2082 + 6H\u2082O \u2192 C\u2086H\u2081\u2082O\u2086 + 6O\u2082"
+      },
+      "score": {
+        "ok": true,
+        "grade": "PASS",
+        "bugs": [],
+        "num_hits": null,
+        "type": "plant-anatomy-lab",
+        "defaults": [
+          70.0,
+          60.0,
+          50.0
+        ]
+      }
+    }
+  ]
+}

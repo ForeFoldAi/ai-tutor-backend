@@ -1,0 +1,11 @@
+from enum import StrEnum
+
+
+class Role(StrEnum):
+    STUDENT = "STUDENT"
+    TUTOR = "TUTOR"
+    SCHOOL_ADMIN = "SCHOOL_ADMIN"
+    MASTER_ADMIN = "MASTER_ADMIN"
+
+
+PUBLIC_SIGNUP_ROLES = {Role.STUDENT, Role.TUTOR, Role.SCHOOL_ADMIN}

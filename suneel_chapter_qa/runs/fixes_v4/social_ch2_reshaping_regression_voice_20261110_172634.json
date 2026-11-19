@@ -1,0 +1,319 @@
+{
+  "bank": "social_ch2_reshaping_regression",
+  "channel": "voice",
+  "average": 7.741935483870968,
+  "turns": [
+    {
+      "id": "R01",
+      "query": "I don't understand why India needed state reorganization. Can you explain it with a simple example?",
+      "answer": "This isn't in your chapter, but here's the short answer. This isn't in your chapter, but here's the short answer. Think of it like sorting messy toys. If you have cars, blocks, and dolls all mixed up, it\u2019s hard to play. You sort them into separate boxes so everything has a clear place. That\u2019s what happened to our states. We grouped areas by language and culture. It made things much easier to manage. Your chapter shows how these new boundaries actually look on the map. Have a look at the map in your book. Do you see how the shapes changed?",
+      "score": 4,
+      "reason": "The tutor correctly identifies the topic as off-chapter and provides a simple example, but fails to link the answer back to how medieval rulers reshaped the map as required by the expected behavior.",
+      "issues": [],
+      "ms": 9840,
+      "error": null
+    },
+    {
+      "id": "R02",
+      "query": "If people speak Telugu in Telangana and Andhra Pradesh, why there are two different states?",
+      "answer": "That\u2019s a really good question, and it\u2019s okay to feel stuck here. Think of it like this. Two friends might both love cricket. But one lives in Delhi, the other in Mumbai. They\u2019re different places, even if they share the same hobby. Language is like that shared hobby. But the people in Telangana wanted their own space to manage their own local needs. So, they asked to be a separate state. It\u2019s about local identity and administration, not just language. Your chapter shows how these new boundaries look on the map. Have a look at the map in your book. Do you see where Telangana sits now?",
+      "score": 4,
+      "reason": "The tutor fails to explicitly label the answer as outside the chapter, which is a specific requirement of the expected behavior, and the analogy is slightly confusing.",
+      "issues": [],
+      "ms": 7746,
+      "error": null
+    },
+    {
+      "id": "R03",
+      "query": "Who decides when a new state should be created?",
+      "answer": "This isn't in your chapter, but here's the short answer. The central government decides this. They look at the people's request and the legal process. It's a big political decision. Your chapter shows the result of these decisions on the map. Have a look at the map in your book. Do you see how the boundaries changed?",
+      "score": 7,
+      "reason": "Correctly identifies the topic as outside the chapter and provides a brief, accurate general answer (central government), but fails to explicitly mention \"Parliament\" or \"Constitution\" as specified in the expected behavior, and the link back to the chapter is somewhat weak.",
+      "issues": [],
+      "ms": 5008,
+      "error": null
+    },
+    {
+      "id": "R04",
+      "query": "Can you explain me this chapter like I'm studying it for the first time?",
+      "answer": "Let's walk through this step by step. It starts in the early 11th century. Invaders from beyond the Hindu Kush mountains came in. They were mostly Turkic or Afghan people. They wanted India's riches and territory. This changed the political map completely. The Delhi Sultanate rose to power. But it wasn't stable. Sultans often died violently or were overthrown. Meanwhile, new kingdoms grew in the south. The Vijayanagara Empire became a major force. The map kept shifting as different dynasties rose and fell. Have a look at the map in your book. Can you spot where the Tughlaq territory reached?",
+      "score": 4,
+      "reason": "The response completely omits the Mughal Empire, which is a major part of the expected chapter walkthrough.",
+      "issues": [],
+      "ms": 4387,
+      "error": null
+    },
+    {
+      "id": "R05",
+      "query": "What is the difference between political map of India in 1947 and today?",
+      "answer": "This isn't in your chapter, but here's the short answer. In 1947, we had princely states alongside British provinces. Today, we have only states and union territories. The princely states were merged into modern states. Your chapter shows how boundaries shifted over centuries. Have a look at the map in your book. Do you see how the shapes changed?",
+      "score": 7,
+      "reason": "The answer is accurate and correctly labeled as outside the chapter, but it misses the specific expectation to mention \"new states created\" and the link back to the chapter is generic rather than specifically connecting to medieval map changes.",
+      "issues": [],
+      "ms": 4431,
+      "error": null
+    },
+    {
+      "id": "R06",
+      "query": "I understood the explanation but can you give me a real life example?",
+      "answer": "Think of the map like a living thing. The Tughlaqs stretched from Peshawar to Madurai. Then the Lodis held a smaller area. It's like a family moving houses. The boundaries keep shifting as new rulers arrive. Have a look at the map in your book. Can you spot how much smaller the Lodi territory is?",
+      "score": 10,
+      "reason": "Provides a clear, accurate real-life analogy (family moving houses) to illustrate the territorial shift between the Tughlaq and Lodi dynasties, fitting the chapter content and student level.",
+      "issues": [],
+      "ms": 5406,
+      "error": null
+    },
+    {
+      "id": "R07",
+      "query": "Why? Every district becomes a separate state.",
+      "answer": "That's not how it works. Districts don't automatically become states. The central government decides based on requests and legal processes. It's a careful political decision. Your chapter focuses on historical changes, not modern state creation. Let's stick to the map shifts we discussed. Do you want to look at the Tughlaq expansion again?",
+      "score": 10,
+      "reason": "Corrects the misconception clearly and kindly, maintains a supportive tone, and successfully redirects the student back to the chapter content.",
+      "issues": [],
+      "ms": 4263,
+      "error": null
+    },
+    {
+      "id": "R11",
+      "query": "Why did India need to reorganize its states after independence?",
+      "answer": "This specific reason isn't detailed in our current chapter context. We focused on the historical map shifts, like the Tughlaq and Mughal expansions. The chapter shows how territories changed hands over time. It doesn't cover the post-independence reorganization logic in depth. Let's stick to the historical map changes we've been discussing. Do you want to revisit the Lodis?",
+      "score": 4,
+      "reason": "The tutor refused to answer the question instead of providing the expected brief general answer (language-based reorganization) labeled as outside the chapter.",
+      "issues": [],
+      "ms": 3748,
+      "error": null
+    },
+    {
+      "id": "R12",
+      "query": "Can you explain it like I'm 10 years old?",
+      "answer": "Think of India's map like a puzzle. Before independence, the pieces were all jumbled up. Some were tiny, some were huge. They didn't fit together nicely. Reorganizing meant sorting those pieces into sensible groups. It made the map easier to manage. That's the simple idea. Does that make sense?",
+      "score": 4,
+      "reason": "The tutor explains the concept of post-independence state reorganization, which is explicitly excluded from the chapter scope, rather than explaining the medieval political map shifts covered in the text.",
+      "issues": [],
+      "ms": 4793,
+      "error": null
+    },
+    {
+      "id": "R13",
+      "query": "Can you explain that again without repeating the same example?",
+      "answer": "Got it. Let's try a different angle. Imagine your school has many small classrooms. Some are too crowded, some are empty. The principal groups them into bigger, balanced rooms. That's what reorganizing states was like. It made administration smoother. No more tiny, unmanageable units. Just practical grouping. Does that click for you?",
+      "score": 10,
+      "reason": "The tutor successfully provided a new, distinct analogy (school classrooms) as requested, maintaining a kind and appropriate tone for the student.",
+      "issues": [],
+      "ms": 5424,
+      "error": null
+    },
+    {
+      "id": "R14",
+      "query": "Can you explain the whole concept in just three sentences?",
+      "answer": "India's map changed hands many times. Tughlaqs expanded, then Lodis held smaller areas. Mughals took over next. That's the core shift.",
+      "score": 4,
+      "reason": "The response contains exactly three sentences, accurately summarizes the chapter's content regarding medieval territorial shifts, and avoids the prohibited post-independence topic.",
+      "issues": [
+        "4 sentences > 3"
+      ],
+      "ms": 3832,
+      "error": null
+    },
+    {
+      "id": "R15",
+      "query": "What were we discussing just now?",
+      "answer": "We were talking about how India's map changed over time. Specifically, we looked at how different dynasties like the Tughlaqs and Mughals expanded their territories. We also touched on why reorganizing states made administration easier. Does that refresh your memory?",
+      "score": 10,
+      "reason": "Accurately recaps the discussion on medieval dynasties and state reorganization using the correct 'we' perspective.",
+      "issues": [],
+      "ms": 3696,
+      "error": null
+    },
+    {
+      "id": "R16",
+      "query": "Can you explain the second point again?",
+      "answer": "The second point was about the Lodis. They controlled a smaller area than the Tughlaqs did. Their territory was more limited. This shows how power shifted between dynasties. The map kept changing hands. Each group held different lands. That\u2019s the key difference. Does that clear it up?",
+      "score": 7,
+      "reason": "The tutor correctly identifies the \"second point\" from its previous summary (Lodis vs Tughlaqs) and explains it accurately, but the response is slightly repetitive and could be more engaging for a voice interaction.",
+      "issues": [],
+      "ms": 6347,
+      "error": null
+    },
+    {
+      "id": "R17",
+      "query": "What was the main thing I learned from our discussion?",
+      "answer": "You learned that India\u2019s political map kept changing hands. The Tughlaqs expanded, then the Lodis held smaller areas. Finally, the Mughals took over. That\u2019s the core shift we covered. Does that summary feel right to you?",
+      "score": 10,
+      "reason": "Accurately summarizes the key points discussed (Tughlaqs, Lodis, Mughals) in a concise and appropriate manner for the student.",
+      "issues": [],
+      "ms": 4692,
+      "error": null
+    },
+    {
+      "id": "R18",
+      "query": "Indians became independent in 1956.",
+      "answer": "I think that date feels a bit off. India actually became independent in 1947. 1956 is when states were reorganized into linguistic groups. That\u2019s a key part of our chapter. The map changed shape again then. Does that distinction make sense now?",
+      "score": 7,
+      "reason": "The tutor correctly identifies 1947 as the independence year and 1956 as the reorganization date, but incorrectly claims that state reorganization is a key part of the current chapter, which the prompt explicitly states is NOT covered.",
+      "issues": [],
+      "ms": 4483,
+      "error": null
+    },
+    {
+      "id": "R19",
+      "query": "Stats and Districts are exactly the same",
+      "answer": "I think you meant states and districts. They\u2019re not the same. A state is a big political unit with its own government. A district is a smaller administrative area inside a state. Think of a state as a whole city, and a district as one neighborhood within it. That\u2019s the key difference. Does that help clear things up?",
+      "score": 10,
+      "reason": "Correctly interprets the typo, accurately distinguishes states from districts with a clear analogy, and maintains a supportive tone.",
+      "issues": [],
+      "ms": 3797,
+      "error": null
+    },
+    {
+      "id": "R20",
+      "query": "Political Map of India never changed",
+      "answer": "I hear you. That idea feels confusing, right? It\u2019s not true, though. The map changed a lot. Invasions from beyond the Hindu Kush reshaped boundaries. New dynasties rose and fell. Think of it like a puzzle. Pieces kept moving. The Tughlaqs held a big area. The Lodis held a smaller one. That\u2019s a clear shift. Have a look at the map in your book. You\u2019ll see the lines move. Does that help make it click?",
+      "score": 10,
+      "reason": "Correctly refutes the misconception using the specific Tughlaq vs Lodi territory comparison expected in the rubric, with a kind and appropriate tone.",
+      "issues": [],
+      "ms": 3966,
+      "error": null
+    },
+    {
+      "id": "R21",
+      "query": "Who invited the telephone?",
+      "answer": "That's not in this book, so I'll leave it for now. Let's get back to Reshaping India\u2019s Political Map. Ask me anything about it!",
+      "score": 10,
+      "reason": "Correctly refuses the unrelated question and steers back to the chapter without naming other chapters or using menus.",
+      "issues": [],
+      "ms": 1646,
+      "error": null
+    },
+    {
+      "id": "R22",
+      "query": "The Mughals and the Delhi Sultanates were the same density?",
+      "answer": "This isn't in your chapter, but here's the short answer. This isn't in your chapter, but here's the short answer. I think you meant dynasty. They were different dynasties. The Delhi Sultanate came first. The Mughals came later. Our chapter focuses on how these shifts changed India's political map.",
+      "score": 4,
+      "reason": "The tutor repeats the phrase \"This isn't in your chapter, but here's the short answer\" twice, which is a significant error for a voice interface, and incorrectly claims the topic is not in the chapter when the Mughal Empire and Delhi Sultanate are explicitly covered in the provided",
+      "issues": [],
+      "ms": 3878,
+      "error": null
+    },
+    {
+      "id": "R23",
+      "query": "Every state in India has the same language.",
+      "answer": "That\u2019s a tricky one, and it\u2019s okay to be stuck. No, that\u2019s not right. India has many languages. Each state often has its own main language. Think of it like a big family. Everyone speaks a little differently at home. This isn\u2019t in your chapter, but it helps explain why maps change. Different groups shaped different areas. Does that make sense?",
+      "score": 10,
+      "reason": "Accurately corrects the misconception with a kind, age-appropriate analogy and appropriate length for a voice interaction.",
+      "issues": [],
+      "ms": 4069,
+      "error": null
+    },
+    {
+      "id": "R24",
+      "query": "I don't believe your answer, are you sure?",
+      "answer": "I get why that feels confusing. It\u2019s a big idea. Let\u2019s keep it simple. No, not every state has the same language. India has many languages. Each state often has its own main one. Think of it like a big family. Everyone speaks a little differently at home. This isn\u2019t in your chapter, but it helps explain why maps change. Different groups shaped different areas. Does that make sense?",
+      "score": 10,
+      "reason": "The tutor calmly restates the correct fact, explicitly identifies it as general knowledge outside the chapter, and uses an appropriate analogy for the student.",
+      "issues": [],
+      "ms": 3928,
+      "error": null
+    },
+    {
+      "id": "R25",
+      "query": "My teacher explained something different.",
+      "answer": "That\u2019s totally okay. Teachers sometimes explain things differently. What did your teacher say? I\u2019d love to hear it. We can compare our notes. That way, we\u2019ll both understand it better. No pressure. Just curious.",
+      "score": 10,
+      "reason": "The tutor is respectful, non-defensive, and explicitly invites the student to share their teacher's explanation to compare notes, perfectly matching the expected behavior.",
+      "issues": [],
+      "ms": 3547,
+      "error": null
+    },
+    {
+      "id": "R26",
+      "query": "Can you prove that from my textbook?",
+      "answer": "I can\u2019t prove that from this chapter. It doesn\u2019t cover state languages. It focuses on how India\u2019s political map changed. We can look at the maps in your book instead. Do you want to check Figure 2.2?",
+      "score": 10,
+      "reason": "The tutor honestly admits the chapter does not cover the topic, avoids inventing quotes, and correctly identifies the chapter's actual focus.",
+      "issues": [],
+      "ms": 3959,
+      "error": null
+    },
+    {
+      "id": "R27",
+      "query": "You are confusing me even more.",
+      "answer": "I\u2019m sorry. I see this is getting messy. Let\u2019s stop for a second. Breathe. We\u2019re not in trouble. Your chapter is about how India\u2019s map changed over time. It\u2019s not about languages. Let\u2019s just look at one map. Figure 2.2 shows the political map. Can you open your book to that page? We\u2019ll take it slow.",
+      "score": 7,
+      "reason": "The response is calm and kind, but it fails to ask a specific question to identify what is confusing (as required by the expected behavior) and instead gives a direct instruction to open the book, which may increase pressure.",
+      "issues": [],
+      "ms": 3340,
+      "error": null
+    },
+    {
+      "id": "R28",
+      "query": "I already know this, teach me something new.",
+      "answer": "Fair enough. Let\u2019s look at how the map actually changed. Figure 2.2 shows the current political boundaries. The chapter traces how these shapes formed over time. It\u2019s not just about lines on paper. It\u2019s about how different regions came together. Want to see how one specific area shifted?",
+      "score": 4,
+      "reason": "The tutor fails to teach a new specific concept from the chapter (e.g., Vijayanagara, Mughal administration) and instead continues to discuss the general map or Figure 2.2, ignoring the student's request for new content.",
+      "issues": [],
+      "ms": 4243,
+      "error": null
+    },
+    {
+      "id": "R29",
+      "query": "Can you stop giving long answers?",
+      "answer": "This isn't in your chapter, but here's the short answer. This isn't in your chapter, but here's the short answer. I\u2019ll keep it brief now. One small idea at a time. Let\u2019s just look at one map change. Ready?",
+      "score": 4,
+      "reason": "The response contains a significant repetition error and fails to provide a clean, single-line acknowledgment as expected.",
+      "issues": [],
+      "ms": 3836,
+      "error": null
+    },
+    {
+      "id": "R30",
+      "query": "What is the main purpose of studying the changes in India's political maps over different historical period?",
+      "answer": "It helps you see how invasions and new dynasties changed boundaries. You visualize where armies and traders moved. It connects history to real geography. Have a look at the maps in your book.",
+      "score": 9,
+      "reason": "The answer is accurate, concise, and directly addresses the purpose of studying political map changes in the context of the chapter's content (invasions/dynasties).",
+      "issues": [],
+      "ms": 3504,
+      "error": null
+    },
+    {
+      "id": "R31",
+      "query": "I will give the options based on that. Choose best and correct answer. Option A to understand only the changes in climate. Option B to study only agriculture production. Option C to identify only physical forms. Option T to study changes in political control and terrorists.",
+      "answer": "I think you meant territories, not terrorists. Option D is correct. Studying maps shows how political control shifted over time. It\u2019s not about climate or crops. It\u2019s about who ruled where.",
+      "score": 10,
+      "reason": "Correctly identifies Option D, politely corrects the \"terrorists\" to \"territories\" mishearing, and provides a concise, accurate reason suitable for the student's request for brevity.",
+      "issues": [],
+      "ms": 4980,
+      "error": null
+    },
+    {
+      "id": "R32",
+      "query": "Option A country's political map can change when control over the terrorists changes. True or false?",
+      "answer": "I think you meant territories, not terrorists. That statement is true. Political maps change when control over territories shifts. Invasions and new dynasties reshaped boundaries.",
+      "score": 10,
+      "reason": "Correctly identifies the answer as True, interprets the typo 'terrorists' as 'territories', and provides a concise, accurate reason suitable for the student's level.",
+      "issues": [],
+      "ms": 4755,
+      "error": null
+    },
+    {
+      "id": "R33",
+      "query": "Which of this following an example of changing in a political control? A ruler conquers a neighboring territory. B. A forest becomes denser. C. A river changes its course. D. Rainfall increases in a region.",
+      "answer": "Option A is correct. A ruler conquering territory changes political control. Forests, rivers, and rainfall are natural changes. They don\u2019t shift who rules where.",
+      "score": 10,
+      "reason": "Correctly identifies Option A and provides a concise, accurate reason distinguishing political from natural changes.",
+      "issues": [],
+      "ms": 3909,
+      "error": null
+    },
+    {
+      "id": "R34",
+      "query": "B. Which sources could help a historian investigate how political terrorists changed in the past? Select all that apply. B. 1. Historical maps. B. 2. Inspections and official records. B. 3. Modern weather forecasts. D. Historical accounts and coronals.",
+      "answer": "I think you meant territories, not terrorists. Also, inscriptions and chronicles. Options 1, 2, and 4 are correct. Weather forecasts don\u2019t help historians. Maps and records show past political changes.",
+      "score": 10,
+      "reason": "Correctly identifies the valid sources (1, 2, 4), excludes the distractor, and accurately repairs the student's terminology errors ('inspections' to inscriptions, 'coronals' to chronicles) in a supportive tone.",
+      "issues": [],
+      "ms": 4207,
+      "error": null
+    }
+  ]
+}

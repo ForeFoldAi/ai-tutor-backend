@@ -1,0 +1,290 @@
+{
+  "slug": "math_ch2_power_play",
+  "subject": "Mathematics",
+  "chapter_id": "39",
+  "chapter": "Chapter-2 : POWER PLAY",
+  "board": "CBSE",
+  "class_level": "CLASS_8",
+  "questions": [
+    {
+      "id": "M2-01",
+      "query": "what does power play mean? is it about exponents?",
+      "label": "normal",
+      "expect_keywords": [
+        "power",
+        "exponent"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-02",
+      "query": "ok explain 2 to the power 5 slowly",
+      "label": "interactive",
+      "expect_keywords": [
+        "32",
+        "power",
+        "2"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-03",
+      "query": "what is a base and an exponent?",
+      "label": "normal",
+      "expect_keywords": [
+        "base",
+        "exponent",
+        "power"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-04",
+      "query": "why do we use powers instead of long multiplications?",
+      "label": "normal",
+      "expect_keywords": [
+        "power",
+        "multiply"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-05",
+      "query": "what is 10 to the power 3?",
+      "label": "normal",
+      "expect_keywords": [
+        "1000",
+        "10",
+        "power"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-06",
+      "query": "any laws of exponents in this chapter?",
+      "label": "normal",
+      "expect_keywords": [
+        "exponent",
+        "law",
+        "power"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-07",
+      "query": "show a diagram or table about powers if the book has one",
+      "label": "diagram",
+      "expect_keywords": [
+        "power",
+        "figure",
+        "table"
+      ],
+      "forbidden": [],
+      "want_images": true,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-08",
+      "query": "quiz me on powers with one easy question",
+      "label": "normal",
+      "expect_keywords": [
+        "power",
+        "?"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-09",
+      "query": "what happens when exponent is 0?",
+      "label": "normal",
+      "expect_keywords": [
+        "power",
+        "zero",
+        "1",
+        "exponent"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-10",
+      "query": "how do i multiply same bases with powers?",
+      "label": "normal",
+      "expect_keywords": [
+        "power",
+        "multiply",
+        "add"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-11",
+      "query": "explain 3^4 with expanded form",
+      "label": "interactive",
+      "expect_keywords": [
+        "81",
+        "3",
+        "power"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-12",
+      "query": "is 2^3 same as 3^2?",
+      "label": "normal",
+      "expect_keywords": [
+        "8",
+        "9",
+        "not",
+        "power"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-13",
+      "query": "real life use of powers?",
+      "label": "normal",
+      "expect_keywords": [
+        "power",
+        "life",
+        "example"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-14",
+      "query": "big numbers with powers of 10?",
+      "label": "normal",
+      "expect_keywords": [
+        "power",
+        "10"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-15",
+      "query": "give two practice problems from this idea",
+      "label": "normal",
+      "expect_keywords": [
+        "power"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-16",
+      "query": "what is 5 too the powr of 3?",
+      "label": "typo",
+      "expect_keywords": [
+        "125",
+        "5",
+        "power"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-17",
+      "query": "is power play about electricity in social studies?",
+      "label": "wrong",
+      "expect_keywords": [
+        "power",
+        "exponent",
+        "math",
+        "not"
+      ],
+      "forbidden": [
+        "electricity"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "M2-18",
+      "query": "who were the mughals in power play math chapter?",
+      "label": "wrong",
+      "expect_keywords": [
+        "power",
+        "math",
+        "not"
+      ],
+      "forbidden": [
+        "mughal"
+      ],
+      "want_images": false,
+      "want_math": false,
+      "want_science": false
+    },
+    {
+      "id": "M2-19",
+      "query": "i keep forgetting \u2014 say again what exponent means",
+      "label": "normal",
+      "expect_keywords": [
+        "exponent",
+        "power"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    },
+    {
+      "id": "M2-20",
+      "query": "explain 2^4 agian slowly pls",
+      "label": "typo",
+      "expect_keywords": [
+        "16",
+        "power",
+        "2"
+      ],
+      "forbidden": [],
+      "want_images": false,
+      "want_math": true,
+      "want_science": false
+    }
+  ]
+}

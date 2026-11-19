@@ -1,0 +1,67 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 1048576
+    timeout: 10s
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 10s
+    relabel_configs:
+      # Keep only LearnMestro / Coolify containers (adjust names if needed)
+      - source_labels: ["__meta_docker_container_name"]
+        regex: ".*(api|worker|voice|frontend|loki|promtail|learnmestro|ai-tutor).*"
+        action: keep
+
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: container
+
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
+        target_label: service
+
+      - source_labels: ["__meta_docker_container_log_stream"]
+        target_label: stream
+
+      - replacement: production
+        target_label: env
+
+      - replacement: learnmestro
+        target_label: job
+
+      - source_labels: ["__meta_docker_container_id"]
+        target_label: __path__
+        replacement: /var/lib/docker/containers/$1/*-json.log
+
+    pipeline_stages:
+      - docker: {}
+      # Parse app JSON logs when present
+      - match:
+          selector: '{job="learnmestro"}'
+          stages:
+            - json:
+                expressions:
+                  level: severity
+                  severity: severity
+                  service_field: service
+                  message: message
+                  request_id: request_id
+                  trace_id: trace_id
+                  environment: environment
+                  module: module
+            - labels:
+                severity:
+                service_field:
+                module:
+                environment:
+            - output:
+                source: message

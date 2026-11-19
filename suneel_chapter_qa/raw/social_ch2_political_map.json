@@ -1,0 +1,2217 @@
+{
+  "generated_at": "2026-09-09 16:50:59 +0530",
+  "meta": {
+    "slug": "social_ch2_political_map",
+    "subject": "Social",
+    "chapter_id": "33",
+    "chapter": "Chapter 2 - Reshaping India\u2019s Political Map",
+    "board": "CBSE",
+    "class_level": "CLASS_8",
+    "questions": [
+      {
+        "id": "So2-01",
+        "query": "what is a political map anyway?",
+        "label": "normal",
+        "expect_keywords": [
+          "political",
+          "map"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-02",
+        "query": "how is it different from a physical map?",
+        "label": "normal",
+        "expect_keywords": [
+          "political",
+          "physical",
+          "map"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-03",
+        "query": "who were the mughals in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "mughal"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-04",
+        "query": "can you show the political map figure?",
+        "label": "diagram",
+        "expect_keywords": [
+          "map",
+          "figure",
+          "political"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-05",
+        "query": "how did india's political map get reshaped?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political",
+          "india"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-06",
+        "query": "what kingdoms or powers are discussed?",
+        "label": "normal",
+        "expect_keywords": [
+          "kingdom",
+          "mughal",
+          "power",
+          "empire"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-07",
+        "query": "why do maps change over time?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "change"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-08",
+        "query": "quiz me on political map with one question",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political",
+          "?"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-09",
+        "query": "what is an empire in this context?",
+        "label": "normal",
+        "expect_keywords": [
+          "empire",
+          "mughal"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-10",
+        "query": "any famous rulers named here?",
+        "label": "normal",
+        "expect_keywords": [
+          "ruler",
+          "mughal",
+          "akbar",
+          "aurangzeb",
+          "babur"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-11",
+        "query": "what regions changed hands?",
+        "label": "normal",
+        "expect_keywords": [
+          "region",
+          "map",
+          "territory"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-12",
+        "query": "why is this chapter called reshaping?",
+        "label": "normal",
+        "expect_keywords": [
+          "reshap",
+          "map"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-13",
+        "query": "how do historians use maps?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "histor"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-14",
+        "query": "give two important takeaways",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-15",
+        "query": "explain like im new to history maps",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-16",
+        "query": "what is politcal map of india in this chaptre?",
+        "label": "typo",
+        "expect_keywords": [
+          "political",
+          "map"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-17",
+        "query": "did mughals invent the steam engine here?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mughal",
+          "map",
+          "not"
+        ],
+        "forbidden": [
+          "steam"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-18",
+        "query": "is this chapter about perfect squares?",
+        "label": "wrong",
+        "expect_keywords": [
+          "map",
+          "political",
+          "not"
+        ],
+        "forbidden": [
+          "square"
+        ],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-19",
+        "query": "show another map related image if you can",
+        "label": "diagram",
+        "expect_keywords": [
+          "map",
+          "figure",
+          "image"
+        ],
+        "forbidden": [],
+        "want_images": true,
+        "want_math": false,
+        "want_science": false
+      },
+      {
+        "id": "So2-20",
+        "query": "who were the mughuls on the map?",
+        "label": "typo",
+        "expect_keywords": [
+          "mughal",
+          "map"
+        ],
+        "forbidden": [],
+        "want_images": false,
+        "want_math": false,
+        "want_science": false
+      }
+    ]
+  },
+  "nest_probe": {
+    "ok": true,
+    "health": {
+      "status": "ok",
+      "voice": "ws-pcm",
+      "instanceId": "Maniths-MacBook-Air.local:68746",
+      "draining": false,
+      "liveSessions": 0,
+      "redis": "up"
+    },
+    "session_id": "f1548d40-f916-4b72-9a9e-f6cfbe1c1111",
+    "query_ok": true,
+    "note": "REST ok only; scored via voice_mode stream"
+  },
+  "tutor": {
+    "primaries": [
+      {
+        "id": "So2-01",
+        "query": "what is a political map anyway?",
+        "label": "normal",
+        "expect_keywords": [
+          "political",
+          "map"
+        ],
+        "answer_clip": "A political map is a type of map that shows the borders and divisions of countries, kingdoms, or territories\u2014like how the chapter explains the shifting control over India during the medieval period. These maps highlight where different rulers, such as the Delhi Sultanate or regional kingdoms, held power and how their territories expanded or changed.  - They use lines and colors to mark boundaries between ruled areas. - Important cities and cente\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11232,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-02",
+        "query": "how is it different from a physical map?",
+        "label": "normal",
+        "expect_keywords": [
+          "political",
+          "physical",
+          "map"
+        ],
+        "answer_clip": "A political map shows the borders of kingdoms or empires, unlike a physical map that focuses on natural features like rivers or mountains. The chapter explains that political maps highlight how India\u2019s borders changed over time\u2014like shifting pieces on a chessboard\u2014due to battles, conquests, and new dynasties. For instance, Fig. 2.12 displays the Vijayanagara Empire\u2019s territory, while a physical map would show the same area\u2019s geography instead.  \u2026",
+        "images": [
+          {
+            "figure": "2.17",
+            "page": 20,
+            "caption": "Painting showing Akbar in his court receiving",
+            "file": "figures/fig_2_17.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11446,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So2-03",
+        "query": "who were the mughals in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "mughal"
+        ],
+        "answer_clip": "The Mughals were a powerful dynasty of rulers who shaped India\u2019s political map from the early 1500s onward, according to the chapter. They began with **Babur**, who won the **First Battle of Panipat (1526)** and established the Mughal Empire. Later emperors like **Akbar** and **Aurangzeb** expanded their control through military campaigns, diplomacy, and administrative reforms.  - They ruled over vast territories, including Delhi, Agra, and part\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9104,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-04",
+        "query": "can you show the political map figure?",
+        "label": "diagram",
+        "expect_keywords": [
+          "map",
+          "figure",
+          "political"
+        ],
+        "answer_clip": "The chapter shows the political map in **Fig. 2.3**, which compares the territories of the Tughlaq and Lodi dynasties alongside other regional kingdoms like the Eastern Gangas and Hoysalas. This map visually highlights how foreign invasions and new dynasties reshaped India\u2019s borders during the medieval period, showing cities like Delhi, Daulatabad, and Belur alongside their expanding or resisting territories.  The figure helps you see which area\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10328,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So2-05",
+        "query": "how did india's political map get reshaped?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political",
+          "india"
+        ],
+        "answer_clip": "India\u2019s political map was reshaped by foreign invasions and the rise of new dynasties, especially from Central Asia. According to the chapter, Turkic and Afghan invaders like the **Delhi Sultanate** (starting in 1192) conquered northern India, while kingdoms like the **Hoysalas** and **Eastern Gangas** resisted and thrived in the south. The chapter explains that battles, conquests, and even shifts in capital (like Muhammad bin Tughlaq moving Del\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10206,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So2-06",
+        "query": "what kingdoms or powers are discussed?",
+        "label": "normal",
+        "expect_keywords": [
+          "kingdom",
+          "mughal",
+          "power",
+          "empire"
+        ],
+        "answer_clip": "The chapter discusses major kingdoms and powers that shaped India\u2019s political map, like the **Delhi Sultanate** (including the Tughlaqs and Lodis) and the **Mughals**, who ruled large parts of North India. It also covers the **Vijayanagara Empire** in the south, the **Ahom Kingdom** in the northeast, and the **Hoysalas** in Karnataka, which lasted longer due to strong defenses. The chapter explains how these groups expanded, fought, or traded wi\u2026",
+        "images": [
+          {
+            "figure": "2.12",
+            "page": 13,
+            "caption": "Kingdoms in the Deccan and the Vijayanagara Empire",
+            "file": "figures/fig_2_12.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12626,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "So2-07",
+        "query": "why do maps change over time?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "change"
+        ],
+        "answer_clip": "Maps change over time because India\u2019s political map was constantly reshaped by foreign invasions, new dynasties, and battles\u2014just as the chapter describes. When groups like the Mughals or Delhi Sultans conquered lands, they adjusted borders to expand their rule. Even local kingdoms such as Vijayanagara fought to protect their territories, leading to shifts in where people lived and who held power. These changes show how wars, trade, and cultural\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11069,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-08",
+        "query": "quiz me on political map with one question",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political",
+          "?"
+        ],
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of how India\u2019s political map changed during the medieval period! You\u2019ve been learning about kingdoms, invasions, and shifting borders\u2014now let\u2019s see what sticks.  **Questions** 1. The chapter mentions that the **Delhi Sultanate** was ruled by five successive dynasties. Name *two* of these dynasties that were of Turkic-Afghan origin.  2. Look at **Fig. 2.3** (the map of territories under the Tughlaqs and\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9084,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So2-09",
+        "query": "what is an empire in this context?",
+        "label": "normal",
+        "expect_keywords": [
+          "empire",
+          "mughal"
+        ],
+        "answer_clip": "In this chapter, an empire is a powerful kingdom that rules over many lands and diverse people under one authority. The textbook shows how empires like the Delhi Sultanate or Mughals expanded by conquering regions, controlling trade routes, and enforcing centralized rule. These rulers often combined military strength with administrative systems to maintain control.  - Empires grew by defeating smaller kingdoms or absorbing their territories. - T\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10236,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-10",
+        "query": "any famous rulers named here?",
+        "label": "normal",
+        "expect_keywords": [
+          "ruler",
+          "mughal",
+          "akbar",
+          "aurangzeb",
+          "babur"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Ruler**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 762,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 6.5,
+          "expect_score": 2.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 6.1,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-11",
+        "query": "what regions changed hands?",
+        "label": "normal",
+        "expect_keywords": [
+          "region",
+          "map",
+          "territory"
+        ],
+        "answer_clip": "During this period, many regions in India shifted between different rulers, as shown in **Fig. 2.3**. The Tughlaq dynasty expanded their control over northern India, while the Lodis later took over Delhi. In the south, kingdoms like Vijayanagara grew powerful, while the Eastern Ganga dynasty ruled parts of eastern India.  - **Delhi** became a battleground for control between the Tughlaqs and Lodis. - **Southern India** saw Vijayanagara rise as a\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12440,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-12",
+        "query": "why is this chapter called reshaping?",
+        "label": "normal",
+        "expect_keywords": [
+          "reshap",
+          "map"
+        ],
+        "answer_clip": "The chapter is called *Reshaping India\u2019s Political Map* because it traces how India\u2019s borders and ruling kingdoms were constantly redrawn during the medieval period. According to the chapter, foreign invasions by Turkic, Afghan, and Mughal armies\u2014along with the rise of new dynasties like the Delhi Sultanate and Vijayanagara Empire\u2014created a shifting political landscape. Battles, conquests, and resistance movements (such as Maharana Pratap\u2019s guer\u2026",
+        "images": [
+          {
+            "figure": "2.18",
+            "page": 21,
+            "caption": "The five-storied \u2018Panch Mahal\u2019 at Fatehpur Sikri, a city built by Akbar near pr\u2026",
+            "file": "figures/fig_2_18.jpg"
+          },
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13051,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-13",
+        "query": "how do historians use maps?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "histor"
+        ],
+        "answer_clip": "**Topic** **How Historians Use Maps** Maps are like time machines for historians\u2014they help them understand how places, borders, and societies changed over centuries.  ---  **In Simple Words** Imagine you\u2019re playing a game of \"What Changed?\" with a country\u2019s history. Maps are your clues! Historians use them to see how cities grew, kingdoms expanded or shrank, and people moved. For example, if a map from 1500 shows a small kingdom and another from\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 16938,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-14",
+        "query": "give two important takeaways",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political"
+        ],
+        "answer_clip": "The chapter shows how **political power reshaped India\u2019s map through both conflict and adaptation**. First, **foreign invasions\u2014like Timur\u2019s attack on Delhi\u2014brought destruction**, killing people, destroying cities, and damaging trade, which hurt everyday life. Second, **some kingdoms survived longer by using their geography, strong armies, and local loyalty**, like the Vijayanagara Empire.  Would you like to see how traders like the Marwaris man\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10287,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-15",
+        "query": "explain like im new to history maps",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political"
+        ],
+        "answer_clip": "Let\u2019s imagine history maps are like **a giant jigsaw puzzle of India\u2019s past**, where each piece shows how kingdoms, empires, and borders changed over time. Here\u2019s how to understand them step by step:  1. **The Blank Canvas (Early Maps)**    Start with a simple outline of India\u2014just like a blank map of your school. This shows where cities and rivers were, but no kingdoms yet.  2. **Adding the Pieces (Kingdoms Rise)**    Now, imagine colored stick\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10943,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-16",
+        "query": "what is politcal map of india in this chaptre?",
+        "label": "typo",
+        "expect_keywords": [
+          "political",
+          "map"
+        ],
+        "answer_clip": "In this chapter, the political map of India isn\u2019t just a fixed drawing\u2014it\u2019s a story of shifting borders and new rulers. The textbook shows how invaders like the Turks and Mughals arrived from Central Asia, fought battles (like the First Battle of Panipat in 1526), and built empires that changed who controlled different parts of the country. You\u2019ll see kingdoms like the Vijayanagara Empire in the south (Figure 2.12) and the Mughals expanding nort\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12907,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-17",
+        "query": "did mughals invent the steam engine here?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mughal",
+          "map",
+          "not"
+        ],
+        "answer_clip": "The Mughals did not invent the steam engine\u2014this was a European development centuries later. The chapter explains that the Mughals focused on expanding their empire, improving administration (like Akbar\u2019s revenue system), and building infrastructure such as roads and canals. Their innovations were centered on governance, agriculture, and trade rather than mechanical inventions.  The steam engine was later developed by British engineers in the 17\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11298,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.8,
+          "bugs": [
+            "forbidden content mentioned: steam"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-18",
+        "query": "is this chapter about perfect squares?",
+        "label": "wrong",
+        "expect_keywords": [
+          "map",
+          "political",
+          "not"
+        ],
+        "answer_clip": "This chapter shows how India\u2019s political map changed dramatically over time due to foreign invasions, new rulers, and local resistance. The textbook explains that Turkic and later Mughal dynasties like the Delhi Sultanate and Vijayanagara Empire expanded or fought for control, while smaller kingdoms such as the Ahoms and Rajputs defended their lands. It also covers how these shifts impacted people\u2019s lives\u2014through taxes, cultural changes, and eve\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.16",
+            "page": 19,
+            "caption": "The Mughals and the rise of regional powers at different periods",
+            "file": "figures/fig_2_16.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 12004,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.4,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-19",
+        "query": "show another map related image if you can",
+        "label": "diagram",
+        "expect_keywords": [
+          "map",
+          "figure",
+          "image"
+        ],
+        "answer_clip": "The chapter includes maps like **Fig. 2.12**, which shows the Vijayanagara Empire and other Deccan kingdoms. Another related map is **Fig. 2.17**, which highlights Akbar\u2019s court at Fatehpur Sikri\u2014though it\u2019s not a political map, it illustrates how empires shaped culture and trade.  Would you like me to explain how **Fig. 2.12** helps us see the Vijayanagara Empire\u2019s power? Or would you prefer to explore another figure from the chapter?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11171,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 2.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 6.7,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-20",
+        "query": "who were the mughuls on the map?",
+        "label": "typo",
+        "expect_keywords": [
+          "mughal",
+          "map"
+        ],
+        "answer_clip": "The Mughuls were a powerful dynasty of Central Asian invaders who ruled India starting in 1526 after Babur\u2019s victory at the First Battle of Panipat. According to the chapter, they were Turkic and Afghan people who expanded their control across northern and central India, creating an empire that included regions like Delhi, Jaunpur, and Peshawar. Their rule left a lasting mark on India\u2019s political and cultural landscape, blending Persian and Indi\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 11864,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 5.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.2,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "So2-02",
+        "source_query": "how is it different from a physical map?",
+        "query": "hold on, what do you mean by track human-made divisions?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down simply:  A **political map** shows the borders of kingdoms, empires, or countries\u2014like how India was divided into parts ruled by different dynasties (e.g., Mughals, Vijayanagara). Think of it like a **sports team\u2019s playing field**: the lines on the field (boundaries) are *human-made* to separate teams. Similarly, political maps show where one ruler\u2019s power ended and another\u2019s began\u2014like the borders between the Delhi Sultanate\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.12",
+            "page": 13,
+            "caption": "Kingdoms in the Deccan and the Vijayanagara Empire",
+            "file": "figures/fig_2_12.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8760,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "So2-05",
+        "source_query": "how did india's political map get reshaped?",
+        "query": "ok but can you explain Hoysalas in simpler words?",
+        "derived": true,
+        "answer_clip": "**Topic** The **Hoysala Empire** was a powerful medieval kingdom in southern India that resisted foreign invasions and built stunning temples.  **In Simple Words** Imagine a time when India\u2019s south was ruled by a strong but peaceful kingdom called the Hoysalas. They didn\u2019t just fight wars\u2014they also built beautiful temples and protected their land from invaders. Their empire lasted for about 200 years (around 1000\u20131250 AD) and left behind some of\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.16",
+            "page": 19,
+            "caption": "The Mughals and the rise of regional powers at different periods",
+            "file": "figures/fig_2_16.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 14599,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So2-06",
+        "source_query": "what kingdoms or powers are discussed?",
+        "query": "is Vijayanagara Empire actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Yes, the **Vijayanagara Empire** is definitely covered in this chapter. The textbook explains its rise in the 14th century, its golden age under **Krishnadevaraya** in the 16th century, and how it resisted Mughal expansion. It even mentions its capital at **Hampi** (Fig. 2.11) and its rivalry with the **Bahmani Sultanate** (Fig. 2.12). The chapter highlights its military strength, cultural achievements, and why it lasted longer than many other k\u2026",
+        "images": [
+          {
+            "figure": "2.14",
+            "page": 15,
+            "caption": "ast dia\u2019s Po Fig. 2.14. A panel from the Vitthala temple",
+            "file": "figures/fig_2_14.jpg"
+          },
+          {
+            "figure": "2.13",
+            "page": 14,
+            "caption": "The mah\u0101mandapa (great hall) of the Vitthala temple; note the grandeur and intr\u2026",
+            "file": "figures/fig_2_13.jpg"
+          },
+          {
+            "figure": "2.12",
+            "page": 13,
+            "caption": "Kingdoms in the Deccan and the Vijayanagara Empire",
+            "file": "figures/fig_2_12.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7970,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 7.5,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 8.6,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "So2-07",
+        "source_query": "why do maps change over time?",
+        "query": "quiz me with one easy question just about Delhi Sultans",
+        "derived": true,
+        "answer_clip": "**Quiz Time** Let\u2019s test your understanding of the Delhi Sultans\u2014just one question to start! You\u2019ve got this.  **Questions** 1. According to the chapter, what *two* key reasons did Central Asian invaders (like the Turks and Afghans) have for reshaping India\u2019s political map during the Delhi Sultanate period?  **How to Answer** Reply with your answer, and I\u2019ll guide you through it step by step.  **Encouragement** Think about their motivations\u2014both\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4537,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.4,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So2-08",
+        "source_query": "quiz me on political map with one question",
+        "query": "show me a figure or example related to Fig. 2.3",
+        "derived": true,
+        "answer_clip": "Let\u2019s test your memory of the Delhi Sultanate\u2019s dynasties! The textbook says five dynasties ruled here\u2014can you name *one Turkic* and *one Afghan* dynasty?  Reply with your answers, and I\u2019ll check if they match what the chapter highlights.  What do you recall first?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8438,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.0,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So2-12",
+        "source_query": "why is this chapter called reshaping?",
+        "query": "wait why is Mughal important here?",
+        "derived": true,
+        "answer_clip": "The chapter is called *Reshaping India\u2019s Political Map* because it shows how **India\u2019s borders and kingdoms changed dramatically** due to foreign invasions and new rulers.  Here\u2019s why the **Mughals are important** in this chapter: - The Mughals were one of the **biggest empires** that reshaped India\u2019s map. Their leader, **Babur**, won the **First Battle of Panipat (1526)** and started the Mughal Empire. - They **conquered many kingdoms** (like R\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.18",
+            "page": 21,
+            "caption": "The five-storied \u2018Panch Mahal\u2019 at Fatehpur Sikri, a city built by Akbar near pr\u2026",
+            "file": "figures/fig_2_18.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10816,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So2-13",
+        "source_query": "how do historians use maps?",
+        "query": "can you give one more real-life example of Show changes over time?",
+        "derived": true,
+        "answer_clip": "Example of Changes Over Time The chapter shows how the **Vijayanagara Empire** (Fig. 2.12) dominated the Deccan in 1509, but by the time of **Krishnadevaraya\u2019s rule (1529)**, its borders expanded further. Then, after the **Battle of Talikota (1565)**, the empire collapsed, and smaller kingdoms like **Ahmednagar and Bijapur** took its place\u2014just like how a big tree (Vijayanagara) can fall, and smaller branches (kingdoms) grow in its place. This s\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7917,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "So2-15",
+        "source_query": "explain like im new to history maps",
+        "query": "i still don't get Resistance \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Resistance in history is when smaller kingdoms or groups **fought back** against bigger empires that were taking over their land or money. Think of it like a small village refusing to give up its fields to a powerful king who wants them all.  The chapter shows how: - Peasants like the Jats in Uttar Pradesh killed a Mughal officer and fought 20,000 strong, even if they lost later. - Tribes such as the Bhils and Gonds used their knowledge of fores\u2026",
+        "images": [
+          {
+            "figure": "2.22",
+            "page": 27,
+            "caption": "47 Ta 2 Fig. 2.22. The Mewar emblem, with a Bhil warrior on the\u2026",
+            "file": "figures/fig_2_22.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 9915,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 9.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 5.2,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "So2-16",
+        "source_query": "what is politcal map of india in this chaptre?",
+        "query": "ok so what should i remember about India for a test?",
+        "derived": true,
+        "answer_clip": "For your test, focus on how India\u2019s political map changed due to invasions and empires. Remember that the **Delhi Sultanate** (starting 1206) and later the **Mughals** (like Babur) expanded their control from the north, while kingdoms like **Vijayanagara** (south) and **Ahom** (northeast) resisted longer because of strong defenses and geography. The chapter also highlights that **trade and culture** grew despite wars\u2014look at Fig. 2.3 to see how \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7496,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 9.0,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So2-20",
+        "source_query": "who were the mughuls on the map?",
+        "query": "that part about The Mughuls sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "The term you heard was correct\u2014it\u2019s the **Mughals** (or *Mughul*), not \"the Mughuls.\" According to the chapter, they were a powerful dynasty of Turkic and Afghan origin who established their empire in India after Babur\u2019s victory at Panipat in 1526. Their rule covered vast regions like Delhi, Agra, and parts of central India, blending Persian and Indian traditions.  - Their empire faced resistance from groups like the Jats and tribal communities.\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 10784,
+        "error": null,
+        "path": "POST /auth/chat",
+        "scores": {
+          "answer_score": 9.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": 8.0,
+          "interactive_note": "",
+          "overall": 7.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      }
+    ]
+  },
+  "voice": {
+    "primaries": [
+      {
+        "id": "So2-01",
+        "query": "what is a political map anyway?",
+        "label": "normal",
+        "expect_keywords": [
+          "political",
+          "map"
+        ],
+        "answer_clip": "A political map shows the borders of kingdoms or empires. Not just mountains or rivers\u2014it\u2019s all about who ruled where. Look at Fig. 2.3\u2014you\u2019ll see different empires like the Tughlaqs or Lodis. Their territories are marked, showing how power shifted over time. It\u2019s like a puzzle of who controlled which lands in India\u2019s past.",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6055,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-02",
+        "query": "how is it different from a physical map?",
+        "label": "normal",
+        "expect_keywords": [
+          "political",
+          "physical",
+          "map"
+        ],
+        "answer_clip": "Oh, that\u2019s a great question\u2014let me make it super clear.  A **physical map** shows natural things\u2014like rivers, mountains, forests. A **political map** shows *who controls* what land\u2014kingdoms, empires, borders.  Think of it like this: if you\u2019re coloring a map of your school. A physical map would show the playground, trees, and roads. A political map would show *whose classroom is whose*\u2014like which teacher rules which area.  In this chapter, we\u2019re \u2026",
+        "images": [
+          {
+            "figure": "2.16",
+            "page": 19,
+            "caption": "The Mughals and the rise of regional powers at different periods",
+            "file": "figures/fig_2_16.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 19224,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So2-03",
+        "query": "who were the mughals in this chapter?",
+        "label": "normal",
+        "expect_keywords": [
+          "mughal"
+        ],
+        "answer_clip": "In this chapter, the Mughals were a powerful dynasty. They ruled large parts of India for many years. The chapter mentions Aurangzeb, their last emperor. He wrote about feeling regretful for his actions.  The Mughals faced resistance from many groups. Peasants, Rajputs, and tribes like the Ahoms fought back. Their rule wasn\u2019t complete\u2014some areas stayed independent.  The chapter shows how their empire slowly weakened. Not all people accepted thei\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5235,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.8,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-04",
+        "query": "can you show the political map figure?",
+        "label": "diagram",
+        "expect_keywords": [
+          "map",
+          "figure",
+          "political"
+        ],
+        "answer_clip": "Ah, I see you want to look at the political map figure!  The chapter has **Fig. 2.3**\u2014it shows how empires like the Tughlaqs, Lodis, and southern kingdoms grew or changed over time. You\u2019ll see cities like Delhi, Jaunpur, and Belur marked with their territories.  Look closely at the colored areas\u2014those show which dynasty controlled which lands. The map even compares the Tughlaq and Lodi dynasties side by side.  Want me to explain how to read it? \u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 13022,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So2-05",
+        "query": "how did india's political map get reshaped?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political",
+          "india"
+        ],
+        "answer_clip": "India\u2019s political map changed mostly because of two big things. First, **foreign invaders** from Central Asia\u2014like Turkic and Afghan groups\u2014came in large numbers. They brought new kingdoms, like the **Delhi Sultanate** and later the **Mughals**.  Second, **new dynasties** rose inside India too. The **Vijayanagara Empire** in the south and the **Bahmani Sultanate** also shaped borders. Look at **Fig. 2.3**\u2014it shows how these groups\u2019 territories g\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 2,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6659,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So2-06",
+        "query": "what kingdoms or powers are discussed?",
+        "label": "normal",
+        "expect_keywords": [
+          "kingdom",
+          "mughal",
+          "power",
+          "empire"
+        ],
+        "answer_clip": "The chapter talks about two big groups of powers.  First, there were the **Delhi Sultanate** and **Mughals** in the north. Then, in the south and east, we see strong kingdoms like: - **Vijayanagara Empire** (near Halebidu and Belur) - **Hoysala Territories** (also near those temples) - **Eastern Ganga Territory** (under Narasimhadeva) - **Ahom Kingdom** (in the east, near Konark)  The map in **Figure 2.3** shows these clearly\u2014have a look at it.",
+        "images": [
+          {
+            "figure": "2.12",
+            "page": 13,
+            "caption": "Kingdoms in the Deccan and the Vijayanagara Empire",
+            "file": "figures/fig_2_12.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6721,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 4
+        }
+      },
+      {
+        "id": "So2-07",
+        "query": "why do maps change over time?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "change"
+        ],
+        "answer_clip": "Maps change because new rulers and kingdoms keep appearing. The chapter says foreign invaders\u2014like those from Central Asia\u2014 came and took over lands. Their battles and victories reshaped borders.  Then, rulers like the Mughals built new cities and roads. They also made better maps to collect taxes and manage land. So, every time a new dynasty rose or fell, the map had to update.  Think of it like this: if your school changes its class rooms, you\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5331,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-08",
+        "query": "quiz me on political map with one question",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political",
+          "?"
+        ],
+        "answer_clip": "Got it! Here\u2019s your quiz question:  *\"Look at Fig. 2.3\u2014what two dynasties controlled Delhi between the 1330s and 1479?\"*  (It\u2019s the Tughlaqs first, then the Lodis. Check the colored areas near Delhi!)",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5007,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-09",
+        "query": "what is an empire in this context?",
+        "label": "normal",
+        "expect_keywords": [
+          "empire",
+          "mughal"
+        ],
+        "answer_clip": "In this chapter, an empire is a big kingdom that controls many lands. It\u2019s not just about size\u2014it\u2019s about power. Empires like the Delhi Sultanate or Mughals ruled over huge areas, with strong armies and control over trade.  The chapter shows how empires grew by conquering other kingdoms. They had kings who made rules, collected taxes, and built armies to keep control. That\u2019s how empires shaped India\u2019s political map.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5577,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-10",
+        "query": "any famous rulers named here?",
+        "label": "normal",
+        "expect_keywords": [
+          "ruler",
+          "mughal",
+          "akbar",
+          "aurangzeb",
+          "babur"
+        ],
+        "answer_clip": "I think I may have misheard \u2014 did you mean **Ruler**?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 595,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 6.5,
+          "expect_score": 2.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 5.5,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-11",
+        "query": "what regions changed hands?",
+        "label": "normal",
+        "expect_keywords": [
+          "region",
+          "map",
+          "territory"
+        ],
+        "answer_clip": "Ah, this is a great question\u2014let\u2019s look at the map together.  The chapter shows how power shifted between different dynasties. For example, the **Tughlaqs** (around 1335) controlled a big stretch of northern India, including Delhi and Gwalior. Later, the **Lodis** (by 1479) took over parts of that same region, like Delhi again.  In the south, we see the **Hoysala territories** (around 1300) and the **Eastern Ganga Territory** under Narasimhadeva\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5418,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "id": "So2-12",
+        "query": "why is this chapter called reshaping?",
+        "label": "normal",
+        "expect_keywords": [
+          "reshap",
+          "map"
+        ],
+        "answer_clip": "The chapter\u2019s name is simple\u2014it\u2019s about how India\u2019s borders changed over time.  Look at those maps in the chapter. They show different kingdoms rising and falling. Some empires grew, others disappeared. New rulers came in, like the Delhi Sultanate or Vijayanagara. That\u2019s the \"reshaping\"\u2014the political map wasn\u2019t static. It shifted with wars, alliances, and new leaders.  The chapter even mentions foreign invasions and battles that redrew the lines\u2026",
+        "images": [
+          {
+            "figure": "2.18",
+            "page": 21,
+            "caption": "The five-storied \u2018Panch Mahal\u2019 at Fatehpur Sikri, a city built by Akbar near pr\u2026",
+            "file": "figures/fig_2_18.jpg"
+          },
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6681,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-13",
+        "query": "how do historians use maps?",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "histor"
+        ],
+        "answer_clip": "Historians use maps to show how borders changed over time. Look at Figs. 2.3, 2.12, and 2.16\u2014they\u2019re like snapshots of India\u2019s kingdoms. One map might show small kingdoms, another shows bigger empires after conquests. They help track which dynasties grew or disappeared.  Maps also show where new cities were built\u2014like Fatehpur Sikri by Akbar. That way, historians see how power shifted and how people lived differently. Want to see how? Look at th\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4857,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-14",
+        "query": "give two important takeaways",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political"
+        ],
+        "answer_clip": "Okay, let\u2019s keep it simple.  First takeaway: **Traders like the Marwaris** found clever ways to survive. They built trust and credit systems that worked *even* when empires changed. That\u2019s how they stayed strong\u2014smart business, not just big armies.  Second takeaway: **Some kingdoms lasted longer** because of their geography. Look at Vijayanagara or Ahom\u2014strong forts, hard-to-reach lands, and loyal people made them tough to conquer. Maps show why\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6177,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 5.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.2,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-15",
+        "query": "explain like im new to history maps",
+        "label": "normal",
+        "expect_keywords": [
+          "map",
+          "political"
+        ],
+        "answer_clip": "Oh, I totally get why maps can feel confusing at first! Let me make it simple.  Imagine you\u2019re playing a game of Lego with your friends. Each friend builds their own castle\u2014some big, some small\u2014using different colored bricks. A *physical map* is like looking at the real world: mountains, rivers, forests\u2014just the natural stuff. But a *political map* is like seeing which friend\u2019s castle (kingdom) owns which Lego pieces (land). It shows the borders\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6270,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-16",
+        "query": "what is politcal map of india in this chaptre?",
+        "label": "typo",
+        "expect_keywords": [
+          "political",
+          "map"
+        ],
+        "answer_clip": "A political map of India in this chapter shows the borders of kingdoms and empires.  It\u2019s not about rivers or mountains\u2014it\u2019s about who ruled where. Look at Fig. 2.12\u2014you\u2019ll see empires like Vijayanagara, Bahmani Sultanate, and Ahom Kingdom marked on the map.  These lines changed over time as dynasties rose and fell. That\u2019s how India\u2019s political map got reshaped.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6061,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-17",
+        "query": "did mughals invent the steam engine here?",
+        "label": "wrong",
+        "expect_keywords": [
+          "mughal",
+          "map",
+          "not"
+        ],
+        "answer_clip": "No, the Mughals did not invent the steam engine here. The chapter talks about their big achievements\u2014like roads, canals, and a new currency system. But the steam engine? That\u2019s not mentioned. It\u2019s a later invention, from Europe, not from Mughal India.  The Mughals did build strong infrastructure\u2014like bridges and irrigation. But steam engines? Not in this chapter. We\u2019ll learn more about other empires next time. Okay?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4755,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 7.7,
+          "bugs": [
+            "forbidden content mentioned: steam"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-18",
+        "query": "is this chapter about perfect squares?",
+        "label": "wrong",
+        "expect_keywords": [
+          "map",
+          "political",
+          "not"
+        ],
+        "answer_clip": "No, this chapter isn\u2019t about perfect squares at all. It\u2019s about how India\u2019s political map changed over time. Think of it like a puzzle where new kingdoms rose, others fell, and borders shifted\u2014just like how your school\u2019s playground might change if new teams join.  The chapter shows how foreign invasions and new rulers reshaped India\u2019s borders. For example, dynasties like the Delhi Sultanate, Vijayanagara, and Mughals expanded or fought with othe\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.16",
+            "page": 19,
+            "caption": "The Mughals and the rise of regional powers at different periods",
+            "file": "figures/fig_2_16.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7412,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 6.7,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.1,
+          "bugs": [
+            "forbidden content mentioned: square"
+          ],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "id": "So2-19",
+        "query": "show another map related image if you can",
+        "label": "diagram",
+        "expect_keywords": [
+          "map",
+          "figure",
+          "image"
+        ],
+        "answer_clip": "Oh, I see you want to look at another map!  The chapter has **Fig. 2.12**\u2014that\u2019s the one showing the Deccan kingdoms and the Vijayanagara Empire. It marks places like **Ahmednagar, Bijapur, Golconda**, and the empire\u2019s capital at **Hampi**.  If you\u2019re looking for something else, the chapter doesn\u2019t show many other maps. But **Fig. 2.14** has a temple panel\u2014it\u2019s not a map, but it shows life there. Want me to describe what\u2019s in that picture instea\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6116,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 2.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.6,
+          "bugs": [
+            "wanted images but got none"
+          ],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "id": "So2-20",
+        "query": "who were the mughuls on the map?",
+        "label": "typo",
+        "expect_keywords": [
+          "mughal",
+          "map"
+        ],
+        "answer_clip": "Ah, the Mughuls\u2014this chapter calls them the **Mughals** instead.  They were a group of invaders from Central Asia. The chapter says they came from beyond the Hindu Kush mountains. Their leader, Babur, won the **First Battle of Panipat in 1526**. That victory helped them build the **Mughal Empire**\u2014you\u2019ll see their lands marked on maps later.  They weren\u2019t just warriors\u2014they also spread their religion by force. Their rule changed India\u2019s politica\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5181,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ],
+    "followups": [
+      {
+        "source_id": "So2-02",
+        "source_query": "how is it different from a physical map?",
+        "query": "hold on, what do you mean by physical map?",
+        "derived": true,
+        "answer_clip": "Let\u2019s break it down even simpler:  A **physical map** shows *natural* things\u2014like mountains, rivers, and forests. Imagine a map of your school with trees and playgrounds marked.  A **political map** (the one we\u2019re studying) shows *who controls* what land\u2014like which kingdom or empire owns which area. Think of it like a map of your school showing *whose classroom is whose* or *who is the head of each section*.  In this chapter, we\u2019re looking at **\u2026",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          },
+          {
+            "figure": "2.2",
+            "page": 2,
+            "caption": "Reshaping India\u2019s Political Map",
+            "file": "figures/fig_2_2.jpg"
+          },
+          {
+            "figure": "2.7",
+            "page": 7,
+            "caption": "A 19th-century painting depicting Muhammad bin Tughlaq in his court",
+            "file": "figures/fig_2_7.jpg"
+          }
+        ],
+        "n_images": 3,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8997,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 3
+        }
+      },
+      {
+        "source_id": "So2-04",
+        "source_query": "can you show the political map figure?",
+        "query": "ok but can you explain Tughlaqs in simpler words?",
+        "derived": true,
+        "answer_clip": "Okay, so the **Tughlaqs** were a dynasty that ruled Delhi after the Khiljis. They tried big ideas\u2014like moving the capital to Daulatabad. But their plans often failed, causing trouble for people.  Think of them like a king who wanted to build a new city far away. It didn\u2019t work out well for everyone.",
+        "images": [
+          {
+            "figure": "2.1",
+            "page": 1,
+            "caption": "An aerial view of the Qutub Minar complex, Delhi",
+            "file": "figures/fig_2_1.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7992,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.3,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "So2-05",
+        "source_query": "how did india's political map get reshaped?",
+        "query": "is Mughals actually in this chapter or are you guessing?",
+        "derived": true,
+        "answer_clip": "Oh, yes\u2014Mughals are *definitely* in this chapter! The textbook talks about them in two key ways. First, it mentions **Aurangzeb\u2019s reign**\u2014his letters show how he felt about his rule. Second, it talks about **resistance against the Mughals**, like the Jat peasant rebellion. So yes, they\u2019re right there\u2014just not as the main focus, but as part of how India\u2019s map changed.  Want me to explain *how* they reshaped the map? Or should we look at the rebel\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6034,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So2-07",
+        "source_query": "why do maps change over time?",
+        "query": "quiz me with one easy question just about Mughals",
+        "derived": true,
+        "answer_clip": "Got it! Here\u2019s your easy Mughal quiz question:  **\"The Mughals introduced a new silver coin called what?\"**  (Think of it like their version of today\u2019s rupee\u2014just in silver!) Take your guess. It\u2019s in the chapter.",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 4255,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "So2-11",
+        "source_query": "what regions changed hands?",
+        "query": "show me a figure or example related to Figure 2.3",
+        "derived": true,
+        "answer_clip": "Look at **Figure 2.3**\u2014it shows the shifting kingdoms in India.  You\u2019ll see the **Delhi Sultanate** (like the Tughlaqs and Lodis) controlling northern lands. In the south, the **Vijayanagara Empire** holds strong in places like **Halebidu and Vijayanagara**. The **Ahom Kingdom** is marked in the northeast, too.  The map highlights how borders changed as empires rose and fell. It\u2019s like a puzzle where each piece shows who ruled where at different\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 7176,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 8.5,
+          "expect_score": 3.3,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 6.6,
+          "bugs": [],
+          "keyword_hits": 1
+        }
+      },
+      {
+        "source_id": "So2-12",
+        "source_query": "why is this chapter called reshaping?",
+        "query": "wait why is Delhi Sultanate important here?",
+        "derived": true,
+        "answer_clip": "Ah, the Delhi Sultanate is *key* here because it was the first big foreign empire to rule most of northern India after King Prithviraj Chauhan lost in 1192.  It didn\u2019t just *exist*\u2014it *reshaped* the map. Look at Fig. 2.3: it tried to expand south, even fought the Hoysalas and Eastern Gangas. That\u2019s how the chapter\u2019s title makes sense\u2014new rulers changed borders, built cities like Delhi into power centers, and left marks like the Qutub Minar (Fig.\u2026",
+        "images": [
+          {
+            "figure": "2.4",
+            "page": 5,
+            "caption": "The Qutub Minar. Fig. 2.5. A section of the Quwwat-ul-Islam (\u2018Might of Islam\u2019) \u2026",
+            "file": "figures/fig_2_4.jpg"
+          }
+        ],
+        "n_images": 1,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 8029,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 9.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.7,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So2-14",
+        "source_query": "give two important takeaways",
+        "query": "can you give one more real-life example of They?",
+        "derived": true,
+        "answer_clip": "\"Oh, you mean the traders? Like the **Marwaris**\u2014they built their own trust systems. They didn\u2019t rely on kings or empires. So when borders changed, *they* kept trading safely. That\u2019s how they stayed powerful\u2014smart business, not just big armies!  Want another example? Or should we talk about how Vijayanagara treated traders?",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5906,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "So2-15",
+        "source_query": "explain like im new to history maps",
+        "query": "i still don't get Does \u2014 say it again slowly",
+        "derived": true,
+        "answer_clip": "Oh, okay\u2014let me slow it down for you.  When the chapter says *\"Does\"*\u2014it\u2019s actually talking about **how empires grew**. Not a question, but a way to show *how* rulers like Akbar built their power.  Look at the text: Akbar\u2019s empire lasted almost 50 years (1556\u20131605). Earlier rulers mostly used *force*\u2014battles, wars\u2014to take over land. But Akbar? He did *both* military campaigns (like in Kashmir, Sindh) *and* something smarter\u2014he invited scholars, \u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5510,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 4.0,
+          "expect_score": 0.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 4.0,
+          "bugs": [
+            "missing expected keywords"
+          ],
+          "keyword_hits": 0
+        }
+      },
+      {
+        "source_id": "So2-18",
+        "source_query": "is this chapter about perfect squares?",
+        "query": "ok so what should i remember about India for a test?",
+        "derived": true,
+        "answer_clip": "Got it! For your test, focus on **three big ideas** from the chapter.  First, **how India\u2019s political map changed**\u2014think of it like a puzzle where kingdoms rose and fell. The Delhi Sultanate and Mughals expanded, but others like Vijayanagara and Ahom resisted longer. Look at maps like Fig. 2.3 to see how borders shifted.  Second, **key themes**: warfare reshaped India, but culture and trade kept growing. Even with hardship, people rebuilt towns\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 5450,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 6.7,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 8.2,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      },
+      {
+        "source_id": "So2-20",
+        "source_query": "who were the mughuls on the map?",
+        "query": "that part about First Battle of Panipat in 1526 sounded confusing \u2014 did i hear it right?",
+        "derived": true,
+        "answer_clip": "Oh, I hear you\u2014this part *does* sound a little tangled. Let me untangle it for you.  The **First Battle of Panipat in 1526** wasn\u2019t just any battle\u2014it was a turning point. The chapter says **Babur**, a ruler from Central Asia (Turkic-Mongol background), defeated **Ibrahim Lodi** (the last Delhi Sultan). This win didn\u2019t just end the Delhi Sultanate\u2014it *started* the Mughal Empire. Think of it like this: if someone takes over a big school\u2019s leaders\u2026",
+        "images": [],
+        "n_images": 0,
+        "has_math_lesson": false,
+        "has_science_experiment": false,
+        "ms": 6870,
+        "error": null,
+        "path": "POST /auth/chat/stream voice_mode=true",
+        "scores": {
+          "answer_score": 10.0,
+          "expect_score": 10.0,
+          "images_score": 8.0,
+          "interactive_score": null,
+          "interactive_note": "N/A",
+          "overall": 9.3,
+          "bugs": [],
+          "keyword_hits": 2
+        }
+      }
+    ]
+  },
+  "tutor_avg": 8.06,
+  "voice_avg": 7.99
+}
