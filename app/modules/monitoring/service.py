@@ -50,6 +50,21 @@ def _env() -> str:
     return os.environ.get("ENVIRONMENT", "production")
 
 
+def _ai_tutor_status(probes: dict[str, Any]) -> str:
+    """Overview 'AI Tutor' card — API text tutor + voice, not voice-only."""
+    api = str((probes.get("api") or {}).get("status") or "unknown")
+    voice = str((probes.get("voice") or {}).get("status") or "unknown")
+    if api == "down":
+        return "down"
+    if voice == "down":
+        return "degraded"
+    if api == "healthy" and voice in ("healthy", "unknown"):
+        return "healthy" if voice == "healthy" else "healthy"
+    if api == "healthy":
+        return "healthy"
+    return api or "unknown"
+
+
 def get_or_create_settings(db: Session) -> MonSettings:
     row = db.get(MonSettings, 1)
     if row is None:
@@ -204,7 +219,9 @@ def build_overview(
         "database_status": (probes.get("postgres") or {}).get("status", "unknown"),
         "redis_status": (probes.get("redis") or {}).get("status", "unknown"),
         "containers": coolify.get("containers") or [],
-        "ai_tutor_status": (probes.get("voice") or {}).get("status", "unknown"),
+        # Text tutor rides the API; voice is separate. Overall AI stack:
+        # down only if API is down; degraded if voice is down; else healthy/unknown.
+        "ai_tutor_status": _ai_tutor_status(probes),
         "recent_deployments": recent_deployments,
         "recent_alerts": recent_alerts,
         "services": services,

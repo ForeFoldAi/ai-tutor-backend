@@ -30,8 +30,12 @@ Set these on the **API / worker Coolify apps** (never in frontend bundles).
 - `SLACK_WEBHOOK_URL`
 - SMTP settings already used by the app (`SMTP_*`, `ADMIN_NOTIFY_EMAIL`)
 
-## Voice
-- `VOICE_URL` — NestJS base for `/rtc/health` probes
+## Voice / website probes
+- `VOICE_URL` — NestJS public (or internal) base for `/rtc/health`  
+  Example: `https://api.voice.tutor.forefoldai.com`  
+  If unset in production, voice shows **unknown** (not down). Do **not** rely on `localhost:8080` inside the API container.
+- `FRONTEND_URL` — website probe  
+  Example: `https://learnmastro.com`
 
 ## Rollback
 1. Set `MONITORING_ENABLED=false`
