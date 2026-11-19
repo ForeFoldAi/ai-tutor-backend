@@ -37,6 +37,24 @@ from app.modules.teacher.assignments.models import (  # noqa: F401
 )
 from app.modules.auth.otp_models import PasswordResetOtp  # noqa: F401
 from app.modules.notifications.models import Notification  # noqa: F401
+from app.modules.monitoring.models import (  # noqa: F401
+    MonAlert,
+    MonAlertAck,
+    MonAlertRule,
+    MonAuditEvent,
+    MonDeployment,
+    MonHealthCheck,
+    MonIncident,
+    MonIncidentComment,
+    MonIncidentEvent,
+    MonIssue,
+    MonIssueComment,
+    MonIssueEvent,
+    MonLogIndex,
+    MonMetricAggregate,
+    MonService,
+    MonSettings,
+)
 
 config = context.config
 settings = get_settings()

@@ -190,6 +190,177 @@ _PRIMARY_WAIT_SEC = min(_MAX_PACE_WAIT_SEC, float(os.environ.get("LLM_PRIMARY_WA
 _KEY_FAIL_STATUSES = frozenset({401, 403, 413})
 _BAD_KEY_PARK_SEC = 300.0
 
+# Last successful route per feature (no raw secrets) — for Master Admin monitoring.
+_last_used_lock = threading.Lock()
+_last_used: dict[str, dict[str, Any]] = {}
+
+
+def _record_last_used(feature: str, target: dict[str, str], *, status_code: int) -> None:
+    from datetime import UTC, datetime
+
+    from app.config import LLM_FALLBACK_PROVIDER, LLM_PROVIDER, provider_keys
+    from app.modules.monitoring.activity import touch_user_activity
+    from app.services.token_usage import current_user_id
+
+    provider = _provider_name_for_base(target.get("base_url") or "")
+    role = "primary" if provider == LLM_PROVIDER else ("secondary" if provider == LLM_FALLBACK_PROVIDER else provider)
+    keys = provider_keys(provider) if provider else []
+    key = target.get("key") or ""
+    key_index = keys.index(key) + 1 if key in keys else None
+    api_key_label = f"Key {key_index}" if key_index else key_pool.label(key)
+    payload = {
+        "feature": feature,
+        "role": role,
+        "provider": provider or "unknown",
+        "model": target.get("model"),
+        "api_key": api_key_label,
+        "api_key_index": key_index,
+        "key_tail": key_pool.label(key),
+        "status_code": status_code,
+        "user_id": current_user_id.get(),
+        "at": datetime.now(UTC).isoformat(),
+    }
+    with _last_used_lock:
+        _last_used[feature] = payload
+    try:
+        from app.modules.monitoring.activity import current_agent_mode
+
+        touch_user_activity(
+            user_id=current_user_id.get(),
+            feature=feature,
+            role=role,
+            provider=provider or "unknown",
+            model=target.get("model"),
+            api_key=api_key_label,
+            api_key_index=key_index,
+            key_tail=key_pool.label(key),
+            agent_mode=current_agent_mode.get(),
+            voice_mode=feature == "voice",
+        )
+    except Exception:
+        pass
+
+
+def _provider_name_for_base(base_url: str) -> str:
+    from app.config import _PROVIDERS
+
+    base = (base_url or "").rstrip("/")
+    for name, meta in _PROVIDERS.items():
+        if (meta.get("base_url") or "").rstrip("/") == base:
+            return name
+    if "groq.com" in base:
+        return "groq"
+    if "mistral.ai" in base:
+        return "mistral"
+    if "googleapis.com" in base:
+        return "gemini"
+    return ""
+
+
+def routing_snapshot(features: list[str] | None = None) -> dict[str, Any]:
+    """Live primary/secondary + API key cooldown view for monitoring (no secrets)."""
+    from app.config import (
+        LLM_FALLBACK_PROVIDER,
+        LLM_PROVIDER,
+        llm_base_url_for,
+        llm_fallback_for,
+        llm_key_pool_for,
+        llm_model_for,
+    )
+
+    features = features or ["chat", "voice", "assistant", "lesson", "vision"]
+    with _last_used_lock:
+        last_used = {k: dict(v) for k, v in _last_used.items()}
+
+    out_features: list[dict[str, Any]] = []
+    for feature in features:
+        primary_name = LLM_PROVIDER
+        try:
+            from app.config import _provider_for
+
+            primary_name = _provider_for(feature)
+        except Exception:
+            primary_name = LLM_PROVIDER
+        primary_keys = llm_key_pool_for(feature)
+        primary_model = llm_model_for(feature)
+        primary_base = llm_base_url_for(feature)
+        fb = llm_fallback_for(feature)
+
+        def _key_rows(provider: str, keys: list[str], role: str, model: str, base_url: str) -> list[dict[str, Any]]:
+            rows: list[dict[str, Any]] = []
+            for i, key in enumerate(keys, start=1):
+                cool_s = key_pool.seconds_until_ready(base_url, key)
+                rows.append(
+                    {
+                        "role": role,
+                        "provider": provider,
+                        "model": model,
+                        "api_key": f"Key {i}",
+                        "api_key_index": i,
+                        "key_tail": key_pool.label(key),
+                        "status": "cooling" if cool_s > 0 else "ready",
+                        "cooldown_seconds": round(cool_s, 1) if cool_s > 0 else 0,
+                    }
+                )
+            return rows
+
+        keys_view = _key_rows(primary_name, primary_keys, "primary", primary_model, primary_base)
+        if fb and (fb.get("keys") or fb.get("key")):
+            fb_keys = list(fb.get("keys") or ([fb["key"]] if fb.get("key") else []))
+            keys_view.extend(
+                _key_rows(
+                    str(fb.get("name") or LLM_FALLBACK_PROVIDER or "secondary"),
+                    fb_keys,
+                    "secondary",
+                    str(fb.get("model") or ""),
+                    str(fb.get("base_url") or ""),
+                )
+            )
+
+        next_target = None
+        try:
+            targets = _targets(feature)
+            if targets:
+                t0 = targets[0]
+                next_provider = _provider_name_for_base(t0.get("base_url") or "")
+                next_role = (
+                    "primary"
+                    if next_provider == primary_name
+                    else ("secondary" if next_provider == (fb or {}).get("name") else next_provider)
+                )
+                pool = primary_keys if next_role == "primary" else list((fb or {}).get("keys") or [])
+                idx = pool.index(t0["key"]) + 1 if t0.get("key") in pool else None
+                next_target = {
+                    "role": next_role,
+                    "provider": next_provider or "unknown",
+                    "model": t0.get("model"),
+                    "api_key": f"Key {idx}" if idx else key_pool.label(t0.get("key") or ""),
+                    "api_key_index": idx,
+                    "key_tail": key_pool.label(t0.get("key") or ""),
+                }
+        except Exception:
+            next_target = None
+
+        out_features.append(
+            {
+                "feature": feature,
+                "primary_provider": primary_name,
+                "primary_model": primary_model,
+                "secondary_provider": (fb or {}).get("name") if fb else None,
+                "secondary_model": (fb or {}).get("model") if fb else None,
+                "keys": keys_view,
+                "next": next_target,
+                "last_used": last_used.get(feature),
+            }
+        )
+
+    return {
+        "primary_provider": LLM_PROVIDER,
+        "secondary_provider": LLM_FALLBACK_PROVIDER or None,
+        "features": out_features,
+        "last_used": last_used,
+    }
+
 
 def _reserve_start(provider: str = "") -> float:
     """Claim the next start time for a provider; returns seconds to wait for it."""
@@ -316,6 +487,11 @@ async def _send_with_retries(
         if not failed or attempt + 1 >= attempts:
             if failed and code != 413:
                 _park(target, _retry_wait_sec(resp, attempt))
+            if not failed:
+                try:
+                    _record_last_used(feature, target, status_code=code)
+                except Exception:
+                    pass
             if not stream:
                 slot.release()
             return resp

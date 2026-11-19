@@ -50,6 +50,11 @@ from app.modules.learning_intelligence.router import internal_router as lia_inte
 from app.modules.learning_intelligence.router import tutor_router as lia_tutor_router
 from app.modules.notifications.router import router as notifications_router
 from app.modules.image_understanding.router import router as tutor_images_router
+from app.modules.monitoring.router import router as monitoring_router
+from app.modules.monitoring.ingestion.middleware import MonitoringMetricsMiddleware
+from app.modules.monitoring.sentry_init import init_sentry
+
+init_sentry()
 
 app = FastAPI()
 
@@ -85,6 +90,7 @@ app.add_middleware(
 )
 app.add_middleware(DomainEventMiddleware)
 app.add_middleware(UsageUserMiddleware)
+app.add_middleware(MonitoringMetricsMiddleware)
 
 app.include_router(voice_router)
 app.include_router(ws_router)      # WebSocket: /ws/voice
@@ -113,6 +119,7 @@ app.include_router(lia_internal_router)
 app.include_router(lia_tutor_router)
 app.include_router(notifications_router)
 app.include_router(tutor_images_router)
+app.include_router(monitoring_router)
 
 
 @app.on_event("startup")
