@@ -28,6 +28,7 @@ settings = get_settings()
 _worker_pool = os.environ.get("CELERY_WORKER_POOL") or ("solo" if sys.platform == "darwin" else "prefork")
 
 from app.modules.learning_intelligence.constants import QUEUE_LIA
+from app.modules.monitoring import QUEUE_MONITORING
 from app.services.catalog_pipeline.constants import (
     QUEUE_CATALOG,
     TASK_ANALYZE_TEXTBOOK,
@@ -46,6 +47,7 @@ celery_app = Celery(
         "app.services.mail.tasks",
         "app.services.learning_intelligence.workers.tasks",
         "app.services.catalog_pipeline.tasks",
+        "app.modules.monitoring.tasks",
     ],
 )
 
@@ -70,6 +72,7 @@ celery_app.conf.update(
         QUEUE_MAIL: {"exchange": QUEUE_MAIL, "routing_key": QUEUE_MAIL},
         QUEUE_LIA: {"exchange": QUEUE_LIA, "routing_key": QUEUE_LIA},
         QUEUE_CATALOG: {"exchange": QUEUE_CATALOG, "routing_key": QUEUE_CATALOG},
+        QUEUE_MONITORING: {"exchange": QUEUE_MONITORING, "routing_key": QUEUE_MONITORING},
     },
     task_routes={
         "lesson_planner.generate": {"queue": QUEUE_GENERATE},
@@ -86,6 +89,9 @@ celery_app.conf.update(
         TASK_PROCESS_UPLOAD: {"queue": QUEUE_CATALOG},
         TASK_ANALYZE_TEXTBOOK: {"queue": QUEUE_CATALOG},
         TASK_PROCESS_CHAPTERS: {"queue": QUEUE_CATALOG},
+        "monitoring.evaluate_alert_rules": {"queue": QUEUE_MONITORING},
+        "monitoring.run_retention": {"queue": QUEUE_MONITORING},
+        "monitoring.probe_services": {"queue": QUEUE_MONITORING},
     },
     beat_schedule={
         "mail-session-reminders": {
@@ -109,6 +115,18 @@ celery_app.conf.update(
         "lia-monthly-summaries": {
             "task": "lia.monthly_summaries",
             "schedule": crontab(hour=6, minute=30, day_of_month=1),
+        },
+        "monitoring-probe-services": {
+            "task": "monitoring.probe_services",
+            "schedule": 60.0,
+        },
+        "monitoring-evaluate-alerts": {
+            "task": "monitoring.evaluate_alert_rules",
+            "schedule": 60.0,
+        },
+        "monitoring-retention": {
+            "task": "monitoring.run_retention",
+            "schedule": crontab(hour=3, minute=15),
         },
     },
     task_annotations={

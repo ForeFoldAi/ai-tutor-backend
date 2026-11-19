@@ -922,6 +922,16 @@ async def chat(
     voice_mode: bool = False,
 ) -> tuple[str, list[str]]:
     mode = normalize_agent_mode(agent_mode)
+    try:
+        from app.modules.monitoring.activity import bind_request_surface
+
+        bind_request_surface(
+            agent_mode=mode,
+            voice_mode=False,
+            feature="assistant",
+        )
+    except Exception:
+        pass
     turn = await _start_turn(
         db,
         user,
@@ -973,6 +983,13 @@ async def chat_stream(
     voice_mode: bool = False,
 ) -> AsyncIterator[str]:
     mode = normalize_agent_mode(agent_mode)
+    try:
+        from app.modules.monitoring.activity import bind_request_surface
+
+        # Voice using Ask/Practice/Explain/Free still counts as that product surface.
+        bind_request_surface(agent_mode=mode, voice_mode=False, feature="assistant")
+    except Exception:
+        pass
     # Sent before any setup so the client (and proxies) get bytes immediately.
     yield "\0STATUS:searching"
     if image_ids:

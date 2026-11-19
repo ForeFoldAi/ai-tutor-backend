@@ -769,6 +769,20 @@ async def chapter_aware_qa_stream(
     Optionally invokes *emit_related_images* when ranked images are ready
     (usually during the first tokens, without blocking retrieval).
     """
+    try:
+        from app.modules.monitoring.activity import bind_request_surface
+
+        mode = (agent_mode or "").strip().lower()
+        if mode in ("free", "ask", "practice", "explain"):
+            bind_request_surface(agent_mode=mode, voice_mode=False, feature="assistant")
+        else:
+            bind_request_surface(
+                agent_mode=None,
+                voice_mode=bool(voice_mode),
+                feature="voice" if voice_mode else "chat",
+            )
+    except Exception:
+        pass
     from app.config import CONTEXT_CHAR_BUDGET, EARLY_IMAGE_MIN_CHARS, RETRIEVAL_K, VOICE_EARLY_IMAGE_MIN_CHARS, VOICE_MAX_TOKENS, VOICE_CONTEXT_CHAR_BUDGET, VOICE_RETRIEVAL_K
     from app.services.conversation_context import resolve_conversation_context, should_retrieve_images
     from app.services.conversation_memory import format_memory_for_prompt, prepare_conversation_inputs

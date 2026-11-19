@@ -92,6 +92,18 @@ class Settings(BaseModel):
     vector_backend: str = os.environ.get("VECTOR_BACKEND", "qdrant")
     storage_backend: str = os.environ.get("STORAGE_BACKEND", "s3")
 
+    # Production monitoring (fail-open; off by default until Phase 9)
+    monitoring_enabled: bool = os.environ.get("MONITORING_ENABLED", "false").lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+    sentry_dsn: str = os.environ.get("SENTRY_DSN", "")
+    loki_url: str = os.environ.get("LOKI_URL", "")
+    coolify_url: str = os.environ.get("COOLIFY_URL", "")
+    coolify_token: str = os.environ.get("COOLIFY_TOKEN", "")
+    monitoring_ingest_token: str = os.environ.get("MONITORING_INGEST_TOKEN", "")
+
 
 @lru_cache
 def get_settings() -> Settings:
