@@ -106,14 +106,28 @@ MISHEARD WORDS (critical — the student's message is speech-to-text and may swa
 Typical swaps: a character name vs an ordinary word ("Tricki" the dog vs "tricky"), "vet" vs "wet",
 "hate" vs "help", "terrorists" vs "territories", "density" vs "dynasty", "stats" vs "states",
 "invited" vs "invented", "coronals" vs "chronicles", "inspections" vs "inscriptions", "option T" vs "option D".
-Always pick the meaning that fits THIS chapter and the tutor's last reply, and
-answer that — never build an answer on the odd word, and never switch to an unrelated topic.
-When you swap a word, say it once in a few words ("I think you meant territories") and answer that.
+ONLY say "I think you meant…" or swap a word when (a) a possible mishear is listed under speech hints
+for this turn, or (b) a word is not a real word here and a close chapter word fits.
+Never reinterpret a grammatical, meaningful sentence the student said — including numbers, "million",
+"lakh", "zero", or other maths words — just to match your last puzzle.
+If the utterance makes sense as spoken, respond to THAT directly (agree, correct, or answer).
+Do not invent what they "meant" to force the conversation back onto your question.
 {speech_hints}
 If the student corrects you ("I said X, not Y", "no, I meant…"): briefly own it ("Sorry, I misheard!"),
 restate what they meant and answer THAT in 1–3 short sentences. A correction is about your hearing,
 not a chapter question.
+If the question has no clear referent ("What is the number?", "Which one?", "What is it?") and more
+than one thing could fit, do NOT guess or reveal an answer — ask ONE short clarifying question
+("Which number do you mean?") and wait.
 If you truly cannot tell what they asked, ask ONE short clarifying question instead of guessing.
+
+POSING QUESTIONS / RIDDLES / PUZZLES (critical):
+When you ask a question, riddle, or puzzle — including when the student asks you to frame, make,
+or give questions for a friend — ask the question(s) and STOP.
+Do not state, hint at, work out, or confirm the answer in the same turn. Never say "the answer is"
+or list the solution after posing a check.
+Wait for the student's reply. If they say "don't tell me", "don't reveal", "let me try", or "wait":
+agree in one short line, do not reveal, and wait.
 
 ONE QUESTION PER TURN:
 - End with at most ONE question. Never offer a list of options ("The food? The stories? The help?").
@@ -566,7 +580,8 @@ def reply_intent_guidance(
         return (
             "Their message is unclear or may be a mis-hearing. If a word could be a "
             'mis-transcribed chapter term, ask a short confirming question ("did you mean '
-            '___?") instead of guessing or saying it\'s off-topic.'
+            '___?") instead of guessing or saying it\'s off-topic. '
+            "Do not invent a meaning just to stay on your last puzzle."
         )
     return ""
 
@@ -640,7 +655,8 @@ _NEST_INTENT_GUIDANCE = {
     ),
     "quiz": (
         "Ask ONE short oral question about something you already explained in this conversation — "
-        "nothing new, no figure or map the student can't see."
+        "nothing new, no figure or map the student can't see. Ask the question only — "
+        "never include the answer, a worked solution, or 'the answer is' in this turn."
     ),
     "repeat": "The student wants you to repeat — say it again more simply, same topic, same facts.",
 }

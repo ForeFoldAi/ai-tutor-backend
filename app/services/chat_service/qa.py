@@ -7,9 +7,9 @@ import re
 from collections.abc import Awaitable, Callable
 from typing import Any, AsyncIterator
 
-from app.core.student_messages import ANSWER_NOT_IN_CHAPTER
+from app.core.student_messages import ANSWER_NOT_IN_CHAPTER, CHAT_LLM_BUSY
 
-VOICE_RETRY_LINE = "Sorry, I lost my train of thought for a second. Could you say that again?"
+VOICE_RETRY_LINE = "Sorry, I couldn't get that answer ready just now. Could you ask me again in a moment?"
 BRIDGE_LEAD = "This isn't in your chapter, but here's the short answer."
 _BRIDGE_LEAD_ECHO_RE = re.compile(
     r"^\s*this\s+isn['’]?t\s+in\s+your\s+chapter,?\s*but(?:\s+here['’]?s\s+the\s+short\s+answer)?\s*[.:,]?\s*",
@@ -20,6 +20,39 @@ _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
 
 def _strip_bridge_lead(text: str) -> str:
     return _BRIDGE_LEAD_ECHO_RE.sub("", text, count=1)
+
+
+# Mid-answer repeats of the bridge lead ("…14. This isn't in your chapter, but it…").
+_BRIDGE_REPEAT_RE = re.compile(
+    r"\s*this\s+isn['’]?t\s+in\s+your\s+chapter,?\s*but(?:\s+here['’]?s\s+the\s+short\s+answer)?\s*[.:,]?\s*",
+    re.I,
+)
+
+
+class _PhraseDropper:
+    """Remove a phrase from a token stream, holding back just enough text to catch it
+    when it is split across tokens."""
+
+    def __init__(self, pattern: re.Pattern[str], hold: int = 64) -> None:
+        self._re, self._hold, self._buf = pattern, hold, ""
+
+    def _clean(self, text: str) -> str:
+        if not self._re.search(text):
+            return text
+        text = self._re.sub(lambda m: " " if m.start() > 0 else "", text)
+        # "…itself. it uses" -> "…itself. It uses" where the phrase was cut out.
+        return re.sub(r"([.!?]\s+)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
+
+    def feed(self, token: str) -> str:
+        self._buf = self._clean(self._buf + token)
+        if len(self._buf) <= self._hold:
+            return ""
+        out, self._buf = self._buf[: -self._hold], self._buf[-self._hold :]
+        return out
+
+    def flush(self) -> str:
+        out, self._buf = self._clean(self._buf), ""
+        return out
 
 
 def _first_sentences(text: str, n: int) -> str:
@@ -234,9 +267,153 @@ def _best_chunk_fallback(query: str, docs: list) -> str:
     if not best_text:
         return ANSWER_NOT_IN_CHAPTER
 
-    parts = re.split(r"(?<=[.?!])\s+", best_text)
+    cleaned = _clean_chunk_for_student(best_text)
+    parts = [
+        p for p in re.split(r"(?<=[.?!])\s+", cleaned)
+        if len(p.split()) >= 6 and not _CHUNK_NOISE_SENTENCE_RE.search(p)
+    ]
     snippet = " ".join(parts[:3]).strip()
-    return snippet or best_text[:600].strip()
+    if not snippet:
+        return ANSWER_NOT_IN_CHAPTER
+    return f"Here's what your textbook says: {snippet}"
+
+
+_THAT_FIGURE_RE = re.compile(
+    r"\b(?:that|this|the\s+same|those|these)\s+(?:figure|fig|picture|image|diagram|map|photo)s?\b",
+    re.I,
+)
+_IMAGE_WORDS = frozenset({
+    "show", "image", "images", "picture", "pictures", "figure", "figures", "diagram",
+    "diagrams", "photo", "photos", "illustration", "book", "textbook", "chapter",
+    "science", "social", "english", "mathematics", "maths", "math", "from", "about",
+})
+
+
+def _is_image_request(query: str) -> bool:
+    from app.services.chapter_scope import is_image_follow_up_request
+
+    return is_image_follow_up_request(query)
+
+
+def _image_hint_terms(query: str) -> set[str]:
+    from app.services.chapter_scope import substantive_query_terms
+
+    return {t for t in substantive_query_terms(query) if t not in _IMAGE_WORDS}
+
+
+def _last_assistant_text(conversation_history: list[dict] | None) -> str:
+    for turn in reversed(conversation_history or []):
+        if (turn.get("role") or "").lower() == "assistant":
+            return turn.get("content") or ""
+    return ""
+
+
+def _figures_named_in_last_reply(conversation_history: list[dict] | None) -> list[str]:
+    from app.services.image_service.image_intent_extractor import figure_numbers_cited_in_text
+
+    for turn in reversed(conversation_history or []):
+        if (turn.get("role") or "").lower() == "assistant":
+            return figure_numbers_cited_in_text(turn.get("content") or "")
+    return []
+
+
+def _no_excerpt_guidance(chapter: str, chapter_names: list[str] | None) -> str:
+    focus = chapter or ", ".join(chapter_names or []) or "this chapter"
+    return (
+        "NO CHAPTER EXCERPT MATCHED THIS MESSAGE. If it follows up on the conversation (another example, "
+        "the second point, a recap), answer from the conversation history. If the question is about this "
+        f"chapter's own topic ({focus}), answer it accurately from what a teacher of this chapter would "
+        "say. If it is a new question closely related to the subject of the chapter, answer in at most two "
+        "sentences starting with \"This isn't in your chapter, but\", then link back to the chapter. If it "
+        "is unrelated to the subject, say in one line that it's not in this book and steer back. If the "
+        "question rests on a false premise, say plainly that it is not true and give the correct fact. "
+        "Never say the context is unavailable."
+    )
+
+
+def _shown_figures_prompt_block(rows: list[dict]) -> str:
+    """Tell the model which textbook pictures are already on screen (numbered or not)."""
+    lines = ["STUDENT ASKED TO SEE A TEXTBOOK PICTURE. These are ALREADY DISPLAYED on their screen:"]
+    for f in rows:
+        num = str(f.get("figure_number") or "").strip()
+        cap = (f.get("caption") or "").strip()
+        about = (f.get("visual_description") or f.get("figure_context") or "").strip()
+        label = f"Fig. {num}" if num else "A picture"
+        detail = f"- {label} (textbook page {f.get('page')})"
+        if cap:
+            detail += f": \"{cap[:120]}\""
+        if about:
+            detail += f". What it shows: {about[:240]}"
+        lines.append(detail)
+    lines.append(
+        "Say the pictures are on their screen, then briefly explain what the first one shows using "
+        "only the details above and the chapter context. Never say you cannot show, display, find "
+        "or pull up images, and never ask them to look in their book instead."
+    )
+    return "\n".join(lines)
+
+
+async def _resolve_figure_request(
+    query: str,
+    conversation_history: list[dict] | None,
+    chapter_ids: list[str] | None,
+    asked_figs: list[str],
+    messages: list[dict] | None,
+) -> tuple[list[str], list[dict]]:
+    """Figure numbers to look up, plus figures already chosen for a generic request.
+
+    - "what is that figure trying to show?" → the figure(s) named in the last reply.
+    - "show me a diagram / map from this chapter" (no number, no topic) → the chapter's own
+      figures, so the model is told they are on screen instead of saying it can't show images.
+    """
+    if not chapter_ids or asked_figs:
+        return asked_figs, []
+    hints = _image_hint_terms(query)
+    refers_back = bool(_THAT_FIGURE_RE.search(query or ""))
+    if refers_back:
+        named = _figures_named_in_last_reply(conversation_history)[:2]
+        if named:
+            return named, []
+        # Unnumbered picture from the last turn: rank by what the tutor just said about it.
+        hints |= _image_hint_terms(_last_assistant_text(conversation_history))
+    if not (_is_image_request(query) or refers_back):
+        return asked_figs, []
+    try:
+        from app.services.image_service.textbook_image_retrieval import (
+            chapter_figures_for_generic_request,
+        )
+
+        generic = await asyncio.to_thread(
+            chapter_figures_for_generic_request,
+            chapter_ids,
+            hints,
+            max_n=1 if refers_back else 3,
+        )
+    except Exception as exc:
+        logger.warning("generic figure lookup failed: %s", exc)
+        return asked_figs, []
+    if generic:
+        block = _shown_figures_prompt_block(generic)
+        if block and messages and messages[0].get("role") == "system":
+            messages[0]["content"] = messages[0]["content"] + "\n\n" + block
+    return asked_figs, generic
+
+
+# Running headers / footers / figure labels that PDF extraction leaves in chunks
+# ("22 Exploring Society: India and Beyond | Grade 8 Part 1", "Chapter 1 — Title 5").
+_CHUNK_HEADER_RE = re.compile(
+    r"(?:^|\s)\d{1,3}\s+[^|\n.]{3,80}\|\s*(?:Grade|Class)\s*\d+(?:\s+Part\s*\d+)?"
+    r"|(?:^|\s)(?:Chapter|Unit)\s*\d+\s*[\u2014\u2013:-]\s*[^.\n]{3,80}?\s\d{1,3}(?=\s+[A-Z])"
+    r"|\bFig(?:ure)?\.?\s*\d+(?:\.\d+)*\.?",
+)
+_CHUNK_NOISE_SENTENCE_RE = re.compile(r"\|")
+
+
+def _clean_chunk_for_student(text: str) -> str:
+    t = re.sub(r"[\u2009\u200a\u00a0]", " ", text or "")
+    t = _CHUNK_HEADER_RE.sub(" ", t)
+    t = re.sub(r"\s{2,}", " ", t)
+    return t.strip()
 
 
 async def chapter_aware_qa(
@@ -441,7 +618,9 @@ async def chapter_aware_qa(
                 logger.warning("Image-only retrieval failed: %s", exc)
         return "", related, None, None
     if not docs and not coverage_guidance and not skip_retrieval and not image_block:
-        return ANSWER_NOT_IN_CHAPTER, [], None, None
+        # Same as the streaming path: let the model build on the conversation or bridge,
+        # instead of a canned "couldn't find this" (which also fired on retrieval hiccups).
+        coverage_guidance = _no_excerpt_guidance(chapter, chapter_names)
 
     learner_snapshot, understanding_scores = await _mentor_profile_for_turn(
         student_key,
@@ -593,24 +772,51 @@ async def chapter_aware_qa(
         query=effective_query,
     )
 
+    from app.services.image_service.image_intent_extractor import (
+        figure_numbers_cited_in_text as _cited_figs,
+    )
+
+    asked_figs_ns = _cited_figs(query) if chapter_ids else []
+    asked_figs_ns, requested_figs_ns = await _resolve_figure_request(
+        query, conversation_history, chapter_ids, asked_figs_ns, messages
+    )
+    if asked_figs_ns and not requested_figs_ns:
+        try:
+            requested_figs_ns = await asyncio.to_thread(
+                _db_figures_for_numbers, chapter_ids, asked_figs_ns
+            )
+        except Exception as exc:
+            logger.warning("requested figure lookup failed: %s", exc)
+        block = requested_figure_prompt_block(asked_figs_ns, requested_figs_ns)
+        if block and messages and messages[0].get("role") == "system":
+            messages[0]["content"] = messages[0]["content"] + "\n\n" + block
+
     llm_ok = False
     try:
-        answer = await _cs()._call_mistral_async(messages, max_tokens=token_limit)
-        answer = await _finalize_direct_answer(
-            messages,
-            answer,
-            effective_query,
-            answer_type=answer_type,
-            heading_scope=scope,
-            conversation_history=recent_hist,
-            subject_name=subject_name,
+        answer = await _cs()._call_mistral_async(
+            messages, max_tokens=token_limit, empty_fallback=""
         )
+        if not (answer or "").strip():
+            raise RuntimeError("LLM returned no answer after retries")
         llm_ok = True
+        try:
+            answer = await _finalize_direct_answer(
+                messages,
+                answer,
+                effective_query,
+                answer_type=answer_type,
+                heading_scope=scope,
+                conversation_history=recent_hist,
+                subject_name=subject_name,
+            )
+        except Exception as exc:
+            # A post-processing failure must not throw away a good model answer.
+            logger.warning("finalize_direct_answer failed, keeping raw answer: %s", exc)
     except FileNotFoundError:
         answer = _best_chunk_fallback(effective_query, docs)
     except Exception as exc:
         logger.error("Mistral call failed: %s: %s", type(exc).__name__, exc)
-        answer = _best_chunk_fallback(effective_query, docs)
+        answer = CHAT_LLM_BUSY
 
     from app.services.chapter_scope import scrub_wrong_premise_echo
 
@@ -620,6 +826,11 @@ async def chapter_aware_qa(
         docs=docs,
         chapter_names=chapter_names,
     )
+    from app.services.arithmetic_check import fix_arithmetic_claims
+
+    from app.services.arithmetic_check import trim_incomplete_tail
+
+    answer = trim_incomplete_tail(fix_arithmetic_claims(answer))
 
     async def _related_images() -> list[dict]:
         if not (chapter_ids and img_allowed):
@@ -698,6 +909,8 @@ async def chapter_aware_qa(
     related, (answer, math_lesson, science_experiment) = await asyncio.gather(
         _related_images(), _panels(answer)
     )
+    if requested_figs_ns:
+        related = _merge_cited_image_rows(requested_figs_ns, related)
 
     from app.services.chat_service.images import figure_inventory_text
     from app.services.image_service.image_intent_extractor import is_chapter_figure_list_ask
@@ -1155,14 +1368,7 @@ async def chapter_aware_qa_stream(
     if not docs and not coverage_guidance and not skip_retrieval and not image_block:
         # Nothing retrieved: a follow-up builds on the conversation; a new question is bridged or
         # politely refused by the model instead of a canned "couldn't find this" line.
-        focus = chapter or ", ".join(chapter_names or []) or "this chapter"
-        coverage_guidance = (
-            "NO CHAPTER EXCERPT MATCHED THIS MESSAGE. If it follows up on the conversation (another example, "
-            "the second point, a recap), answer from the conversation history. If it is a new question closely "
-            "related to the subject of the chapter, answer in at most two sentences starting with "
-            f"\"This isn't in your chapter, but\", then link back to {focus}. If it is unrelated to the subject, "
-            "say in one line that it's not in this book and steer back. Never say the context is unavailable."
-        )
+        coverage_guidance = _no_excerpt_guidance(chapter, chapter_names)
 
     if emit_related_images and not img_allowed:
         await emit_related_images([])
@@ -1426,6 +1632,10 @@ async def chapter_aware_qa_stream(
     asked_acts = activity_numbers_cited_in_text(query) if chapter_ids else []
     requested_figs: list[dict] = []
     requested_acts: list[dict] = []
+    if chapter_ids and not asked_acts:
+        asked_figs, requested_figs = await _resolve_figure_request(
+            query, conversation_history, chapter_ids, asked_figs, messages
+        )
     if asked_figs:
         try:
             requested_figs = await asyncio.to_thread(_db_figures_for_numbers, chapter_ids, asked_figs)
@@ -1659,8 +1869,10 @@ async def chapter_aware_qa_stream(
                 f'\n\nThe reply already begins with "{BRIDGE_LEAD}" — continue right after it with the '
                 "short general answer, then link back to the chapter. Do not repeat that opening."
             )
-            full_answer.append(BRIDGE_LEAD + " ")
-            yield BRIDGE_LEAD + " "
+        # The lead is sent with the first real token, never before: if the model then fails,
+        # the student must not hear "This isn't in your chapter…" followed by an error line.
+        lead_pending = bridging
+        repeat_drop = _PhraseDropper(_BRIDGE_REPEAT_RE) if bridging else None
         from app.services.chat_service.turn_rules import requested_count
 
         count = requested_count(query)
@@ -1680,16 +1892,30 @@ async def chapter_aware_qa_stream(
                 token, bridging = _strip_bridge_lead(opening), False
                 if not token:
                     continue
+            if repeat_drop is not None:
+                token = repeat_drop.feed(token)
+                if not token:
+                    continue
+            if lead_pending:
+                token, lead_pending = BRIDGE_LEAD + " " + token, False
             full_answer.append(token)
             if sentence_cap:
                 continue
             await _maybe_emit_bootstrap_images("".join(full_answer))
             yield token
+        tail = ""
         if bridging and opening:
-            rest = _strip_bridge_lead(opening)
-            full_answer.append(rest)
+            tail = _strip_bridge_lead(opening)
+            if repeat_drop is not None:
+                tail = repeat_drop.feed(tail)
+        if repeat_drop is not None:
+            tail += repeat_drop.flush()
+        if tail.strip():
+            if lead_pending:
+                tail, lead_pending = BRIDGE_LEAD + " " + tail, False
+            full_answer.append(tail)
             if not sentence_cap:
-                yield rest
+                yield tail
         answer_text = "".join(full_answer)
         if sentence_cap and answer_text.strip():
             answer_text = _first_sentences(answer_text, sentence_cap)
@@ -1697,7 +1923,7 @@ async def chapter_aware_qa_stream(
         llm_ok = bool((answer_text or "").strip()) and answer_text.strip() != BRIDGE_LEAD
         # Empty LLM stream → textbook snippet so the UI never shows a blank bubble.
         if not llm_ok:
-            fb = VOICE_RETRY_LINE if voice_mode else _best_chunk_fallback(effective_query, docs)
+            fb = VOICE_RETRY_LINE if voice_mode else CHAT_LLM_BUSY
             if fb.strip():
                 answer_text = fb
                 yield fb
@@ -1736,6 +1962,15 @@ async def chapter_aware_qa_stream(
             docs=docs,
             chapter_names=chapter_names,
         )
+        from app.services.arithmetic_check import fix_arithmetic_claims
+
+        from app.services.arithmetic_check import trim_incomplete_tail
+
+        checked = trim_incomplete_tail(fix_arithmetic_claims(answer_text))
+        if checked != answer_text:
+            answer_text = checked
+            if emit_clean_answer:
+                await emit_clean_answer(answer_text)
         math_lesson = None
         science_experiment = None
         should_finalize_math = use_text_format or (
@@ -1906,11 +2141,9 @@ async def chapter_aware_qa_stream(
                 await emit_related_images([])
             yield VOICE_RETRY_LINE
             return
-        fb = _best_chunk_fallback(query, docs)
-        last_imgs = requested_figs or await _retrieve_images_for_answer(fb, llm_ok=False)
         if emit_related_images:
-            await emit_related_images(last_imgs)
-        yield fb
+            await emit_related_images(requested_figs or [])
+        yield CHAT_LLM_BUSY
     finally:
         await _cancel_bg_tasks()
 

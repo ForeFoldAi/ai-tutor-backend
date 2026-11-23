@@ -75,7 +75,13 @@ _AFFIRM = re.compile(
     re.I,
 )
 _QUIZ_INTENT = re.compile(
-    r"\b(quiz|test\s+me|take\s+a\s+test|give\s+me\s+a\s+test|ask\s+me\s+questions?|\d+\s+questions?)\b",
+    r"\b("
+    r"quiz(?:\s+me)?|test\s+me|take\s+a\s+test|give\s+me\s+a\s+test|ask\s+me\s+questions?|"
+    r"\d+\s+questions?|tricky\s+questions?|"
+    r"(?:frame|make|create|give|set|ask)\s+(?:me\s+)?(?:some|a\s+few|\d+)?\s*"
+    r"(?:simple|easy|tricky|tough|hard|quick|short\s+)*(?:questions?|puzzles?|riddles?)|"
+    r"(?:frame|make|create)\s+some"
+    r")\b",
     re.I,
 )
 _CLOSING = re.compile(
@@ -209,7 +215,10 @@ class UnderstandingScores:
                 "Stay inside the chapter context — do not add new examples."
             )
         if self.wants_quiz:
-            return "Ask ONE short quiz question orally. Wait for their answer next turn."
+            return (
+                "Ask ONE short quiz question orally. Do NOT give the answer, a worked solution, "
+                "or hints that reveal it. Wait for their answer next turn."
+            )
         return (
             "Use short spoken lines (6–12 words). Answer naturally like a helpful voice AI — "
             "no scripted labels. Do not use the student's name."
@@ -393,6 +402,12 @@ def classify_reply_intent(student_text: str, *, quiz_pending: bool) -> ReplyInte
         return ReplyIntent.DONT_KNOW
 
     if is_teach_request(q):
+        return ReplyIntent.NEW_QUESTION
+
+    # Complaints / "don't reveal" / meta requests are never quiz answers.
+    from app.services.chat_service.turn_rules import is_non_answer
+
+    if is_non_answer(q):
         return ReplyIntent.NEW_QUESTION
 
     # A fresh question is never an "answer" to the pending quiz — otherwise one old

@@ -95,6 +95,7 @@ class MathEngineResult:
                 "MATH ENGINE (SymPy-verified — mandatory):",
                 f"Task: {plain(self.to_find)}",
                 f"Correct final answer: {plain(self.final_answer)}",
+                f"Idea to teach: {plain(self.concept)}",
                 f"Check: {plain(self.quick_check)}",
                 "Say exactly this final answer. Never calculate or say a different result.",
                 "Explain the idea in 2–3 short spoken sentences — do not read out long working.",
@@ -144,6 +145,16 @@ def _normalize_spoken_math(query: str) -> str:
     q = re.sub(r"\btimes\b", "*", q, flags=re.I)
     q = re.sub(r"(?:\braised\s+)?\bto\s+the\s+power\s+(?:of\s+)?", "^", q, flags=re.I)
     q = re.sub(r"\braised\s+to\b", "^", q, flags=re.I)
+    # Teaching asks about a pure expression: "what does 2^5 actually mean?", "explain 2^5 slowly",
+    # "how do I find 3^4" → "what is 2^5", so the steps the model explains are verified.
+    q = re.sub(
+        r"\b(?:what\s+does|explain|show\s+me|how\s+(?:do|can|would)\s+(?:i|we|you)\s+"
+        r"(?:find|calculate|work\s+out|get))\s+([\d][\d\s^*+\-/×÷().]*?)\s*"
+        r"(?:(?:actually|really)\s+)?(?:mean|slowly|step\s+by\s+step|please)?\s*(\?|$)",
+        r"what is \1\2",
+        q,
+        flags=re.I,
+    )
     # Indian classroom English: "23 into 47" and "23 x 47" mean multiply.
     q = re.sub(rf"{_INDIAN_NUM}\s+(?:into|x|X)\s+(?={_INDIAN_NUM})", r"\1 * ", q)
     # "square of 549" / "the cube of 12" / "549 square" → the "549 squared" form the solvers parse.
@@ -363,16 +374,35 @@ def _try_arithmetic(query: str, class_band: str) -> MathEngineResult | None:
     latex_expr = cleaned.replace("*", " \\times ").replace("/", " \\div ")
     formula_latex = f"$$\\text{{Result}} = {latex_expr}$$"
     solution = [f"$$= {latex_number(num)}$$"]
+    concept = "Follow BODMAS: brackets, orders, division/multiplication, addition/subtraction."
+    steps: list[MathStep] = []
+    power = re.fullmatch(r"\s*(\d{1,4})\s*\^\s*(\d{1,2})\s*", cleaned)
+    if power:
+        base, exp = int(power.group(1)), int(power.group(2))
+        # Repeated multiplication shown step by step; "n groups of b" pictures (5 boxes with 2
+        # candies) describe b × n, not a power, and taught students 2^5 = 10 (eval 2026-11-23).
+        running, lines = base, [str(base)]
+        for _ in range(exp - 1):
+            running *= base
+            lines.append(str(running))
+        concept = (
+            f"A power means multiplying the SAME number by itself: {base}^{exp} = "
+            + " × ".join([str(base)] * exp)
+            + f". It is NOT {base} × {exp} = {base * exp}. If you use a picture, use repeated "
+            f"multiplying (each step multiplies by {base} again: " + " → ".join(lines[:8])
+            + "), never 'groups of' or 'boxes each holding' (that is ordinary multiplication)."
+        )
+        steps = [MathStep(label="Multiply step by step", latex_lines=[" → ".join(lines[:12])])]
     return MathEngineResult(
         solved=True,
         kind="arithmetic",
         class_band=class_band,
         to_find=f"Evaluate {expr_raw}.",
         given=[f"Expression = {expr_raw}"],
-        concept="Follow BODMAS: brackets, orders, division/multiplication, addition/subtraction.",
+        concept=concept,
         formula_words=formula_words,
         formula_latex=formula_latex,
-        steps=[],
+        steps=steps,
         solution_latex=solution,
         final_answer=f"**{format_indian(num) if num == int(num) else num}**",
         quick_check="Estimate with rounded numbers to see if the result is reasonable.",
@@ -507,8 +537,17 @@ def _extract_number_list(query: str) -> list[float]:
     return nums
 
 
+_STATS_ASK_RE = re.compile(
+    r"\b(?:median|mode)\b"
+    r"|\b(?:mean|average)\s+(?:of|value|marks?|score|height|weight|age)\b"
+    r"|\b(?:the|find|calculate|compute|get|what\s+is\s+the|arithmetic)\s+(?:mean|average)\b",
+    re.I,
+)
+
+
 def _try_statistics(query: str, class_band: str) -> MathEngineResult | None:
-    if not re.search(r"\b(mean|median|mode|average)\b", query, re.I):
+    # "what does 2 to the power 5 actually mean?" — "mean" as a verb is not statistics.
+    if not _STATS_ASK_RE.search(query):
         return None
     nums = _extract_number_list(query)
     if len(nums) < 2:

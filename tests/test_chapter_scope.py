@@ -708,8 +708,10 @@ def test_other_chapter_needs_minimum_hits():
 
 @patch("app.services.chapter_scope._best_other_chapter")
 def test_llm_second_opinion_fails_safe_on_error(mock_other):
-    """If the LLM call errors/times out, keep today's behavior (show the
-    wall) rather than silently letting every retrieval miss through."""
+    """If the LLM call errors/times out, answer briefly with the bridge lead instead of
+    the "not in this book" wall — under load that wall refused real in-subject questions
+    (Suneel QA: "who were the mughals" in a Mughal chapter). The bridge prompt still makes
+    the model say "not in this book" for a truly unrelated question."""
     ch2_id = "22222222-2222-2222-2222-222222222222"
     mock_other.return_value = ("", 0, 0)
 
@@ -725,4 +727,5 @@ def test_llm_second_opinion_fails_safe_on_error(mock_other):
             class_level="CLASS_9",
             subject_name="Social",
         ))
-    assert early is not None
+    assert early is None
+    assert _rest[-1].startswith("CHAPTER COVERAGE: RELATED")

@@ -120,7 +120,10 @@ _COMPLAINT_RE = re.compile(
     r"|confus(?:ing|e)\s+me|you\s+(?:already|just)\s+(?:said|asked|told)"
     r"|(?:you\s+are\s+)?telling\s+(?:me\s+)?different|let\s+me\s+finish|don'?t\s+wanna\s+answer"
     r"|(?:stop|quit)\s+(?:asking|repeating|giving)|that'?s\s+(?:not\s+what\s+i|wrong)|i\s+didn'?t\s+ask"
-    r"|why\s+(?:are|do)\s+you\s+(?:keep|asking|repeating)|this\s+is\s+(?:boring|confusing))\b",
+    r"|why\s+(?:are|do)\s+you\s+(?:keep|asking|repeating)|this\s+is\s+(?:boring|confusing)"
+    r"|(?:don'?t|do\s+not|shouldn'?t|should\s+not)\s+(?:you\s+)?(?:reveal|tell|give|say|show)\s+"
+    r"(?:me\s+)?(?:the\s+)?answer|i'?m\s+not\s+(?:supposed|told|meant)\s+to\s+reveal"
+    r"|let\s+me\s+(?:try|guess|think)|not\s+told\s+to\s+reveal)\b",
     re.I,
 )
 _META_REQUEST_RE = re.compile(
@@ -161,7 +164,13 @@ say so plainly and correct it.
 - MISHEARD WORDS: The message may come from speech-to-text. If a word doesn't fit but a chapter word \
 sounds similar ("terrorists" → territories, "density" → dynasty, "stats" → states, "invited" → invented, \
 "option T" → option D), answer the intended word and say once "I think you meant ...". Only when a word \
-really was misheard — never use "I think you meant" to rephrase a clear question.
+really was misheard — never use "I think you meant" to rephrase a clear, grammatical sentence, and never \
+invent a meaning just to force the talk back onto your last puzzle.
+- POSING QUESTIONS: When you ask a riddle, puzzle or check question (or the student asks you to frame \
+questions), ask and STOP — do not reveal, work out, or confirm the answer in the same turn. If they say \
+don't reveal / let me try, agree briefly and wait.
+- AMBIGUOUS REFERENTS: If they ask "what is the number?" / "which one?" with no clear referent, ask one \
+clarifying question instead of guessing an answer.
 - MEMORY: Speak as "I" and about the conversation as "we" — never "the tutor". If the student asks about \
 "the second point" and you gave no numbered list, use your last explanation and say which point you mean.
 - Never say "your chapter covers/focuses on X" unless the CHAPTER CONTEXT shows X.

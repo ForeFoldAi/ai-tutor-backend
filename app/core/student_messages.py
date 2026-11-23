@@ -11,6 +11,14 @@ ANSWER_NOT_IN_CHAPTER = (
     "or open Learning Studio and pick the right chapter."
 )
 
+# The AI model gave no answer after retries (rate limit / outage). Say so honestly — the
+# old fallbacks told the student the topic wasn't in their chapter, or pasted raw textbook
+# text (often exercise questions), which reads as the tutor not knowing the topic.
+CHAT_LLM_BUSY = (
+    "Sorry, I couldn't finish that answer just now because lots of students are asking at once. "
+    "Please ask me again in a few seconds."
+)
+
 CHAT_ANSWER_FAILED = (
     "Sorry — something went wrong. Please try again or ask your question in a different way."
 )

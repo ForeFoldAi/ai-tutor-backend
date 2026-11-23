@@ -119,6 +119,9 @@ def test_groq_keys_rotate_then_fall_to_secondary(monkeypatch):
     key_pool.reset()
     monkeypatch.setenv("GROQ_API_KEY", "g1")
     monkeypatch.setenv("GROQ_API_KEYS", "g2, g3\ng1")
+    # Isolate from machine env extras (GROQ_API_KEY_2 …) so this stays deterministic.
+    for i in range(2, 21):
+        monkeypatch.delenv(f"GROQ_API_KEY_{i}", raising=False)
     from app.config import provider_keys
 
     assert provider_keys("groq") == ["g1", "g2", "g3"]  # de-duplicated, ordered
