@@ -22,8 +22,10 @@ VOICE = "http://127.0.0.1:8080"
 LOGIN_ID = "Suneel"
 LOGIN_PW = "12345678"
 OUT_DIR = ROOT / "evaluation" / "reports"
-OUT_JSON = OUT_DIR / "suneel_qa_baseline.json"
-OUT_MD = OUT_DIR / "suneel_qa_baseline.md"
+# SUNEEL_QA_OUT=suneel_qa_after_fixes writes a separate report so the baseline is kept.
+_OUT_STEM = __import__("os").environ.get("SUNEEL_QA_OUT", "suneel_qa_baseline")
+OUT_JSON = OUT_DIR / f"{_OUT_STEM}.json"
+OUT_MD = OUT_DIR / f"{_OUT_STEM}.md"
 
 
 @dataclass
@@ -176,6 +178,124 @@ BANK: list[QItem] = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Scorer v2. The legacy scorer (score_turn) is kept and still reported so runs stay
+# comparable; v2 fixes its known false readings:
+#   - follow-ups were checked against the PRIMARY question's keywords ("quiz me" never says
+#     "mystery"), so correct follow-ups scored 3-4/10;
+#   - a correct refusal ("photosynthesis isn't in this chapter") was penalised for
+#     naming the forbidden term;
+#   - one synonym miss ("duty, honour" but not "value") zeroed the expectation score;
+#   - canned failure lines ("lost my train of thought", raw textbook paste) were not flagged.
+# ---------------------------------------------------------------------------
+PRIMARY_KEYWORDS_V2: dict[str, list[str]] = {
+    "E2": ["value", "duty", "honour", "courage", "patriot", "kind", "empathy"],
+    "S2": ["figure", "diagram", "image", "picture", "screen", "shows"],
+    "So3": ["mughal", "akbar", "babur", "empire", "dynasty"],
+}
+FOLLOW_KEYWORDS_V2: dict[str, list[str]] = {
+    "E1": ["tenali", "king", "queen", "rama", "yawn"],
+    "E2": ["value", "honest", "courage", "help", "duty", "integrity", "kind"],
+    "E3": ["?", "quiz", "question"],
+    "E4": ["tenali", "wit", "wisdom", "ask", "king"],
+    "M1": ["square"],
+    "M2": ["cube"],
+    "M3": ["32", "thirty-two", "thirty two"],
+    "M4": ["125", "cube"],
+    "M5": ["perfect", "square"],
+    "S1": ["question", "observ", "experiment", "investigat", "curio"],
+    "S2": ["figure", "picture", "shows", "image", "ponder"],
+    "S3": ["health", "food", "exercise", "clean", "sleep", "hygiene", "diet"],
+    "S4": ["wash", "germ", "hand", "soap", "microb"],
+    "S5": ["not", "chapter", "guess"],
+    "So1": ["resource", "future", "limited", "renew", "deplet", "waste", "run out"],
+    "So2": ["picture", "figure", "resource", "shows", "map"],
+    "So3": ["map", "figure", "screen", "territor"],
+    "So4": ["physical", "political", "mountain", "river", "boundar"],
+    "So5": ["maratha", "shivaji", "army", "fort", "rose", "rise", "guerrilla"],
+    "So6": ["maratha", "shivaji", "empire", "army", "fort", "fought", "kingdom"],
+}
+_CANNED_FAILURE_RE = re.compile(
+    r"lost my train of thought|that'?s not in this book|couldn'?t find this in your chapter"
+    r"|here'?s what your textbook says|can'?t (?:show|display|pull up) (?:an? )?(?:image|picture|figure|diagram)"
+    r"|cannot display|don'?t have the (?:specific )?(?:image|figure|details)",
+    re.I,
+)
+_NEGATION_RE = re.compile(r"\b(?:not|isn'?t|wasn'?t|doesn'?t|didn'?t|no one|never|no|nothing)\b", re.I)
+
+
+def _forbidden_asserted(answer: str, term: str) -> bool:
+    """True only when a sentence names the forbidden term without negating it."""
+    for sent in re.split(r"(?<=[.!?])\s+", answer or ""):
+        if term.lower() in sent.lower() and not _NEGATION_RE.search(sent):
+            return True
+    return False
+
+
+def score_turn_v2(item: "QItem", *, answer: str, images: list | None, math_lesson,
+                  science_experiment, channel: str, turn: str) -> dict:
+    a = (answer or "").lower()
+    bugs: list[str] = []
+    if turn == "follow":
+        kws = FOLLOW_KEYWORDS_V2.get(item.id) or item.expect_keywords
+    else:
+        kws = PRIMARY_KEYWORDS_V2.get(item.id) or item.expect_keywords
+    hits = sum(1 for k in kws if k.lower() in a)
+    need = max(1, -(-len(kws) // 2)) if turn == "primary" else 1
+    expect = round(10.0 * min(1.0, hits / need), 1)
+
+    ans = 2.0 if len(a) < 40 else (6.0 if len(a) < 80 else 7.0)
+    if len(a) < 40:
+        bugs.append("very short answer")
+    if hits:
+        ans = min(10.0, ans + 1.5 * min(hits, 2))
+    else:
+        ans = max(1.0, ans - 3.0)
+        bugs.append("missing expected keywords")
+    if _CANNED_FAILURE_RE.search(answer or ""):
+        ans = min(ans, 2.0)
+        expect = 0.0
+        bugs.append("canned failure / refusal line")
+    for f in item.forbidden:
+        if _forbidden_asserted(answer, f):
+            ans = max(1.0, ans - 2.5)
+            bugs.append(f"forbidden content asserted: {f}")
+    if item.label in ("wrong", "typo") and _NEGATION_RE.search(a):
+        ans = min(10.0, ans + 1.0)
+
+    nimg = len(images or [])
+    wants_img = item.want_images and (turn == "primary" or item.id in ("So3", "S2", "So2"))
+    if wants_img:
+        images_score = 9.0 if nimg else 2.0
+        if not nimg:
+            bugs.append("wanted images but got none")
+    else:
+        images_score = 9.0 if nimg else 8.0
+
+    interactive = None
+    if channel != "voice":
+        if item.want_math:
+            interactive = 9.0 if math_lesson else 3.0
+            if not math_lesson:
+                bugs.append("expected math_lesson missing")
+        elif item.want_science:
+            interactive = 9.0 if science_experiment else 4.0
+            if not science_experiment:
+                bugs.append("expected science_experiment missing")
+        else:
+            interactive = 8.0
+    parts = [ans, expect, images_score] + ([interactive] if interactive is not None else [])
+    return {
+        "answer_score": round(ans, 1),
+        "expect_score": expect,
+        "images_score": images_score,
+        "interactive_score": interactive,
+        "overall": round(sum(parts) / len(parts), 1),
+        "bugs": bugs,
+        "keyword_hits": hits,
+    }
+
+
 def http_json(method: str, url: str, body: dict | None = None, token: str | None = None, timeout: int = 180):
     data = None if body is None else json.dumps(body).encode()
     headers = {"Content-Type": "application/json"}
@@ -315,12 +435,23 @@ def score_turn(
     }
 
 
+# Subject names exactly as stored on the uploads (what the app's catalog sends). The bank's
+# short names ("Social") pointed retrieval at collections that don't exist, so Science /
+# Social / Maths answers were scored without any textbook passages.
+API_SUBJECT = {
+    "Social": "Social - Part-I",
+    "Science": "Science -  Curiosity",
+    "Mathematics": "Mathematics - I",
+    "English": "English",
+}
+
+
 def chat_tutor(token: str, item: QItem, query: str, history: list[dict] | None) -> dict:
     body = {
         "query": query,
         "board": item.board,
         "class_level": item.class_level,
-        "subject_name": item.subject,
+        "subject_name": API_SUBJECT.get(item.subject, item.subject),
         "chapter_ids": [item.chapter_id],
         "chapter": item.chapter,
         "chapter_names": [item.chapter],
@@ -344,7 +475,7 @@ def chat_voice_stream(token: str, item: QItem, query: str, history: list[dict] |
         "query": query,
         "board": item.board,
         "class_level": item.class_level,
-        "subject_name": item.subject,
+        "subject_name": API_SUBJECT.get(item.subject, item.subject),
         "chapter_ids": [item.chapter_id],
         "chapter": item.chapter,
         "chapter_names": [item.chapter],
@@ -443,7 +574,28 @@ def probe_nest(token: str, item: QItem) -> dict:
         return {"ok": False, "health": health, "error": str(e)[:300]}
 
 
+def _with_relogin(runner):
+    """Retry once with a fresh login when the JWT expires mid-run (long runs hit 401)."""
+    state: dict = {}
+
+    def call(token, item, query, history):
+        tok = state.get("token") or token
+        try:
+            res = runner(tok, item, query, history)
+        except RuntimeError as e:
+            if "401" not in str(e):
+                raise
+            res = {"error": "HTTP Error 401"}
+        if "401" in str(res.get("error") or ""):
+            state["token"] = login()
+            res = runner(state["token"], item, query, history)
+        return res
+
+    return call
+
+
 def run_channel(token: str, channel: str, runner) -> list[dict]:
+    runner = _with_relogin(runner)
     rows = []
     for i, item in enumerate(BANK, 1):
         print(f"[{channel}] {i}/{len(BANK)} {item.id} primary…", flush=True)
@@ -458,6 +610,15 @@ def run_channel(token: str, channel: str, runner) -> list[dict]:
             math_lesson=primary.get("math_lesson"),
             science_experiment=primary.get("science_experiment"),
             channel=channel,
+        )
+        p_v2 = score_turn_v2(
+            item,
+            answer=primary.get("answer") or "",
+            images=primary.get("related_images"),
+            math_lesson=primary.get("math_lesson"),
+            science_experiment=primary.get("science_experiment"),
+            channel=channel,
+            turn="primary",
         )
         history = [
             {"role": "user", "content": item.query},
@@ -475,6 +636,15 @@ def run_channel(token: str, channel: str, runner) -> list[dict]:
             math_lesson=follow.get("math_lesson"),
             science_experiment=follow.get("science_experiment"),
             channel=channel,
+        )
+        f_v2 = score_turn_v2(
+            item,
+            answer=follow.get("answer") or "",
+            images=follow.get("related_images"),
+            math_lesson=follow.get("math_lesson"),
+            science_experiment=follow.get("science_experiment"),
+            channel=channel,
+            turn="follow",
         )
         rows.append({
             "id": item.id,
@@ -496,6 +666,7 @@ def run_channel(token: str, channel: str, runner) -> list[dict]:
                 "error": primary.get("error"),
                 "path": primary.get("path"),
                 "scores": p_score,
+                "scores_v2": p_v2,
             },
             "follow": {
                 "answer": follow.get("answer") or "",
@@ -508,8 +679,10 @@ def run_channel(token: str, channel: str, runner) -> list[dict]:
                 "error": follow.get("error"),
                 "path": follow.get("path"),
                 "scores": f_score,
+                "scores_v2": f_v2,
             },
             "item_overall": round((p_score["overall"] + f_score["overall"]) / 2, 1),
+            "item_overall_v2": round((p_v2["overall"] + f_v2["overall"]) / 2, 1),
         })
         print(f"[{channel}] {item.id} overall={rows[-1]['item_overall']}", flush=True)
     return rows
@@ -557,6 +730,9 @@ def write_md(payload: dict) -> None:
     lines.append("")
     lines.append(f"- **AI Tutor average:** **{avg(tutor)} / 10**")
     lines.append(f"- **AI Voice average:** **{avg(voice)} / 10**")
+    if "tutor_avg_v2" in payload:
+        lines.append(f"- **AI Tutor average (scorer v2):** **{payload['tutor_avg_v2']} / 10**")
+        lines.append(f"- **AI Voice average (scorer v2):** **{payload['voice_avg_v2']} / 10**")
     lines.append("")
     lines.append("## Per-question dual results")
     lines.append("")
@@ -697,10 +873,19 @@ def main() -> None:
     nest = probe_nest(token, BANK[0])
     print("nest_probe:", nest, flush=True)
 
-    print("=== AI TUTOR ===", flush=True)
-    tutor_rows = run_channel(token, "tutor", chat_tutor)
-    print("=== AI VOICE (voice_mode stream) ===", flush=True)
-    voice_rows = run_channel(token, "voice", chat_voice_stream)
+    # SUNEEL_QA_CHANNELS=voice re-runs one channel and reuses the other from the existing report.
+    channels = __import__("os").environ.get("SUNEEL_QA_CHANNELS", "tutor,voice").split(",")
+    prior = json.loads(OUT_JSON.read_text()) if OUT_JSON.exists() else {}
+    if "tutor" in channels:
+        print("=== AI TUTOR ===", flush=True)
+        tutor_rows = run_channel(token, "tutor", chat_tutor)
+    else:
+        tutor_rows = prior["tutor"]
+    if "voice" in channels:
+        print("=== AI VOICE (voice_mode stream) ===", flush=True)
+        voice_rows = run_channel(token, "voice", chat_voice_stream)
+    else:
+        voice_rows = prior["voice"]
 
     payload = {
         "generated_at": time.strftime("%Y-%m-%d %H:%M:%S %z"),
@@ -711,6 +896,8 @@ def main() -> None:
         "voice": voice_rows,
         "tutor_avg": round(sum(r["item_overall"] for r in tutor_rows) / max(1, len(tutor_rows)), 2),
         "voice_avg": round(sum(r["item_overall"] for r in voice_rows) / max(1, len(voice_rows)), 2),
+        "tutor_avg_v2": round(sum(r["item_overall_v2"] for r in tutor_rows) / max(1, len(tutor_rows)), 2),
+        "voice_avg_v2": round(sum(r["item_overall_v2"] for r in voice_rows) / max(1, len(voice_rows)), 2),
     }
     # Trim full answers in JSON companion to keep file smaller but keep clips + scores
     slim = json.loads(json.dumps(payload))
@@ -723,6 +910,7 @@ def main() -> None:
     print("Wrote", OUT_MD)
     print("Wrote", OUT_JSON)
     print("TUTOR_AVG", payload["tutor_avg"], "VOICE_AVG", payload["voice_avg"])
+    print("TUTOR_AVG_V2", payload["tutor_avg_v2"], "VOICE_AVG_V2", payload["voice_avg_v2"])
 
 
 if __name__ == "__main__":

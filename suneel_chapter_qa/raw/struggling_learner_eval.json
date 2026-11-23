@@ -16,8 +16,8 @@
         "need": "topic inventory / orientation",
         "answer": "**Topics in 9. Light \u2013 Reflection and Refraction** (8):\n\n1. 9.1 Reflection Of Light\n2. 9.2 Spherical Mirrors\n3. 9.2.1 Image Formation by Spherical Mirrors\n4. 9.3 Refraction Of Light\n5. 9.3.1 Refraction through a Rectangular Glass Slab\n6. 9.3.2 The Refractive Index\n7. 9.3.3 Refraction by Spherical Lenses\n8. 9.3.4 Image Formation by Lenses\n\nWhich topic would you like to learn first?",
         "answer_clip": "**Topics in 9. Light \u2013 Reflection and Refraction** (8):  1. 9.1 Reflection Of Light 2. 9.2 Spherical Mirrors 3. 9.2.1 Image Formation by Spherical Mirrors 4. 9.3 Refraction Of Light 5. 9.3.1 Refraction through a Rectangular Glass Slab 6. 9.3.2 The Refractive Index 7. 9.3.3 Refraction by Spherical Lenses 8. 9.3.4 Image Formation by Lenses  Which topic would you like to learn first?",
-        "ms": 9196,
-        "ttft_ms": 9196,
+        "ms": 596,
+        "ttft_ms": 596,
         "error": null,
         "scores": {
           "clarity": 8.0,
@@ -39,21 +39,21 @@
         "channel": "text",
         "query": "wait what is refraction i keep forgetting",
         "need": "simple definition + everyday hook",
-        "answer": "It\u2019s okay to be stuck. Think of light like a car driving on a road.\n\n1. When it moves from air into glass, it slows down.\n2. This change in speed makes the light ray bend.\n3. This bending is called refraction.\n\nIt\u2019s why a straw looks bent in a glass of water.\n\nDoes that help you remember?",
-        "answer_clip": "It\u2019s okay to be stuck. Think of light like a car driving on a road.  1. When it moves from air into glass, it slows down. 2. This change in speed makes the light ray bend. 3. This bending is called refraction.  It\u2019s why a straw looks bent in a glass of water.  Does that help you remember?",
-        "ms": 43904,
-        "ttft_ms": 5703,
+        "answer": "**Refraction of Light**\nIt\u2019s okay to be stuck! Imagine you\u2019re holding a straw in a glass of water\u2014when you look at it from the side, the straw *appears* bent at the water\u2019s surface. That\u2019s refraction in action.\n\nLight travels in straight lines, but when it moves from one medium (like air) to another (like water or glass), it *bends*\u2014just like a car changing lanes. This bending happens because light slows down or speeds up slightly in different materials. The chapter will show you how to predict where this bending happens and how it affects images.\n\nWant to try a quick check? Think: if you drop a coin in a shallow bowl of water, does it look *closer* or *farther* than it really is? That\u2019s refraction too!\n\nReady to explore how this works with lenses?",
+        "answer_clip": "**Refraction of Light** It\u2019s okay to be stuck! Imagine you\u2019re holding a straw in a glass of water\u2014when you look at it from the side, the straw *appears* bent at the water\u2019s surface. That\u2019s refraction in action.  Light travels in straight lines, but when it moves from one medium (like air) to another (like water or glass), it *bends*\u2014just like a car changing lanes. This bending happens because light slows down or speeds up slightly in different materials. The chapter will show you how to predict\u2026",
+        "ms": 29261,
+        "ttft_ms": 1141,
         "error": null,
         "scores": {
           "clarity": 8.0,
           "scaffolding": 8.5,
-          "concept": 6.7,
+          "concept": 10.0,
           "empathy": 7.5,
           "format": 8.5,
-          "overall": 7.8,
+          "overall": 8.6,
           "can_weak_learner_get_it": true,
-          "words": 60,
-          "avg_sentence_words": 6,
+          "words": 141,
+          "avg_sentence_words": 14.1,
           "images": 1,
           "bugs": []
         },
@@ -70,10 +70,10 @@
         "channel": "text",
         "query": "ok",
         "need": "gentle next step, not a quiz dump if offer was specific",
-        "answer": "Great! Now that you know what refraction is, would you like a real-life example, a quick quiz, to learn about the refractive index, or explore other topics?",
-        "answer_clip": "Great! Now that you know what refraction is, would you like a real-life example, a quick quiz, to learn about the refractive index, or explore other topics?",
-        "ms": 6752,
-        "ttft_ms": 3326,
+        "answer": "Great! Now that you\u2019re clear on what refraction *is*, let\u2019s see it in action\u2014**would you like a real-life example (like why a swimming pool looks shallower than it is), a quick quiz to test your understanding, or to dive into how lenses use refraction to form images?**",
+        "answer_clip": "Great! Now that you\u2019re clear on what refraction *is*, let\u2019s see it in action\u2014**would you like a real-life example (like why a swimming pool looks shallower than it is), a quick quiz to test your understanding, or to dive into how lenses use refraction to form images?**",
+        "ms": 20630,
+        "ttft_ms": 17720,
         "error": null,
         "scores": {
           "clarity": 8.0,
@@ -83,8 +83,8 @@
           "format": 8.0,
           "overall": 7.8,
           "can_weak_learner_get_it": true,
-          "words": 28,
-          "avg_sentence_words": 14,
+          "words": 51,
+          "avg_sentence_words": 17,
           "images": 0,
           "bugs": []
         },
@@ -95,52 +95,48 @@
         "channel": "text",
         "query": "why it bends tho??",
         "need": "cause in plain words, no jargon pile",
-        "answer": "Light bends because its speed changes when it moves from one medium to another, such as from air into glass. The chapter explains that this change in speed causes the direction of the light ray to shift at the boundary. This phenomenon is known as refraction.\n\n* Light slows down when entering a denser medium like water or glass.\n* The bending occurs specifically at the interface where the two media meet.\n* The angle of bending depends on how steeply the light hits the surface.\n\nWould you like to see how this works with a simple diagram?",
-        "answer_clip": "Light bends because its speed changes when it moves from one medium to another, such as from air into glass. The chapter explains that this change in speed causes the direction of the light ray to shift at the boundary. This phenomenon is known as refraction.  * Light slows down when entering a denser medium like water or glass. * The bending occurs specifically at the interface where the two media meet. * The angle of bending depends on how steeply the light hits the surface.  Would you like t\u2026",
-        "ms": 26968,
-        "ttft_ms": 2145,
+        "answer": "Sorry, I couldn't finish that answer just now because lots of students are asking at once. Please ask me again in a few seconds.",
+        "answer_clip": "Sorry, I couldn't finish that answer just now because lots of students are asking at once. Please ask me again in a few seconds.",
+        "ms": 33871,
+        "ttft_ms": 33868,
         "error": null,
         "scores": {
           "clarity": 8.0,
-          "scaffolding": 8.0,
-          "concept": 10.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
           "empathy": 7.0,
-          "format": 8.5,
-          "overall": 8.5,
-          "can_weak_learner_get_it": true,
-          "words": 95,
-          "avg_sentence_words": 13.6,
-          "images": 1,
-          "bugs": []
+          "format": 8.0,
+          "overall": 6.2,
+          "can_weak_learner_get_it": false,
+          "words": 24,
+          "avg_sentence_words": 12,
+          "images": 0,
+          "bugs": [
+            "missed key concept words: speed, light, medium"
+          ]
         },
-        "images": [
-          {
-            "figure": "9.10",
-            "activity": null,
-            "caption": "a diagram of a glass plane with a line of symmetry. Science textbook figure\u2026"
-          }
-        ]
+        "images": []
       },
       {
         "id": "T5_glass_slab",
         "channel": "text",
         "query": "glass slab thing is confusing explain like im dumb",
         "need": "scaffolded glass-slab idea",
-        "answer": "**Refraction through a Rectangular Glass Slab**\nWhen light passes through a rectangular glass slab, it bends at the air-glass boundary (entering) and again at the glass-air boundary (exiting). The slab is parallel-sided, so the light ray emerges parallel to its original path but shifted sideways. This sideways shift happens because light slows down in glass and speeds up again when it exits.\n\n* The light ray bends *toward* the normal (perpendicular line) when entering glass.\n* It bends *away* from the normal when exiting glass.\n* The emergent ray is parallel to the incident ray but offset sideways.\n\nYou can see this effect if you place a pencil in a glass of water\u2014it looks bent!\n\n---\nWould you like to see how this works in a simple ray diagram?",
-        "answer_clip": "**Refraction through a Rectangular Glass Slab** When light passes through a rectangular glass slab, it bends at the air-glass boundary (entering) and again at the glass-air boundary (exiting). The slab is parallel-sided, so the light ray emerges parallel to its original path but shifted sideways. This sideways shift happens because light slows down in glass and speeds up again when it exits.  * The light ray bends *toward* the normal (perpendicular line) when entering glass. * It bends *away* f\u2026",
-        "ms": 48114,
-        "ttft_ms": 5017,
+        "answer": "Let\u2019s break it down **super simply**\u2014like a magic trick!\n\nImagine light is a **car** driving on a road (air). When it hits a **bumpy road** (glass slab), it slows down and **turns** toward the normal (the dotted line straight down). That\u2019s why it bends *toward* the normal when entering glass (denser medium).\n\nNow, when the car exits the glass and goes back to air (faster road), it **speeds up** and bends *away* from the normal. But here\u2019s the cool part: the **total turn** (entry + exit) cancels out! So the light **ends up parallel** to its original path\u2014just shifted sideways a tiny bit (like a car taking a detour but ending up going the same direction).\n\n**Why does this happen?**\n- Light **slows down** in glass (denser medium) \u2192 bends toward normal.\n- Light **speeds up** in air (rarer medium) \u2192 bends away from normal.\n- The slab\u2019s sides are **parallel**, so the bends cancel out.\n\n**Check this:** Look at Fig. 9.10 (the diagram is on your screen). The ray EO bends at O (air\u2192glass) and O\u2032H bends at O\u2032 (glass\u2192air). The emergent ray (O\u2032H) is parallel to the incident ray (EO), but shifted sideways. Got it?\n\nWant to try an example? If you shine a flashlight through a glass block, the beam bends *in*\u2014then bends *out*\u2014but still points the same way. That\u2019s refraction!",
+        "answer_clip": "Let\u2019s break it down **super simply**\u2014like a magic trick!  Imagine light is a **car** driving on a road (air). When it hits a **bumpy road** (glass slab), it slows down and **turns** toward the normal (the dotted line straight down). That\u2019s why it bends *toward* the normal when entering glass (denser medium).  Now, when the car exits the glass and goes back to air (faster road), it **speeds up** and bends *away* from the normal. But here\u2019s the cool part: the **total turn** (entry + exit) cancels\u2026",
+        "ms": 47300,
+        "ttft_ms": 19040,
         "error": null,
         "scores": {
           "clarity": 8.0,
-          "scaffolding": 8.0,
+          "scaffolding": 9.0,
           "concept": 10.0,
           "empathy": 7.0,
           "format": 8.5,
-          "overall": 8.5,
+          "overall": 8.7,
           "can_weak_learner_get_it": true,
-          "words": 129,
-          "avg_sentence_words": 16.1,
+          "words": 232,
+          "avg_sentence_words": 11.6,
           "images": 1,
           "bugs": []
         },
@@ -157,85 +153,82 @@
         "channel": "text",
         "query": "so emergent ray same direction? yes or no",
         "need": "direct yes/no then one-line why",
-        "answer": "Yes, the emergent ray travels in the same direction as the incident ray. When light passes through a rectangular glass slab, it bends at the first surface and bends again at the second surface. Because the slab\u2019s faces are parallel, these two bends are equal and opposite. This means the final ray emerges parallel to the original path, though it is shifted slightly sideways.\n\n* The ray bends toward the normal when entering the glass.\n* It bends away from the normal when exiting the glass.\n* The net effect is a lateral shift, not a change in direction.\n\nWould you like to see how this works in a simple ray diagram?",
-        "answer_clip": "Yes, the emergent ray travels in the same direction as the incident ray. When light passes through a rectangular glass slab, it bends at the first surface and bends again at the second surface. Because the slab\u2019s faces are parallel, these two bends are equal and opposite. This means the final ray emerges parallel to the original path, though it is shifted slightly sideways.  * The ray bends toward the normal when entering the glass. * It bends away from the normal when exiting the glass. * The \u2026",
-        "ms": 8919,
-        "ttft_ms": 3579,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 16917,
+        "ttft_ms": null,
         "error": null,
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 8.0,
-          "concept": 10.0,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
           "empathy": 7.0,
-          "format": 8.5,
-          "overall": 8.5,
-          "can_weak_learner_get_it": true,
-          "words": 110,
-          "avg_sentence_words": 13.8,
-          "images": 1,
-          "bugs": []
+          "format": 8.0,
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
+          "images": 0,
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: yes, parallel"
+          ]
         },
-        "images": [
-          {
-            "figure": "9.10",
-            "activity": null,
-            "caption": "a diagram of a glass plane with a line of symmetry. Science textbook figure\u2026"
-          }
-        ]
+        "images": []
       },
       {
         "id": "T7_give_up",
         "channel": "text",
         "query": "still confused about normal line what is that",
         "need": "re-explain 'normal' simply",
-        "answer": "It\u2019s okay to be stuck. Think of the normal line as an invisible helper.\n\n1. It is an imaginary straight line.\n2. It stands straight up (perpendicular) at the exact point where light hits the surface.\n3. We measure angles of bending using this line as a reference.\n\nIt\u2019s like a plumb line hanging straight down.\n\nDoes that make it clearer?",
-        "answer_clip": "It\u2019s okay to be stuck. Think of the normal line as an invisible helper.  1. It is an imaginary straight line. 2. It stands straight up (perpendicular) at the exact point where light hits the surface. 3. We measure angles of bending using this line as a reference.  It\u2019s like a plumb line hanging straight down.  Does that make it clearer?",
-        "ms": 15524,
-        "ttft_ms": 3253,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 1,
+        "ttft_ms": null,
+        "error": "[Errno 54] Connection reset by peer",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 8.5,
-          "concept": 10.0,
-          "empathy": 7.5,
-          "format": 8.5,
-          "overall": 8.6,
-          "can_weak_learner_get_it": true,
-          "words": 63,
-          "avg_sentence_words": 6.3,
-          "images": 1,
-          "bugs": []
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
+          "empathy": 7.0,
+          "format": 8.0,
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
+          "images": 0,
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: straight, surface, normal"
+          ]
         },
-        "images": [
-          {
-            "figure": "9.10",
-            "activity": null,
-            "caption": "a diagram of a glass plane with a line of symmetry. Science textbook figure\u2026"
-          }
-        ]
+        "images": []
       },
       {
         "id": "T8_mirror_mixup",
         "channel": "text",
         "query": "concave and convex same na?",
         "need": "correct misconception gently",
-        "answer": "No, they are not the same. A concave mirror curves inward like a cave, while a convex mirror curves outward like the back of a spoon.\n\n* **Concave:** Focuses light to a single point.\n* **Convex:** Spreads light outwards.\n\nThis difference changes how images appear in each.",
-        "answer_clip": "No, they are not the same. A concave mirror curves inward like a cave, while a convex mirror curves outward like the back of a spoon.  * **Concave:** Focuses light to a single point. * **Convex:** Spreads light outwards.  This difference changes how images appear in each.",
-        "ms": 11120,
-        "ttft_ms": 4593,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 8.5,
-          "concept": 6.7,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
           "empathy": 7.0,
           "format": 8.0,
-          "overall": 7.7,
-          "can_weak_learner_get_it": true,
-          "words": 45,
-          "avg_sentence_words": 9,
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
           "images": 0,
-          "bugs": []
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: concave, convex, different"
+          ]
         },
         "images": []
       }
@@ -246,23 +239,26 @@
         "channel": "voice",
         "query": "idk whats in this chapter tell me topics",
         "need": "topic inventory / orientation",
-        "answer": "This chapter, 9. Light \u2013 Reflection and Refraction, has 8 main topics. Topic 1: 9.1 Reflection Of Light. Topic 2: 9.2 Spherical Mirrors. Topic 3: 9.2.1 Image Formation by Spherical Mirrors. Topic 4: 9.3 Refraction Of Light. Topic 5: 9.3.1 Refraction through a Rectangular Glass Slab. Topic 6: 9.3.2 The Refractive Index. Topic 7: 9.3.3 Refraction by Spherical Lenses. Topic 8: 9.3.4 Image Formation by Lenses. Which topic should we start with?",
-        "answer_clip": "This chapter, 9. Light \u2013 Reflection and Refraction, has 8 main topics. Topic 1: 9.1 Reflection Of Light. Topic 2: 9.2 Spherical Mirrors. Topic 3: 9.2.1 Image Formation by Spherical Mirrors. Topic 4: 9.3 Refraction Of Light. Topic 5: 9.3.1 Refraction through a Rectangular Glass Slab. Topic 6: 9.3.2 The Refractive Index. Topic 7: 9.3.3 Refraction by Spherical Lenses. Topic 8: 9.3.4 Image Formation by Lenses. Which topic should we start with?",
-        "ms": 1169,
-        "ttft_ms": 1169,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 7.5,
-          "concept": 10.0,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
           "empathy": 7.0,
           "format": 8.0,
-          "overall": 8.3,
-          "can_weak_learner_get_it": true,
-          "words": 84,
-          "avg_sentence_words": 3.5,
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
           "images": 0,
-          "bugs": []
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: reflection, refraction, mirror, lens"
+          ]
         },
         "images": []
       },
@@ -271,54 +267,53 @@
         "channel": "voice",
         "query": "wait what is refraction i keep forgetting",
         "need": "simple definition + everyday hook",
-        "answer": "It's okay to be stuck. Think of it this way. Light travels straight in air. But when it hits water or glass, it slows down. That speed change makes the light ray bend. That bending is refraction. Right?",
-        "answer_clip": "It's okay to be stuck. Think of it this way. Light travels straight in air. But when it hits water or glass, it slows down. That speed change makes the light ray bend. That bending is refraction. Right?",
-        "ms": 27371,
-        "ttft_ms": 2861,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 8.5,
-          "concept": 6.7,
-          "empathy": 8.5,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
+          "empathy": 7.0,
           "format": 8.0,
-          "overall": 7.9,
-          "can_weak_learner_get_it": true,
-          "words": 38,
-          "avg_sentence_words": 5.4,
-          "images": 1,
-          "bugs": []
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
+          "images": 0,
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: bend, light, medium"
+          ]
         },
-        "images": [
-          {
-            "figure": "9.10",
-            "activity": null,
-            "caption": "a diagram of a glass plane with a line of symmetry. Science textbook figure\u2026"
-          }
-        ]
+        "images": []
       },
       {
         "id": "T3_lazy_yes",
         "channel": "voice",
         "query": "ok",
         "need": "gentle next step, not a quiz dump if offer was specific",
-        "answer": "Good, you\u2019ve got it. Ready to move on? We can tackle spherical mirrors next. Or, if you want, I can give you a quick quiz on refraction first. What sounds better?",
-        "answer_clip": "Good, you\u2019ve got it. Ready to move on? We can tackle spherical mirrors next. Or, if you want, I can give you a quick quiz on refraction first. What sounds better?",
-        "ms": 3100,
-        "ttft_ms": 1446,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 7.5,
-          "concept": 7.0,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 4.0,
           "empathy": 7.0,
           "format": 8.0,
-          "overall": 7.5,
-          "can_weak_learner_get_it": true,
-          "words": 32,
-          "avg_sentence_words": 6.4,
+          "overall": 5.8,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
           "images": 0,
-          "bugs": []
+          "bugs": [
+            "too thin to learn from"
+          ]
         },
         "images": []
       },
@@ -327,54 +322,54 @@
         "channel": "voice",
         "query": "why it bends tho??",
         "need": "cause in plain words, no jargon pile",
-        "answer": "I get why that feels confusing. Think of light like a car. It moves fast on a smooth road. Now, imagine it hits mud. The front wheels slow down first. The car turns slightly. Light does the same. It slows down in denser media like water or glass. That speed change forces the direction to shift. That's why it bends. Does that car analogy make it click?",
-        "answer_clip": "I get why that feels confusing. Think of light like a car. It moves fast on a smooth road. Now, imagine it hits mud. The front wheels slow down first. The car turns slightly. Light does the same. It slows down in denser media like water or glass. That speed change forces the direction to shift. That's why it bends. Does that car analogy make it click?",
-        "ms": 41333,
-        "ttft_ms": 1884,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 8.5,
-          "concept": 6.7,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
           "empathy": 7.0,
           "format": 8.0,
-          "overall": 7.7,
-          "can_weak_learner_get_it": true,
-          "words": 67,
-          "avg_sentence_words": 6.1,
-          "images": 1,
-          "bugs": []
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
+          "images": 0,
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: speed, light, medium"
+          ]
         },
-        "images": [
-          {
-            "figure": "9.10",
-            "activity": null,
-            "caption": "a diagram of a glass plane with a line of symmetry. Science textbook figure\u2026"
-          }
-        ]
+        "images": []
       },
       {
         "id": "T5_glass_slab",
         "channel": "voice",
         "query": "glass slab thing is confusing explain like im dumb",
         "need": "scaffolded glass-slab idea",
-        "answer": "It's okay to be stuck. The glass slab part trips everyone up. Think of it like this. Light enters the glass at an angle. It bends toward the normal. Then it exits the other side. It bends away from the normal. Because the slab's sides are parallel, those two bends cancel out. So, the light comes out parallel to where it started. It just shifts sideways a bit. That's why letters under a slab look raised. The light path is shifted, but the direction stays the same. Does that parallel exit make sense now?",
-        "answer_clip": "It's okay to be stuck. The glass slab part trips everyone up. Think of it like this. Light enters the glass at an angle. It bends toward the normal. Then it exits the other side. It bends away from the normal. Because the slab's sides are parallel, those two bends cancel out. So, the light comes out parallel to where it started. It just shifts sideways a bit. That's why letters under a slab look raised. The light path is shifted, but the direction stays the same. Does that parallel exit make se\u2026",
-        "ms": 19821,
-        "ttft_ms": 2323,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 8.5,
-          "concept": 10.0,
-          "empathy": 8.5,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
+          "empathy": 7.0,
           "format": 8.0,
-          "overall": 8.7,
-          "can_weak_learner_get_it": true,
-          "words": 94,
-          "avg_sentence_words": 7.2,
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
           "images": 0,
-          "bugs": []
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: glass, bend, parallel"
+          ]
         },
         "images": []
       },
@@ -383,126 +378,152 @@
         "channel": "voice",
         "query": "so emergent ray same direction? yes or no",
         "need": "direct yes/no then one-line why",
-        "answer": "Yes, same direction. The emergent ray is parallel to the incident ray. It just shifts sideways a bit. The bending at the first surface is equal and opposite to the bending at the second surface. So, they cancel out direction-wise. But the path is shifted. That's why the line under the slab looks raised. Does that \"parallel but shifted\" idea make sense now?",
-        "answer_clip": "Yes, same direction. The emergent ray is parallel to the incident ray. It just shifts sideways a bit. The bending at the first surface is equal and opposite to the bending at the second surface. So, they cancel out direction-wise. But the path is shifted. That's why the line under the slab looks raised. Does that \"parallel but shifted\" idea make sense now?",
-        "ms": 4089,
-        "ttft_ms": 1158,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 7.5,
-          "concept": 10.0,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
           "empathy": 7.0,
           "format": 8.0,
-          "overall": 8.3,
-          "can_weak_learner_get_it": true,
-          "words": 64,
-          "avg_sentence_words": 8,
-          "images": 1,
-          "bugs": []
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
+          "images": 0,
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: yes, parallel"
+          ]
         },
-        "images": [
-          {
-            "figure": "9.10",
-            "activity": null,
-            "caption": "a diagram of a glass plane with a line of symmetry. Science textbook figure\u2026"
-          }
-        ]
+        "images": []
       },
       {
         "id": "T7_give_up",
         "channel": "voice",
         "query": "still confused about normal line what is that",
         "need": "re-explain 'normal' simply",
-        "answer": "It's okay to be stuck. The normal is just an imaginary line. It's drawn at the exact point where light hits the surface. This line is always at a right angle to that surface. Think of it as a ruler standing straight up. We use it to measure angles. The angle of incidence is between the light ray and this normal. The angle of reflection is also measured from the normal. It's your reference point. Without it, you can't measure the bending. Does that \"straight ruler\" idea help?",
-        "answer_clip": "It's okay to be stuck. The normal is just an imaginary line. It's drawn at the exact point where light hits the surface. This line is always at a right angle to that surface. Think of it as a ruler standing straight up. We use it to measure angles. The angle of incidence is between the light ray and this normal. The angle of reflection is also measured from the normal. It's your reference point. Without it, you can't measure the bending. Does that \"straight ruler\" idea help?",
-        "ms": 41908,
-        "ttft_ms": 2684,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 8.5,
-          "concept": 10.0,
-          "empathy": 8.5,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
+          "empathy": 7.0,
           "format": 8.0,
-          "overall": 8.7,
-          "can_weak_learner_get_it": true,
-          "words": 88,
-          "avg_sentence_words": 8,
-          "images": 1,
-          "bugs": []
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
+          "images": 0,
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: straight, surface, normal"
+          ]
         },
-        "images": [
-          {
-            "figure": "9.10",
-            "activity": null,
-            "caption": "a diagram of a glass plane with a line of symmetry. Science textbook figure\u2026"
-          }
-        ]
+        "images": []
       },
       {
         "id": "T8_mirror_mixup",
         "channel": "voice",
         "query": "concave and convex same na?",
         "need": "correct misconception gently",
-        "answer": "No, they're not the same. Concave mirrors curve inward. Convex mirrors curve outward. Think of that spoon activity. One side is concave, the other is convex. They form different images. Concave can make magnified images. Convex always makes smaller, erect images. The shape changes how light reflects. That's why they behave differently. Which one are you finding trickier?",
-        "answer_clip": "No, they're not the same. Concave mirrors curve inward. Convex mirrors curve outward. Think of that spoon activity. One side is concave, the other is convex. They form different images. Concave can make magnified images. Convex always makes smaller, erect images. The shape changes how light reflects. That's why they behave differently. Which one are you finding trickier?",
-        "ms": 5429,
-        "ttft_ms": 2658,
-        "error": null,
+        "answer": "",
+        "answer_clip": "",
+        "ms": 0,
+        "ttft_ms": null,
+        "error": "<urlopen error [Errno 61] Connection refused>",
         "scores": {
-          "clarity": 8.0,
-          "scaffolding": 8.5,
-          "concept": 10.0,
+          "clarity": 5.0,
+          "scaffolding": 7.0,
+          "concept": 2.0,
           "empathy": 7.0,
           "format": 8.0,
-          "overall": 8.5,
-          "can_weak_learner_get_it": true,
-          "words": 58,
-          "avg_sentence_words": 5.3,
-          "images": 1,
-          "bugs": []
+          "overall": 5.2,
+          "can_weak_learner_get_it": false,
+          "words": 0,
+          "avg_sentence_words": 0.0,
+          "images": 0,
+          "bugs": [
+            "too thin to learn from",
+            "missed key concept words: concave, convex, different"
+          ]
         },
-        "images": [
-          {
-            "figure": "9.6",
-            "activity": null,
-            "caption": "the diagram shows the direction of the plane. Science textbook figure, 9. Light\u2026"
-          }
-        ]
+        "images": []
       }
     ]
   },
   "summary": {
     "text": {
       "avg": {
-        "clarity": 8.0,
-        "scaffolding": 8.2,
-        "concept": 8.8,
+        "clarity": 6.9,
+        "scaffolding": 7.7,
+        "concept": 5.6,
         "empathy": 7.1,
-        "format": 8.3,
-        "overall": 8.2
+        "format": 8.1,
+        "overall": 6.9
       },
-      "learn_rate_pct": 100.0,
+      "learn_rate_pct": 50.0,
       "turns": 8,
-      "bugs": []
+      "bugs": [
+        "T4_why: missed key concept words: speed, light, medium",
+        "T6_check: too thin to learn from",
+        "T6_check: missed key concept words: yes, parallel",
+        "T7_give_up: too thin to learn from",
+        "T7_give_up: missed key concept words: straight, surface, normal",
+        "T8_mirror_mixup: too thin to learn from",
+        "T8_mirror_mixup: missed key concept words: concave, convex, different"
+      ]
     },
     "voice": {
       "avg": {
-        "clarity": 8.0,
-        "scaffolding": 8.1,
-        "concept": 8.8,
-        "empathy": 7.6,
+        "clarity": 5.0,
+        "scaffolding": 7.0,
+        "concept": 2.2,
+        "empathy": 7.0,
         "format": 8.0,
-        "overall": 8.2
+        "overall": 5.3
       },
-      "learn_rate_pct": 100.0,
+      "learn_rate_pct": 0.0,
       "turns": 8,
-      "bugs": []
+      "bugs": [
+        "T1_topics: too thin to learn from",
+        "T1_topics: missed key concept words: reflection, refraction, mirror, lens",
+        "T2_confused_def: too thin to learn from",
+        "T2_confused_def: missed key concept words: bend, light, medium",
+        "T3_lazy_yes: too thin to learn from",
+        "T4_why: too thin to learn from",
+        "T4_why: missed key concept words: speed, light, medium",
+        "T5_glass_slab: too thin to learn from",
+        "T5_glass_slab: missed key concept words: glass, bend, parallel",
+        "T6_check: too thin to learn from",
+        "T6_check: missed key concept words: yes, parallel",
+        "T7_give_up: too thin to learn from",
+        "T7_give_up: missed key concept words: straight, surface, normal",
+        "T8_mirror_mixup: too thin to learn from",
+        "T8_mirror_mixup: missed key concept words: concave, convex, different"
+      ]
     }
   },
   "gaps": [
-    "No critical gaps flagged by heuristics \u2014 still spot-check misconception turns manually."
+    "text: clarity under 7.5 \u2014 shorten sentences / cut jargon for weak learners",
+    "text: only 50.0% of turns were learnable for a weak student",
+    "text: T6_check: too thin to learn from",
+    "text: T7_give_up: too thin to learn from",
+    "text: T8_mirror_mixup: too thin to learn from",
+    "voice: clarity under 7.5 \u2014 shorten sentences / cut jargon for weak learners",
+    "voice: scaffolding weak \u2014 add analogy + one check question more often",
+    "voice: only 0.0% of turns were learnable for a weak student",
+    "voice: T1_topics: too thin to learn from",
+    "voice: T2_confused_def: too thin to learn from",
+    "voice: T3_lazy_yes: too thin to learn from",
+    "voice: T4_why: too thin to learn from"
   ],
-  "verdict": "Mostly satisfies a struggling learner for this chapter (text 8.2/10, voice 8.2/10). Text is safer for clarity; voice is usable for first contact."
+  "verdict": "Partial: student can get pieces but not reliable clarity (text 6.9/10 @ 50.0% learnable, voice 5.3/10 @ 0.0% learnable). See gaps."
 }

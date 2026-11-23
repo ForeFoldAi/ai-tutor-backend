@@ -221,3 +221,41 @@ def test_reply_intent_guidance_wrong_answer_second_attempt_reveals():
         ReplyIntent.WRONG_ANSWER, quiz_pending=True, quiz_question="q", quiz_attempts=1
     )
     assert "reveal the correct answer" in second.lower()
+
+
+def test_voice_system_prompt_blocks_spoilers_and_invented_mishears():
+    from app.services.voice_prompts import build_voice_system_prompt
+    from app.services.voice_tutor import TutorState, UnderstandingScores
+
+    system = build_voice_system_prompt(
+        "Can you frame some simple tricky questions on this chapter?",
+        class_level="CLASS_8",
+        subject_name="Mathematics",
+        chapter="Number Play",
+        student_name="Manith",
+        conversation_history=[],
+        tutor_state=TutorState.TEACHING,
+        understanding=UnderstandingScores(wants_quiz=True),
+        last_assistant="",
+        state_guidance="",
+        understanding_guidance="",
+        acknowledgment_guidance="",
+        nest_intent="quiz",
+    )
+    lower = system.lower()
+    assert "posing questions" in lower
+    assert "ask the question" in lower or "do not state" in lower
+    assert "never reinterpret a grammatical" in lower
+    assert "which number do you mean" in lower
+    assert "never include the answer" in lower
+
+
+def test_quiz_intent_matches_frame_tricky_questions():
+    from app.services.voice_tutor import evaluate_student_response
+
+    scores = evaluate_student_response(
+        "Okay, my friend wants some simple tricky questions. Can you frame some on this chapter?"
+    )
+    assert scores.wants_quiz
+    hint = scores.to_hint().lower()
+    assert "do not give the answer" in hint

@@ -1050,6 +1050,13 @@ _MATH_FOLLOWUP = re.compile(
     r"^\s*(?:and|what\s+about|how\s+about|why|how|next|same|now|then|ok(?:ay)?|so)\b", re.I
 )
 _FOLLOWUP_NUM = re.compile(r"\d+(?:\.\d+)?")
+# "i still don't get it, explain more simply" / "check if i understood": re-explaining the same
+# problem must keep its verified numbers (without them the model wrote 2⁵ = 64).
+_MATH_CONFUSED_FOLLOWUP = re.compile(
+    r"\b(?:don'?t|do\s+not|didn'?t)\s+(?:really\s+)?(?:get|understand)\b|\bconfus|\bsimpler\b"
+    r"|\bmore\s+simply\b|\bexplain\s+(?:it\s+)?again\b|\bcheck\s+(?:if|whether)\s+i\b|\bslowly\b",
+    re.I,
+)
 
 
 def _math_followup_query(query: str, history: list[dict] | None, solve) -> str:
@@ -1058,7 +1065,10 @@ def _math_followup_query(query: str, history: list[dict] | None, solve) -> str:
     ponytail: the number swap is positional — follow-ups that change the
     operation rather than the numbers ("now the square of it") fall back to the LLM.
     """
-    if not history or not _MATH_FOLLOWUP.match(query or "") or len(query.split()) > 8:
+    confused = bool(_MATH_CONFUSED_FOLLOWUP.search(query or ""))
+    if not history or not (
+        confused or (_MATH_FOLLOWUP.match(query or "") and len(query.split()) <= 8)
+    ):
         return ""
     for turn in reversed(history):
         if (turn.get("role") or "").lower() != "user":

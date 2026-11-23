@@ -1245,6 +1245,71 @@ def chapter_figures_by_number(
         return out
 
 
+def chapter_caption_text(chapter_ids: list[str] | None) -> str:
+    """All figure captions of the chapter(s), lower-cased — cheap evidence of chapter topics."""
+    if not chapter_ids:
+        return ""
+    with SessionLocal() as db:
+        uploads = _load_uploads(db, chapter_ids)
+        if not uploads:
+            return ""
+        images = _list_images(db, list(uploads.keys()))
+        return " ".join((im.caption or "") for im in images).lower()
+
+
+def chapter_figures_for_generic_request(
+    chapter_ids: list[str] | None,
+    hint_terms: set[str] | None = None,
+    *,
+    max_n: int = 3,
+) -> list[dict]:
+    """Numbered figures of the chapter for "show me a diagram/map/picture from this chapter".
+
+    Semantic image search has nothing to rank on for such a request (no topic words), so it
+    used to return nothing and the tutor said "I cannot display figures". Figures whose caption
+    shares a hint word (e.g. "map", "resource") come first, then textbook order.
+    """
+    if not chapter_ids or max_n <= 0:
+        return []
+    hints = {h.lower() for h in (hint_terms or set()) if len(h) >= 3}
+    with SessionLocal() as db:
+        uploads = _load_uploads(db, chapter_ids)
+        if not uploads:
+            return []
+        images = _list_images(db, list(uploads.keys()))
+        _attach_upload_refs(images, uploads)
+        from app.services.image_service.content_kind_retrieval import get_content_kind
+
+        cands: list[tuple[int, tuple, TextbookImage]] = []
+        seen: set[str] = set()
+        for im in images:
+            if get_content_kind(im) != "figure":
+                continue
+            num = _resolved_figure_number(im)
+            key = num or f"file:{im.file_name}"
+            if key in seen:
+                continue
+            disk = image_disk_path(
+                im.textbook_upload_id, im.file_name, upload=getattr(im, "upload", None)
+            )
+            if not image_has_visible_content(disk):
+                continue
+            seen.add(key)
+            cap = " ".join(
+                str(getattr(im, a, "") or "") for a in ("caption", "visual_description")
+            ).lower()
+            overlap = sum(1 for h in hints if h in cap)
+            # Numbered figures first (they can be cited), then unnumbered ones in page order.
+            order = (
+                (0, *(int(x) if x.isdigit() else 0 for x in num.split(".")))
+                if num
+                else (1, int(getattr(im, "page", 0) or 0))
+            )
+            cands.append((-overlap, order, im))
+        cands.sort(key=lambda c: (c[0], c[1]))
+        return [_payload_row(im, 90.0) for _, _, im in cands[:max_n]]
+
+
 def chapter_activities_by_number(
     chapter_ids: list[str] | None,
     numbers: list[str],

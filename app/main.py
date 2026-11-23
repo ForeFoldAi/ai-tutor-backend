@@ -547,7 +547,11 @@ async def chapter_chat(
     optionally filtered to the selected chapter IDs."""
     if not (req.query or "").strip() and not (req.image_ids or []):
         raise HTTPException(status_code=400, detail="Please type a question or attach an image.")
-    collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
+    from app.services.chapter_collection import resolve_chat_collection
+
+    collection = resolve_chat_collection(
+        req.board, req.class_level, req.subject_name, req.chapter_ids
+    )
     logger.debug(
         "[CHAT] collection=%r chapter_ids=%s query=%r",
         collection, req.chapter_ids, (req.query or "")[:80],
@@ -604,7 +608,11 @@ async def chapter_chat_stream(
       {"type":"science_experiment","experiment":{...},"clean_answer":"..."}  (science subjects)
       {"type":"done"}
     """
-    collection = f"{req.board}_{req.class_level}_{req.subject_name}".replace(" ", "_")
+    from app.services.chapter_collection import resolve_chat_collection
+
+    collection = resolve_chat_collection(
+        req.board, req.class_level, req.subject_name, req.chapter_ids
+    )
     logger.debug(
         "[STREAM] collection=%r chapter_ids=%s query=%r",
         collection, req.chapter_ids, (req.query or "")[:80],

@@ -51,6 +51,9 @@ def test_non_answer():
     assert is_non_answer("stop asking me questions")
     assert is_non_answer("why did the Mughal empire decline?")
     assert is_non_answer("stop giving such long answers")
+    assert is_non_answer("I don't, I'm not told to reveal the answer")
+    assert is_non_answer("don't reveal the answer")
+    assert is_non_answer("let me try")
     assert not is_non_answer("1-b, 2-a, 3-c")
     assert not is_non_answer("Akbar built Fatehpur Sikri")
 
@@ -59,6 +62,8 @@ def test_turn_rules_block():
     rules = build_turn_rules("explain it in 3 sentences")
     assert "exactly 3 sentences" in rules
     assert "FALSE STATEMENTS" in rules and "never say the context".lower() in rules.lower()
+    assert "POSING QUESTIONS" in rules
+    assert "AMBIGUOUS REFERENTS" in rules
     short = build_turn_rules("what was the iqta system", prefers_short=True, voice=True)
     assert "under 40 words" in short
     mcq = build_turn_rules("True or false: Babur founded the Mughal empire")

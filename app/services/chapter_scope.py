@@ -503,11 +503,28 @@ def build_session_followup_guidance(prior_topic: str) -> str:
     )
 
 
+_IMAGE_REQUEST_WORDS = frozenset({
+    "show", "see", "image", "images", "picture", "pictures", "figure", "figures", "fig",
+    "diagram", "diagrams", "illustration", "illustrations", "photo", "photos", "display",
+    "bring", "fetch", "open", "textbook", "book", "chapter", "with", "also", "one",
+})
+
+
+def _image_request_topic_terms(query: str) -> set[str]:
+    """Topic words in an image request beyond the request itself ("political", "map")."""
+    return {
+        t for t in content_substantive_terms(query)
+        if t not in _IMAGE_REQUEST_WORDS and t not in _GENERIC_QUESTION_WORDS
+    }
+
+
 def build_visual_follow_up_guidance() -> str:
     return (
         "CHAPTER VISUAL REQUEST\n"
         "The student asked for a textbook diagram or image for the topic you just discussed.\n"
         "- Answer briefly using the chapter; related figures are shown separately in the UI.\n"
+        "- Talk about the picture itself (what it shows and why it matters). Do NOT repeat "
+        "your previous answer.\n"
         "- Do NOT treat 'image' or 'diagram' as an out-of-chapter topic.\n"
         "- Do NOT show an a/b/c choice menu."
     )
@@ -1081,17 +1098,99 @@ def _terms_match_chapter_titles(terms: set[str], chapter_names: list[str] | None
     return bool(title_text) and all(term in title_text for term in terms)
 
 
+def _term_stem(term: str) -> str:
+    """Plural query words match singular textbook words ("mughals" -> "mughal")."""
+    t = term
+    if len(t) > 4 and t.endswith("ies"):
+        return t[:-3] + "y"
+    if len(t) > 4 and t.endswith("es") and t[-3] in "sxz":
+        return t[:-2]
+    if len(t) > 4 and t.endswith("s") and not t.endswith("ss"):
+        return t[:-1]
+    return t
+
+
+_GENERIC_QUESTION_WORDS = frozenset({
+    "important", "importance", "matter", "matters", "mean", "means", "meant", "happen",
+    "happens", "happened", "thing", "things", "one", "easy", "simple", "simply", "words",
+    "word", "really", "actually", "like", "kind", "way", "ways", "keep", "lol", "pls",
+    "plz", "anyway", "even", "called", "call", "different", "difference", "same",
+    "show", "know", "good", "bad", "first", "next", "last", "slowly", "quick", "quickly",
+    # pronouns / chat filler that survive the stopword list
+    "they", "them", "their", "theirs", "we", "our", "ours", "you", "your", "yours", "he",
+    "she", "his", "her", "him", "its", "there", "then", "also", "just", "okay", "yeah",
+    "wait", "hey", "hmm", "please", "thanks",
+})
+
+
+def _any_term_in_chapter_titles(terms: set[str], chapter_names: list[str] | None) -> bool:
+    """True when a (non-generic) query term is the selected chapter's own title topic."""
+    if not terms or not chapter_names:
+        return False
+    title = " ".join(_chapter_focus_hint(n or "").lower() for n in chapter_names)
+    return any(len(t) >= 4 and _term_pattern(t).search(title) for t in terms)
+
+
+def _terms_in_chapter_captions(terms: set[str], chapter_ids: list[str] | None) -> bool:
+    """True when every term appears in this chapter's figure captions (DB, no vector search)."""
+    if not terms or not chapter_ids:
+        return False
+    try:
+        from app.services.image_service.textbook_image_retrieval import chapter_caption_text
+
+        text = chapter_caption_text(chapter_ids)
+    except Exception as exc:
+        logger.debug("caption scope check unavailable: %s", exc)
+        return False
+    return bool(text) and _term_hits_in_text(terms, text) == len(terms)
+
+
+def _non_title_terms_in_docs(
+    terms: set[str], chapter_names: list[str] | None, docs: list
+) -> bool:
+    title = " ".join(_chapter_focus_hint(n or "").lower() for n in (chapter_names or []))
+    rest = {t for t in terms if not _term_pattern(t).search(title)}
+    # "how do cube numbers work" in A Square and a Cube: "numbers" is in the text, "work" is
+    # just phrasing — at least half of the non-title words must be in the chapter.
+    return not rest or _max_term_hits(rest, docs) >= -(-len(rest) // 2)
+
+
 @lru_cache(maxsize=4096)
 def _term_pattern(term: str) -> re.Pattern[str]:
     # Whole word plus common inflections ("desert" -> "deserts"), so "who" never matches "whole".
-    return re.compile(rf"\b{re.escape(term)}(?:s|es|ed|d|ing|al|n|ns)?\b")
+    stem = _term_stem(term)
+    alts = re.escape(term) if stem == term else f"(?:{re.escape(term)}|{re.escape(stem)})"
+    return re.compile(rf"\b{alts}(?:s|es|ed|d|ing|al|n|ns)?\b")
+
+
+# Typo tolerance ("squre" -> "square", "fotosyntesis" -> "photosynthesis"): only for
+# longer tokens that aren't real English words, so "cube" never fuzzy-matches "tube".
+_FUZZY_TERM_MIN_LEN = 5
+_FUZZY_TERM_CUTOFF = 0.8
+
+
+def _fuzzy_term_in_words(term: str, words: set[str]) -> bool:
+    if len(term) < _FUZZY_TERM_MIN_LEN or _is_known_english_word(term):
+        return False
+    cands = [w for w in words if abs(len(w) - len(term)) <= 2]
+    return bool(difflib.get_close_matches(term, cands, n=1, cutoff=_FUZZY_TERM_CUTOFF))
 
 
 def _term_hits_in_text(terms: set[str], text: str) -> int:
     if not terms:
         return 0
     lowered = (text or "").lower()
-    return sum(1 for term in terms if _term_pattern(term).search(lowered))
+    hits = 0
+    words: set[str] | None = None
+    for term in terms:
+        if _term_pattern(term).search(lowered):
+            hits += 1
+            continue
+        if words is None:
+            words = set(re.findall(r"[a-z]{4,}", lowered))
+        if _fuzzy_term_in_words(term, words):
+            hits += 1
+    return hits
 
 
 def _docs_with_all_terms(terms: set[str], docs: list) -> int:
@@ -1107,10 +1206,15 @@ def _docs_with_all_terms(terms: set[str], docs: list) -> int:
 def _max_term_hits(terms: set[str], docs: list) -> int:
     if not terms or not docs:
         return 0
+    # Look past the top-10 ranked passages: a chapter that names the topic further down
+    # (the Mughals in a Sultanate-heavy chapter) must not be called "not in your chapter".
     return max(
         _term_hits_in_text(terms, getattr(doc, "page_content", "") or "")
-        for doc in docs[:10]
+        for doc in docs[:_TERM_SCAN_DOCS]
     )
+
+
+_TERM_SCAN_DOCS = int(os.environ.get("CHAPTER_SCOPE_TERM_SCAN_DOCS", "40"))
 
 
 def _upload_id_from_doc(doc) -> str:
@@ -1262,6 +1366,24 @@ def assess_chapter_coverage(
             topic_label=topic_label,
             current_chapter_label=current_label,
         )
+    # "why are the marathas important?" — question filler ("important", "matter") isn't a
+    # topic; requiring it made another chapter that happens to use the word "own" the question.
+    core_terms = {t for t in terms if t not in _GENERIC_QUESTION_WORDS}
+    if core_terms:
+        terms = core_terms
+    # The chapter's own title topic ("Marathas" in "The Rise of the Marathas") is in scope
+    # when every other topic word is in the chapter text too ("shivaji"). Math practice keeps
+    # its own path below so it still gets the solve-it guidance.
+    if (
+        _any_term_in_chapter_titles(terms, chapter_names)
+        and not looks_like_math_problem(query)
+        and _non_title_terms_in_docs(terms, chapter_names, docs)
+    ):
+        return ChapterCoverageAssessment(
+            level=ChapterCoverageLevel.FULL,
+            topic_label=topic_label,
+            current_chapter_label=current_label,
+        )
 
     selected_hits = _max_term_hits(terms, docs)
     selected_coverage = _docs_with_all_terms(terms, docs)
@@ -1311,6 +1433,11 @@ def assess_chapter_coverage(
 
     # Weak or no match in selected chapter
     if selected_hits == 0:
+        # Retrieval can miss a topic the chapter plainly has — "Fig. 2.16 The Mughals and the
+        # rise of regional powers". Figure captions are the chapter's own words, so they count.
+        if not (other_id and other_hits > 0) and _terms_in_chapter_captions(terms, chapter_ids):
+            base.level = ChapterCoverageLevel.FULL
+            return base
         base.level = ChapterCoverageLevel.NONE
         return base
 
@@ -1384,7 +1511,7 @@ def resolve_chapter_scope_message(
 # it's a 6-token completion that should return well under a second normally;
 # on any real slowness, fail fast and fall back to the existing (instant,
 # heuristic) behavior rather than make the student wait for it.
-_TOPIC_MISMATCH_LLM_TIMEOUT_SEC = float(os.environ.get("TOPIC_MISMATCH_LLM_TIMEOUT_SEC", "3.0"))
+_TOPIC_MISMATCH_LLM_TIMEOUT_SEC = float(os.environ.get("TOPIC_MISMATCH_LLM_TIMEOUT_SEC", "6.0"))
 _TOPIC_MISMATCH_LLM_SYSTEM_PROMPT = (
     "A student is in a live tutoring session on the chapter '{chapter}'. "
     "A keyword search found nothing in that chapter matching their latest "
@@ -1399,10 +1526,25 @@ _TOPIC_MISMATCH_LLM_SYSTEM_PROMPT = (
     "(for example modern state reorganisation while studying medieval kingdoms and "
     "political maps, or a nearby civics or geography idea) — that a teacher would briefly answer;\n"
     "UNRELATED if it belongs to a different subject altogether (an inventor, a science fact "
-    "in a history chapter, sports, films, celebrities, personal trivia)."
+    "in a history chapter, sports, films, celebrities, personal trivia).\n"
+    "The subject is {subject}. Any question a {subject} teacher would answer in class "
+    "(for example basic arithmetic like squares, cubes or powers in Mathematics; a ruler, dynasty, "
+    "empire, war or place in Social Science or History; a body process or disease in Science) "
+    "is RELATED, never UNRELATED. Students misspell words — "
+    "judge the intended meaning, not the spelling."
 )
 
 OffChapterVerdict = str  # "followup" | "related" | "unrelated"
+
+# "who were the mughals in this chapter?" — the scope phrase is the student's framing, not
+# evidence; left in, it pushed the model to answer UNRELATED for in-chapter topics.
+_SCOPE_PHRASE_RE = re.compile(
+    r"\s*\b(?:in|from|of)\s+(?:this|the|our|my)\s+(?:chapter|unit|lesson|book|textbook)\b", re.I
+)
+
+
+def _strip_scope_phrase(query: str) -> str:
+    return _SCOPE_PHRASE_RE.sub("", query or "").strip() or (query or "")
 
 
 def _format_recent_turns(conversation_history: list[dict] | None, limit: int = 4) -> str:
@@ -1418,6 +1560,7 @@ async def _llm_confirms_topic_mismatch(
     query: str,
     conversation_history: list[dict] | None,
     chapter_label: str,
+    subject_name: str = "",
 ) -> OffChapterVerdict | None:
     """Second opinion before redirecting the student away from their question.
 
@@ -1432,14 +1575,15 @@ async def _llm_confirms_topic_mismatch(
             {
                 "role": "system",
                 "content": _TOPIC_MISMATCH_LLM_SYSTEM_PROMPT.format(
-                    chapter=chapter_label or "the current chapter"
+                    chapter=chapter_label or "the current chapter",
+                    subject=subject_name or "this subject",
                 ),
             },
             {
                 "role": "user",
                 "content": (
                     f"Recent conversation:\n{_format_recent_turns(conversation_history)}\n\n"
-                    f"Student's latest message: {query}"
+                    f"Student's latest message: {_strip_scope_phrase(query)}"
                 ),
             },
         ]
@@ -1560,11 +1704,14 @@ async def resolve_chapter_awareness_turn(
     ):
         return None, effective_query, None, build_visual_follow_up_guidance()
 
-    # "with an image" / "show me a diagram" — reuse prior question, fetch figures
+    # "with an image" / "show me a diagram" — reuse prior question, fetch figures.
+    # "show the political map figure" names its own topic: keep the student's words, or the
+    # model just re-answers the previous question word for word (Suneel QA So3).
     if is_image_follow_up_request(effective_query):
-        prior = prior_user_question(conversation_history)
-        if prior:
-            effective_query = prior
+        if not _image_request_topic_terms(effective_query):
+            prior = prior_user_question(conversation_history)
+            if prior:
+                effective_query = prior
         return None, effective_query, None, build_visual_follow_up_guidance()
 
     # Conversational identity — not a chapter topic. Don't fuzzy-match "name"→"same".
@@ -1658,12 +1805,29 @@ async def resolve_chapter_awareness_turn(
         # those heuristics can actually answer: does this *read* like a
         # follow-up in context, even though the keyword search found nothing?
         # Only ever runs on this rare, high-disruption branch — normal
-        # in-scope turns never pay this cost. Errors/unclear replies keep the wall
+        # in-scope turns never pay this cost. Errors/unclear replies fall back to a bridged answer
         # so retrieval misses never slip through silently.
-        verdict = await _llm_confirms_topic_mismatch(scope_q, conversation_history, current_label)
+        verdict = await _llm_confirms_topic_mismatch(
+            scope_q, conversation_history, current_label, subject_name
+        )
+        # No verdict (timeout/error under load): a short bridged answer is far less harmful
+        # than wrongly telling the student their in-subject question "is not in this book".
+        if verdict is None:
+            verdict = "related"
         # Nothing to follow up on: the model's FOLLOWUP is a guess.
         if verdict == "followup" and not conversation_history:
             verdict = "related"
+        # "did the marathas invent the steam engine?" in The Rise of the Marathas: a false
+        # premise about the chapter's own topic is corrected, not walled off as "not in this book".
+        if verdict == "unrelated" and _any_term_in_chapter_titles(
+            content_substantive_terms(scope_q) - _GENERIC_QUESTION_WORDS, chapter_names
+        ):
+            return (
+                None,
+                effective_query,
+                assessment,
+                build_statement_guidance(current_label, spoken=spoken),
+            )
         if verdict != "followup" and assessment.other_chapter_label:
             # Another chapter of this book teaches it — point there instead of answering here.
             return (

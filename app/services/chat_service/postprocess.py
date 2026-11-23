@@ -26,7 +26,8 @@ logger = logging.getLogger(__name__)
 _DIRECT_ANSWER_MAX_WORDS = 100
 
 
-_DIRECT_ANSWER_TOKEN_LIMIT = 160
+# 160 cut answers mid-sentence and dropped the closing check question (eval 2026-11-23).
+_DIRECT_ANSWER_TOKEN_LIMIT = 240
 
 
 _MAIN_SECTION_TOKEN_LIMIT = 700
