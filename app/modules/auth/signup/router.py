@@ -1,12 +1,16 @@
 """Public signup API routes."""
 
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.modules.auth.constants import Role
+from app.modules.auth.dependencies import require_roles
 from app.modules.schools.models import School
+from app.modules.users.models import User
 from app.services.mail import send_signup_pending_admin_email
 from app.modules.auth.service import issue_verify_email_token
 from app.modules.auth.signup.constants import signup_options_payload
@@ -96,3 +100,57 @@ def signup_school_route(
 ):
     user = signup_school(db, payload)
     return _commit_signup(db, user, payload.user_id, background)
+
+
+# ─── Master admin: same payloads as public signup, but pre-approved ───────────
+
+admin_router = APIRouter(prefix="/auth/admin/signup", tags=["signup-admin"])
+
+MasterAdminUser = Annotated[User, Depends(require_roles(Role.MASTER_ADMIN))]
+
+
+def _commit_admin_signup(db: Session, user: User, login_user_id: str, actor: User) -> SignupResponse:
+    """Approve immediately (no pending-approval notice).
+
+    Deliberately does NOT set ``created_by``: a student with ``created_by`` set is treated as
+    tutor-owned (no favourite subjects, Session/Assignments visible), not as an individual student.
+    """
+    user.approved_at = datetime.now(UTC)
+    db.commit()
+    db.refresh(user)
+    return SignupResponse(
+        id=user.id,
+        user_id=login_user_id.lower(),
+        role=user.role.value,
+        message=f"{user.role.value} account created and approved.",
+    )
+
+
+@admin_router.post("/student", response_model=SignupResponse, status_code=201)
+def admin_signup_student_route(
+    payload: StudentSignupRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: MasterAdminUser,
+):
+    user = signup_student(db, payload)
+    return _commit_admin_signup(db, user, payload.user_id, current_user)
+
+
+@admin_router.post("/tutor", response_model=SignupResponse, status_code=201)
+def admin_signup_tutor_route(
+    payload: TutorSignupRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: MasterAdminUser,
+):
+    user = signup_tutor(db, payload)
+    return _commit_admin_signup(db, user, payload.user_id, current_user)
+
+
+@admin_router.post("/school", response_model=SignupResponse, status_code=201)
+def admin_signup_school_route(
+    payload: SchoolSignupRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: MasterAdminUser,
+):
+    user = signup_school(db, payload)
+    return _commit_admin_signup(db, user, payload.user_id, current_user)
