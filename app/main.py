@@ -22,7 +22,7 @@ from app.services.query_match import document_page, keyword_match_score
 from app.voice_api import router as voice_router
 from app.voice_ws import ws_router
 from app.modules.auth.router import router as auth_router
-from app.modules.auth.signup.router import router as signup_router
+from app.modules.auth.signup.router import router as signup_router, admin_router as signup_admin_router
 from app.modules.auth.dependencies import get_current_user
 from app.modules.users.models import User
 from app.modules.auth.bootstrap import seed_test_users_if_missing
@@ -96,6 +96,7 @@ app.include_router(voice_router)
 app.include_router(ws_router)      # WebSocket: /ws/voice
 app.include_router(auth_router)
 app.include_router(signup_router)
+app.include_router(signup_admin_router)
 app.include_router(catalog_router)
 app.include_router(textbook_catalog_router)
 app.include_router(student_catalog_router)
