@@ -276,6 +276,24 @@ def is_meta_only_follow_up(query: str) -> bool:
     return not terms and bool(_SESSION_CONTINUATION_RE.search(q) or len(q.split()) <= 6)
 
 
+_GAP_CHECK_RE = re.compile(
+    r"\b("
+    r"(?:did|do)\s+(?:you|u)\s+miss|"
+    r"miss(?:ed)?\s+anything|"
+    r"anything\s+(?:missing|left\s+out)|"
+    r"(?:leave|left)\s+(?:anything|something)\s+out|"
+    r"what\s+did\s+you\s+(?:miss|leave\s+out|skip)|"
+    r"is\s+(?:there\s+)?anything\s+missing"
+    r")\b",
+    re.I,
+)
+
+
+def is_gap_check_query(query: str) -> bool:
+    """True when the student asks whether the last answer left chapter topics out."""
+    return bool(_GAP_CHECK_RE.search(query or ""))
+
+
 def is_current_lesson_query(query: str) -> bool:
     """True when the student refers to the current lesson/topic session, not a new search term."""
     q = (query or "").strip()
@@ -405,6 +423,21 @@ def build_partial_coverage_guidance(
         f"\"Beyond this chapter...\" (keep it short and age-appropriate).{extra}\n"
         "- Do NOT invent textbook-only facts (page numbers, figure names).\n"
         "- Do NOT force an a/b/c menu. Optionally offer a deeper chapter switch at the end."
+    )
+
+
+def build_gap_check_guidance(chapter_label: str) -> str:
+    label = (chapter_label or "this chapter").strip()
+    return (
+        "CHAPTER COVERAGE: GAP CHECK\n"
+        f"The student is asking whether your previous answer missed topics from {label}.\n"
+        "- Compare that previous answer with the CHAPTER TOPICS list in the context.\n"
+        "- Teach only topics that answer did not already explain. "
+        "One short heading and 1–2 sentences each, in list order.\n"
+        "- If every listed topic is already in your previous answer, say you did not miss anything and stop.\n"
+        "- Do not repeat topics you already taught.\n"
+        "- Do not invent topics that are not on the list.\n"
+        "- Do not offer a simulation, quiz, or menu."
     )
 
 
@@ -1723,8 +1756,19 @@ async def resolve_chapter_awareness_turn(
     ):
         return None, query, None, ""
 
+    # "Do you miss anything?" reviews the last answer against this chapter.
+    # Keep the student's words so the gap-check prompt and topic list attach.
+    if is_gap_check_query(query):
+        return None, query, None, build_gap_check_guidance(current_label)
+
     # Current lesson / chapter meta — teach the selected chapter, never a/b/c wall.
     if is_current_lesson_query(query) or is_current_lesson_query(scope_q):
+        from app.services.voice_chapter_vocab import is_whole_chapter_explain
+
+        # Whole-chapter asks must stay in the student's words. Replacing them with
+        # the retrieval phrase drops the walk-every-topic prompt and the topic list.
+        if is_whole_chapter_explain(query):
+            return None, query, None, build_current_lesson_guidance(current_label)
         lesson_q = current_lesson_retrieval_query(current_label)
         return (
             None,

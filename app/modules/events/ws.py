@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import SessionLocal
 from app.core.security import decode_token
+from app.modules.auth.single_session import WS_CLOSE_SESSION_REPLACED, sid_is_current
 from app.modules.events.hub import hub
 from app.modules.users.models import User
 
@@ -18,7 +19,8 @@ logger = logging.getLogger(__name__)
 events_ws_router = APIRouter()
 
 
-def _authenticate_ws_token(token: str | None) -> int | None:
+def _authenticate_ws_token(token: str | None) -> tuple[int, str | None] | None:
+    """(user id, session id) from a valid access token, else None."""
     if not token:
         return None
     try:
@@ -28,9 +30,19 @@ def _authenticate_ws_token(token: str | None) -> int | None:
     if payload.get("type") != "access":
         return None
     try:
-        return int(payload.get("sub"))
+        return int(payload.get("sub")), payload.get("sid")
     except (TypeError, ValueError):
         return None
+
+
+def _session_replaced(user_id: int, sid: str | None) -> bool:
+    """True when this student has since signed in on another device."""
+    db: Session = SessionLocal()
+    try:
+        user = db.get(User, user_id)
+        return user is not None and not sid_is_current(user, sid)
+    finally:
+        db.close()
 
 
 def _rooms_for_user(user: User) -> list[str]:
@@ -55,16 +67,20 @@ async def domain_events_ws(
     # surfaces as "Connection closed before receiving a handshake response").
     await ws.accept()
 
-    user_id = _authenticate_ws_token(access_token)
-    if not user_id:
+    auth = _authenticate_ws_token(access_token)
+    if not auth:
         await ws.close(code=4401)
         return
+    user_id, sid = auth
 
     db: Session = SessionLocal()
     try:
         user = db.get(User, user_id)
         if user is None or not user.is_active:
             await ws.close(code=4403)
+            return
+        if not sid_is_current(user, sid):
+            await ws.close(code=WS_CLOSE_SESSION_REPLACED)
             return
         rooms = _rooms_for_user(user)
     finally:
@@ -75,6 +91,11 @@ async def domain_events_ws(
 
     async def heartbeat() -> None:
         while not stop.is_set():
+            if await asyncio.to_thread(_session_replaced, user_id, sid):
+                stop.set()
+                await _send_json(ws, {"type": "session_replaced"})
+                await ws.close(code=WS_CLOSE_SESSION_REPLACED)
+                return
             await _send_json(ws, {"type": "heartbeat"})
             try:
                 await asyncio.wait_for(stop.wait(), timeout=25.0)

@@ -5,7 +5,8 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from app.modules.auth.signup.enums import CurriculumEnum, parse_curricula
+from app.modules.auth.signup.enums import CurriculumEnum
+from app.modules.auth.signup.validators import parse_curricula
 from app.modules.auth.signup.schemas import SchoolSignupRequest, StudentSignupRequest, TutorSignupRequest
 from app.modules.auth.signup.validators import normalize_grade, normalize_phone
 

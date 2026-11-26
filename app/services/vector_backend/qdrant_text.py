@@ -41,7 +41,16 @@ def _embed_query(query: str) -> list[float] | None:
     return model.embed_query(query)
 
 
-def add_documents(docs: list[Document], *, collection_name: str) -> int:
+def add_documents(
+    docs: list[Document], *, collection_name: str, replace_existing: bool = True
+) -> int:
+    """Embed and upsert *docs*.
+
+    replace_existing=True first deletes every vector of the docs' upload, so a
+    one-shot re-index never duplicates. Callers that index one upload in several
+    batches must clear it once themselves and pass False — otherwise each batch
+    wipes the batches before it and only the last one survives.
+    """
     if not docs:
         return 0
     from qdrant_client.http import models as qm
@@ -55,7 +64,7 @@ def add_documents(docs: list[Document], *, collection_name: str) -> int:
     client = get_qdrant_client()
 
     upload_id = str((docs[0].metadata or {}).get("textbook_upload_id") or "")
-    if upload_id:
+    if upload_id and replace_existing:
         try:
             client.delete(
                 collection_name=collection_name,

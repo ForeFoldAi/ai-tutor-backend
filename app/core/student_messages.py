@@ -54,6 +54,9 @@ ACCOUNT_INACTIVE = (
 # Frontend matches on this exact text to show the waiting page; keep in sync with login.tsx.
 ACCOUNT_PENDING_APPROVAL = "Your account is awaiting admin approval."
 NOT_SIGNED_IN = "Your session ended. Please sign in again."
+# Frontend matches both of these exact texts (login.tsx / api/index.ts); keep in sync.
+ALREADY_SIGNED_IN_ELSEWHERE = "You're already signed in on another device."
+SESSION_REPLACED = "You were signed out because your account was opened on another device."
 EMAIL_ALREADY_USED = (
     "This email is already in use. Try signing in or use a different email."
 )

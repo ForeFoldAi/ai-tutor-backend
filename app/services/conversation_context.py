@@ -249,6 +249,28 @@ class ConversationContextResolver:
             is_current_lesson_query,
         )
 
+        from app.services.chapter_scope import is_gap_check_query
+        from app.services.voice_chapter_vocab import is_whole_chapter_explain
+
+        # Gap check and whole-chapter asks keep the student's words in the
+        # retrieval string so query breadth stays "chapter" and chunks are
+        # spread across the book, not a search for "do you miss anything?".
+        if chapter and (is_gap_check_query(q) or is_whole_chapter_explain(q)):
+            kind = "gap_check" if is_gap_check_query(q) else "chapter_overview"
+            return ConversationContext(
+                resolved_topic=chapter,
+                current_intent=ResponseMode.EXPLANATION.value,
+                inherited_entities=_extract_entities_from_text(chapter),
+                inherited_chapter=chapter,
+                followup_type=FollowupType.CONTINUE_EXPLANATION.value,
+                requires_visuals=False,
+                response_mode=ResponseMode.EXPLANATION,
+                visual_intent=VisualIntent.NO_VISUALS,
+                retrieval_query=f"{q} {chapter}".strip(),
+                intent_method=kind,
+                intent_confidence=1.0,
+            )
+
         if is_current_lesson_query(q) and chapter:
             rq = current_lesson_retrieval_query(chapter)
             return ConversationContext(
@@ -453,6 +475,12 @@ def should_retrieve_images(
     from app.config import ENABLE_LLM_IMAGE_SELECT, ENABLE_VISUAL_INTENT_DETECTION
 
     if not chapter_ids:
+        return False
+    # A whole-chapter walkthrough and a "did you miss anything?" check are prose.
+    # Figure cards here are OCR scraps (map labels, cut-off captions), not the lesson.
+    if ctx.intent_method == "gap_check":
+        return False
+    if ctx.intent_method == "chapter_overview" and not voice_mode:
         return False
     if heading_scope_kind == "main_section":
         return True

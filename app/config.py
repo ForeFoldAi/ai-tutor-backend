@@ -463,6 +463,16 @@ VISION_CAPTION_MODEL = os.environ.get(
     "Salesforce/blip-image-captioning-base",
 )
 
+# Student-facing figure captions written by the vision LLM (LLM_VISION_* settings), one
+# figure per call with the printed caption and surrounding text. Replaces BLIP for figures.
+FIGURE_CAPTION_VLM_ENABLED = os.environ.get("FIGURE_CAPTION_VLM_ENABLED", "true").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+FIGURE_CAPTION_VLM_TIMEOUT_SEC = float(os.environ.get("FIGURE_CAPTION_VLM_TIMEOUT_SEC", "45"))
+FIGURE_CAPTION_VLM_MAX_PX = int(os.environ.get("FIGURE_CAPTION_VLM_MAX_PX", "1024"))
+
 # ---------------------------------------------------------------------------
 # Precision pedagogy-centric retrieval thresholds
 # ---------------------------------------------------------------------------

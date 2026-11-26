@@ -69,9 +69,9 @@ def query_breadth(query: str) -> str:
     q = (query or "").strip()
     if not q:
         return "narrow"
-    from app.services.chapter_scope import is_current_lesson_query
+    from app.services.chapter_scope import is_current_lesson_query, is_gap_check_query
 
-    if is_current_lesson_query(q):
+    if is_current_lesson_query(q) or is_gap_check_query(q):
         return "chapter"
     if re.search(r"\b(whole|entire|full)\s+(chapter|topic|lesson|unit)\b", q, re.I):
         return "chapter"

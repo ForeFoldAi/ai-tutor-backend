@@ -85,7 +85,10 @@ def _process_upload(upload_id: int) -> dict[str, Any]:
         if total_chunks > 0:
             for idx in range(0, total_chunks, EMBEDDING_BATCH_SIZE):
                 batch = chunks[idx : idx + EMBEDDING_BATCH_SIZE]
-                added = add_documents_to_store(batch, collection_name=collection)
+                # Cleared once above; per-batch replace would delete the earlier batches.
+                added = add_documents_to_store(
+                    batch, collection_name=collection, replace_existing=False
+                )
                 total_added += added
                 logger.info(
                     "Upload %s: Indexed batch %d-%d (%d added) into %s",

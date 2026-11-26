@@ -1,6 +1,12 @@
 """Tests for math textbook extraction helpers."""
 
 from app.services.image_service.formula_bbox import expand_formula_bbox
+from app.services.image_service.math_extraction import (
+    is_decorative_math_figure,
+    is_oversized_formula_prose_crop,
+    looks_like_math_line,
+    merge_formula_structured_text,
+)
 
 
 def test_expand_formula_bbox_adds_padding():

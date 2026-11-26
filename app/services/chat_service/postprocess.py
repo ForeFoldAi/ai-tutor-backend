@@ -147,12 +147,17 @@ def _mistral_token_limit_for_answer_type(
     from app.config import MATH_CHAT_MAX_TOKENS
     from app.modules.student_learning.topic_progress import is_chapter_topics_list_query
     from app.services.section_heading import HeadingScope
+    from app.services.chapter_scope import is_gap_check_query
     from app.services.voice_chapter_vocab import is_chapter_overview_request
 
     if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
         return _MAIN_SECTION_TOKEN_LIMIT
-    # Whole-chapter walkthrough / topic inventory need more than a short-answer budget.
-    if query and (is_chapter_overview_request(query) or is_chapter_topics_list_query(query)):
+    # Whole-chapter walkthrough, gap check, and topic inventory need more than a short-answer budget.
+    if query and (
+        is_chapter_overview_request(query)
+        or is_chapter_topics_list_query(query)
+        or is_gap_check_query(query)
+    ):
         return _MAIN_SECTION_TOKEN_LIMIT
     # Math answers must include ```math-lesson``` JSON — 160 tokens cuts it off
     # and the incomplete fence wipes the reply ("Sorry — something went wrong").
@@ -201,6 +206,16 @@ async def _finalize_direct_answer(
             return text.strip()
         return strip_embedded_figure_lines(text.strip())
 
+    from app.modules.student_learning.topic_progress import is_chapter_topics_list_query
+    from app.services.chapter_scope import is_gap_check_query
+    from app.services.voice_chapter_vocab import is_chapter_overview_request
+
+    if query and (
+        is_chapter_overview_request(query)
+        or is_chapter_topics_list_query(query)
+        or is_gap_check_query(query)
+    ):
+        return _finish(answer)
     if isinstance(heading_scope, HeadingScope) and heading_scope.is_main_section:
         return _finish(answer)
     if _is_mathematics_subject(subject_name) and answer_type not in (

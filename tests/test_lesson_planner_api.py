@@ -78,8 +78,9 @@ def test_chapter_topics_returns_headings(authed_client, tutor_user: User):
 @patch("app.modules.teacher.lesson_planner.router.lesson_generation_worker")
 def test_generate_returns_202(mock_worker: MagicMock, mock_rate: MagicMock, authed_client, tutor_user: User):
     client, db = authed_client
-    plan_id = uuid.uuid4()
-    job_id = uuid.uuid4()
+    # Lesson plan / job primary keys are BigInteger identities (see lesson_planner/models.py).
+    plan_id = 101
+    job_id = 202
 
     mock_worker.delay.return_value = MagicMock(id="celery-task-1")
 
@@ -109,8 +110,8 @@ def test_generate_returns_202(mock_worker: MagicMock, mock_rate: MagicMock, auth
 
     assert resp.status_code == 202
     body = resp.json()
-    assert body["job_id"] == str(job_id)
-    assert body["lesson_plan_id"] == str(plan_id)
+    assert body["job_id"] == job_id
+    assert body["lesson_plan_id"] == plan_id
     assert body["websocket_url"] == f"/ws/lesson-planner/{job_id}"
     mock_worker.delay.assert_called_once_with(str(job_id))
     assert db.commit.called

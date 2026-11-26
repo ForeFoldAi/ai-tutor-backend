@@ -143,7 +143,12 @@ def pdf_path_for_image(im) -> str | None:
     if upload is not None:
         path = getattr(upload, "file_path", None)
         if path:
-            return str(path)
+            # file_path is a storage key (e.g. "CBSE/CLASS_10/Science/x.pdf") when PDFs live in
+            # S3; fitz cannot open that, so every PDF caption lookup silently returned "".
+            # Fetch once into the local uploads cache.
+            from app.services.image_service.storage_backend import materialize_textbook_file
+
+            return materialize_textbook_file(str(path)) or str(path)
     return None
 
 
@@ -269,8 +274,13 @@ def resolve_display_caption(im, *, subtopic: str | None = None) -> str:
     """
     from app.services.image_service.figure_context_gates import is_corrupt_ml_caption
 
-    raw = (getattr(im, "caption", None) or getattr(im, "title", None) or "").strip()
     generated = (getattr(im, "generated_caption", None) or "").strip()
+    if getattr(im, "caption_source", None) == "vlm" and generated:
+        # Written for students from the figure + printed caption + surrounding text, and
+        # validated against what the model saw; already short (1–2 sentences).
+        return generated[:320]
+
+    raw = (getattr(im, "caption", None) or getattr(im, "title", None) or "").strip()
     # Prefer vision/contextual generated caption when stored OCR caption is junk.
     if is_corrupt_ml_caption(raw) and generated and not is_corrupt_ml_caption(generated):
         raw = generated

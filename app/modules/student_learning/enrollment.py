@@ -24,6 +24,10 @@ def _parse_class_level(raw: str | None) -> ClassEnum | None:
     if not raw or not str(raw).strip():
         return None
     grade_str = str(raw).strip()
+    # Signup and school rosters also send "Grade 9" / "Class 9" — same class as "9".
+    labelled = re.fullmatch(r"(?:grade|class)[\s_-]*(\d{1,2})", grade_str, re.I)
+    if labelled:
+        grade_str = labelled.group(1)
     canon = f"CLASS_{grade_str}" if grade_str.isdigit() else grade_str
     try:
         return ClassEnum(canon)

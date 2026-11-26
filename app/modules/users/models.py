@@ -47,6 +47,8 @@ class User(Base):
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
+    # Students: the only login (sid) allowed right now; tokens with another sid are rejected.
+    active_sid: Mapped[str | None] = mapped_column(String(36), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(UTC))
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

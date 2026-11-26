@@ -174,6 +174,9 @@ def apply_vision_caption_to_row(
         normalize_caption,
     )
 
+    if getattr(row, "is_decorative", False):
+        # Junk/hidden figures are never captioned (and must stay hidden).
+        return False
     effective = (row.caption or row.generated_caption or "").strip()
     if not is_weak_text_caption(effective):
         return False
@@ -206,7 +209,6 @@ def apply_vision_caption_to_row(
         compute_educational_salience(vision_cap),
     )
     row.has_caption = True
-    row.is_decorative = False
 
     row.figure_context = build_figure_context(
         caption=vision_cap,

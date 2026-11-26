@@ -30,7 +30,26 @@ def test_quiz_followup_inherits_topic_not_images():
     assert not should_retrieve_images(ctx, chapter_ids=["ch1"])
 
 
-def test_explain_topic_allows_images():
+def test_chapter_overview_and_gap_check_do_not_attach_figures():
+    overview = resolve_conversation_context(
+        "explain this chapter",
+        chapter="Chapter 1 - Natural Resources and Their Use",
+    )
+    assert overview.intent_method == "chapter_overview"
+    assert not should_retrieve_images(overview, chapter_ids=["32"])
+    assert should_retrieve_images(overview, chapter_ids=["32"], voice_mode=True)
+
+    gap = resolve_conversation_context(
+        "did u miss any thing?",
+        conversation_history=[
+            {"role": "user", "content": "explain this chapter"},
+            {"role": "assistant", "content": "Resources are things we use from nature."},
+        ],
+        chapter="Chapter 1 - Natural Resources and Their Use",
+    )
+    assert gap.intent_method == "gap_check"
+    assert not should_retrieve_images(gap, chapter_ids=["32"])
+    assert not should_retrieve_images(gap, chapter_ids=["32"], voice_mode=True)
     ctx = resolve_conversation_context("Explain the Thar Desert in detail")
     assert ctx.response_mode == ResponseMode.EXPLANATION
     assert should_retrieve_images(ctx, chapter_ids=["ch1"])
