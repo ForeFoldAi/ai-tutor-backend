@@ -219,8 +219,13 @@ def _struggle_simplify_prompt_override(query: str) -> dict[str, str] | None:
     }
 
 
-def _chapter_meta_prompt_override(query: str) -> dict[str, str] | None:
-    """Prompt bits for topic-list / whole-chapter asks (text chat)."""
+def _chapter_meta_prompt_override(
+    query: str, overview_part: tuple[int, int] | None = None
+) -> dict[str, str] | None:
+    """Prompt bits for topic-list / whole-chapter asks (text chat).
+
+    ``overview_part`` = (part, parts) when a long chapter is taught in parts.
+    """
     from app.modules.student_learning.topic_progress import is_chapter_topics_list_query
     from app.services.voice_chapter_vocab import is_chapter_overview_request
 
@@ -269,6 +274,36 @@ def _chapter_meta_prompt_override(query: str) -> dict[str, str] | None:
             "user_closing": (
                 "Write only the missing topics now, or say you did not miss anything:"
             ),
+        }
+    if is_chapter_overview_request(q) and overview_part and overview_part[1] > 1:
+        part, parts = overview_part
+        last = part >= parts
+        return {
+            "instruction": (
+                f"The student wants the chapter explained. It is taught in {parts} parts; "
+                f"this is PART {part} OF {parts}. "
+                "Walk through ONLY the topics in the CHAPTER TOPICS list, in order — the "
+                "other topics are covered in the other parts, so do not mention or summarise them. "
+                "For each topic use a short bold heading (keep the number shown in the list) and "
+                "2–3 sentences of what it covers. "
+                "Do NOT invent facts outside the context. "
+                "Do NOT number a place name, a map label, a quotation, a figure caption, "
+                "or a fragment of the chapter title. Do NOT leave an empty numbered item. "
+                "Do NOT attach a science-experiment block. "
+                "Do NOT open a quiz/example choice menu."
+            ),
+            "length_policy": (
+                "RESPONSE LENGTH: one short block per listed topic, in order "
+                "(about 50–80 words each)."
+            ),
+            "interaction_policy": (
+                "This is the last part: end with ONE invite to dive deeper into any topic of the chapter."
+                if last
+                else f"End with ONE short line telling the student to press Continue for part {part + 1} "
+                "or to ask about any of these topics first."
+            ),
+            "explanation_structure": "",
+            "user_closing": f"Write part {part} of the chapter walkthrough now (only the listed topics):",
         }
     if is_chapter_overview_request(q):
         return {

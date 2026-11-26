@@ -1143,6 +1143,7 @@ def _build_chat_messages(
     prefers_short: bool = False,
     explained_points: list[str] | None = None,
     quiz_feedback_block: str = "",
+    overview_part: tuple[int, int] | None = None,
 ) -> list[dict[str, str]]:
     from app.services.chat_service.turn_rules import build_turn_rules, quiz_count, requested_count
     from app.services.section_heading import HeadingScope
@@ -1398,7 +1399,7 @@ def _build_chat_messages(
             explanation_structure = struggle["explanation_structure"]
             user_closing = struggle["user_closing"]
         else:
-            chapter_meta = _chapter_meta_prompt_override(q)
+            chapter_meta = _chapter_meta_prompt_override(q, overview_part)
             if chapter_meta:
                 instruction = chapter_meta["instruction"]
                 length_policy = chapter_meta["length_policy"]

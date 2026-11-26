@@ -461,23 +461,52 @@ def _slices(text: str, n: int, size: int) -> str:
     return " … ".join(parts)
 
 
+def _topic_stop_page(outline: dict, i: int) -> int:
+    """First page after topic ``i`` (next topic's page, else end matter, else open-ended)."""
+    topics = outline.get("topics") or []
+    end = outline.get("end_matter_page")
+    if i + 1 < len(topics):
+        return int(topics[i + 1].get("page") or 0)
+    return int(end) if end is not None else 10**6
+
+
+def part_page_range(outline: dict | None, lo: int, hi: int) -> tuple[int, int]:
+    """Page range [start, stop) covering topics ``lo``..``hi - 1`` of the outline."""
+    topics = (outline or {}).get("topics") or []
+    if not topics or lo >= hi:
+        return 0, 10**6
+    start = int(topics[lo].get("page") or 0)
+    return start, max(_topic_stop_page(outline or {}, hi - 1), start + 1)
+
+
 def topic_excerpts_block(
-    chunks: list[Any], outline: dict | None, *, per_topic_chars: int = 1050, max_chars: int = 4800
+    chunks: list[Any],
+    outline: dict | None,
+    *,
+    per_topic_chars: int = 1050,
+    max_chars: int = 4800,
+    only: range | None = None,
 ) -> str:
-    """The opening text of each topic, so a whole-chapter summary is grounded in every part."""
+    """The opening text of each topic, so a whole-chapter summary is grounded in every part.
+
+    ``only`` limits it to those topic indexes (one part of a chapter taught in parts).
+    """
     topics = (outline or {}).get("topics") or []
     if not topics or not chunks:
         return ""
     ordered = sorted(chunks, key=_page)
     end = (outline or {}).get("end_matter_page")
+    n_shown = len([i for i in range(len(topics)) if only is None or i in only])
     # Fewer topics get longer slices; the end slice carries a story's outcome.
-    per_topic_chars = max(per_topic_chars, min(1800, max_chars // max(1, len(topics)) - 80))
+    per_topic_chars = max(per_topic_chars, min(1800, max_chars // max(1, n_shown) - 80))
     parts: list[str] = [
         "LESSON TEXT FOR EACH TOPIC (summarise each topic only from its own text, "
         "including who the main characters are, how it ends and its main message or idea):"
     ]
     used = len(parts[0])
     for i, t in enumerate(topics):
+        if only is not None and i not in only:
+            continue
         start = int(t.get("page") or 0)
         stop = int(topics[i + 1]["page"]) if i + 1 < len(topics) else (int(end) if end is not None else 10**6)
         # Only the topic's own text, not the exercises that follow it.

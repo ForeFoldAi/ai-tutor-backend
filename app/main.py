@@ -438,6 +438,8 @@ class ChapterChatRequest(BaseModel):
     # Standing "keep it short" (both modes) and the text tutor's open quiz, echoed back in "done".
     prefers_short: bool = False
     quiz_state: dict | None = None
+    # Which part of a long whole-chapter walkthrough to teach (Continue button; 1-based).
+    overview_part: int | None = None
 
 
 def _fallback_answer_from_docs(query: str):
@@ -748,6 +750,7 @@ async def chapter_chat_stream(
                 student_user_id=int(_current_user.id),
                 prefers_short=req.prefers_short,
                 quiz_state=req.quiz_state,
+                overview_part=req.overview_part,
             )):
                 while pending:
                     yield pending.pop(0)
@@ -780,7 +783,13 @@ async def chapter_chat_stream(
                 done_payload.update(
                     {
                         k: voice_meta[k]
-                        for k in ("quiz_state", "explained_points", "prefers_short")
+                        for k in (
+                            "quiz_state",
+                            "explained_points",
+                            "prefers_short",
+                            "overview_next_part",
+                            "overview_parts",
+                        )
                         if k in voice_meta
                     }
                 )

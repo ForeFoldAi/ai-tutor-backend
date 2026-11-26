@@ -894,13 +894,17 @@ def chapter_toc_context_block(
     topics: list[dict[str, str]],
     *,
     max_n: int = 40,
+    start: int = 1,
 ) -> str:
-    """Inject ordered topic titles into LLM context for whole-chapter walkthroughs."""
+    """Inject ordered topic titles into LLM context for whole-chapter walkthroughs.
+
+    ``start`` is the first topic's number (a later part of a chapter taught in parts).
+    """
     clean = [t for t in (topics or []) if (t.get("title") or "").strip()]
     if not clean:
         return ""
     lines = ["CHAPTER TOPICS IN ORDER (cover each one; do not skip):"]
-    for i, t in enumerate(clean[:max_n], start=1):
+    for i, t in enumerate(clean[:max_n], start=start):
         title = (t.get("title") or "").strip()
         num = (t.get("section_number") or "").strip()
         label = f"{num} {title}".strip() if num else title
