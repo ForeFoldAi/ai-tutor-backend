@@ -231,12 +231,16 @@ def load_vector_store():
         return InMemoryDocVectorStore([])
 
 
-def add_documents_to_store(docs, *, collection_name: str = "textbooks") -> int:
+def add_documents_to_store(
+    docs, *, collection_name: str = "textbooks", replace_existing: bool = True
+) -> int:
     """Add documents to an existing collection (or create it).
 
-    Before inserting, any existing vectors that share the same
-    ``textbook_upload_id`` metadata are deleted so that re-processing a
-    chapter never creates duplicate vectors.
+    With replace_existing (default), any existing vectors that share the same
+    ``textbook_upload_id`` metadata are deleted first so that re-processing a
+    chapter never creates duplicate vectors. Batched indexing of one upload must
+    clear it once up front and pass replace_existing=False for every batch —
+    otherwise each batch deletes the previous ones.
 
     Returns the number of chunks added.
     """
@@ -245,7 +249,9 @@ def add_documents_to_store(docs, *, collection_name: str = "textbooks") -> int:
     if use_qdrant():
         from app.services.vector_backend import qdrant_text
 
-        return qdrant_text.add_documents(docs, collection_name=collection_name)
+        return qdrant_text.add_documents(
+            docs, collection_name=collection_name, replace_existing=replace_existing
+        )
 
     _sanitize_chroma_env()
     from langchain_community.vectorstores import Chroma
@@ -256,7 +262,7 @@ def add_documents_to_store(docs, *, collection_name: str = "textbooks") -> int:
         return 0
 
     # Dedup: remove existing vectors for this upload before re-inserting.
-    if docs:
+    if docs and replace_existing:
         upload_id = (docs[0].metadata or {}).get("textbook_upload_id")
         if upload_id:
             try:

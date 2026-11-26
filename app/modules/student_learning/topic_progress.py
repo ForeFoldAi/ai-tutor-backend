@@ -57,7 +57,8 @@ _NOISE_TOPIC_RE = re.compile(
     # End-matter / non-teaching headings that must never appear in a student TOC
     r"exercises?|questions?|activities?|projects?|summary|keypoints?|"
     r"what\s+you\s+have\s+learnt|extend|group\s+discussion|index|contents?|"
-    r"multiple\s+choice|fill\s+in|match\s+the|true\s+or\s+false)\b",
+    r"multiple\s+choice|fill\s+in|match\s+the|true\s+or\s+false|"
+    r"a\s+note\s+on|legend)\b",
     re.I,
 )
 
@@ -100,9 +101,17 @@ def _load_chapter_chunks(
     subject_name: str = "",
     chapter_name: str = "",
 ) -> list[Any]:
-    if not subject_name:
+    if not subject_name and not chapter_id:
         return []
-    collection = collection_name_for(board, class_level, subject_name)
+    # The chapter id names the upload exactly; the client's subject text may differ
+    # from the uploaded one ("English - Poorvi" vs "English -  Poorvi") and then
+    # this read an empty collection.
+    try:
+        from app.services.chapter_collection import resolve_chat_collection
+
+        collection = resolve_chat_collection(board, class_level, subject_name, [str(chapter_id)])
+    except Exception:
+        collection = collection_name_for(board, class_level, subject_name)
     chunks = fetch_chapter_chunks(
         collection,
         [str(chapter_id)],
@@ -119,7 +128,7 @@ def _load_chapter_chunks(
 
 
 _SENTENCE_FRAGMENT_TOPIC_RE = re.compile(
-    r"^(?:if|when|now|as|for|with|from|after|before|m\.|cm\b|mm\b)|"
+    r"^(?:if|when|now|as|for|with|from|after|before|by|m\.|cm\b|mm\b)|"
     r"\b(?:now you|familiar with|is placed|is located|in size|"
     r"the position,\s*size|table\b)\b",
     re.I,
@@ -178,10 +187,95 @@ def _is_usable_topic_title(title: str, *, chapter_name: str = "") -> bool:
     return True
 
 
+_HEADING_FUNCTION_WORDS = frozenset({
+    "of", "and", "the", "their", "its", "a", "an", "on", "in", "for", "to", "with", "from",
+})
+_HEADING_CONCEPT_WORDS = frozenset({
+    "resource", "resources", "distribution", "categories", "category", "stewardship",
+    "responsible", "wise", "restoration", "regeneration", "renewable", "natural",
+    "use", "uses",
+})
+_CITATION_HEADING_RE = re.compile(r"\bin\s+['\u2018\"]", re.I)
+
+
+def _chapter_title_body(chapter_name: str) -> str:
+    body = normalize_title(chapter_name or "")
+    body = re.sub(r"^chapter\s+\d+\s*", "", body).strip(" -")
+    return body
+
+
+def _is_chapter_title_fragment(title: str, chapter_name: str) -> bool:
+    """'and Their Use' / 'Natural Resources' sliced out of the chapter title."""
+    chapter = _chapter_title_body(chapter_name)
+    topic = normalize_title(title)
+    if not topic or not chapter or topic == chapter:
+        return False
+    return topic in chapter
+
+
+def _is_proper_name_label(title: str) -> bool:
+    """Map keys and place names: 'Mumbai High', 'Iron Ore', 'Fatehgarh Sahib'."""
+    words = re.findall(r"[A-Za-z][A-Za-z'-]*", title or "")
+    if not words or len(words) > 4:
+        return False
+    if any(w.lower() in _HEADING_FUNCTION_WORDS or w.lower() in _HEADING_CONCEPT_WORDS for w in words):
+        return False
+    return all(w[0].isupper() for w in words)
+
+
+def is_unnumbered_teaching_heading(title: str, *, chapter_name: str = "") -> bool:
+    """A real idea heading in a chapter that has no 1.1 / 1.2 section numbers."""
+    if not _is_usable_topic_title(title, chapter_name=chapter_name):
+        return False
+    if _is_chapter_title_fragment(title, chapter_name):
+        return False
+    if _CITATION_HEADING_RE.search(title or ""):
+        return False
+    if _is_proper_name_label(title):
+        return False
+    words = [w.lower() for w in re.findall(r"[A-Za-z']+", title or "")]
+    return any(w in _HEADING_CONCEPT_WORDS or w in {"of", "and", "their"} for w in words)
+
+
+_MENTION_STOP = frozenset(
+    "the a an of and or to in on for with from by at as is are was were be "
+    "this that these those it its into about your you we our their does have".split()
+)
+
+
+def topic_mentioned_in_text(title: str, text: str) -> bool:
+    """True when an explanation already names this chapter topic."""
+    title_l = (title or "").lower().strip()
+    text_l = (text or "").lower()
+    if not title_l:
+        return False
+    if len(title_l) >= 6 and title_l in text_l:
+        return True
+    tokens = [
+        w for w in re.findall(r"[a-z0-9]+", title_l)
+        if len(w) >= 4 and w not in _MENTION_STOP
+    ]
+    if not tokens:
+        return title_l in text_l
+    hits = sum(1 for w in tokens if w in text_l)
+    need = 1 if len(tokens) == 1 else max(2, int(round(len(tokens) * 0.6)))
+    return hits >= need
+
+
+def topics_missing_from_text(topics: list[dict[str, str]], text: str) -> list[dict[str, str]]:
+    missing: list[dict[str, str]] = []
+    for topic in topics or []:
+        title = (topic.get("title") or "").strip()
+        if title and not topic_mentioned_in_text(title, text):
+            missing.append(topic)
+    return missing
+
+
 def _title_display(title: str) -> str:
     from app.services.section_heading import normalize_heading_line
 
     t = normalize_heading_line(title or "")
+    t = re.sub(r"[\x00-\x1f\x7f]", "", t)
     t = re.sub(r"^\d+(?:\.\d+)+\s+", "", t).strip()
     # NCERT often prints section titles in ALL CAPS — soften for students.
     if t.isupper() and len(t) > 4:
@@ -302,7 +396,133 @@ def list_chapter_topics(
             if len(out) >= 9:
                 break
     out.sort(key=lambda t: _section_sort_key(t.get("section_number") or "", t.get("title") or ""))
-    return out
+    # Numbered books (1.1, 1.2 …) keep their section list unchanged.
+    if sum(1 for r in out if r.get("section_number")) >= 2:
+        return out
+    # Unnumbered books (readers, EVS, most State Board): the chapter's lesson outline.
+    outline_rows = _outline_topic_rows(
+        chapter_id,
+        chunks,
+        chapter_name=chapter_name,
+        subject_name=subject_name,
+        class_level=class_level,
+    )
+    if outline_rows:
+        return outline_rows
+    if out:
+        return out
+    return _unnumbered_concept_topics(chunks, chapter_name=chapter_name)
+
+
+def _outline_topic_rows(
+    chapter_id: int,
+    chunks: list[Any],
+    *,
+    chapter_name: str,
+    subject_name: str,
+    class_level: str,
+) -> list[dict[str, str]]:
+    try:
+        from app.services.chapter_outline import get_chapter_outline, outline_topic_rows
+
+        outline = get_chapter_outline(
+            chapter_id,
+            chunks,
+            chapter_name=chapter_name,
+            subject_name=subject_name,
+            class_level=class_level,
+        )
+    except Exception:
+        logger.exception("chapter outline failed for %s", chapter_id)
+        return []
+    return [{"key": r["key"], "title": r["title"]} for r in outline_topic_rows(outline)]
+
+
+def chapter_outline_and_chunks(
+    *,
+    chapter_id: int,
+    board: str = "",
+    class_level: str = "",
+    subject_name: str = "",
+    chapter_name: str = "",
+) -> tuple[dict | None, list[Any]]:
+    """Cached lesson outline plus the chapter's chunks (for whole-chapter overviews)."""
+    chunks = _load_chapter_chunks(
+        chapter_id=chapter_id,
+        board=board,
+        class_level=class_level,
+        subject_name=subject_name,
+        chapter_name=chapter_name,
+    )
+    if not chunks:
+        return None, []
+    try:
+        from app.services.chapter_outline import get_chapter_outline
+
+        return (
+            get_chapter_outline(
+                chapter_id,
+                chunks,
+                chapter_name=chapter_name,
+                subject_name=subject_name,
+                class_level=class_level,
+            ),
+            chunks,
+        )
+    except Exception:
+        logger.exception("chapter outline failed for %s", chapter_id)
+        return None, chunks
+
+
+def _unnumbered_concept_topics(chunks: list[Any], *, chapter_name: str) -> list[dict[str, str]]:
+    """Chapters without 9.1-style numbers still have idea headings in the prose.
+
+    Map labels and title fragments parse as headings too. Keep only the idea lines.
+    A heading wrapped onto the next line ("... of Natural" / "Resources: Stewardship")
+    is one topic.
+    """
+    from app.services.section_heading import normalize_heading_line, parse_heading_line
+
+    lines: list[str] = []
+    for doc in chunks:
+        for raw in (getattr(doc, "page_content", "") or "").splitlines():
+            line = normalize_heading_line(raw)
+            if line and len(line) <= 160:
+                lines.append(line)
+
+    rows: list[dict[str, str]] = []
+    seen: set[str] = set()
+    skip: set[int] = set()
+    for i, line in enumerate(lines):
+        if i in skip:
+            continue
+        parsed = parse_heading_line(line)
+        if not parsed:
+            continue
+        number, title, _level = parsed
+        if number:
+            continue
+        title = _title_display(title)
+        words = title.split()
+        if words and words[-1].lower() in {"natural", "of", "and", "the", "their"}:
+            for j in range(i + 1, min(i + 4, len(lines))):
+                nxt = lines[j].strip()
+                if not nxt:
+                    continue
+                if nxt[0].isupper() and len(nxt.split()) <= 6:
+                    title = f"{title} {nxt}".strip()
+                    skip.add(j)
+                break
+        if not is_unnumbered_teaching_heading(title, chapter_name=chapter_name):
+            continue
+        key = topic_key(title)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        rows.append({"key": key, "title": title})
+        if len(rows) >= 12:
+            return rows
+    return rows
 
 
 def match_topic_keys_for_query(

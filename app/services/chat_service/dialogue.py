@@ -246,6 +246,30 @@ def _chapter_meta_prompt_override(query: str) -> dict[str, str] | None:
                 "Write the complete numbered topic list now, then ask which topic to start with:"
             ),
         }
+    from app.services.chapter_scope import is_gap_check_query
+
+    if is_gap_check_query(q):
+        return {
+            "instruction": (
+                "The student is asking what your previous answer left out of this chapter. "
+                "Read the CHAPTER TOPICS list and your previous answer. "
+                "Explain only the listed topics that previous answer did not already teach, "
+                "in order, with a short bold heading and 1–2 sentences each. "
+                "If every listed topic is already in that answer, say you did not miss anything "
+                "and stop. Do not repeat covered topics. Do not invent topics. "
+                "Place names, map labels, quotations, and pieces of the chapter title are not topics. "
+                "Do not attach a science-experiment block or a quiz menu."
+            ),
+            "length_policy": (
+                "RESPONSE LENGTH: only as long as the still-missing topics need. "
+                "If nothing is missing, one sentence."
+            ),
+            "interaction_policy": "Do not end with a simulation offer, quiz, or choice menu.",
+            "explanation_structure": "",
+            "user_closing": (
+                "Write only the missing topics now, or say you did not miss anything:"
+            ),
+        }
     if is_chapter_overview_request(q):
         return {
             "instruction": (
@@ -253,12 +277,15 @@ def _chapter_meta_prompt_override(query: str) -> dict[str, str] | None:
                 "Walk through EVERY main topic from the CHAPTER TOPICS list / chapter context "
                 "in order. For each topic use a short bold heading (section number + title when "
                 "present) and 1–2 sentences of what it covers. Do not stop after 2–3 topics. "
-                "Do NOT invent facts outside the context. Do NOT attach a science-experiment block. "
+                "Do NOT invent facts outside the context. "
+                "Do NOT number a place name, a map label, a quotation, a figure caption, "
+                "or a fragment of the chapter title. Do NOT leave an empty numbered item. "
+                "Do NOT attach a science-experiment block. "
                 "Do NOT open a quiz/example choice menu."
             ),
             "length_policy": (
-                "RESPONSE LENGTH: cover every listed topic (about 180–320 words). "
-                "Short headings + 1–2 sentences each."
+                "RESPONSE LENGTH: one short block per listed topic, in order "
+                "(about 40–70 words each). Do not stop after the first two topics."
             ),
             "interaction_policy": (
                 "End with ONE invite to dive deeper into the first topic — "

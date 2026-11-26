@@ -1146,8 +1146,15 @@ def _load_uploads(db: Session, chapter_ids: list[str] | None) -> dict[int, Textb
 def _list_images(db: Session, upload_ids: list[int]) -> list[TextbookImage]:
     if not upload_ids:
         return []
+    # Decorative rows (QR codes, banners, recurring mascots/margin art, admin-hidden) never
+    # reach students.
     return list(
-        db.scalars(select(TextbookImage).where(TextbookImage.textbook_upload_id.in_(upload_ids))).all()
+        db.scalars(
+            select(TextbookImage).where(
+                TextbookImage.textbook_upload_id.in_(upload_ids),
+                TextbookImage.is_decorative.is_(False),
+            )
+        ).all()
     )
 
 

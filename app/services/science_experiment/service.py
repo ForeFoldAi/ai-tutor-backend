@@ -107,10 +107,15 @@ def should_use_interactive_science_experiment(
         return False
     # Chapter meta asks (topic list / whole-chapter overview) are inventories — not labs.
     from app.modules.student_learning.topic_progress import is_chapter_topics_list_query
+    from app.services.chapter_scope import is_gap_check_query
     from app.services.conversation_intent_classifier import FollowupType, classify_followup_regex
     from app.services.voice_chapter_vocab import is_chapter_overview_request
 
-    if is_chapter_topics_list_query(query) or is_chapter_overview_request(query):
+    if (
+        is_chapter_topics_list_query(query)
+        or is_chapter_overview_request(query)
+        or is_gap_check_query(query)
+    ):
         return False
     # Confused / "explain simply" turns need plain prose — no lab JSON.
     act = classify_followup_regex(query)

@@ -17,6 +17,7 @@ from app.core.student_messages import (
     INVALID_RESET_TOKEN,
     INVALID_VERIFY_TOKEN,
     LOGIN_USE_USERNAME,
+    SESSION_REPLACED,
     USERNAME_TAKEN,
     WRONG_CURRENT_PASSWORD,
 )
@@ -54,6 +55,7 @@ from app.modules.auth.schemas import (
     TokenTelemetryResponse,
     UserTokenUsage,
 )
+from app.modules.auth import single_session
 from app.modules.auth.security import create_refresh_session
 from app.modules.schools.models import School
 from app.modules.sessions.models import SessionToken
@@ -156,15 +158,26 @@ def login(db: Session, payload: LoginRequest, request: Request) -> tuple[User, s
         raise AuthException(INVALID_LOGIN, status.HTTP_401_UNAUTHORIZED)
     _ensure_active(user)
 
+    # Students: one device at a time. 409 (-> "sign out the other device?") unless they confirmed.
+    sid = (
+        single_session.start_session(
+            db, user, force=payload.force_logout_others, device_id=payload.device_id
+        )
+        if single_session.applies_to(user)
+        else None
+    )
+
     refresh_token, session = create_refresh_session(
         db,
         user_id=user.id,
         user_agent=request.headers.get("user-agent"),
         ip_address=request.client.host if request.client else None,
+        sid=sid,
+        device_id=payload.device_id,
     )
     db.flush()
 
-    access_token = create_access_token(subject=str(user.id), role=user.role.value)
+    access_token = create_access_token(subject=str(user.id), role=user.role.value, sid=sid)
     return user, access_token, refresh_token
 
 
@@ -174,13 +187,18 @@ def refresh_access_token(db: Session, refresh_token: str) -> tuple[User, str, st
     if not session:
         raise AuthException("Invalid refresh token.", status.HTTP_401_UNAUTHORIZED)
     now = datetime.now(UTC)
+    user = db.get(User, session.user_id)
+    # Checked before "revoked": a device replaced by a newer login is told why, not just "expired".
+    if user and session.sid and not single_session.sid_is_current(user, session.sid):
+        raise AuthException(SESSION_REPLACED, status.HTTP_401_UNAUTHORIZED)
     if session.revoked or session.expires_at <= now:
         raise AuthException("Refresh token expired or revoked.", status.HTTP_401_UNAUTHORIZED)
 
-    user = db.get(User, session.user_id)
     if not user:
         raise AuthException("User not found.", status.HTTP_401_UNAUTHORIZED)
     _ensure_active(user)
+    if not single_session.sid_is_current(user, session.sid):
+        raise AuthException(SESSION_REPLACED, status.HTTP_401_UNAUTHORIZED)
 
     # Rotate: the old token stays usable for a short grace window instead of dying instantly, so a
     # second tab refreshing at the same time, or a response lost to a server restart, doesn't log
@@ -191,15 +209,18 @@ def refresh_access_token(db: Session, refresh_token: str) -> tuple[User, str, st
         user_id=user.id,
         user_agent=session.user_agent,
         ip_address=session.ip_address,
+        sid=session.sid,
+        device_id=session.device_id,
     )
     db.add(new_session)
-    access_token = create_access_token(subject=str(user.id), role=user.role.value)
+    access_token = create_access_token(subject=str(user.id), role=user.role.value, sid=session.sid)
     return user, access_token, new_refresh
 
 
 def logout(db: Session, user: User, refresh_token: str | None, all_devices: bool) -> None:
     if all_devices:
         db.execute(update(SessionToken).where(SessionToken.user_id == user.id).values(revoked=True))
+        single_session.end_session(user, None, all_devices=True)
         return
     if not refresh_token:
         raise AuthException("refresh_token is required when all_devices=false.")
@@ -208,6 +229,7 @@ def logout(db: Session, user: User, refresh_token: str | None, all_devices: bool
     session = _get_session_by_hash(db, refresh_hash)
     if session and session.user_id == user.id:
         session.revoked = True
+        single_session.end_session(user, session.sid)
 
 
 def admin_create_user(

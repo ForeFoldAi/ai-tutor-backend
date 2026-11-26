@@ -27,7 +27,7 @@ def generate_refresh_token() -> str:
     return secrets.token_urlsafe(64)
 
 
-def create_access_token(subject: str, role: str) -> str:
+def create_access_token(subject: str, role: str, sid: str | None = None) -> str:
     expire = datetime.now(UTC) + timedelta(minutes=settings.access_token_exp_minutes)
     payload = {
         "sub": subject,
@@ -36,6 +36,8 @@ def create_access_token(subject: str, role: str) -> str:
         "exp": expire,
         "iat": datetime.now(UTC),
     }
+    if sid:
+        payload["sid"] = sid
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 

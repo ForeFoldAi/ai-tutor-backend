@@ -188,6 +188,78 @@ def _topics_left_reply(**kwargs: Any) -> str | None:
         return try_topics_left_reply(db, **kwargs)
 
 
+def _assistant_chapter_text(history: list[dict] | None) -> str:
+    parts: list[str] = []
+    for turn in history or []:
+        if (turn.get("role") or "").lower() == "assistant":
+            text = (turn.get("content") or "").strip()
+            if text:
+                parts.append(text)
+    return "\n".join(parts)
+
+
+def _gap_check_decision(
+    query: str,
+    history: list[dict] | None,
+    coverage_guidance: str,
+    *,
+    chapter_ids: list[str] | None,
+    board: str,
+    class_level: str,
+    subject_name: str,
+    chapter: str,
+) -> tuple[str | None, str]:
+    """Compare prior answers with the chapter topic list.
+
+    A complete explanation stops here. A partial one tells the model the exact
+    titles still missing, so it cannot claim a covered topic was left out.
+    """
+    from app.modules.student_learning.topic_progress import (
+        list_chapter_topics,
+        topics_missing_from_text,
+    )
+    from app.services.chapter_scope import is_gap_check_query
+
+    if not is_gap_check_query(query):
+        return None, coverage_guidance
+    topics: list[dict] = []
+    if chapter_ids:
+        try:
+            chapter_id = int(str(chapter_ids[0]).strip())
+        except (TypeError, ValueError):
+            chapter_id = 0
+        if chapter_id:
+            try:
+                topics = list_chapter_topics(
+                    chapter_id=chapter_id,
+                    board=board,
+                    class_level=class_level,
+                    subject_name=subject_name,
+                    chapter_name=chapter,
+                )
+            except Exception:
+                logger.exception("gap-check topic list failed")
+                topics = []
+    if not topics:
+        return None, coverage_guidance
+    missing = topics_missing_from_text(topics, _assistant_chapter_text(history))
+    if not missing:
+        return (
+            "I didn't miss anything. That explanation already covers every topic in this chapter.",
+            coverage_guidance,
+        )
+    lines = []
+    for topic in missing:
+        num = (topic.get("section_number") or "").strip()
+        title = (topic.get("title") or "").strip()
+        lines.append(f"- {num} {title}".strip())
+    extra = (
+        "STILL MISSING — explain only these topics, in this order. "
+        "Do not say any other topic was missed:\n" + "\n".join(lines)
+    )
+    return None, (coverage_guidance + "\n\n" + extra).strip()
+
+
 def _chapter_topics_list_reply(**kwargs: Any) -> str | None:
     from app.core.database import SessionLocal
     from app.modules.student_learning.topic_progress import try_chapter_topics_list_reply
@@ -205,19 +277,31 @@ def _chapter_toc_for_overview(
     board: str = "",
     class_level: str = "",
     docs: list | None = None,
-) -> str:
-    """Ordered topic list injected into context for whole-chapter voice/text walkthroughs."""
+) -> tuple[str, list | None]:
+    """Topic list (+ each topic's opening text) for whole-chapter walkthroughs.
+
+    Returns ``(block, docs)``. For an unnumbered chapter with a lesson outline the
+    docs lose end matter (teacher transcripts, answer keys) and the block carries
+    the opening text of every topic, so the summary of each part comes from that
+    part — not from whichever chunks the search happened to return.
+    """
     from app.modules.student_learning.topic_progress import (
         chapter_toc_context_block,
         is_chapter_topics_list_query,
         list_chapter_topics,
         topics_from_retrieved_docs,
     )
+    from app.services.chapter_scope import is_gap_check_query
     from app.services.voice_chapter_vocab import is_chapter_overview_request
 
-    if not (is_chapter_overview_request(query) or is_chapter_topics_list_query(query)):
-        return ""
+    if not (
+        is_chapter_overview_request(query)
+        or is_chapter_topics_list_query(query)
+        or is_gap_check_query(query)
+    ):
+        return "", docs
     topics: list[dict] = []
+    excerpts = ""
     if chapter_ids:
         try:
             chapter_id = int(str(chapter_ids[0]).strip())
@@ -231,9 +315,34 @@ def _chapter_toc_for_overview(
                 subject_name=subject_name,
                 chapter_name=chapter,
             )
+            if is_chapter_overview_request(query) and len(chapter_ids) == 1:
+                try:
+                    from app.modules.student_learning.topic_progress import (
+                        chapter_outline_and_chunks,
+                        topic_key,
+                    )
+                    from app.services.chapter_outline import lesson_docs, topic_excerpts_block
+
+                    outline, chunks = chapter_outline_and_chunks(
+                        chapter_id=chapter_id,
+                        board=board,
+                        class_level=class_level,
+                        subject_name=subject_name,
+                        chapter_name=chapter,
+                    )
+                    # Only when the topic list itself came from this outline.
+                    outline_keys = [topic_key(t.get("title") or "") for t in (outline or {}).get("topics") or []]
+                    if outline and [t.get("key") for t in topics] == outline_keys:
+                        docs = lesson_docs(list(docs or []), outline)
+                        excerpts = topic_excerpts_block(chunks, outline)
+                except Exception:
+                    logger.exception("overview outline context failed")
     if not topics:
         topics = topics_from_retrieved_docs(docs, chapter_name=chapter)
-    return chapter_toc_context_block(topics)
+    block = chapter_toc_context_block(topics)
+    if block and excerpts:
+        block = f"{block}\n\n{excerpts}"
+    return block, docs
 
 
 def _section_instruction_with_figures(
@@ -575,6 +684,18 @@ async def chapter_aware_qa(
         )
     if early:
         return early, [], None, None
+    gap_early, coverage_guidance = _gap_check_decision(
+        query,
+        recent_hist,
+        coverage_guidance,
+        chapter_ids=chapter_ids,
+        board=board,
+        class_level=class_level,
+        subject_name=subject_name,
+        chapter=chapter,
+    )
+    if gap_early:
+        return gap_early, [], None, None
     if not skip_retrieval and not prefer_image_over_rag and _query_changed(
         effective_query, query, retrieval_query
     ):
@@ -668,8 +789,9 @@ async def chapter_aware_qa(
             scope_title=scope_title,
         )
 
-    context = "" if skip_retrieval else _join_context_within_budget(docs)
-    toc_block = _chapter_toc_for_overview(
+    # Thread: may fetch the chapter and (once per chapter, cached) build its outline.
+    toc_block, docs = await asyncio.to_thread(
+        _chapter_toc_for_overview,
         query=effective_query,
         chapter_ids=chapter_ids,
         subject_name=subject_name,
@@ -678,6 +800,7 @@ async def chapter_aware_qa(
         class_level=class_level,
         docs=docs,
     )
+    context = "" if skip_retrieval else _join_context_within_budget(docs)
     if toc_block:
         context = f"{toc_block}\n\n{context}".strip() if context else toc_block
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
@@ -1325,6 +1448,22 @@ async def chapter_aware_qa_stream(
             await emit_related_images([])
         yield early
         return
+    gap_early, coverage_guidance = _gap_check_decision(
+        query,
+        recent_hist,
+        coverage_guidance,
+        chapter_ids=chapter_ids,
+        board=board,
+        class_level=class_level,
+        subject_name=subject_name,
+        chapter=chapter,
+    )
+    if gap_early:
+        _drop_voice_presteps()
+        if emit_related_images:
+            await emit_related_images([])
+        yield gap_early
+        return
     if not skip_retrieval and not prefer_image_over_rag and _query_changed(
         effective_query, query, retrieval_query
     ):
@@ -1412,10 +1551,9 @@ async def chapter_aware_qa_stream(
             scope_title=scope_title,
         )
 
-    context = _join_context_within_budget(docs, char_budget=context_budget)
-    if skip_retrieval:
-        context = (quiz_state or {}).get("context", "") if quiz_feedback_block else ""
-    toc_block = _chapter_toc_for_overview(
+    # Thread: may fetch the chapter and (once per chapter, cached) build its outline.
+    toc_block, docs = await asyncio.to_thread(
+        _chapter_toc_for_overview,
         query=effective_query,
         chapter_ids=chapter_ids,
         subject_name=subject_name,
@@ -1424,6 +1562,9 @@ async def chapter_aware_qa_stream(
         class_level=class_level,
         docs=docs,
     )
+    context = _join_context_within_budget(docs, char_budget=context_budget)
+    if skip_retrieval:
+        context = (quiz_state or {}).get("context", "") if quiz_feedback_block else ""
     if toc_block:
         context = f"{toc_block}\n\n{context}".strip() if context else toc_block
     logger.info(

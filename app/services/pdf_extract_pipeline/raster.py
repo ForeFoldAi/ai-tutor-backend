@@ -22,7 +22,11 @@ def load_pdf_pages(
     dpi: int = 144,
     max_pages: int | None = None,
 ) -> tuple[fitz.Document, list[Image.Image]]:
-    doc = fitz.open(pdf_path)
+    from app.services.pdf_extract_pipeline.vector_figure import strip_recurring_images
+
+    # Work on a copy without watermark / page-template images (e.g. "© NCERT not to be
+    # republished"): they bleed into every crop and confuse the layout model.
+    doc, _ = strip_recurring_images(fitz.open(pdf_path))
     n = len(doc)
     if max_pages is not None:
         n = min(n, max_pages)

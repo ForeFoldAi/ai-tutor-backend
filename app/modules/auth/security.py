@@ -14,6 +14,8 @@ def create_refresh_session(
     user_id: int,
     user_agent: str | None,
     ip_address: str | None,
+    sid: str | None = None,
+    device_id: str | None = None,
 ) -> tuple[str, SessionToken]:
     refresh_token = generate_refresh_token()
     refresh_hash = hash_token(refresh_token)
@@ -21,6 +23,8 @@ def create_refresh_session(
     session = SessionToken(
         user_id=user_id,
         refresh_token_hash=refresh_hash,
+        sid=sid,
+        device_id=device_id,
         user_agent=user_agent,
         ip_address=ip_address,
         expires_at=expires_at,

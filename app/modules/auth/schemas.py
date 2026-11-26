@@ -19,6 +19,10 @@ class StudentSignupRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str = Field(min_length=1, max_length=320)
     password: str = Field(min_length=8, max_length=128)
+    # Students already signed in elsewhere: true = sign that device out and continue here.
+    force_logout_others: bool = False
+    # Random id the browser keeps in localStorage. Lets the same browser sign in again without a prompt.
+    device_id: str | None = Field(default=None, max_length=64, pattern=r"^[A-Za-z0-9-]{8,64}$")
 
 
 class RefreshRequest(BaseModel):

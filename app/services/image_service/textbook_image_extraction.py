@@ -715,7 +715,8 @@ def compute_phash(image_bytes: bytes) -> int | None:
 
         with Image.open(BytesIO(image_bytes)) as im:
             h = imagehash.phash(im)
-        raw = int(h)
+        # ImageHash has no __int__; its str() is the 64-bit hash in hex.
+        raw = int(str(h), 16)
         # Convert unsigned uint64 → signed int64 for PostgreSQL bigint
         if raw >= (1 << 63):
             raw -= (1 << 64)
@@ -812,8 +813,12 @@ def _enrich_image_row(
         is_weak_text_caption,
     )
 
+    from app.config import FIGURE_CAPTION_VLM_ENABLED
+
     effective_for_vision = (row.caption or row.generated_caption or "").strip()
-    if is_weak_text_caption(effective_for_vision):
+    # With VLM captions on, the post-extraction pass captions every figure; BLIP's generic
+    # "a drawing of a ..." text is not used.
+    if not FIGURE_CAPTION_VLM_ENABLED and is_weak_text_caption(effective_for_vision):
         apply_vision_caption_to_row(
             row,
             image_bytes=image_bytes,
@@ -1202,6 +1207,70 @@ def _persist_ml_asset_row(
     return True
 
 
+def _load_book_sibling_figures(db: Session, upload: TextbookUpload) -> list[Any]:
+    """Unnumbered figures from the other chapters of the same book (board, class, subject)."""
+    from app.services.image_service.junk_figure_filter import BookFigure
+
+    try:
+        rows = db.execute(
+            select(
+                TextbookImage.id,
+                TextbookImage.textbook_upload_id,
+                TextbookImage.phash,
+            )
+            .join(TextbookUpload, TextbookUpload.id == TextbookImage.textbook_upload_id)
+            .where(
+                TextbookUpload.board == upload.board,
+                TextbookUpload.class_level == upload.class_level,
+                TextbookUpload.subject_name == upload.subject_name,
+                TextbookUpload.id != upload.id,
+                TextbookImage.content_kind == "figure",
+                TextbookImage.phash.is_not(None),
+                func.coalesce(TextbookImage.figure_number, "") == "",
+            )
+        ).all()
+    except Exception as exc:
+        logger.warning("sibling figure lookup failed for upload %s: %s", upload.id, exc)
+        return []
+    return [BookFigure(key=r[0], upload_id=r[1], phash=r[2], figure_number=None) for r in rows]
+
+
+def _decorative_figure_row(
+    upload: TextbookUpload,
+    pf: Any,
+    fname: str,
+    ph: int | None,
+    chapter_title: str | None,
+    reason: str,
+) -> TextbookImage:
+    """Row for a junk figure: stored for admin review, hidden from students, never captioned."""
+    from app.services.image_service.pdf_extraction_types import bbox_to_json
+
+    return TextbookImage(
+        textbook_upload_id=upload.id,
+        page_index=pf.page_index,
+        sequence=pf.sequence,
+        file_name=fname,
+        caption=None,
+        image_type="unknown",
+        is_decorative=True,
+        educational_salience=0.0,
+        educational_role="decorative",
+        figure_number=pf.figure_number,
+        chapter_title=chapter_title,
+        has_caption=False,
+        image_bbox=bbox_to_json(pf.image_bbox),
+        source_type=pf.source_type,
+        caption_source="none",
+        phash=ph,
+        content_kind="figure",
+        content_hash=compute_content_hash(pf.image_bytes),
+        grade_level=str(getattr(upload, "class_level", "") or ""),
+        subject=str(getattr(upload, "subject_name", "") or ""),
+        educational_tags=f"junk:{reason}",
+    )
+
+
 def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
     """
     Layout-aware PDF extraction with optional native ML pipeline (tables/formulas).
@@ -1240,9 +1309,18 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
                 pl.get("suspicious_pairs"),
             )
 
+    from app.services.image_service.junk_figure_filter import (
+        REASON_RECURRING,
+        RECURRING_MIN_UPLOADS,
+        classify_qr_junk,
+        matching_sibling_keys,
+    )
+
     created = 0
     audit_rows: list[dict[str, Any]] = []
     seen_phashes: dict[int, str] = {}  # phash_int → first filename for dedup logging
+    book_siblings = _load_book_sibling_figures(db, upload)
+    siblings_to_flag: set[int] = set()
 
     for pf in result.figures:
         # Stage 9: document-level pHash deduplication
@@ -1281,6 +1359,15 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
                 )
                 continue
 
+        # QR codes, QR chapter banners and decorations repeated across the book's chapters
+        # are kept as decorative rows (admin can review/unhide) but never reach students.
+        junk_reason = classify_qr_junk(pf.image_bytes, figure_number=pf.figure_number)
+        if junk_reason is None and not (pf.figure_number or "").strip():
+            sib_uploads, sib_keys = matching_sibling_keys(ph, book_siblings)
+            if len(sib_uploads) + 1 >= RECURRING_MIN_UPLOADS:
+                junk_reason = REASON_RECURRING
+                siblings_to_flag.update(int(k) for k in sib_keys)
+
         fname = _save_blob(
             upload,
             pf.page_index,
@@ -1295,6 +1382,19 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
 
         if ph is not None:
             seen_phashes[ph] = fname
+
+        if junk_reason:
+            logger.info(
+                "[JUNK-FIGURE] upload=%s p%d seq=%d reason=%s file=%s",
+                upload.id,
+                pf.page_number,
+                pf.sequence,
+                junk_reason,
+                fname,
+            )
+            db.add(_decorative_figure_row(upload, pf, fname, ph, chapter_title, junk_reason))
+            created += 1
+            continue
 
         snippet = _page_snippet(fig_ctx, [cap] if cap else [])
         img_type = classify_image_type(cap, f"{pf.nearby_before or ''}\n{pf.nearby_after or ''}")
@@ -1361,6 +1461,19 @@ def extract_pdf_images(db: Session, upload: TextbookUpload) -> int:
             "distance": cap_dist,
             "extraction_confidence": conf,
         })
+
+    if siblings_to_flag:
+        # Earlier chapters saved their copy before the decoration reached the recurrence
+        # threshold; hide those copies too now that it has.
+        for sib in db.scalars(select(TextbookImage).where(TextbookImage.id.in_(siblings_to_flag))):
+            if not sib.is_decorative:
+                sib.is_decorative = True
+                sib.educational_role = "decorative"
+        logger.info(
+            "[JUNK-FIGURE] upload=%s flagged %d recurring copies in sibling chapters",
+            upload.id,
+            len(siblings_to_flag),
+        )
 
     for asset in ml_assets:
         if asset.content_kind not in ("table", "formula"):
@@ -1581,12 +1694,20 @@ def _describe_images_after_extract(upload: TextbookUpload) -> None:
     """Store vision descriptions in the background so chat image selection never waits on them."""
     import threading
 
-    from app.config import LLM_IMAGE_SELECT_VISION
+    from app.config import FIGURE_CAPTION_VLM_ENABLED, LLM_IMAGE_SELECT_VISION
 
-    if not LLM_IMAGE_SELECT_VISION:
+    if not (LLM_IMAGE_SELECT_VISION or FIGURE_CAPTION_VLM_ENABLED):
         return
 
     def _run(upload_id: int) -> None:
+        try:
+            from app.services.image_service.figure_caption_vlm import caption_upload_figures
+
+            caption_upload_figures(upload_id)
+        except Exception as exc:
+            logger.warning("figure caption backfill failed for %s: %s", upload_id, exc)
+        if not LLM_IMAGE_SELECT_VISION:
+            return
         try:
             from app.services.image_service.llm_image_select import backfill_visual_summaries
 

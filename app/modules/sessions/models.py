@@ -17,6 +17,10 @@ class SessionToken(Base):
         index=True,
     )
     refresh_token_hash: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
+    # One login = one sid, carried across refresh rotations (see auth.single_session).
+    sid: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
+    # Browser-generated id (localStorage). Same browser signing in again is not "another device".
+    device_id: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
     user_agent: Mapped[str | None] = mapped_column(String(512), nullable=True)
     ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

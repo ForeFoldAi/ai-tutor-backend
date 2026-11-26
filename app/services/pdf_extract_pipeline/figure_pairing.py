@@ -32,7 +32,7 @@ from app.services.pdf_extract_pipeline.embedded_figure_refinement import (
 from app.services.pdf_extract_pipeline.raster import image_box_to_pdf_rect, pdf_rect_to_image_box
 from app.services.pdf_extract_pipeline.types import ExtractedAsset, LayoutElement, PageExtraction
 
-FIGURE_LABEL_RE = re.compile(r"(?i)fig\.\s*(\d+(?:\.\d+)*)")
+FIGURE_LABEL_RE = re.compile(r"(?i)\bfig(?:ure)?\.?\s*(\d+(?:\.\d+)*)\b")
 TABLE_NUMBER_RE = re.compile(r"(?i)\b(?:table|tbl\.?)\s*(\d+(?:\.\d+)*)")
 
 
@@ -138,7 +138,15 @@ def _figure_image_bytes(
     dpi: int,
     *,
     fig_number: str | None = None,
+    vector: Any | None = None,
 ) -> bytes:
+    if vector is not None:
+        from app.services.pdf_extract_pipeline.vector_figure import render_region
+
+        try:
+            return render_region(page, vector.rect, zoom=max(2.5, dpi / 72.0), mask=getattr(vector, "mask", None))
+        except Exception:
+            pass
     sane = _sanitize_box(box, width=image.size[0], height=image.size[1])
     if sane is None:
         return b""
@@ -238,6 +246,10 @@ def _is_inline_figure_reference(page: fitz.Page, rect: fitz.Rect) -> bool:
     if best is None:
         return False
     _, lines, i = best
+    # A line holding nothing but the label ("Fig. 11.8") is a caption, even when PyMuPDF
+    # groups it into a block with the paragraph beside it.
+    if re.fullmatch(r"(?i)fig(?:ure)?\.?\s*\d+(?:\.\d+)*\s*[.:]?", _line_text(lines[i])):
+        return False
     line_rect = fitz.Rect(lines[i]["bbox"])
     after = page.get_text(
         "text", clip=fitz.Rect(rect.x1 + 0.2, line_rect.y0, line_rect.x1 + 1, line_rect.y1)
@@ -286,6 +298,7 @@ def _find_figure_labels(
             candidate = {
                 "fig_number": fig_number,
                 "label_text": label_text,
+                "label_rect": fitz.Rect(rect),
                 "label_box": label_box,
                 "score": score,
                 "context": context,
@@ -334,6 +347,49 @@ def _is_shallow_figure_crop(
     return False
 
 
+def _vector_figure_for_label(page: fitz.Page, label: dict[str, Any]) -> Any | None:
+    """Figure located from the PDF's own drawings when it is a vector diagram.
+
+    Returns None for raster photos (the embedded-image path keeps their original pixels)
+    and when no drawing belongs to the label, so callers fall back to layout boxes.
+    """
+    from app.services.pdf_extract_pipeline.vector_figure import (
+        locate_figure,
+        page_text_lines,
+        prose_mask_rects,
+    )
+
+    rect = label.get("label_rect")
+    if rect is None:
+        return None
+    try:
+        lines = page_text_lines(page)
+        others = [
+            lbl["label_rect"]
+            for lbl in label.get("page_labels") or []
+            if lbl is not label and lbl.get("label_rect") is not None
+        ]
+        vec = locate_figure(page, rect, lines=lines, other_label_rects=others)
+        if vec is None or vec.vector_paths < 3:
+            return None
+        if vec.core.width < 40 and vec.core.height < 40:
+            return None  # a stray tick/marker, not the figure
+        core_area = max(1.0, vec.core.width * vec.core.height)
+        img_area = 0.0
+        for info in page.get_image_info():
+            if int(info.get("width") or 0) <= 2:
+                continue
+            inter = fitz.Rect(info["bbox"]) & vec.core
+            if not inter.is_empty:
+                img_area += inter.width * inter.height
+        if img_area > 0.6 * core_area:
+            return None  # mostly a photo
+        vec.mask = prose_mask_rects(page, vec, lines=lines)
+        return vec
+    except Exception:
+        return None
+
+
 def _resolve_figure_box(
     page: fitz.Page,
     *,
@@ -342,7 +398,11 @@ def _resolve_figure_box(
     image_size: tuple[int, int],
     dpi: int,
 ) -> tuple[int, int, int, int]:
-    """Refine layout box; fall back to embedded photos above the Fig. label."""
+    """Vector diagram geometry first; else refine layout box / embedded photos above the label."""
+    vec = _vector_figure_for_label(page, label)
+    if vec is not None:
+        label["vector_figure"] = vec
+        return pdf_rect_to_image_box(vec.rect, dpi)
     fig_number = label["fig_number"]
     refined = refine_figure_box(
         page,
@@ -389,6 +449,13 @@ def _caption_for_numbered_figure(
     dpi: int,
 ) -> str:
     fig_number = label["fig_number"]
+    rect = label.get("label_rect")
+    if rect is not None:
+        from app.services.pdf_extract_pipeline.vector_figure import printed_caption
+
+        printed = printed_caption(page, rect)
+        if printed and not _caption_fig_number_mismatch(printed, fig_number):
+            return printed[:500]
     caption = _caption_for_label(
         page, label["label_box"], image_size, dpi, fig_number=fig_number
     )
@@ -794,6 +861,8 @@ def extract_assets_from_page(
     global_assigned_numbers = assigned_fig_numbers or set()
     page_assigned_boxes = list(assigned_figure_boxes or [])
     figure_labels = _find_figure_labels(page, figures, figure_captions, dpi)
+    for _lbl in figure_labels:
+        _lbl["page_labels"] = figure_labels
     assignments = _assign_labels_to_figures(figure_labels, figures)
     assigned_numbers = {lbl["fig_number"] for lbl, _ in assignments}
     assigned_ids = {id(fig) for _, fig in assignments}
@@ -810,7 +879,7 @@ def extract_assets_from_page(
             image_size=image_size,
             dpi=dpi,
         )
-        if _is_shallow_figure_crop(box, image_size):
+        if label.get("vector_figure") is None and _is_shallow_figure_crop(box, image_size):
             from app.services.pdf_extract_pipeline.embedded_figure_refinement import (
                 try_extract_embedded_jpeg_bytes,
             )
@@ -828,7 +897,8 @@ def extract_assets_from_page(
                 asset_type="figure",
                 page_no=page_no,
                 image_bytes=_figure_image_bytes(
-                    page, image, box, image_size, dpi, fig_number=fig_number
+                    page, image, box, image_size, dpi, fig_number=fig_number,
+                    vector=label.get("vector_figure"),
                 ),
                 number=fig_number,
                 caption=caption,
@@ -857,7 +927,7 @@ def extract_assets_from_page(
             image_size=image_size,
             dpi=dpi,
         )
-        if _is_shallow_figure_crop(box, image_size):
+        if label.get("vector_figure") is None and _is_shallow_figure_crop(box, image_size):
             from app.services.pdf_extract_pipeline.embedded_figure_refinement import (
                 try_extract_embedded_jpeg_bytes,
             )
@@ -869,14 +939,18 @@ def extract_assets_from_page(
         caption = _caption_for_numbered_figure(
             page, label, box, figure_captions, image_size, dpi
         )
-        if is_prose_figure_region(page, box, image_size, dpi, caption=caption):
+        # Vector crops paint out any body text inside them, so prose overlap is not a reason to drop.
+        if label.get("vector_figure") is None and is_prose_figure_region(
+            page, box, image_size, dpi, caption=caption
+        ):
             continue
         assets.append(
             ExtractedAsset(
                 asset_type="figure",
                 page_no=page_no,
                 image_bytes=_figure_image_bytes(
-                    page, image, box, image_size, dpi, fig_number=fig_number
+                    page, image, box, image_size, dpi, fig_number=fig_number,
+                    vector=label.get("vector_figure"),
                 ),
                 number=fig_number,
                 caption=caption,

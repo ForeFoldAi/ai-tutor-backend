@@ -47,6 +47,46 @@ def test_noise_topic_filter():
     assert _is_usable_topic_title("The Monsoons")
     assert _is_usable_topic_title("Climate Change")
     assert not _is_usable_topic_title("The Big")  # too vague / incomplete
+    assert not _is_usable_topic_title("by changing the direction")
+
+
+def test_unnumbered_chapter_keeps_ideas_and_drops_map_labels():
+    from app.modules.student_learning.topic_progress import is_unnumbered_teaching_heading
+
+    chapter = "Chapter 1 - Natural Resources and Their Use"
+    assert is_unnumbered_teaching_heading("Categories of Natural Resources", chapter_name=chapter)
+    assert is_unnumbered_teaching_heading("Distribution of Natural Resources", chapter_name=chapter)
+    assert is_unnumbered_teaching_heading("Resources: Stewardship", chapter_name=chapter)
+    assert is_unnumbered_teaching_heading(
+        "Responsible and Wise Use of Natural", chapter_name=chapter
+    )
+    assert not is_unnumbered_teaching_heading("and Their Use", chapter_name=chapter)
+    assert not is_unnumbered_teaching_heading("Natural Resources", chapter_name=chapter)
+    assert not is_unnumbered_teaching_heading("Mumbai High", chapter_name=chapter)
+    assert not is_unnumbered_teaching_heading("Iron Ore", chapter_name=chapter)
+    assert not is_unnumbered_teaching_heading("Fatehgarh Sahib", chapter_name=chapter)
+    assert not is_unnumbered_teaching_heading("SBS Nagar", chapter_name=chapter)
+    assert not is_unnumbered_teaching_heading("Taran Tarn", chapter_name=chapter)
+    assert not is_unnumbered_teaching_heading("Yarlung Tsangpe", chapter_name=chapter)
+    assert not is_unnumbered_teaching_heading(
+        "Tom Rivett-Carnac in ‘The Future We Choose’", chapter_name=chapter
+    )
+    assert not is_unnumbered_teaching_heading(
+        "A Note on History's Darker Periods", chapter_name=chapter
+    )
+
+
+def test_topics_missing_from_text_ignores_topics_already_named():
+    from app.modules.student_learning.topic_progress import topics_missing_from_text
+
+    topics = [
+        {"title": "Electromagnets", "section_number": "4.1.1"},
+        {"title": "How Does a Battery Generate Electricity?", "section_number": "4.3"},
+    ]
+    said = "4.1.1 Electromagnets are temporary magnets made with a coil and an iron core."
+    missing = topics_missing_from_text(topics, said)
+    assert [t["title"] for t in missing] == ["How Does a Battery Generate Electricity?"]
+    assert topics_missing_from_text(topics, said + " How Does a Battery Generate Electricity?") == []
     assert not _is_usable_topic_title("Exercises")
     assert not _is_usable_topic_title("Questions")
     assert not _is_usable_topic_title("Summary")

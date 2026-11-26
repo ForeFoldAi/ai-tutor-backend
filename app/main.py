@@ -17,6 +17,7 @@ from app.services.document_service import process_document
 from app.services.vector_service import create_vector_store, load_vector_store
 from app.config import RETRIEVAL_K
 from app.services.chat_service import chapter_aware_qa, chapter_aware_qa_stream, get_qa_chain
+from app.core.chat_rate_limit import check_chat_rate_limit
 from app.core.student_messages import ANSWER_NOT_IN_CHAPTER, CHAT_ANSWER_FAILED, PDF_ONLY
 from app.services.query_match import document_page, keyword_match_score
 from app.voice_api import router as voice_router
@@ -498,15 +499,21 @@ async def tutor_qa_answer_for_query(query: str) -> tuple[str, str | None]:
 
 
 @app.post("/upload")
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(
+    _current_user: Annotated[User, Depends(get_current_user)],
+    file: UploadFile = File(...),
+):
     global vectorstore
 
     filename = file.filename or "document.pdf"
     if not filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail=PDF_ONLY)
 
-    file_path = f"temp_{file.filename}"
-    with open(file_path, "wb") as f:
+    # Never build the path from the client filename ("../x.pdf" would write outside the cwd).
+    import tempfile
+
+    fd, file_path = tempfile.mkstemp(prefix="upload_", suffix=".pdf")
+    with os.fdopen(fd, "wb") as f:
         f.write(await file.read())
 
     try:
@@ -528,7 +535,11 @@ async def upload_pdf(file: UploadFile = File(...)):
 
 
 @app.post("/chat")
-async def chat(req: ChatRequest):
+async def chat(
+    req: ChatRequest,
+    _current_user: Annotated[User, Depends(get_current_user)],
+):
+    check_chat_rate_limit(_current_user.id)
     response, warning = await tutor_qa_answer_for_query(req.query)
     if warning is not None:
         return {
@@ -548,6 +559,8 @@ async def chapter_chat(
     optionally filtered to the selected chapter IDs."""
     if not (req.query or "").strip() and not (req.image_ids or []):
         raise HTTPException(status_code=400, detail="Please type a question or attach an image.")
+    if not req.images_only:
+        check_chat_rate_limit(_current_user.id)
     from app.services.chapter_collection import resolve_chat_collection
 
     collection = resolve_chat_collection(
@@ -609,6 +622,7 @@ async def chapter_chat_stream(
       {"type":"science_experiment","experiment":{...},"clean_answer":"..."}  (science subjects)
       {"type":"done"}
     """
+    check_chat_rate_limit(_current_user.id)
     from app.services.chapter_collection import resolve_chat_collection
 
     collection = resolve_chat_collection(

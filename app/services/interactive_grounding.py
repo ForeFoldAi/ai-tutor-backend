@@ -550,8 +550,9 @@ def _parse_pass2(raw: str, kind: SubjectKind) -> dict[str, Any] | None:
 
         return ScienceExperiment.model_validate(data).model_dump(mode="json")
     except Exception as exc:
-        logger.debug("pass-2 schema validate failed: %s", exc)
-        return data if panel_type(data, kind) else None
+        # Unvalidated JSON crashed the student's page; no panel beats a broken one.
+        logger.info("pass-2 schema validate failed, dropping panel: %s", exc)
+        return None
 
 
 def resolve_grounded_panel(

@@ -21,9 +21,11 @@ def test_cache_module_has_no_tutor_qa_helpers():
 
 
 def test_chat_service_does_not_import_tutor_qa_cache():
-    path = Path(__file__).resolve().parents[1] / "app" / "services" / "chat_service.py"
-    tree = ast.parse(path.read_text(encoding="utf-8"))
-    for node in ast.walk(tree):
+    # chat_service is a package now; check every module in it.
+    pkg = Path(__file__).resolve().parents[1] / "app" / "services" / "chat_service"
+    paths = sorted(pkg.glob("*.py"))
+    assert paths
+    for node in (n for p in paths for n in ast.walk(ast.parse(p.read_text(encoding="utf-8")))):
         if isinstance(node, ast.ImportFrom) and node.module == "app.core.cache":
             names = {a.name for a in node.names}
             assert not names & {

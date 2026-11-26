@@ -202,3 +202,8 @@ _OVERVIEW = re.compile(
 
 def is_chapter_overview_request(text: str) -> bool:
     return bool(_OVERVIEW.search(text or ""))
+
+
+def is_whole_chapter_explain(text: str) -> bool:
+    """Walk the whole chapter. 'tell me about the lesson' stays a current-lesson ask."""
+    return is_chapter_overview_request(text) and bool(re.search(r"\bchapter\b", text or "", re.I))

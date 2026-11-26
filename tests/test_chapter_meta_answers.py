@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from types import SimpleNamespace
 
 from app.config import VOICE_PROMPT_CHAPTER_WORDS, VOICE_PROMPT_MAX_WORDS
@@ -11,7 +12,12 @@ from app.modules.student_learning.topic_progress import (
     is_topics_left_query,
     topics_from_retrieved_docs,
 )
-from app.services.chapter_scope import is_current_lesson_query
+from app.services.chapter_scope import (
+    is_current_lesson_query,
+    is_gap_check_query,
+    resolve_chapter_awareness_turn,
+)
+from app.services.conversation_context import resolve_conversation_context
 from app.services.science_experiment.service import should_use_interactive_science_experiment
 from app.services.section_retrieval import query_breadth
 from app.services.voice_chapter_vocab import is_chapter_overview_request
@@ -31,6 +37,74 @@ def test_topics_remaining_stays_left_query():
     q = "what topics are remaining in this chapter"
     assert is_topics_left_query(q)
     assert not is_chapter_topics_list_query(q)
+
+
+def test_explain_this_chapter_keeps_student_words():
+    q = "explain this chapter"
+    chapter = "4. Electricity: Magnetic and Heating Effects"
+    ctx = resolve_conversation_context(q, chapter=chapter)
+    assert ctx.intent_method == "chapter_overview"
+    assert ctx.retrieval_query.startswith(q)
+    assert "Electricity" in ctx.retrieval_query
+    assert query_breadth(ctx.retrieval_query) == "chapter"
+
+    early, effective, _a, guidance = asyncio.run(
+        resolve_chapter_awareness_turn(
+            q,
+            docs=[],
+            conversation_history=None,
+            collection_name="CBSE_CLASS_8_Science",
+            chapter_ids=["770"],
+            chapter_names=[chapter],
+            board="CBSE",
+            class_level="CLASS_8",
+            subject_name="Science",
+            scope_query=ctx.retrieval_query,
+        )
+    )
+    assert early is None
+    assert effective == q
+    assert "CURRENT LESSON" in guidance
+    override = _chapter_meta_prompt_override(effective)
+    assert override is not None
+    assert "EVERY main topic" in override["instruction"]
+
+
+def test_gap_check_reviews_the_chapter_not_a_new_topic():
+    q = "do you miss anything?"
+    chapter = "4. Electricity: Magnetic and Heating Effects"
+    history = [
+        {"role": "user", "content": "explain this chapter"},
+        {"role": "assistant", "content": "Electric current has a magnetic effect and a heating effect."},
+    ]
+    assert is_gap_check_query(q)
+    assert query_breadth(q) == "chapter"
+    ctx = resolve_conversation_context(q, conversation_history=history, chapter=chapter)
+    assert ctx.intent_method == "gap_check"
+    assert ctx.followup_type == "continue_explanation"
+    assert ctx.retrieval_query.startswith(q)
+    assert "do you miss anything?" != ctx.retrieval_query
+
+    early, effective, _a, guidance = asyncio.run(
+        resolve_chapter_awareness_turn(
+            q,
+            docs=[],
+            conversation_history=history,
+            collection_name="CBSE_CLASS_8_Science",
+            chapter_ids=["770"],
+            chapter_names=[chapter],
+            board="CBSE",
+            class_level="CLASS_8",
+            subject_name="Science",
+            scope_query=ctx.retrieval_query,
+        )
+    )
+    assert early is None
+    assert effective == q
+    assert "GAP CHECK" in guidance
+    override = _chapter_meta_prompt_override(effective)
+    assert override is not None
+    assert "did not already teach" in override["instruction"]
 
 
 def test_explain_whole_chapter_is_overview():

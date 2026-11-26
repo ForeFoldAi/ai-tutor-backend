@@ -44,7 +44,8 @@ class Settings(BaseModel):
     jwt_algorithm: str = os.environ.get("JWT_ALGORITHM", "HS256")
     access_token_exp_minutes: int = int(os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "15"))
     refresh_token_exp_days: int = int(os.environ.get("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
-
+    # Students may be signed in on one device at a time (kill switch: SINGLE_SESSION_ENABLED=false).
+    single_session_enabled: bool = os.environ.get("SINGLE_SESSION_ENABLED", "true").lower() in ("1", "true", "yes")
     app_name: str = os.environ.get("APP_NAME", "AI Tutor")
     api_prefix: str = os.environ.get("API_PREFIX", "")
 

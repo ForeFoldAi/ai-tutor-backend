@@ -819,13 +819,24 @@ async def voice_ws(
     stop = asyncio.Event()
     gen_task: asyncio.Task | None = None
 
+    from app.modules.auth.single_session import WS_CLOSE_SESSION_REPLACED, payload_session_replaced
+
+    token_payload: dict | None = None
     if token:
         try:
             from app.core.security import decode_token
             payload = decode_token(token)
             session.student_key = str(payload.get("sub") or "")
+            token_payload = payload
         except Exception as exc:
             logger.warning("Voice WS token rejected, falling back to guest: %s", exc)
+
+    # A student who has since signed in on another device must not keep a voice session open here.
+    # Accept first so the browser gets a clean close code instead of a failed handshake.
+    if token_payload is not None and await asyncio.to_thread(payload_session_replaced, token_payload):
+        await websocket.accept()
+        await websocket.close(code=WS_CLOSE_SESSION_REPLACED)
+        return
 
     is_anonymous = not session.student_key
     anon_slot_taken = False
@@ -895,6 +906,10 @@ async def voice_ws(
                     await _send(websocket, {"type": "listening"})
 
             elif mtype == "question":
+                # Signed in on another device since this call started: end it instead of answering.
+                if token_payload is not None and await asyncio.to_thread(payload_session_replaced, token_payload):
+                    await websocket.close(code=WS_CLOSE_SESSION_REPLACED)
+                    break
                 text = postprocess_voice_transcript(
                     (msg.get("text") or "").strip(),
                     subject_name=session.subject_name,

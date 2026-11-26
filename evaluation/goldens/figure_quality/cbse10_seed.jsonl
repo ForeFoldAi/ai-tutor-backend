@@ -1,0 +1,196 @@
+{"image_id": 16005, "junk": false, "crop_ok": false, "caption_ok": false, "note": "cut at top; caption is chapter title"}
+{"image_id": 16012, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16033, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16036, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16039, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16040, "junk": false, "crop_ok": false, "caption_ok": false, "note": "table fragment"}
+{"image_id": 16070, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16113, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16116, "junk": false, "crop_ok": true, "caption_ok": false, "note": "fragment caption"}
+{"image_id": 16117, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16135, "junk": false, "crop_ok": true, "caption_ok": true, "note": ""}
+{"image_id": 16139, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16150, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16153, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16161, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16171, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16174, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16195, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16239, "junk": false, "crop_ok": true, "caption_ok": false, "note": "body-text fragment caption"}
+{"image_id": 16243, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16283, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16287, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 16304, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 16483, "junk": false, "crop_ok": true, "caption_ok": false, "note": "garbled BLIP caption"}
+{"image_id": 16499, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 16565, "junk": false, "crop_ok": false, "caption_ok": false, "note": "text block, not Fig 8.16"}
+{"image_id": 16567, "junk": false, "crop_ok": false, "caption_ok": false, "note": "text crop for Fig 8.18; degenerate caption"}
+{"image_id": 16656, "junk": false, "crop_ok": true, "caption_ok": false, "note": "BLIP caption wrong"}
+{"image_id": 16695, "junk": false, "crop_ok": false, "caption_ok": false, "note": "labelled 12.2, shows 12.1 with text"}
+{"image_id": 16726, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 16833, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16834, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16836, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16837, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16838, "junk": true, "crop_ok": null, "caption_ok": null, "note": "page-margin decoration"}
+{"image_id": 16840, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16841, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16842, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16843, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16844, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16845, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16846, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16849, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 16850, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16852, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16853, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16860, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16861, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16863, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16864, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16865, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16866, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16867, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16869, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16870, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16876, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16879, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 16881, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16883, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16884, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16885, "junk": true, "crop_ok": null, "caption_ok": null, "note": "page-margin decoration repeated across chapters"}
+{"image_id": 16886, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16888, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16890, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16891, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16892, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16893, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16900, "junk": false, "crop_ok": true, "caption_ok": false, "note": "generic BLIP caption"}
+{"image_id": 16901, "junk": true, "crop_ok": null, "caption_ok": null, "note": "page-margin decoration repeated across chapters"}
+{"image_id": 16902, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16903, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16907, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 16908, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16909, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16910, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16911, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16913, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16914, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16915, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16916, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16917, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16918, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16919, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16920, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16921, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16924, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16925, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16926, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16927, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16929, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16930, "junk": false, "crop_ok": true, "caption_ok": false, "note": "printed caption 'Basket-seller from Coorg' ignored"}
+{"image_id": 16931, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16933, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16934, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16935, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16936, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16937, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16938, "junk": true, "crop_ok": null, "caption_ok": null, "note": "page-margin decoration repeated across chapters"}
+{"image_id": 16939, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16941, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16943, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16944, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16946, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16947, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16948, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16950, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16951, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16952, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16953, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16954, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16955, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16962, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16963, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16964, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16966, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16967, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16968, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16970, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16971, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16972, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16973, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16974, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16975, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16976, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16977, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16978, "junk": true, "crop_ok": null, "caption_ok": null, "note": "page-margin decoration repeated across chapters"}
+{"image_id": 16979, "junk": true, "crop_ok": null, "caption_ok": null, "note": "page-margin decoration"}
+{"image_id": 16980, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16981, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16982, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16984, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16985, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16986, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16987, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16989, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16990, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16991, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16992, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16994, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16995, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16996, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16997, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16998, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 16999, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17000, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17001, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17002, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17003, "junk": true, "crop_ok": null, "caption_ok": null, "note": "page-margin decoration"}
+{"image_id": 17004, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17005, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17007, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17009, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17012, "junk": false, "crop_ok": true, "caption_ok": false, "note": "story text fragment as caption"}
+{"image_id": 17013, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17016, "junk": true, "crop_ok": null, "caption_ok": null, "note": "chapter banner with QR"}
+{"image_id": 17019, "junk": false, "crop_ok": false, "caption_ok": false, "note": "partial strip"}
+{"image_id": 17021, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17024, "junk": true, "crop_ok": null, "caption_ok": null, "note": "chapter banner with QR"}
+{"image_id": 17027, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17031, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17039, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code"}
+{"image_id": 17062, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17070, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decorative cartoon"}
+{"image_id": 17071, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17082, "junk": false, "crop_ok": true, "caption_ok": false, "note": "fragment caption"}
+{"image_id": 17096, "junk": false, "crop_ok": true, "caption_ok": false, "note": "repeated 'Fig. 4.12:' prefix"}
+{"image_id": 17099, "junk": false, "crop_ok": true, "caption_ok": false, "note": "generic BLIP caption"}
+{"image_id": 17117, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17134, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17148, "junk": false, "crop_ok": true, "caption_ok": false, "note": "printed caption ignored"}
+{"image_id": 17180, "junk": false, "crop_ok": true, "caption_ok": false, "note": "'Textbook illustration'"}
+{"image_id": 17187, "junk": false, "crop_ok": true, "caption_ok": true, "note": ""}
+{"image_id": 17197, "junk": false, "crop_ok": true, "caption_ok": false, "note": "noisy prefix"}
+{"image_id": 17200, "junk": false, "crop_ok": true, "caption_ok": true, "note": ""}
+{"image_id": 17259, "junk": false, "crop_ok": true, "caption_ok": true, "note": ""}
+{"image_id": 17265, "junk": false, "crop_ok": true, "caption_ok": false, "note": "'Textbook illustration'"}
+{"image_id": 17266, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17290, "junk": false, "crop_ok": true, "caption_ok": false, "note": "generic BLIP caption"}
+{"image_id": 17294, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17300, "junk": false, "crop_ok": true, "caption_ok": false, "note": "wrong chart description"}
+{"image_id": 17315, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17337, "junk": false, "crop_ok": true, "caption_ok": false, "note": "fragment caption"}
+{"image_id": 17363, "junk": false, "crop_ok": false, "caption_ok": false, "note": "partial image; generic caption"}
+{"image_id": 17364, "junk": true, "crop_ok": null, "caption_ok": null, "note": "QR code / QR chapter banner (decodes)"}
+{"image_id": 17401, "junk": false, "crop_ok": true, "caption_ok": false, "note": "generic BLIP caption"}
+{"image_id": 17408, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17413, "junk": true, "crop_ok": null, "caption_ok": null, "note": "mascot"}
+{"image_id": 17416, "junk": true, "crop_ok": null, "caption_ok": null, "note": "mascot"}
+{"image_id": 17417, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17438, "junk": true, "crop_ok": null, "caption_ok": null, "note": "recurring think-box"}
+{"image_id": 17446, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17482, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17499, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}
+{"image_id": 17504, "junk": false, "crop_ok": false, "caption_ok": false, "note": "cartoon cut off; caption is credit line"}
+{"image_id": 17509, "junk": false, "crop_ok": true, "caption_ok": false, "note": "party symbol; BLIP caption wrong"}
+{"image_id": 17520, "junk": true, "crop_ok": null, "caption_ok": null, "note": "decoration repeated across chapters"}

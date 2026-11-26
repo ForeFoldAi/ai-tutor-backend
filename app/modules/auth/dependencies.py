@@ -10,6 +10,7 @@ from app.core.security import decode_token
 from app.core.student_messages import ACCOUNT_INACTIVE, ACCOUNT_PENDING_APPROVAL, NOT_SIGNED_IN
 from app.modules.auth.constants import Role
 from app.modules.auth.exceptions import AuthException
+from app.modules.auth.single_session import assert_session_current
 from app.modules.users.models import User
 
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -34,6 +35,7 @@ def get_current_user(
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED) from exc
     if not user:
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
+    assert_session_current(user, payload)
     return user
 
 
@@ -66,6 +68,7 @@ def get_current_user_bearer_or_query(
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED) from exc
     if not user:
         raise AuthException(NOT_SIGNED_IN, status.HTTP_401_UNAUTHORIZED)
+    assert_session_current(user, payload)
     return user
 
 

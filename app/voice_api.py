@@ -107,7 +107,10 @@ async def _chat_voice_mp3_stream(text: str) -> AsyncIterator[bytes]:
 
 
 @router.post("/chat-voice")
-async def chat_voice(req: ChatVoiceRequest):
+async def chat_voice(
+    req: ChatVoiceRequest,
+    _authorized: Annotated[None, Depends(authorize_voice_tts)],
+):
     """
     Stream assistant text to MP3 via Edge TTS (read-aloud in text chat).
 
@@ -381,6 +384,7 @@ async def chapter_voice_stream(req: ChapterVoiceRequest, authorization: str = He
     # token, not a client-supplied field — so this fallback path personalizes
     # (learner profile / LIA guidance) exactly like the WebSocket path does.
     token = authorization.removeprefix("Bearer ").strip() if authorization else ""
+    payload: dict | None = None
     if token:
         try:
             from app.core.security import decode_token
@@ -388,7 +392,16 @@ async def chapter_voice_stream(req: ChapterVoiceRequest, authorization: str = He
             payload = decode_token(token)
             req.student_key = str(payload.get("sub") or "") or req.student_key
         except Exception:
-            pass
+            payload = None
+    # Student signed in on another device since: refuse, same as every other authenticated route.
+    if payload is not None:
+        import asyncio
+
+        from app.core.student_messages import SESSION_REPLACED
+        from app.modules.auth.single_session import payload_session_replaced
+
+        if await asyncio.to_thread(payload_session_replaced, payload):
+            raise HTTPException(status_code=401, detail=SESSION_REPLACED)
     return StreamingResponse(
         _chapter_voice_stream_generate(req),
         media_type="application/octet-stream",
@@ -397,8 +410,11 @@ async def chapter_voice_stream(req: ChapterVoiceRequest, authorization: str = He
 
 
 @router.post("/voice-stream")
-async def general_voice_stream(req: ChapterVoiceRequest):
-    """Unauthenticated/general voice stream fallback (same framed protocol)."""
+async def general_voice_stream(
+    req: ChapterVoiceRequest,
+    _current_user: Annotated[User, Depends(get_current_user)],
+):
+    """General voice stream fallback (same framed protocol). Requires a signed-in user."""
     return StreamingResponse(
         _chapter_voice_stream_generate(req),
         media_type="application/octet-stream",
@@ -559,6 +575,7 @@ def protection_metrics() -> dict:
 
 @router.post("/voice/barge-check")
 async def voice_barge_check(
+    _current_user: Annotated[User, Depends(get_current_user)],
     audio: UploadFile = File(...),
     transcript: str = Form(default=""),
     recent_ai_speech: str = Form(default=""),
@@ -738,7 +755,10 @@ async def auth_voice_session_end(voice_session_id: str = Form(default="")):
 
 
 @router.post("/voice-session-end")
-async def voice_session_end(voice_session_id: str = Form(default="")):
+async def voice_session_end(
+    _current_user: Annotated[User, Depends(get_current_user)],
+    voice_session_id: str = Form(default=""),
+):
     from app.services.voice_session_profile import clear_session_voice
 
     sid = (voice_session_id or "").strip()
