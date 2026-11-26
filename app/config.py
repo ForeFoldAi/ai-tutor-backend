@@ -409,6 +409,17 @@ VOICE_LLM_TEMPERATURE_DIALOGUE = float(
 # Rough cap on retrieved context size (~4k tokens; avoids huge prompts / latency).
 CONTEXT_CHAR_BUDGET = int(os.environ.get("CONTEXT_CHAR_BUDGET", "14000"))
 
+# Whole-chapter walkthroughs ("explain this chapter"). The topic list + per-topic lesson
+# excerpts already ground the answer, so the raw retrieved pages are mostly duplicates.
+# Without these caps the prompt was ~7.4k tokens and Groq rejected it (per-key TPM limit).
+OVERVIEW_CONTEXT_CHAR_BUDGET = int(os.environ.get("OVERVIEW_CONTEXT_CHAR_BUDGET", "3000"))
+# Same, for a chapter with no lesson outline (raw pages are the only grounding).
+OVERVIEW_CONTEXT_CHAR_BUDGET_NO_EXCERPTS = int(
+    os.environ.get("OVERVIEW_CONTEXT_CHAR_BUDGET_NO_EXCERPTS", "6000")
+)
+# Longer chapters are taught in parts of this many topics; the student presses Continue.
+OVERVIEW_TOPICS_PER_PART = int(os.environ.get("OVERVIEW_TOPICS_PER_PART", "2"))
+
 # Related textbook diagrams returned with chapter-aware answers (ranked).
 TOP_RELATED_IMAGES = int(os.environ.get("TOP_RELATED_IMAGES", "3"))
 # Cap when student asks to list all chapter figures (DB catalog short-circuit).

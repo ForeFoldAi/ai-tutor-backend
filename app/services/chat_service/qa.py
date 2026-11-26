@@ -74,6 +74,9 @@ from app.config import (
     CONTEXT_CHAR_BUDGET,
     ENABLE_LLM_IMAGE_SELECT,
     IMAGE_RETRIEVAL_TIMEOUT_SEC,
+    OVERVIEW_CONTEXT_CHAR_BUDGET,
+    OVERVIEW_CONTEXT_CHAR_BUDGET_NO_EXCERPTS,
+    OVERVIEW_TOPICS_PER_PART,
     RETRIEVAL_K,
     TOP_RELATED_IMAGES,
 )
@@ -268,6 +271,14 @@ def _chapter_topics_list_reply(**kwargs: Any) -> str | None:
         return try_chapter_topics_list_reply(db, **kwargs)
 
 
+def _overview_doc_budget(info: dict, default: int) -> int:
+    """Raw-page budget for a whole-chapter walkthrough (its topic excerpts carry the content)."""
+    if not info.get("overview"):
+        return default
+    cap = OVERVIEW_CONTEXT_CHAR_BUDGET if info.get("excerpts") else OVERVIEW_CONTEXT_CHAR_BUDGET_NO_EXCERPTS
+    return min(default, cap)
+
+
 def _chapter_toc_for_overview(
     *,
     query: str,
@@ -277,8 +288,16 @@ def _chapter_toc_for_overview(
     board: str = "",
     class_level: str = "",
     docs: list | None = None,
+    overview_part: int | None = None,
+    split_parts: bool = False,
+    part_out: dict | None = None,
 ) -> tuple[str, list | None]:
     """Topic list (+ each topic's opening text) for whole-chapter walkthroughs.
+
+    With ``split_parts`` a chapter with more than ``OVERVIEW_TOPICS_PER_PART`` topics is
+    taught one part at a time (``overview_part``, 1-based): only that part's topics,
+    excerpts and pages go in the prompt. ``part_out`` receives ``overview`` (bool),
+    ``excerpts`` (bool), ``part`` and ``parts``.
 
     Returns ``(block, docs)``. For an unnumbered chapter with a lesson outline the
     docs lose end matter (teacher transcripts, answer keys) and the block carries
@@ -315,33 +334,61 @@ def _chapter_toc_for_overview(
                 subject_name=subject_name,
                 chapter_name=chapter,
             )
-            if is_chapter_overview_request(query) and len(chapter_ids) == 1:
-                try:
-                    from app.modules.student_learning.topic_progress import (
-                        chapter_outline_and_chunks,
-                        topic_key,
-                    )
-                    from app.services.chapter_outline import lesson_docs, topic_excerpts_block
+    overview = is_chapter_overview_request(query)
+    # Part slice [lo, hi) of the topic list; the whole list when not split.
+    part, parts, lo, hi = 1, 1, 0, len(topics)
+    if overview and split_parts and len(topics) > OVERVIEW_TOPICS_PER_PART:
+        per = max(1, OVERVIEW_TOPICS_PER_PART)
+        parts = -(-len(topics) // per)
+        part = min(max(int(overview_part or 1), 1), parts)
+        lo, hi = (part - 1) * per, min(part * per, len(topics))
+    if topics and chapter_ids and overview and len(chapter_ids) == 1:
+        try:
+            from app.modules.student_learning.topic_progress import (
+                chapter_outline_and_chunks,
+                topic_key,
+            )
+            from app.services.chapter_outline import (
+                lesson_docs,
+                part_page_range,
+                topic_excerpts_block,
+            )
 
-                    outline, chunks = chapter_outline_and_chunks(
-                        chapter_id=chapter_id,
-                        board=board,
-                        class_level=class_level,
-                        subject_name=subject_name,
-                        chapter_name=chapter,
-                    )
-                    # Only when the topic list itself came from this outline.
-                    outline_keys = [topic_key(t.get("title") or "") for t in (outline or {}).get("topics") or []]
-                    if outline and [t.get("key") for t in topics] == outline_keys:
-                        docs = lesson_docs(list(docs or []), outline)
-                        excerpts = topic_excerpts_block(chunks, outline)
-                except Exception:
-                    logger.exception("overview outline context failed")
+            outline, chunks = chapter_outline_and_chunks(
+                chapter_id=int(str(chapter_ids[0]).strip()),
+                board=board,
+                class_level=class_level,
+                subject_name=subject_name,
+                chapter_name=chapter,
+            )
+            # Only when the topic list itself came from this outline.
+            outline_keys = [topic_key(t.get("title") or "") for t in (outline or {}).get("topics") or []]
+            if outline and [t.get("key") for t in topics] == outline_keys:
+                docs = lesson_docs(list(docs or []), outline)
+                excerpts = topic_excerpts_block(chunks, outline, only=range(lo, hi))
+                if parts > 1:
+                    # Keep only this part's pages so the answer stays on its topics.
+                    start, stop = part_page_range(outline, lo, hi)
+                    from app.services.chapter_outline import _page
+
+                    in_part = [d for d in (docs or []) if start <= _page(d) < stop]
+                    docs = in_part or docs
+        except Exception:
+            logger.exception("overview outline context failed")
     if not topics:
         topics = topics_from_retrieved_docs(docs, chapter_name=chapter)
-    block = chapter_toc_context_block(topics)
+        lo, hi = 0, len(topics)
+    block = chapter_toc_context_block(topics[lo:hi], start=lo + 1)
+    if block and parts > 1:
+        rest = "the remaining topics come in the next part" if part < parts else "this is the last part"
+        block = (
+            f"CHAPTER WALKTHROUGH — PART {part} OF {parts}: cover ONLY the topics listed below "
+            f"({rest}).\n{block}"
+        )
     if block and excerpts:
         block = f"{block}\n\n{excerpts}"
+    if part_out is not None:
+        part_out.update(overview=bool(overview and block), excerpts=bool(excerpts), part=part, parts=parts)
     return block, docs
 
 
@@ -790,6 +837,7 @@ async def chapter_aware_qa(
         )
 
     # Thread: may fetch the chapter and (once per chapter, cached) build its outline.
+    overview_info: dict = {}
     toc_block, docs = await asyncio.to_thread(
         _chapter_toc_for_overview,
         query=effective_query,
@@ -799,8 +847,11 @@ async def chapter_aware_qa(
         board=board,
         class_level=class_level,
         docs=docs,
+        part_out=overview_info,
     )
-    context = "" if skip_retrieval else _join_context_within_budget(docs)
+    context = "" if skip_retrieval else _join_context_within_budget(
+        docs, char_budget=_overview_doc_budget(overview_info, CONTEXT_CHAR_BUDGET)
+    )
     if toc_block:
         context = f"{toc_block}\n\n{context}".strip() if context else toc_block
     img_top_n = _image_top_n_for_scope(scope, docs=docs)
@@ -1098,6 +1149,7 @@ async def chapter_aware_qa_stream(
     emit_status: Callable[[dict], Awaitable[None]] | None = None,
     prefers_short: bool = False,
     quiz_state: dict | None = None,
+    overview_part: int | None = None,
 ) -> AsyncIterator[str]:
     """
     Streaming version of chapter_aware_qa.
@@ -1105,6 +1157,12 @@ async def chapter_aware_qa_stream(
     Optionally invokes *emit_related_images* when ranked images are ready
     (usually during the first tokens, without blocking retrieval).
     """
+    if overview_part and not voice_mode:
+        from app.services.voice_chapter_vocab import is_chapter_overview_request
+
+        # The Continue button: whatever its label, this turn is the next walkthrough part.
+        if not is_chapter_overview_request(query):
+            query = f"Explain this chapter (part {int(overview_part)})"
     try:
         from app.modules.monitoring.activity import bind_request_surface
 
@@ -1552,6 +1610,7 @@ async def chapter_aware_qa_stream(
         )
 
     # Thread: may fetch the chapter and (once per chapter, cached) build its outline.
+    overview_info: dict = {}
     toc_block, docs = await asyncio.to_thread(
         _chapter_toc_for_overview,
         query=effective_query,
@@ -1561,8 +1620,17 @@ async def chapter_aware_qa_stream(
         board=board,
         class_level=class_level,
         docs=docs,
+        # Voice reads the whole walkthrough aloud; parts + Continue are a text-chat button.
+        overview_part=overview_part,
+        split_parts=not voice_mode,
+        part_out=overview_info,
     )
-    context = _join_context_within_budget(docs, char_budget=context_budget)
+    context = _join_context_within_budget(
+        docs, char_budget=_overview_doc_budget(overview_info, context_budget)
+    )
+    overview_parts: tuple[int, int] | None = None
+    if overview_info.get("overview") and int(overview_info.get("parts") or 1) > 1:
+        overview_parts = (int(overview_info["part"]), int(overview_info["parts"]))
     if skip_retrieval:
         context = (quiz_state or {}).get("context", "") if quiz_feedback_block else ""
     if toc_block:
@@ -1754,6 +1822,7 @@ async def chapter_aware_qa_stream(
             prefers_short=prefers_short,
             explained_points=explained_points,
             quiz_feedback_block=quiz_feedback_block,
+            overview_part=overview_parts,
             **prefetched,
         )
 
@@ -2062,6 +2131,10 @@ async def chapter_aware_qa_stream(
             answer_text = _first_sentences(answer_text, sentence_cap)
             yield answer_text
         llm_ok = bool((answer_text or "").strip()) and answer_text.strip() != BRIDGE_LEAD
+        # Continue button for the next part — only after a real answer to this part.
+        if llm_ok and overview_parts and overview_parts[0] < overview_parts[1] and voice_metadata_out is not None:
+            voice_metadata_out["overview_next_part"] = overview_parts[0] + 1
+            voice_metadata_out["overview_parts"] = overview_parts[1]
         # Empty LLM stream → textbook snippet so the UI never shows a blank bubble.
         if not llm_ok:
             fb = VOICE_RETRY_LINE if voice_mode else CHAT_LLM_BUSY
